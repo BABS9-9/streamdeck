@@ -270,13 +270,7 @@ const ProfilePicker = ({ onSelect, connectionKey }) => {
     if (!name) return;
     const slug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
     if (profiles.find(p => p.slug === slug)) return;
-    if (profiles.length >= 1) {
-      // Future paywall — for now show message
-      alert("Additional profiles coming soon with StreamDeck Premium!");
-      setAdding(false);
-      setNewName("");
-      return;
-    }
+    // TODO: Add paywall gate here for premium profile limits
     const color = PROFILE_COLORS[profiles.length % PROFILE_COLORS.length];
     const updated = [...profiles, { name, slug, color }];
     LS.gSet(profilesKey, updated);
