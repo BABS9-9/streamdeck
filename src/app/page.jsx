@@ -540,7 +540,7 @@ const AccountPanel = ({ info, onLogout }) => {
 };
 
 // ─── Search Overlay ─────────────────────────────────────────
-const SearchOverlay = ({ onClose, allContent, onItem }) => {
+const SearchOverlay = ({ onClose, allContent, onItem, favorites, onFav }) => {
   const [q, setQ] = useState("");
   const inputRef = useRef(null);
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -562,7 +562,7 @@ const SearchOverlay = ({ onClose, allContent, onItem }) => {
         {q.length < 2 && <div style={{ color: C.textMuted, textAlign: "center", paddingTop: 60, fontSize: 15 }}>Type to search across all content</div>}
         {q.length >= 2 && results.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", paddingTop: 60, fontSize: 15 }}>No results found for "{q}"</div>}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 16 }}>
-          {results.map((item, i) => <ContentCard key={item.stream_id || item.series_id || i} item={item} type={item._type || "movie"} onClick={(it) => { onItem(it); onClose(); }} />)}
+          {results.map((item, i) => <ContentCard key={item.stream_id || item.series_id || i} item={item} type={item._type || "movie"} onClick={(it) => { onItem(it); onClose(); }} isFav={favorites?.has(String(item.stream_id || item.series_id))} onFav={onFav} />)}
         </div>
       </div>
     </div>
@@ -857,13 +857,40 @@ export default function StreamDeck() {
         );
       case "live":
         return (
-          <div style={{ padding: "24px 16px" }}>
-            <h2 style={{ fontFamily: "Outfit", fontSize: 28, fontWeight: 800, marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}><Icon name="tv" size={26} /> Live TV <span style={{ fontSize: 14, color: C.textMuted, fontWeight: 400 }}>({filteredLive.length} channels)</span></h2>
-            <CategoryTabs categories={liveCats} active={liveCatFilter} onSelect={setLiveCatFilter} />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
-              {filteredLive.slice(0, 200).map((item, i) => <ContentCard key={item.stream_id || i} item={item} type="live" onClick={playLive} isFav={favorites.has(String(item.stream_id))} onFav={toggleFav} />)}
+          <div style={{ display: "flex", height: "100%" }}>
+            {/* Categories sidebar */}
+            <div style={{ width: 220, flexShrink: 0, background: C.surface, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{ padding: "16px 14px 8px", display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: C.textMuted, display: "flex", padding: 4, cursor: "pointer" }}><Icon name="chevL" size={18} /></button>
+                <span style={{ fontFamily: "Outfit", fontWeight: 700, fontSize: 16 }}>Live TV</span>
+                <span style={{ fontSize: 11, color: C.textMuted, marginLeft: "auto" }}>{filteredLive.length}</span>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: "8px 6px" }}>
+                <button onClick={() => setLiveCatFilter(null)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px", background: !liveCatFilter ? C.accent + "18" : "transparent", border: "none", borderRadius: 10, color: !liveCatFilter ? C.accent : C.textMuted, fontSize: 13, fontWeight: !liveCatFilter ? 600 : 400, textAlign: "left", cursor: "pointer", transition: "all 0.2s" }}>
+                  <Icon name="grid" size={16} /> All Channels
+                </button>
+                <button onClick={() => setLiveCatFilter("favorites")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px", background: liveCatFilter === "favorites" ? C.accent + "18" : "transparent", border: "none", borderRadius: 10, color: liveCatFilter === "favorites" ? C.accent : C.textMuted, fontSize: 13, fontWeight: liveCatFilter === "favorites" ? 600 : 400, textAlign: "left", cursor: "pointer", transition: "all 0.2s" }}>
+                  <Icon name="heartFill" size={16} /> My Channels
+                  {favLiveChannels.length > 0 && <span style={{ marginLeft: "auto", fontSize: 11, background: C.accent + "33", color: C.accent, padding: "2px 7px", borderRadius: 10 }}>{favLiveChannels.length}</span>}
+                </button>
+                <div style={{ height: 1, background: C.border, margin: "8px 12px" }} />
+                {(liveCats || []).map(cat => (
+                  <button key={cat.category_id} onClick={() => setLiveCatFilter(cat.category_id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 12px", background: liveCatFilter === cat.category_id ? C.accent + "18" : "transparent", border: "none", borderRadius: 10, color: liveCatFilter === cat.category_id ? C.accent : C.textMuted, fontSize: 13, fontWeight: liveCatFilter === cat.category_id ? 600 : 400, textAlign: "left", cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {cat.category_name}
+                  </button>
+                ))}
+              </div>
             </div>
-            {filteredLive.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", padding: 60 }}>No channels in this category</div>}
+            {/* Channel grid */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14 }}>
+                {(liveCatFilter === "favorites" ? liveStreams.filter(s => favorites.has(String(s.stream_id))) : filteredLive).slice(0, 200).map((item, i) => (
+                  <ContentCard key={item.stream_id || i} item={item} type="live" onClick={playLive} isFav={favorites.has(String(item.stream_id))} onFav={toggleFav} />
+                ))}
+              </div>
+              {liveCatFilter === "favorites" && favLiveChannels.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", padding: 60, fontSize: 15 }}>No favorite channels yet. Heart channels to add them here.</div>}
+              {liveCatFilter !== "favorites" && filteredLive.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", padding: 60 }}>No channels in this category</div>}
+            </div>
           </div>
         );
       case "movies":
@@ -915,8 +942,8 @@ export default function StreamDeck() {
     <>
       <GlobalStyle />
       <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-        {/* ─── Sidebar ─────────────────────────────────── */}
-        <div style={{ width: sidebarOpen ? 220 : 68, background: C.surface, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", transition: "width 0.25s ease", flexShrink: 0, overflow: "hidden" }}>
+        {/* ─── Sidebar (hidden in Live TV) ─────────────── */}
+        <div style={{ width: page === "live" ? 0 : (sidebarOpen ? 220 : 68), background: C.surface, borderRight: page === "live" ? "none" : `1px solid ${C.border}`, display: "flex", flexDirection: "column", transition: "width 0.25s ease", flexShrink: 0, overflow: "hidden" }}>
           {/* Logo */}
           <div style={{ padding: sidebarOpen ? "20px 20px 8px" : "20px 14px 8px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setSidebarOpen(!sidebarOpen)}>
             <div style={{ width: 38, height: 38, borderRadius: 12, background: C.gradient, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 4px 12px ${C.accentGlow}` }}>
@@ -954,8 +981,8 @@ export default function StreamDeck() {
 
         {/* ─── Main Content ────────────────────────────── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          {/* Top bar */}
-          <div style={{ display: "flex", alignItems: "center", padding: "12px 24px", gap: 16, borderBottom: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
+          {/* Top bar (hidden in Live TV) */}
+          <div style={{ display: page === "live" ? "none" : "flex", alignItems: "center", padding: "12px 24px", gap: 16, borderBottom: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "none", border: "none", color: C.textMuted, display: "flex", padding: 4 }}><Icon name="menu" size={20} /></button>
             <div style={{ flex: 1 }} />
             <button onClick={() => setSearchOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 18px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, color: C.textMuted, fontSize: 13, transition: "border-color 0.2s" }}
@@ -977,7 +1004,7 @@ export default function StreamDeck() {
 
       {/* ─── Overlays ──────────────────────────────────── */}
       {playerSrc && <VideoPlayer src={playerSrc} title={playerTitle} isLive={playerIsLive} onClose={closePlayer} />}
-      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} allContent={allContent} onItem={handleItemClick} />}
+      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} allContent={allContent} onItem={handleItemClick} favorites={favorites} onFav={toggleFav} />}
       {selectedSeries && <SeriesDetail series={selectedSeries} onPlay={playEpisode} onClose={() => setSelectedSeries(null)} />}
       {!playerSrc && lastWatched && page === "home" && <QuickResume item={lastWatched} onClick={handleItemClick} />}
     </>
