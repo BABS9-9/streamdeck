@@ -10,6 +10,9 @@
     "mock": "node mock-provider/server.js"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
     "hls.js": "^1.6.15",
     "next": "16.2.3",
     "react": "19.2.4",
