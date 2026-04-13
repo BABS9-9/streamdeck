@@ -87,9 +87,13 @@ const XtreamAPI = {
 };
 
 // ─── Local Storage Helpers ──────────────────────────────────
+let _lsProfile = null; // active profile slug for namespacing
 const LS = {
-  get(k, def = null) { try { const v = localStorage.getItem(`sd_${k}`); return v ? JSON.parse(v) : def; } catch { return def; } },
-  set(k, v) { try { localStorage.setItem(`sd_${k}`, JSON.stringify(v)); } catch {} },
+  get(k, def = null) { try { const v = localStorage.getItem(`sd_${_lsProfile ? _lsProfile + "_" : ""}${k}`); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set(k, v) { try { localStorage.setItem(`sd_${_lsProfile ? _lsProfile + "_" : ""}${k}`, JSON.stringify(v)); } catch {} },
+  // Global (not namespaced by profile)
+  gGet(k, def = null) { try { const v = localStorage.getItem(`sd_${k}`); return v ? JSON.parse(v) : def; } catch { return def; } },
+  gSet(k, v) { try { localStorage.setItem(`sd_${k}`, JSON.stringify(v)); } catch {} },
 };
 
 // ─── Icons (inline SVG) ────────────────────────────────────
@@ -187,14 +191,17 @@ const CardSkeleton = () => (
   </div>
 );
 
+// ─── Profile Colors ────────────────────────────────────────
+const PROFILE_COLORS = ["#6d5dfc", "#f87171", "#34d399", "#fbbf24", "#c084fc", "#38bdf8", "#fb923c", "#e879f9"];
+
 // ─── Login Screen ───────────────────────────────────────────
 const LoginScreen = ({ onLogin }) => {
-  const [server, setServer] = useState(LS.get("last_server", ""));
-  const [user, setUser] = useState(LS.get("last_user", ""));
+  const [server, setServer] = useState(LS.gGet("last_server", ""));
+  const [user, setUser] = useState(LS.gGet("last_user", ""));
   const [pass, setPass] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const saved = LS.get("connections", []);
+  const saved = LS.gGet("connections", []);
 
   const handleLogin = async () => {
     if (!server || !user || !pass) { setError("All fields required"); return; }
@@ -202,12 +209,12 @@ const LoginScreen = ({ onLogin }) => {
     try {
       XtreamAPI.setCreds(server, user, pass);
       const data = await XtreamAPI.authenticate();
-      LS.set("last_server", server);
-      LS.set("last_user", user);
+      LS.gSet("last_server", server);
+      LS.gSet("last_user", user);
       // Save connection
-      const conns = LS.get("connections", []);
+      const conns = LS.gGet("connections", []);
       const exists = conns.find(c => c.server === server && c.user === user);
-      if (!exists) { conns.unshift({ server, user, pass, name: data.user_info?.username || user }); LS.set("connections", conns.slice(0, 10)); }
+      if (!exists) { conns.unshift({ server, user, pass, name: data.user_info?.username || user }); LS.gSet("connections", conns.slice(0, 10)); }
       onLogin(data);
     } catch (e) {
       setError("Connection failed. Check your credentials and server URL.");
@@ -246,6 +253,118 @@ const LoginScreen = ({ onLogin }) => {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// ─── Profile Picker (Netflix "Who's watching?") ─────────────
+const ProfilePicker = ({ onSelect, connectionKey }) => {
+  const profilesKey = `profiles_${connectionKey}`;
+  const [profiles, setProfiles] = useState(LS.gGet(profilesKey, []));
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  const createProfile = () => {
+    const name = newName.trim();
+    if (!name) return;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (profiles.find(p => p.slug === slug)) return;
+    if (profiles.length >= 1) {
+      // Future paywall — for now show message
+      alert("Additional profiles coming soon with StreamDeck Premium!");
+      setAdding(false);
+      setNewName("");
+      return;
+    }
+    const color = PROFILE_COLORS[profiles.length % PROFILE_COLORS.length];
+    const updated = [...profiles, { name, slug, color }];
+    LS.gSet(profilesKey, updated);
+    setProfiles(updated);
+    setAdding(false);
+    setNewName("");
+  };
+
+  // If no profiles exist yet, auto-create first one from a prompt
+  if (profiles.length === 0 && !adding) {
+    // Show the "create your first profile" UI directly
+    return (
+      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(ellipse at 50% 30%, rgba(109,93,252,0.1) 0%, transparent 60%), ${C.bg}` }}>
+        <div className="animate-fade" style={{ textAlign: "center", maxWidth: 500, padding: 48 }}>
+          <div style={{ fontSize: 42, fontFamily: "Outfit", fontWeight: 800, background: C.gradient, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: -1, marginBottom: 12 }}>StreamDeck</div>
+          <div style={{ color: C.textMuted, fontSize: 18, marginBottom: 40 }}>Create your profile</div>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <input
+              autoFocus
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { const name = newName.trim(); if (!name) return; const slug = name.toLowerCase().replace(/[^a-z0-9]/g, ""); const color = PROFILE_COLORS[0]; const updated = [{ name, slug, color }]; LS.gSet(profilesKey, updated); setProfiles(updated); onSelect(updated[0]); } }}
+              placeholder="Your name (e.g. Babs)"
+              style={{ padding: "14px 20px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, fontSize: 16, outline: "none", width: 260, transition: "border-color 0.2s" }}
+              onFocus={e => e.target.style.borderColor = C.accent}
+              onBlur={e => e.target.style.borderColor = C.border}
+            />
+            <button
+              onClick={() => { const name = newName.trim(); if (!name) return; const slug = name.toLowerCase().replace(/[^a-z0-9]/g, ""); const color = PROFILE_COLORS[0]; const updated = [{ name, slug, color }]; LS.gSet(profilesKey, updated); setProfiles(updated); onSelect(updated[0]); }}
+              style={{ padding: "14px 28px", background: C.gradient, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 600, fontFamily: "Outfit", cursor: "pointer" }}
+            >Go</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(ellipse at 50% 30%, rgba(109,93,252,0.1) 0%, transparent 60%), ${C.bg}` }}>
+      <div className="animate-fade" style={{ textAlign: "center", maxWidth: 700, padding: 48 }}>
+        <div style={{ fontSize: 42, fontFamily: "Outfit", fontWeight: 800, background: C.gradient, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: -1, marginBottom: 12 }}>StreamDeck</div>
+        <div style={{ color: C.textMuted, fontSize: 18, marginBottom: 48 }}>Who&apos;s watching?</div>
+        <div style={{ display: "flex", gap: 32, justifyContent: "center", flexWrap: "wrap" }}>
+          {profiles.map(p => (
+            <button
+              key={p.slug}
+              onClick={() => onSelect(p)}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, background: "none", border: "none", cursor: "pointer", transition: "transform 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.08)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+            >
+              <div style={{ width: 100, height: 100, borderRadius: 16, background: p.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontFamily: "Outfit", fontWeight: 700, color: "#fff", boxShadow: `0 8px 32px ${p.color}44` }}>
+                {p.name.charAt(0).toUpperCase()}
+              </div>
+              <span style={{ color: C.text, fontSize: 15, fontWeight: 500 }}>{p.name}</span>
+            </button>
+          ))}
+          {/* Add profile button */}
+          {!adding ? (
+            <button
+              onClick={() => setAdding(true)}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, background: "none", border: "none", cursor: "pointer", transition: "transform 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.08)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+            >
+              <div style={{ width: 100, height: 100, borderRadius: 16, background: C.surface, border: `2px dashed ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: C.textMuted }}>+</div>
+              <span style={{ color: C.textMuted, fontSize: 15, fontWeight: 500 }}>Add Profile</span>
+            </button>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 100, height: 100, borderRadius: 16, background: PROFILE_COLORS[profiles.length % PROFILE_COLORS.length], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: "#fff", fontFamily: "Outfit", fontWeight: 700 }}>
+                {newName.trim() ? newName.trim().charAt(0).toUpperCase() : "?"}
+              </div>
+              <input
+                autoFocus
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && createProfile()}
+                placeholder="Name"
+                style={{ width: 120, padding: "8px 12px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 14, outline: "none", textAlign: "center" }}
+              />
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={createProfile} style={{ padding: "6px 14px", background: C.gradient, color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Save</button>
+                <button onClick={() => { setAdding(false); setNewName(""); }} style={{ padding: "6px 14px", background: C.surface, color: C.textMuted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: "pointer" }}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -517,7 +636,7 @@ const QuickResume = ({ item, onClick }) => {
 };
 
 // ─── Account Info Panel ─────────────────────────────────────
-const AccountPanel = ({ info, onLogout }) => {
+const AccountPanel = ({ info, onLogout, profile, onSwitchProfile }) => {
   if (!info) return null;
   const u = info.user_info || {};
   const exp = u.exp_date ? new Date(parseInt(u.exp_date) * 1000).toLocaleDateString() : "N/A";
@@ -525,6 +644,16 @@ const AccountPanel = ({ info, onLogout }) => {
   return (
     <div className="animate-fade" style={{ maxWidth: 500, margin: "0 auto", padding: 24 }}>
       <h2 style={{ fontFamily: "Outfit", fontSize: 24, fontWeight: 700, marginBottom: 24 }}>Account & Settings</h2>
+      {profile && (
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, padding: 20, background: C.surface, borderRadius: 16, border: `1px solid ${C.border}` }}>
+          <div style={{ width: 52, height: 52, borderRadius: 12, background: profile.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontFamily: "Outfit", fontWeight: 700, color: "#fff", flexShrink: 0 }}>{profile.name.charAt(0).toUpperCase()}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "Outfit" }}>{profile.name}</div>
+            <div style={{ color: C.textMuted, fontSize: 13, marginTop: 2 }}>Active Profile</div>
+          </div>
+          <button onClick={onSwitchProfile} style={{ padding: "8px 16px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = C.surfaceHover} onMouseLeave={e => e.currentTarget.style.background = C.card}>Switch Profile</button>
+        </div>
+      )}
       <div style={{ background: C.surface, borderRadius: 16, border: `1px solid ${C.border}`, padding: 24 }}>
         <div style={row}><span style={{ color: C.textMuted }}>Username</span><span style={{ fontWeight: 500 }}>{u.username || "—"}</span></div>
         <div style={row}><span style={{ color: C.textMuted }}>Status</span><span style={{ color: u.status === "Active" ? C.green : C.red, fontWeight: 600 }}>{u.status || "—"}</span></div>
@@ -645,6 +774,8 @@ export default function StreamDeck() {
   // Auth state
   const [authed, setAuthed] = useState(false);
   const [accountInfo, setAccountInfo] = useState(null);
+  const [activeProfile, setActiveProfile] = useState(null); // { name, slug, color }
+  const [connectionKey, setConnectionKey] = useState(""); // for namespacing profiles per server
 
   // Navigation
   const [page, setPage] = useState("home");
@@ -706,7 +837,22 @@ export default function StreamDeck() {
 
   const handleLogin = (data) => {
     setAccountInfo(data);
+    // Build a unique key per connection for profile storage
+    const creds = XtreamAPI._creds;
+    const connKey = `${creds.server}_${creds.username}`.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+    setConnectionKey(connKey);
     setAuthed(true);
+    // Don't load data yet — wait for profile selection
+  };
+
+  const handleProfileSelect = (profile) => {
+    setActiveProfile(profile);
+    _lsProfile = profile.slug; // Set namespace for LS helpers
+    // Re-load profile-specific data from localStorage
+    setFavorites(new Set(LS.get("favorites", [])));
+    setWatchProgress(LS.get("watchProgress", {}));
+    setLastWatched(LS.get("lastWatched", null));
+    setWatchTime(LS.get("watchTime", 0));
     loadData();
   };
 
@@ -751,9 +897,17 @@ export default function StreamDeck() {
   const closePlayer = () => { setPlayerSrc(null); };
 
   const handleLogout = () => {
-    setAuthed(false); setAccountInfo(null);
+    setAuthed(false); setAccountInfo(null); setActiveProfile(null);
+    _lsProfile = null;
     XtreamAPI._creds = null; XtreamAPI._cache = {};
     setLiveStreams([]); setVodStreams([]); setSeriesList([]);
+    setPage("home");
+  };
+
+  const switchProfile = () => {
+    setActiveProfile(null);
+    _lsProfile = null;
+    setPlayerSrc(null);
     setPage("home");
   };
 
@@ -820,6 +974,8 @@ export default function StreamDeck() {
 
   // ─── If not authed, show login ────────────────────────────
   if (!authed) return <><GlobalStyle /><LoginScreen onLogin={handleLogin} /></>;
+  // ─── If authed but no profile selected, show profile picker ──
+  if (!activeProfile) return <><GlobalStyle /><ProfilePicker onSelect={handleProfileSelect} connectionKey={connectionKey} /></>;
 
   // ─── Navigation items ─────────────────────────────────────
   const navItems = [
@@ -984,7 +1140,7 @@ export default function StreamDeck() {
           </div>
         );
       case "settings":
-        return <AccountPanel info={accountInfo} onLogout={handleLogout} />;
+        return <AccountPanel info={accountInfo} onLogout={handleLogout} profile={activeProfile} onSwitchProfile={switchProfile} />;
       default:
         return null;
     }
@@ -1020,15 +1176,21 @@ export default function StreamDeck() {
             })}
           </nav>
 
-          {/* Footer */}
-          {sidebarOpen && (
-            <div style={{ padding: "12px 16px", borderTop: `1px solid ${C.border}`, fontSize: 11, color: C.textMuted }}>
+          {/* Footer — Profile + Connection */}
+          <div style={{ padding: sidebarOpen ? "12px 16px" : "12px 8px", borderTop: `1px solid ${C.border}`, fontSize: 11, color: C.textMuted }}>
+            {activeProfile && (
+              <button onClick={switchProfile} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "6px 4px", marginBottom: 6, background: "none", border: "none", color: C.text, cursor: "pointer", borderRadius: 8, transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = C.surfaceHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <div style={{ width: 24, height: 24, borderRadius: 6, background: activeProfile.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontFamily: "Outfit", fontWeight: 700, color: "#fff", flexShrink: 0 }}>{activeProfile.name.charAt(0).toUpperCase()}</div>
+                {sidebarOpen && <span style={{ fontSize: 13, fontWeight: 500 }}>{activeProfile.name}</span>}
+              </button>
+            )}
+            {sidebarOpen && (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.green }} />
                 Connected
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* ─── Main Content ────────────────────────────── */}
