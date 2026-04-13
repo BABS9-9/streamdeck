@@ -1204,8 +1204,12 @@ export default function StreamDeck() {
               <Icon name="search" size={16} /> Search <span style={{ fontSize: 11, opacity: 0.5, marginLeft: 8 }}>/</span>
             </button>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 14px", background: C.card, borderRadius: 12, border: `1px solid ${C.border}`, cursor: "pointer" }} onClick={() => setPage("settings")}>
-              <Icon name="user" size={18} />
-              {accountInfo?.user_info?.username && <span style={{ fontSize: 13, fontWeight: 500 }}>{accountInfo.user_info.username}</span>}
+              {activeProfile ? (
+                <div style={{ width: 26, height: 26, borderRadius: 7, background: activeProfile.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontFamily: "Outfit", fontWeight: 700, color: "#fff" }}>{activeProfile.name.charAt(0).toUpperCase()}</div>
+              ) : (
+                <Icon name="user" size={18} />
+              )}
+              <span style={{ fontSize: 13, fontWeight: 500 }}>{activeProfile?.name || accountInfo?.user_info?.username || ""}</span>
             </div>
           </div>
 
