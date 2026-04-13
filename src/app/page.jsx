@@ -29,7 +29,10 @@ const XtreamAPI = {
   async _fetch(action, cacheKey) {
     if (cacheKey && this._cache[cacheKey]) return this._cache[cacheKey];
     try {
-      const r = await fetch(this._url(action));
+      // Proxy API calls through our server to avoid CORS
+      const rawUrl = this._url(action);
+      const proxyUrl = `/api/iptv?url=${encodeURIComponent(rawUrl)}`;
+      const r = await fetch(proxyUrl);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
       if (cacheKey) this._cache[cacheKey] = data;
