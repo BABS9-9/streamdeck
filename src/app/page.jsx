@@ -799,6 +799,8 @@ export default function StreamDeck() {
   // Fav items
   const favItems = useMemo(() => allContent.filter(item => favorites.has(String(item.stream_id || item.series_id))), [allContent, favorites]);
   const favLiveChannels = useMemo(() => liveStreams.filter(s => favorites.has(String(s.stream_id))).slice(0, 6), [liveStreams, favorites]);
+  const favMovies = useMemo(() => vodStreams.filter(s => favorites.has(String(s.stream_id))), [vodStreams, favorites]);
+  const favSeries = useMemo(() => seriesList.filter(s => favorites.has(String(s.series_id))), [seriesList, favorites]);
 
   // Hero item
   const heroItem = useMemo(() => {
@@ -895,24 +897,74 @@ export default function StreamDeck() {
         );
       case "movies":
         return (
-          <div style={{ padding: "24px 16px" }}>
-            <h2 style={{ fontFamily: "Outfit", fontSize: 28, fontWeight: 800, marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}><Icon name="film" size={26} /> Movies <span style={{ fontSize: 14, color: C.textMuted, fontWeight: 400 }}>({filteredVod.length})</span></h2>
-            <CategoryTabs categories={vodCats} active={vodCatFilter} onSelect={setVodCatFilter} />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 16 }}>
-              {filteredVod.slice(0, 200).map((item, i) => <ContentCard key={item.stream_id || i} item={item} type="movie" onClick={playVod} isFav={favorites.has(String(item.stream_id))} onFav={toggleFav} />)}
+          <div style={{ display: "flex", height: "100%" }}>
+            <div style={{ width: 220, flexShrink: 0, background: C.surface, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{ padding: "16px 14px 8px", display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: C.textMuted, display: "flex", padding: 4, cursor: "pointer" }}><Icon name="chevL" size={18} /></button>
+                <span style={{ fontFamily: "Outfit", fontWeight: 700, fontSize: 16 }}>Movies</span>
+                <span style={{ fontSize: 11, color: C.textMuted, marginLeft: "auto" }}>{filteredVod.length}</span>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: "8px 6px" }}>
+                <button onClick={() => setVodCatFilter(null)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px", background: !vodCatFilter ? C.accent + "18" : "transparent", border: "none", borderRadius: 10, color: !vodCatFilter ? C.accent : C.textMuted, fontSize: 13, fontWeight: !vodCatFilter ? 600 : 400, textAlign: "left", cursor: "pointer", transition: "all 0.2s" }}>
+                  <Icon name="grid" size={16} /> All Movies
+                </button>
+                <button onClick={() => setVodCatFilter("favorites")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px", background: vodCatFilter === "favorites" ? C.accent + "18" : "transparent", border: "none", borderRadius: 10, color: vodCatFilter === "favorites" ? C.accent : C.textMuted, fontSize: 13, fontWeight: vodCatFilter === "favorites" ? 600 : 400, textAlign: "left", cursor: "pointer", transition: "all 0.2s" }}>
+                  <Icon name="heartFill" size={16} /> My Movies
+                  {favMovies.length > 0 && <span style={{ marginLeft: "auto", fontSize: 11, background: C.accent + "33", color: C.accent, padding: "2px 7px", borderRadius: 10 }}>{favMovies.length}</span>}
+                </button>
+                <div style={{ height: 1, background: C.border, margin: "8px 12px" }} />
+                {(vodCats || []).map(cat => (
+                  <button key={cat.category_id} onClick={() => setVodCatFilter(cat.category_id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 12px", background: vodCatFilter === cat.category_id ? C.accent + "18" : "transparent", border: "none", borderRadius: 10, color: vodCatFilter === cat.category_id ? C.accent : C.textMuted, fontSize: 13, fontWeight: vodCatFilter === cat.category_id ? 600 : 400, textAlign: "left", cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {cat.category_name}
+                  </button>
+                ))}
+              </div>
             </div>
-            {filteredVod.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", padding: 60 }}>No movies in this category</div>}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 14 }}>
+                {(vodCatFilter === "favorites" ? favMovies : filteredVod).slice(0, 200).map((item, i) => (
+                  <ContentCard key={item.stream_id || i} item={item} type="movie" onClick={playVod} isFav={favorites.has(String(item.stream_id))} onFav={toggleFav} />
+                ))}
+              </div>
+              {vodCatFilter === "favorites" && favMovies.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", padding: 60, fontSize: 15 }}>No favorite movies yet. Heart movies to add them here.</div>}
+              {vodCatFilter !== "favorites" && filteredVod.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", padding: 60 }}>No movies in this category</div>}
+            </div>
           </div>
         );
       case "series":
         return (
-          <div style={{ padding: "24px 16px" }}>
-            <h2 style={{ fontFamily: "Outfit", fontSize: 28, fontWeight: 800, marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}><Icon name="layers" size={26} /> Series <span style={{ fontSize: 14, color: C.textMuted, fontWeight: 400 }}>({filteredSeries.length})</span></h2>
-            <CategoryTabs categories={seriesCats} active={seriesCatFilter} onSelect={setSeriesCatFilter} />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 16 }}>
-              {filteredSeries.slice(0, 200).map((item, i) => <ContentCard key={item.series_id || i} item={item} type="series" onClick={(it) => setSelectedSeries(it)} isFav={favorites.has(String(item.series_id))} onFav={toggleFav} />)}
+          <div style={{ display: "flex", height: "100%" }}>
+            <div style={{ width: 220, flexShrink: 0, background: C.surface, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{ padding: "16px 14px 8px", display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: C.textMuted, display: "flex", padding: 4, cursor: "pointer" }}><Icon name="chevL" size={18} /></button>
+                <span style={{ fontFamily: "Outfit", fontWeight: 700, fontSize: 16 }}>Series</span>
+                <span style={{ fontSize: 11, color: C.textMuted, marginLeft: "auto" }}>{filteredSeries.length}</span>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: "8px 6px" }}>
+                <button onClick={() => setSeriesCatFilter(null)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px", background: !seriesCatFilter ? C.accent + "18" : "transparent", border: "none", borderRadius: 10, color: !seriesCatFilter ? C.accent : C.textMuted, fontSize: 13, fontWeight: !seriesCatFilter ? 600 : 400, textAlign: "left", cursor: "pointer", transition: "all 0.2s" }}>
+                  <Icon name="grid" size={16} /> All Series
+                </button>
+                <button onClick={() => setSeriesCatFilter("favorites")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px", background: seriesCatFilter === "favorites" ? C.accent + "18" : "transparent", border: "none", borderRadius: 10, color: seriesCatFilter === "favorites" ? C.accent : C.textMuted, fontSize: 13, fontWeight: seriesCatFilter === "favorites" ? 600 : 400, textAlign: "left", cursor: "pointer", transition: "all 0.2s" }}>
+                  <Icon name="heartFill" size={16} /> My Series
+                  {favSeries.length > 0 && <span style={{ marginLeft: "auto", fontSize: 11, background: C.accent + "33", color: C.accent, padding: "2px 7px", borderRadius: 10 }}>{favSeries.length}</span>}
+                </button>
+                <div style={{ height: 1, background: C.border, margin: "8px 12px" }} />
+                {(seriesCats || []).map(cat => (
+                  <button key={cat.category_id} onClick={() => setSeriesCatFilter(cat.category_id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 12px", background: seriesCatFilter === cat.category_id ? C.accent + "18" : "transparent", border: "none", borderRadius: 10, color: seriesCatFilter === cat.category_id ? C.accent : C.textMuted, fontSize: 13, fontWeight: seriesCatFilter === cat.category_id ? 600 : 400, textAlign: "left", cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {cat.category_name}
+                  </button>
+                ))}
+              </div>
             </div>
-            {filteredSeries.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", padding: 60 }}>No series in this category</div>}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 14 }}>
+                {(seriesCatFilter === "favorites" ? favSeries : filteredSeries).slice(0, 200).map((item, i) => (
+                  <ContentCard key={item.series_id || i} item={item} type="series" onClick={(it) => setSelectedSeries(it)} isFav={favorites.has(String(item.series_id))} onFav={toggleFav} />
+                ))}
+              </div>
+              {seriesCatFilter === "favorites" && favSeries.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", padding: 60, fontSize: 15 }}>No favorite series yet. Heart series to add them here.</div>}
+              {seriesCatFilter !== "favorites" && filteredSeries.length === 0 && <div style={{ color: C.textMuted, textAlign: "center", padding: 60 }}>No series in this category</div>}
+            </div>
           </div>
         );
       case "favorites":
@@ -943,7 +995,7 @@ export default function StreamDeck() {
       <GlobalStyle />
       <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
         {/* ─── Sidebar (hidden in Live TV) ─────────────── */}
-        <div style={{ width: page === "live" ? 0 : (sidebarOpen ? 220 : 68), background: C.surface, borderRight: page === "live" ? "none" : `1px solid ${C.border}`, display: "flex", flexDirection: "column", transition: "width 0.25s ease", flexShrink: 0, overflow: "hidden" }}>
+        <div style={{ width: ["live","movies","series"].includes(page) ? 0 : (sidebarOpen ? 220 : 68), background: C.surface, borderRight: ["live","movies","series"].includes(page) ? "none" : `1px solid ${C.border}`, display: "flex", flexDirection: "column", transition: "width 0.25s ease", flexShrink: 0, overflow: "hidden" }}>
           {/* Logo */}
           <div style={{ padding: sidebarOpen ? "20px 20px 8px" : "20px 14px 8px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setSidebarOpen(!sidebarOpen)}>
             <div style={{ width: 38, height: 38, borderRadius: 12, background: C.gradient, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: `0 4px 12px ${C.accentGlow}` }}>
@@ -982,7 +1034,7 @@ export default function StreamDeck() {
         {/* ─── Main Content ────────────────────────────── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {/* Top bar (hidden in Live TV) */}
-          <div style={{ display: page === "live" ? "none" : "flex", alignItems: "center", padding: "12px 24px", gap: 16, borderBottom: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
+          <div style={{ display: ["live","movies","series"].includes(page) ? "none" : "flex", alignItems: "center", padding: "12px 24px", gap: 16, borderBottom: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "none", border: "none", color: C.textMuted, display: "flex", padding: 4 }}><Icon name="menu" size={20} /></button>
             <div style={{ flex: 1 }} />
             <button onClick={() => setSearchOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 18px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, color: C.textMuted, fontSize: 13, transition: "border-color 0.2s" }}
