@@ -798,6 +798,7 @@ export default function StreamDeck() {
 
   // Fav items
   const favItems = useMemo(() => allContent.filter(item => favorites.has(String(item.stream_id || item.series_id))), [allContent, favorites]);
+  const favLiveChannels = useMemo(() => liveStreams.filter(s => favorites.has(String(s.stream_id))).slice(0, 6), [liveStreams, favorites]);
 
   // Hero item
   const heroItem = useMemo(() => {
@@ -837,11 +838,6 @@ export default function StreamDeck() {
         <Skeleton w="25%" h={28} r={8} style={{ marginBottom: 16 }} />
         <div style={{ display: "flex", gap: 16 }}>{[1,2,3,4,5,6].map(i => <CardSkeleton key={i} />)}</div>
       </div>
-    );
-
-    const favLiveChannels = useMemo(() =>
-      liveStreams.filter(s => favorites.has(String(s.stream_id))).slice(0, 6),
-      [liveStreams, favorites]
     );
 
     switch (page) {
