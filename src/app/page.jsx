@@ -839,12 +839,18 @@ export default function StreamDeck() {
       </div>
     );
 
+    const favLiveChannels = useMemo(() =>
+      liveStreams.filter(s => favorites.has(String(s.stream_id))).slice(0, 6),
+      [liveStreams, favorites]
+    );
+
     switch (page) {
       case "home":
         return (
           <div>
             <HeroBanner item={heroItem} type="movie" onPlay={handleItemClick} />
             <div style={{ padding: "0 16px" }}>
+              {favLiveChannels.length > 0 && <ContentRow title="My Channels" icon="heartFill" items={favLiveChannels} type="live" onItem={playLive} favorites={favorites} onFav={toggleFav} />}
               {aiPicks.length > 0 && <ContentRow title="Recommended For You" icon="sparkle" badge="AI" items={aiPicks} type="movie" onItem={handleItemClick} favorites={favorites} onFav={toggleFav} />}
               <ContentRow title="Live TV" icon="tv" items={liveStreams.slice(0, 30)} type="live" onItem={playLive} favorites={favorites} onFav={toggleFav} />
               <ContentRow title="Recently Added Movies" icon="film" items={[...vodStreams].sort((a,b) => (b.added || 0) - (a.added || 0)).slice(0, 30)} type="movie" onItem={playVod} favorites={favorites} onFav={toggleFav} />
