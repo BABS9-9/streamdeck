@@ -33,7 +33,10 @@ const XtreamAPI = {
       const rawUrl = this._url(action);
       const proxyUrl = `/api/iptv?url=${encodeURIComponent(rawUrl)}`;
       const r = await fetch(proxyUrl);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      if (!r.ok) {
+        const errBody = await r.text().catch(() => "");
+        throw new Error(`HTTP ${r.status}: ${errBody.slice(0, 100)}`);
+      }
       const data = await r.json();
       if (cacheKey) this._cache[cacheKey] = data;
       return data;
@@ -45,7 +48,8 @@ const XtreamAPI = {
 
   async authenticate() {
     const data = await this._fetch(null, null);
-    if (data.user_info && data.user_info.auth === 1) return data;
+    console.log("Auth response:", JSON.stringify(data?.user_info || data).slice(0, 300));
+    if (data.user_info && (data.user_info.auth == 1 || data.user_info.auth === true)) return data;
     if (data.user_info && data.user_info.status === "Active") return data;
     throw new Error("Authentication failed");
   },
@@ -217,7 +221,8 @@ const LoginScreen = ({ onLogin }) => {
       if (!exists) { conns.unshift({ server, user, pass, name: data.user_info?.username || user }); LS.gSet("connections", conns.slice(0, 10)); }
       onLogin(data);
     } catch (e) {
-      setError("Connection failed. Check your credentials and server URL.");
+      console.error("Login error:", e);
+      setError(`Connection failed: ${e.message}`);
     }
     setLoading(false);
   };

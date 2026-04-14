@@ -22,8 +22,11 @@ export async function GET(request) {
     });
 
     if (!upstream.ok) {
-      return new Response(`Upstream error: ${upstream.status}`, {
+      const body = await upstream.text().catch(() => "");
+      console.error("IPTV upstream error:", upstream.status, body.slice(0, 200));
+      return new Response(JSON.stringify({ error: `Upstream ${upstream.status}`, detail: body.slice(0, 200) }), {
         status: upstream.status,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
       });
     }
 
