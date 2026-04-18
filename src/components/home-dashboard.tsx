@@ -7,6 +7,20 @@ import { NormalizedEpg, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 
+type HomeState = {
+  featured: XtreamStream | null;
+  spotlight: XtreamStream[];
+  quickLive: XtreamStream[];
+  summary: { live: number; vod: number; series: number };
+};
+
+const emptyState: HomeState = {
+  featured: null,
+  spotlight: [],
+  quickLive: [],
+  summary: { live: 0, vod: 0, series: 0 },
+};
+
 export function HomeDashboard() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connections = useAuthStore((state) => state.connections);
@@ -14,31 +28,43 @@ export function HomeDashboard() {
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const playStream = usePlayerStore((state) => state.playStream);
 
-  const [featured, setFeatured] = useState<XtreamStream | null>(null);
+  const [home, setHome] = useState<HomeState>(emptyState);
   const [heroEpg, setHeroEpg] = useState<NormalizedEpg | null>(null);
-  const [summary, setSummary] = useState({ live: 0, vod: 0, series: 0 });
-  const [spotlight, setSpotlight] = useState<XtreamStream[]>([]);
+  const [liveNow, setLiveNow] = useState<Record<number, NormalizedEpg>>({});
 
   useEffect(() => {
     let cancelled = false;
     if (!activeConnection) return;
 
-    getHomeData(activeConnection).then(async (data) => {
-      if (cancelled) return;
-      const hero = data.liveStreams[0] ?? null;
-      setFeatured(hero);
-      setSummary({ live: data.liveStreams.length, vod: data.vodStreams.length, series: data.series.length });
-      setSpotlight([...data.liveStreams.slice(1, 4), ...data.vodStreams.slice(0, 3)]);
-      if (hero) setHeroEpg(await getShortEpg(activeConnection, hero.stream_id));
-    }).catch(() => {
-      if (cancelled) return;
-      setFeatured(null);
-      setHeroEpg(null);
-      setSummary({ live: 0, vod: 0, series: 0 });
-      setSpotlight([]);
-    });
+    getHomeData(activeConnection)
+      .then(async (data) => {
+        if (cancelled) return;
+        const featured = data.liveStreams[0] ?? null;
+        const quickLive = data.liveStreams.slice(0, 4);
+        setHome({
+          featured,
+          summary: { live: data.liveStreams.length, vod: data.vodStreams.length, series: data.series.length },
+          spotlight: [...data.liveStreams.slice(1, 4), ...data.vodStreams.slice(0, 3)],
+          quickLive,
+        });
 
-    return () => { cancelled = true; };
+        const epgPairs = await Promise.all(
+          quickLive.map(async (stream) => [stream.stream_id, await getShortEpg(activeConnection, stream.stream_id)] as const)
+        );
+        if (cancelled) return;
+        setLiveNow(Object.fromEntries(epgPairs));
+        setHeroEpg(featured ? (Object.fromEntries(epgPairs)[featured.stream_id] ?? await getShortEpg(activeConnection, featured.stream_id)) : null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setHome(emptyState);
+        setHeroEpg(null);
+        setLiveNow({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeConnection]);
 
   const providerHistory = useMemo(
@@ -48,12 +74,17 @@ export function HomeDashboard() {
 
   const quickActions = useMemo(
     () => [
-      { label: 'Browse live channels', href: '/live', meta: `${summary.live} channels` },
-      { label: 'Open movie library', href: '/movies', meta: `${summary.vod} titles` },
-      { label: 'Review settings', href: '/settings', meta: 'Connections and preferences' },
+      { label: 'Browse live channels', href: '/live', meta: `${home.summary.live} channels ready` },
+      { label: 'Open movie library', href: '/movies', meta: `${home.summary.vod} titles loaded` },
+      { label: 'Review settings', href: '/settings', meta: 'Connections and playback preferences' },
     ],
-    [summary]
+    [home.summary]
   );
+
+  const providerLabel = useMemo(() => {
+    if (!activeConnection) return 'No provider';
+    return `${activeConnection.name} · ${activeConnection.username}`;
+  }, [activeConnection]);
 
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Go back to login and connect first.</div>;
@@ -65,14 +96,14 @@ export function HomeDashboard() {
         <div className="grid gap-8 p-8 lg:grid-cols-[1.2fr_0.8fr] lg:p-10">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-violet-300">Featured live preview</p>
-            <h2 className="mt-4 text-4xl font-semibold text-white">{featured?.name ?? 'Loading featured channel...'}</h2>
+            <h2 className="mt-4 text-4xl font-semibold text-white">{home.featured?.name ?? 'Loading featured channel...'}</h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
               StreamDeck leads with saved provider hot-swap, inline NOW and NEXT guide context, and launch-to-play flow directly from the browse surface.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <button
                 onClick={() => {
-                  if (featured) playStream(featured, buildLiveStreamUrl(activeConnection, featured), activeConnection.id);
+                  if (home.featured) playStream(home.featured, buildLiveStreamUrl(activeConnection, home.featured), activeConnection.id);
                 }}
                 className="rounded-2xl bg-violet-500 px-5 py-3 text-sm font-medium text-white hover:bg-violet-400"
               >
@@ -88,6 +119,7 @@ export function HomeDashboard() {
               <div>
                 <p className="text-sm text-slate-400">Provider</p>
                 <p className="mt-2 text-xl font-semibold text-white">{activeConnection.name}</p>
+                <p className="mt-2 text-sm text-slate-500">{providerLabel}</p>
               </div>
               {connections.length > 1 ? (
                 <select
@@ -104,9 +136,9 @@ export function HomeDashboard() {
             <p className="mt-2 text-sm text-slate-400">Next: {heroEpg?.next?.title ?? 'Loading next slot'}</p>
             <div className="mt-8 grid grid-cols-3 gap-3">
               {[
-                ['Live', summary.live],
-                ['Movies', summary.vod],
-                ['Series', summary.series],
+                ['Live', home.summary.live],
+                ['Movies', home.summary.vod],
+                ['Series', home.summary.series],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
                   <p className="text-2xl font-semibold text-white">{value}</p>
@@ -135,11 +167,36 @@ export function HomeDashboard() {
 
       <section>
         <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold text-white">Live now</h3>
+          <span className="text-sm text-slate-500">Inline NOW and NEXT, straight from the home screen</span>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {home.quickLive.map((stream) => (
+            <article key={stream.stream_id} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
+              <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${stream.stream_icon})` }} />
+              <p className="mt-4 text-lg font-semibold text-white">{stream.name}</p>
+              <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-slate-500">Now</p>
+              <p className="mt-1 text-sm text-slate-200">{liveNow[stream.stream_id]?.now?.title ?? 'Loading guide...'}</p>
+              <p className="mt-3 text-[11px] uppercase tracking-[0.25em] text-slate-500">Next</p>
+              <p className="mt-1 text-sm text-slate-400">{liveNow[stream.stream_id]?.next?.title ?? 'Fetching next slot'}</p>
+              <button
+                onClick={() => playStream(stream, buildLiveStreamUrl(activeConnection, stream), activeConnection.id)}
+                className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"
+              >
+                Play now
+              </button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold text-white">Spotlight picks</h3>
           <Link href="/live" className="text-sm text-violet-300 hover:text-violet-200">Open browser</Link>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {spotlight.map((item) => (
+          {home.spotlight.map((item) => (
             <article key={`${item.stream_type}-${item.stream_id}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
               <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${item.stream_icon})` }} />
               <p className="mt-4 text-lg font-semibold text-white">{item.name}</p>
