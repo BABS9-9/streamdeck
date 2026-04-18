@@ -12,7 +12,7 @@ export function LiveBrowser() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connections = useAuthStore((state) => state.connections);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
-  const favorites = useFavoritesStore((state) => state.favorites);
+  const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const playStream = usePlayerStore((state) => state.playStream);
   const currentStream = usePlayerStore((state) => state.currentStream);
@@ -46,6 +46,11 @@ export function LiveBrowser() {
       cancelled = true;
     };
   }, [activeConnection]);
+
+  const favorites = useMemo(
+    () => (activeConnection ? getFavoritesForProvider(activeConnection.id) : []),
+    [activeConnection, getFavoritesForProvider]
+  );
 
   const filtered = useMemo(() => streams.filter((stream) => {
     const categoryMatch = selectedCategory === 'all' || stream.category_id === selectedCategory;
@@ -121,7 +126,7 @@ export function LiveBrowser() {
                     <p className="text-lg font-semibold text-white">{stream.name}</p>
                     <p className="mt-1 text-xs uppercase tracking-[0.25em] text-slate-500">{categories.find((item) => item.category_id === stream.category_id)?.category_name ?? 'Live'}</p>
                   </div>
-                  <button onClick={() => toggleFavorite(stream.stream_id)} className={`rounded-full px-3 py-1 text-xs ${favourite ? 'bg-amber-400/20 text-amber-300' : 'bg-white/5 text-slate-400'}`}>
+                  <button onClick={() => toggleFavorite(activeConnection.id, stream.stream_id)} className={`rounded-full px-3 py-1 text-xs ${favourite ? 'bg-amber-400/20 text-amber-300' : 'bg-white/5 text-slate-400'}`}>
                     {favourite ? '★ Saved' : '☆ Save'}
                   </button>
                 </div>

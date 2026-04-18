@@ -43,6 +43,14 @@ export const storage = {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.favorites, JSON.stringify(favorites));
   },
+  getProviderFavorites(): Record<string, number[]> {
+    if (!isBrowser()) return {};
+    return safeJsonParse(localStorage.getItem(KEYS.favorites), {});
+  },
+  saveProviderFavorites(favorites: Record<string, number[]>) {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.favorites, JSON.stringify(favorites));
+  },
   getHistory(): WatchHistoryItem[] {
     if (!isBrowser()) return [];
     return safeJsonParse(localStorage.getItem(KEYS.history), []);

@@ -41,6 +41,11 @@ export function HomeDashboard() {
     return () => { cancelled = true; };
   }, [activeConnection]);
 
+  const providerHistory = useMemo(
+    () => (activeConnection ? watchHistory.filter((item) => item.providerId === activeConnection.id) : []),
+    [activeConnection, watchHistory]
+  );
+
   const quickActions = useMemo(
     () => [
       { label: 'Browse live channels', href: '/live', meta: `${summary.live} channels` },
@@ -147,7 +152,7 @@ export function HomeDashboard() {
       <section>
         <h3 className="text-xl font-semibold text-white">Continue watching</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-3 xl:grid-cols-4">
-          {watchHistory.length > 0 ? watchHistory.map((item) => (
+          {providerHistory.length > 0 ? providerHistory.map((item) => (
             <div key={item.id} className="rounded-3xl border border-white/10 bg-white/5 p-4">
               <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${item.artwork})` }} />
               <p className="mt-4 font-medium text-white">{item.title}</p>
@@ -156,7 +161,7 @@ export function HomeDashboard() {
                 <div className="h-full rounded-full bg-violet-400" style={{ width: `${Math.max(8, item.progress * 100)}%` }} />
               </div>
             </div>
-          )) : <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Start a stream from Live TV and it will appear here.</div>}
+          )) : <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Start a stream from this provider and it will appear here.</div>}
         </div>
       </section>
     </div>

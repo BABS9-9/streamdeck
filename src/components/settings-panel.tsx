@@ -1,9 +1,13 @@
 'use client';
 
 import { useAuthStore } from '@/stores/auth-store';
+import { useFavoritesStore } from '@/stores/favorites-store';
+import { usePlayerStore } from '@/stores/player-store';
 
 export function SettingsPanel() {
   const { connections, activeConnection, setActiveConnection } = useAuthStore();
+  const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
+  const watchHistory = usePlayerStore((state) => state.watchHistory);
   return (
     <div className="space-y-6">
       <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
@@ -23,7 +27,10 @@ export function SettingsPanel() {
                 onClick={() => setActiveConnection(connection.id)}
                 className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left ${activeConnection?.id === connection.id ? 'border-violet-400 bg-violet-500/10 text-white' : 'border-white/10 bg-white/5 text-slate-300'}`}
               >
-                <span>{connection.name}</span>
+                <div>
+                  <span className="block">{connection.name}</span>
+                  <span className="mt-1 block text-xs text-slate-500">{getFavoritesForProvider(connection.id).length} favorites • {watchHistory.filter((item) => item.providerId === connection.id).length} recent items</span>
+                </div>
                 <span className="text-xs uppercase tracking-[0.2em] text-slate-500">{connection.username}</span>
               </button>
             ))}
