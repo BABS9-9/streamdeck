@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuthStore } from '@/stores/auth-store';
 
 const nav = [
   ['/', 'Login'],
@@ -14,13 +15,24 @@ const nav = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const activeConnection = useAuthStore((state) => state.activeConnection);
+  const connections = useAuthStore((state) => state.connections);
+
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-white/10 bg-black/30 p-6 lg:flex lg:flex-col">
+    <aside className="hidden w-72 shrink-0 border-r border-white/10 bg-black/30 p-6 lg:flex lg:flex-col">
       <div>
         <p className="text-xs uppercase tracking-[0.4em] text-violet-300">BABcorp</p>
         <h1 className="mt-3 text-3xl font-semibold text-white">StreamDeck</h1>
         <p className="mt-2 text-sm text-slate-400">IPTV, without the jank.</p>
       </div>
+
+      <div className="mt-8 rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Active provider</p>
+        <p className="mt-2 text-lg font-semibold text-white">{activeConnection?.name ?? 'Not connected'}</p>
+        <p className="mt-1 text-sm text-slate-400">{activeConnection?.username ?? 'Connect on the login screen'}</p>
+        <p className="mt-4 text-xs text-slate-500">{connections.length} saved connection{connections.length === 1 ? '' : 's'}</p>
+      </div>
+
       <nav className="mt-10 space-y-2">
         {nav.map(([href, label]) => {
           const active = pathname === href;
@@ -35,6 +47,11 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="mt-auto rounded-[1.5rem] border border-white/10 bg-black/20 p-4 text-sm text-slate-400">
+        <p className="font-medium text-white">Phase 1 prototype</p>
+        <p className="mt-2 leading-6">Login, home, live browser, inline guide, saved providers, and stream health are live in the current shell.</p>
+      </div>
     </aside>
   );
 }

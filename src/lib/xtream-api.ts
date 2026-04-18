@@ -1,61 +1,77 @@
-import { EpgListing, NormalizedEpg, XtreamAuthResponse, XtreamCategory, XtreamCredentials, XtreamStream } from './types';
+import {
+  EpgListing,
+  NormalizedEpg,
+  XtreamAuthResponse,
+  XtreamCategory,
+  XtreamCredentials,
+  XtreamStream,
+} from './types';
 
-const buildApiUrl = (credentials: XtreamCredentials, action?: string, extra?: Record<string, string | number | undefined>) => {
+const buildPlayerApiUrl = (
+  credentials: XtreamCredentials,
+  action?: string,
+  extra?: Record<string, string | number | undefined>
+) => {
   const url = new URL('/player_api.php', credentials.server);
   url.searchParams.set('username', credentials.username);
   url.searchParams.set('password', credentials.password);
   if (action) url.searchParams.set('action', action);
   Object.entries(extra || {}).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+    if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
   });
   return url.toString();
 };
 
-const decodeBase64 = (value: string) => {
+const buildProxyUrl = (url: string) => `/api/iptv?url=${encodeURIComponent(url)}`;
+const buildStreamProxyUrl = (url: string) => `/api/stream?url=${encodeURIComponent(url)}`;
+
+const decodeBase64 = (value?: string | null) => {
+  if (!value) return '';
   try {
     if (typeof atob === 'function') return atob(value);
   } catch {}
   return value;
 };
 
-async function xtreamFetch<T>(url: string): Promise<T> {
-  const response = await fetch(url, { cache: 'no-store' });
+async function xtreamFetch<T>(credentials: XtreamCredentials, action?: string, extra?: Record<string, string | number | undefined>): Promise<T> {
+  const response = await fetch(buildProxyUrl(buildPlayerApiUrl(credentials, action, extra)), { cache: 'no-store' });
   if (!response.ok) {
-    throw new Error(`Xtream request failed: ${response.status}`);
+    const detail = await response.text().catch(() => '');
+    throw new Error(detail || `Xtream request failed: ${response.status}`);
   }
   return response.json() as Promise<T>;
 }
 
 export async function authenticate(credentials: XtreamCredentials) {
-  return xtreamFetch<XtreamAuthResponse>(buildApiUrl(credentials));
+  return xtreamFetch<XtreamAuthResponse>(credentials);
 }
 
 export async function getLiveCategories(credentials: XtreamCredentials) {
-  return xtreamFetch<XtreamCategory[]>(buildApiUrl(credentials, 'get_live_categories'));
+  return xtreamFetch<XtreamCategory[]>(credentials, 'get_live_categories');
 }
 
 export async function getLiveStreams(credentials: XtreamCredentials, categoryId?: string) {
-  return xtreamFetch<XtreamStream[]>(buildApiUrl(credentials, 'get_live_streams', { category_id: categoryId }));
+  return xtreamFetch<XtreamStream[]>(credentials, 'get_live_streams', { category_id: categoryId });
 }
 
 export async function getVodCategories(credentials: XtreamCredentials) {
-  return xtreamFetch<XtreamCategory[]>(buildApiUrl(credentials, 'get_vod_categories'));
+  return xtreamFetch<XtreamCategory[]>(credentials, 'get_vod_categories');
 }
 
-export async function getVodStreams(credentials: XtreamCredentials) {
-  return xtreamFetch<XtreamStream[]>(buildApiUrl(credentials, 'get_vod_streams'));
+export async function getVodStreams(credentials: XtreamCredentials, categoryId?: string) {
+  return xtreamFetch<XtreamStream[]>(credentials, 'get_vod_streams', { category_id: categoryId });
 }
 
 export async function getSeriesCategories(credentials: XtreamCredentials) {
-  return xtreamFetch<XtreamCategory[]>(buildApiUrl(credentials, 'get_series_categories'));
+  return xtreamFetch<XtreamCategory[]>(credentials, 'get_series_categories');
 }
 
-export async function getSeries(credentials: XtreamCredentials) {
-  return xtreamFetch<XtreamStream[]>(buildApiUrl(credentials, 'get_series'));
+export async function getSeries(credentials: XtreamCredentials, categoryId?: string) {
+  return xtreamFetch<XtreamStream[]>(credentials, 'get_series', { category_id: categoryId });
 }
 
 export async function getShortEpg(credentials: XtreamCredentials, streamId: number) {
-  const data = await xtreamFetch<{ epg_listings: EpgListing[] }>(buildApiUrl(credentials, 'get_short_epg', { stream_id: streamId }));
+  const data = await xtreamFetch<{ epg_listings: EpgListing[] }>(credentials, 'get_short_epg', { stream_id: streamId });
   const listings = (data.epg_listings || []).map((listing) => ({
     ...listing,
     title: decodeBase64(listing.title),
@@ -72,13 +88,17 @@ export function normalizeEpg(listings: EpgListing[]): NormalizedEpg {
 }
 
 export function buildLiveStreamUrl(credentials: XtreamCredentials, stream: XtreamStream) {
-  if (stream.direct_source?.startsWith('http')) return stream.direct_source;
-  return new URL(`/${credentials.username}/${credentials.password}/${stream.stream_id}`, credentials.server).toString();
+  const raw = stream.direct_source?.startsWith('http')
+    ? stream.direct_source
+    : new URL(`/${credentials.username}/${credentials.password}/${stream.stream_id}`, credentials.server).toString();
+  return buildStreamProxyUrl(raw);
 }
 
 export function buildVodStreamUrl(credentials: XtreamCredentials, stream: XtreamStream) {
-  if (stream.direct_source?.startsWith('http')) return stream.direct_source;
-  return new URL(`/movie/${credentials.username}/${credentials.password}/${stream.stream_id}.${stream.container_extension || 'm3u8'}`, credentials.server).toString();
+  const raw = stream.direct_source?.startsWith('http')
+    ? stream.direct_source
+    : new URL(`/movie/${credentials.username}/${credentials.password}/${stream.stream_id}.${stream.container_extension || 'm3u8'}`, credentials.server).toString();
+  return buildStreamProxyUrl(raw);
 }
 
 export async function getHomeData(credentials: XtreamCredentials) {
