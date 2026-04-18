@@ -15,6 +15,7 @@ export function LiveBrowser() {
   const playStream = usePlayerStore((state) => state.playStream);
   const currentStream = usePlayerStore((state) => state.currentStream);
   const playbackUrl = usePlayerStore((state) => state.playbackUrl);
+  const streamHealth = usePlayerStore((state) => state.streamHealth);
 
   const [categories, setCategories] = useState<XtreamCategory[]>([]);
   const [streams, setStreams] = useState<XtreamStream[]>([]);
@@ -125,6 +126,25 @@ export function LiveBrowser() {
             <p className="text-xs uppercase tracking-[0.3em] text-violet-300">Live preview</p>
             <h3 className="mt-2 text-2xl font-semibold text-white">{currentStream?.name ?? selectedStream?.name ?? 'Select a channel'}</h3>
             <p className="mt-2 text-sm text-slate-400">{selectedStream ? epg[selectedStream.stream_id]?.now?.title ?? 'Guide loading' : 'Choose a channel card to preview or play it here.'}</p>
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-[1.2rem] border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Health</p>
+                <p className={`mt-1 font-medium ${streamHealth.status === 'healthy' ? 'text-emerald-300' : streamHealth.status === 'buffering' ? 'text-amber-300' : streamHealth.status === 'error' ? 'text-rose-300' : 'text-slate-200'}`}>{streamHealth.status}</p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Bitrate</p>
+                <p className="mt-1 font-medium text-white">{streamHealth.bitrateKbps ? `${streamHealth.bitrateKbps} kbps` : 'Pending'}</p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Buffer</p>
+                <p className="mt-1 font-medium text-white">{streamHealth.bufferSeconds !== null ? `${streamHealth.bufferSeconds}s` : 'Pending'}</p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Video</p>
+                <p className="mt-1 font-medium text-white">{streamHealth.resolution ?? streamHealth.codec ?? 'Detecting'}</p>
+              </div>
+            </div>
+            {streamHealth.message ? <p className="mt-3 text-xs text-slate-500">{streamHealth.message}</p> : null}
           </div>
         </div>
 

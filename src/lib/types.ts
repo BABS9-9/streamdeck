@@ -71,3 +71,14 @@ export type WatchHistoryItem = {
   progress: number;
   updatedAt: number;
 };
+
+export type StreamHealth = {
+  status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
+  bitrateKbps: number | null;
+  bufferSeconds: number | null;
+  droppedFrames: number | null;
+  resolution: string | null;
+  codec: string | null;
+  updatedAt: number | null;
+  message?: string | null;
+};

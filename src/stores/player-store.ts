@@ -2,20 +2,35 @@
 
 import { create } from 'zustand';
 import { storage } from '@/lib/storage';
-import { WatchHistoryItem, XtreamStream } from '@/lib/types';
+import { StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
 
 type PlayerState = {
   currentStream: XtreamStream | null;
   playbackUrl: string | null;
   watchHistory: WatchHistoryItem[];
+  streamHealth: StreamHealth;
   hydrate: () => void;
   playStream: (stream: XtreamStream, playbackUrl: string, providerId: string) => void;
+  updateStreamHealth: (health: Partial<StreamHealth>) => void;
+  resetStreamHealth: () => void;
+};
+
+const defaultStreamHealth: StreamHealth = {
+  status: 'idle',
+  bitrateKbps: null,
+  bufferSeconds: null,
+  droppedFrames: null,
+  resolution: null,
+  codec: null,
+  updatedAt: null,
+  message: null,
 };
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentStream: null,
   playbackUrl: null,
   watchHistory: [],
+  streamHealth: defaultStreamHealth,
   hydrate: () => set({ watchHistory: storage.getHistory() }),
   playStream: (stream, playbackUrl, providerId) => {
     const nextEntry: WatchHistoryItem = {
@@ -33,6 +48,24 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       ...get().watchHistory.filter((item) => item.id !== `${providerId}-${stream.stream_id}`),
     ].slice(0, 12);
     storage.saveHistory(nextHistory);
-    set({ currentStream: stream, playbackUrl, watchHistory: nextHistory });
+    set({
+      currentStream: stream,
+      playbackUrl,
+      watchHistory: nextHistory,
+      streamHealth: {
+        ...defaultStreamHealth,
+        status: 'loading',
+        updatedAt: Date.now(),
+        message: `Loading ${stream.name}`,
+      },
+    });
   },
+  updateStreamHealth: (health) => set((state) => ({
+    streamHealth: {
+      ...state.streamHealth,
+      ...health,
+      updatedAt: Date.now(),
+    },
+  })),
+  resetStreamHealth: () => set({ streamHealth: defaultStreamHealth }),
 }));
