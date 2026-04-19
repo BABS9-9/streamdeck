@@ -35,6 +35,10 @@ export const storage = {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.activeConnection, id);
   },
+  clearActiveConnectionId() {
+    if (!isBrowser()) return;
+    localStorage.removeItem(KEYS.activeConnection);
+  },
   getFavorites(): number[] {
     if (!isBrowser()) return [];
     return safeJsonParse(localStorage.getItem(KEYS.favorites), []);

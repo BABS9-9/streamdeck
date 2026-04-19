@@ -15,6 +15,8 @@ type AuthState = {
   hydrate: () => void;
   connect: (credentials: XtreamCredentials) => Promise<boolean>;
   setActiveConnection: (id: string) => void;
+  renameConnection: (id: string, name: string) => void;
+  removeConnection: (id: string) => void;
 };
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -57,5 +59,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!activeConnection) return;
     storage.setActiveConnectionId(id);
     set({ activeConnection });
+  },
+  renameConnection: (id, name) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+    const connections = get().connections.map((item) => (item.id === id ? { ...item, name: trimmedName } : item));
+    const activeConnection = connections.find((item) => item.id === get().activeConnection?.id) ?? null;
+    storage.saveConnections(connections);
+    set({ connections, activeConnection });
+  },
+  removeConnection: (id) => {
+    const connections = get().connections.filter((item) => item.id !== id);
+    const nextActive = get().activeConnection?.id === id ? connections[0] ?? null : connections.find((item) => item.id === get().activeConnection?.id) ?? null;
+    storage.saveConnections(connections);
+    if (nextActive) {
+      storage.setActiveConnectionId(nextActive.id);
+    } else {
+      storage.clearActiveConnectionId();
+    }
+    set({ connections, activeConnection: nextActive, session: nextActive ? get().session : null });
   },
 }));
