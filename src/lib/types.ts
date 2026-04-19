@@ -10,6 +10,13 @@ export type SavedConnection = XtreamCredentials & {
   connectedAt: number;
 };
 
+export type ConnectionStatus = {
+  state: 'idle' | 'checking' | 'healthy' | 'degraded' | 'error';
+  checkedAt: number | null;
+  message: string | null;
+  serverTime?: string | null;
+};
+
 export type XtreamAuthResponse = {
   user_info: {
     username: string;

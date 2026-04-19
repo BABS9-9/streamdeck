@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { authenticate } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
-import { SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
+import { ConnectionStatus, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
 
 type AuthState = {
   connections: SavedConnection[];
@@ -12,12 +12,38 @@ type AuthState = {
   loading: boolean;
   error: string | null;
   initialized: boolean;
+  connectionStatus: Record<string, ConnectionStatus>;
   hydrate: () => void;
   connect: (credentials: XtreamCredentials) => Promise<boolean>;
   setActiveConnection: (id: string) => void;
   renameConnection: (id: string, name: string) => void;
   removeConnection: (id: string) => void;
+  validateConnection: (id: string) => Promise<boolean>;
+  validateAllConnections: () => Promise<void>;
 };
+
+const checkingStatus: ConnectionStatus = {
+  state: 'checking',
+  checkedAt: null,
+  message: 'Checking provider health...',
+  serverTime: null,
+};
+
+const buildHealthyStatus = (session: XtreamAuthResponse): ConnectionStatus => ({
+  state: session.user_info.auth === 1 ? 'healthy' : 'degraded',
+  checkedAt: Date.now(),
+  message: session.user_info.auth === 1
+    ? `${session.user_info.active_cons}/${session.user_info.max_connections} active connections used`
+    : 'Provider responded, but auth is not fully healthy',
+  serverTime: session.server_info.time_now,
+});
+
+const buildErrorStatus = (message: string): ConnectionStatus => ({
+  state: 'error',
+  checkedAt: Date.now(),
+  message,
+  serverTime: null,
+});
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   connections: [],
@@ -26,6 +52,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loading: false,
   error: null,
   initialized: false,
+  connectionStatus: {},
   hydrate: () => {
     if (get().initialized) return;
     const connections = storage.getConnections();
@@ -35,10 +62,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   connect: async (credentials) => {
     set({ loading: true, error: null });
+    const connectionId = `${credentials.server}-${credentials.username}`;
+    set((state) => ({
+      connectionStatus: { ...state.connectionStatus, [connectionId]: checkingStatus },
+    }));
     try {
       const session = await authenticate(credentials);
       const connection: SavedConnection = {
-        id: `${credentials.server}-${credentials.username}`,
+        id: connectionId,
         name: new URL(credentials.server).host,
         connectedAt: Date.now(),
         ...credentials,
@@ -47,10 +78,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const connections = [connection, ...existing];
       storage.saveConnections(connections);
       storage.setActiveConnectionId(connection.id);
-      set({ connections, activeConnection: connection, session, loading: false, error: null });
+      set((state) => ({
+        connections,
+        activeConnection: connection,
+        session,
+        loading: false,
+        error: null,
+        connectionStatus: {
+          ...state.connectionStatus,
+          [connection.id]: buildHealthyStatus(session),
+        },
+      }));
       return true;
     } catch (error) {
-      set({ loading: false, error: error instanceof Error ? error.message : 'Unable to connect' });
+      const message = error instanceof Error ? error.message : 'Unable to connect';
+      set((state) => ({
+        loading: false,
+        error: message,
+        connectionStatus: {
+          ...state.connectionStatus,
+          [connectionId]: buildErrorStatus(message),
+        },
+      }));
       return false;
     }
   },
@@ -77,6 +126,37 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } else {
       storage.clearActiveConnectionId();
     }
-    set({ connections, activeConnection: nextActive, session: nextActive ? get().session : null });
+    set((state) => {
+      const nextStatus = { ...state.connectionStatus };
+      delete nextStatus[id];
+      return { connections, activeConnection: nextActive, session: nextActive ? get().session : null, connectionStatus: nextStatus };
+    });
+  },
+  validateConnection: async (id) => {
+    const connection = get().connections.find((item) => item.id === id);
+    if (!connection) return false;
+    set((state) => ({ connectionStatus: { ...state.connectionStatus, [id]: checkingStatus } }));
+    try {
+      const session = await authenticate(connection);
+      set((state) => ({
+        session: get().activeConnection?.id === id ? session : state.session,
+        connectionStatus: {
+          ...state.connectionStatus,
+          [id]: buildHealthyStatus(session),
+        },
+      }));
+      return true;
+    } catch (error) {
+      set((state) => ({
+        connectionStatus: {
+          ...state.connectionStatus,
+          [id]: buildErrorStatus(error instanceof Error ? error.message : 'Health check failed'),
+        },
+      }));
+      return false;
+    }
+  },
+  validateAllConnections: async () => {
+    await Promise.all(get().connections.map((connection) => get().validateConnection(connection.id)));
   },
 }));

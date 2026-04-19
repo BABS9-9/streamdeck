@@ -7,13 +7,23 @@ import { useAuthStore } from '@/stores/auth-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
 
+const statusTone = {
+  idle: 'text-slate-400',
+  checking: 'text-amber-300',
+  healthy: 'text-emerald-300',
+  degraded: 'text-amber-300',
+  error: 'text-rose-300',
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const hydrate = useAuthStore((state) => state.hydrate);
   const connect = useAuthStore((state) => state.connect);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const validateConnection = useAuthStore((state) => state.validateConnection);
   const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const loading = useAuthStore((state) => state.loading);
   const error = useAuthStore((state) => state.error);
 
@@ -104,6 +114,13 @@ export default function LoginPage() {
             {error ? <p className="text-sm text-rose-300">{error}</p> : null}
           </form>
 
+          <div className="mt-8 rounded-[1.4rem] border border-violet-400/15 bg-violet-500/5 p-4 text-sm text-slate-300">
+            <p className="font-medium text-white">Provider validation is now built into the shell.</p>
+            <p className="mt-2 leading-6 text-slate-400">
+              New connections are health-checked on connect, and saved providers can be revalidated before you switch into playback.
+            </p>
+          </div>
+
           <div className="mt-8 border-t border-white/10 pt-6">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Saved connections</h3>
@@ -113,21 +130,42 @@ export default function LoginPage() {
               {connections.length > 0 ? connections.map((connection) => {
                 const isActive = activeConnection?.id === connection.id;
                 return (
-                  <button
+                  <div
                     key={connection.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveConnection(connection.id);
-                      router.push('/home');
-                    }}
-                    className={`flex w-full items-center justify-between rounded-[1.4rem] border px-4 py-4 text-left transition ${isActive ? 'border-violet-400/60 bg-violet-500/10' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}
+                    className={`flex items-center justify-between gap-4 rounded-[1.4rem] border px-4 py-4 transition ${isActive ? 'border-violet-400/60 bg-violet-500/10' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}
                   >
-                    <div>
-                      <p className="font-medium text-white">{connection.name}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveConnection(connection.id);
+                        router.push('/home');
+                      }}
+                      className="flex-1 text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-white">{connection.name}</p>
+                        {connectionStatus[connection.id] ? (
+                          <span className={`text-[11px] uppercase tracking-[0.22em] ${statusTone[connectionStatus[connection.id].state]}`}>
+                            {connectionStatus[connection.id].state}
+                          </span>
+                        ) : null}
+                      </div>
                       <p className="mt-1 text-sm text-slate-400">{connection.username}</p>
+                      {connectionStatus[connection.id]?.message ? (
+                        <p className="mt-2 text-xs text-slate-500">{connectionStatus[connection.id].message}</p>
+                      ) : null}
+                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => validateConnection(connection.id)}
+                        className="rounded-xl border border-white/10 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-slate-300 hover:bg-white/5"
+                      >
+                        Retry
+                      </button>
+                      <span className="text-xs uppercase tracking-[0.25em] text-slate-500">{isActive ? 'active' : 'switch'}</span>
                     </div>
-                    <span className="text-xs uppercase tracking-[0.25em] text-slate-500">{isActive ? 'active' : 'switch'}</span>
-                  </button>
+                  </div>
                 );
               }) : <p className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-4 text-sm text-slate-400">No saved providers yet. Connect once and StreamDeck keeps it locally.</p>}
             </div>

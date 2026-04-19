@@ -14,10 +14,20 @@ const nav = [
   ['/settings', 'Settings'],
 ];
 
+const statusTone: Record<string, string> = {
+  idle: 'text-slate-400',
+  checking: 'text-amber-300',
+  healthy: 'text-emerald-300',
+  degraded: 'text-amber-300',
+  error: 'text-rose-300',
+};
+
 export function Sidebar() {
   const pathname = usePathname();
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connections = useAuthStore((state) => state.connections);
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const activeStatus = activeConnection ? connectionStatus[activeConnection.id] : null;
 
   return (
     <aside className="hidden w-72 shrink-0 border-r border-white/10 bg-black/30 p-6 lg:flex lg:flex-col">
@@ -31,7 +41,10 @@ export function Sidebar() {
         <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Active provider</p>
         <p className="mt-2 text-lg font-semibold text-white">{activeConnection?.name ?? 'Not connected'}</p>
         <p className="mt-1 text-sm text-slate-400">{activeConnection?.username ?? 'Connect on the login screen'}</p>
-        <p className="mt-4 text-xs text-slate-500">{connections.length} saved connection{connections.length === 1 ? '' : 's'}</p>
+        <p className={`mt-3 text-xs uppercase tracking-[0.22em] ${activeStatus ? statusTone[activeStatus.state] : 'text-slate-500'}`}>
+          {activeStatus ? `${activeStatus.state}${activeStatus.serverTime ? ` · ${activeStatus.serverTime}` : ''}` : 'Status pending'}
+        </p>
+        <p className="mt-2 text-xs text-slate-500">{connections.length} saved connection{connections.length === 1 ? '' : 's'}</p>
       </div>
 
       <nav className="mt-10 space-y-2">

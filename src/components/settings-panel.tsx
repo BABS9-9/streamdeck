@@ -5,8 +5,16 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 
+const statusTone: Record<string, string> = {
+  idle: 'border-slate-400/30 bg-slate-400/10 text-slate-200',
+  checking: 'border-amber-400/30 bg-amber-500/10 text-amber-200',
+  healthy: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
+  degraded: 'border-amber-400/30 bg-amber-500/10 text-amber-200',
+  error: 'border-rose-400/30 bg-rose-500/10 text-rose-200',
+};
+
 export function SettingsPanel() {
-  const { connections, activeConnection, setActiveConnection, renameConnection, removeConnection } = useAuthStore();
+  const { connections, activeConnection, setActiveConnection, renameConnection, removeConnection, validateConnection, validateAllConnections, connectionStatus } = useAuthStore();
   const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const [draftNames, setDraftNames] = useState<Record<string, string>>({});
@@ -27,17 +35,26 @@ export function SettingsPanel() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-semibold text-white">Saved providers</h3>
-              <p className="mt-1 text-sm text-slate-400">Rename, switch, and clean up IPTV connections in place.</p>
+              <p className="mt-1 text-sm text-slate-400">Rename, switch, validate, and clean up IPTV connections in place.</p>
             </div>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-slate-500">
-              {connections.length} total
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => validateAllConnections()}
+                className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs uppercase tracking-[0.25em] text-slate-300 hover:bg-white/5"
+              >
+                Retry all
+              </button>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-slate-500">
+                {connections.length} total
+              </span>
+            </div>
           </div>
           <div className="mt-4 space-y-4">
             {connections.length > 0 ? connections.map((connection) => {
               const draftName = draftNames[connection.id] ?? connection.name;
               const isActive = activeConnection?.id === connection.id;
               const recentItems = watchHistory.filter((item) => item.providerId === connection.id).length;
+              const status = connectionStatus[connection.id];
               return (
                 <div
                   key={connection.id}
@@ -45,8 +62,16 @@ export function SettingsPanel() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-lg font-semibold text-white">{connection.name}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-lg font-semibold text-white">{connection.name}</p>
+                        {status ? (
+                          <span className={`rounded-full border px-2.5 py-1 text-[11px] uppercase tracking-[0.22em] ${statusTone[status.state]}`}>
+                            {status.state}
+                          </span>
+                        ) : null}
+                      </div>
                       <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">{connection.username} · {connection.server}</p>
+                      {status?.message ? <p className="mt-2 text-xs text-slate-400">{status.message}</p> : null}
                     </div>
                     <button
                       onClick={() => setActiveConnection(connection.id)}
@@ -56,7 +81,7 @@ export function SettingsPanel() {
                     </button>
                   </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+                  <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
                     <input
                       value={draftName}
                       onChange={(event) => setDraftNames((current) => ({ ...current, [connection.id]: event.target.value }))}
@@ -68,6 +93,12 @@ export function SettingsPanel() {
                       className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-200 hover:bg-white/5"
                     >
                       Save name
+                    </button>
+                    <button
+                      onClick={() => validateConnection(connection.id)}
+                      className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-200 hover:bg-white/5"
+                    >
+                      Retry check
                     </button>
                     <button
                       onClick={() => removeConnection(connection.id)}

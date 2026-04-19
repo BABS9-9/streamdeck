@@ -8,6 +8,8 @@ import { usePlayerStore } from '@/stores/player-store';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const hydrateAuth = useAuthStore((state) => state.hydrate);
+  const validateAllConnections = useAuthStore((state) => state.validateAllConnections);
+  const initialized = useAuthStore((state) => state.initialized);
   const hydrateFavorites = useFavoritesStore((state) => state.hydrate);
   const hydratePlayer = usePlayerStore((state) => state.hydrate);
 
@@ -16,6 +18,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     hydrateFavorites();
     hydratePlayer();
   }, [hydrateAuth, hydrateFavorites, hydratePlayer]);
+
+  useEffect(() => {
+    if (!initialized) return;
+    validateAllConnections();
+  }, [initialized, validateAllConnections]);
 
   return (
     <div className="flex min-h-screen bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.25),_transparent_30%),linear-gradient(180deg,#09090f_0%,#05050a_100%)] text-white">
