@@ -287,8 +287,15 @@ const server = http.createServer((req, res) => {
       liveStreams: liveStreams.length,
       vodStreams: vodStreams.length,
       series: series.length,
+      searchHints: ['sports', 'news', 'movie', 'kids', 'atlas'],
+      topCategories: liveCategories.map((category) => ({
+        id: category.category_id,
+        name: category.category_name,
+        channels: liveStreams.filter((stream) => stream.category_id === category.category_id).length,
+      })),
       xmltv: `${host}/xmltv.php?username=test&password=test`,
       sampleLive: `${host}/player_api.php?username=test&password=test&action=get_live_streams&category_id=1`,
+      sampleSeries: `${host}/player_api.php?username=test&password=test&action=get_series`,
     });
   }
 

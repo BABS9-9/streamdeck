@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { buildLiveStreamUrl, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
+import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
@@ -37,7 +37,10 @@ export function LiveBrowser() {
       setSelectedStream(live[0] ?? null);
       setPreviewUrl(live[0] ? buildLiveStreamUrl(activeConnection, live[0]) : null);
       Promise.all(
-        live.slice(0, 18).map(async (stream) => [stream.stream_id, await getShortEpg(activeConnection, stream.stream_id)] as const)
+        live.slice(0, 18).map(async (stream) => {
+          const streamId = getContentId(stream);
+          return [streamId, await getShortEpg(activeConnection, streamId)] as const;
+        })
       ).then((entries) => {
         if (!cancelled) setEpg(Object.fromEntries(entries));
       });
@@ -104,13 +107,14 @@ export function LiveBrowser() {
 
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((stream) => {
-            const guide = epg[stream.stream_id];
-            const selected = displayStream?.stream_id === stream.stream_id;
-            const favourite = favorites.includes(stream.stream_id);
-            const previewing = selectedStream?.stream_id === stream.stream_id;
+            const contentId = getContentId(stream);
+            const guide = epg[contentId];
+            const selected = displayStream ? getContentId(displayStream) === contentId : false;
+            const favourite = favorites.includes(contentId);
+            const previewing = selectedStream ? getContentId(selectedStream) === contentId : false;
             return (
               <article
-                key={stream.stream_id}
+                key={contentId}
                 onMouseEnter={() => {
                   setSelectedStream(stream);
                   setPreviewUrl(buildLiveStreamUrl(activeConnection, stream));
@@ -126,14 +130,14 @@ export function LiveBrowser() {
                     <p className="text-lg font-semibold text-white">{stream.name}</p>
                     <p className="mt-1 text-xs uppercase tracking-[0.25em] text-slate-500">{categories.find((item) => item.category_id === stream.category_id)?.category_name ?? 'Live'}</p>
                   </div>
-                  <button onClick={() => toggleFavorite(activeConnection.id, stream.stream_id)} className={`rounded-full px-3 py-1 text-xs ${favourite ? 'bg-amber-400/20 text-amber-300' : 'bg-white/5 text-slate-400'}`}>
+                  <button onClick={() => toggleFavorite(activeConnection.id, contentId)} className={`rounded-full px-3 py-1 text-xs ${favourite ? 'bg-amber-400/20 text-amber-300' : 'bg-white/5 text-slate-400'}`}>
                     {favourite ? '★ Saved' : '☆ Save'}
                   </button>
                 </div>
                 <div className="mt-4 aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${stream.stream_icon})` }} />
                 <div className="mt-3 flex items-center justify-between text-xs uppercase tracking-[0.25em] text-slate-500">
                   <span>{previewing ? 'Preview armed' : 'Hover to preview'}</span>
-                  <span>{stream.stream_id}</span>
+                  <span>{contentId}</span>
                 </div>
                 <div className="mt-4 space-y-2 text-sm">
                   <p className="text-slate-400">NOW</p>
@@ -169,7 +173,7 @@ export function LiveBrowser() {
           <div className="mt-4 px-2 pb-2">
             <p className="text-xs uppercase tracking-[0.3em] text-violet-300">Instant channel preview</p>
             <h3 className="mt-2 text-2xl font-semibold text-white">{displayStream?.name ?? 'Select a channel'}</h3>
-            <p className="mt-2 text-sm text-slate-400">{displayStream ? epg[displayStream.stream_id]?.now?.title ?? 'Guide loading' : 'Choose a channel card to preview or play it here.'}</p>
+            <p className="mt-2 text-sm text-slate-400">{displayStream ? epg[getContentId(displayStream)]?.now?.title ?? 'Guide loading' : 'Choose a channel card to preview or play it here.'}</p>
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-[1.2rem] border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Health</p>

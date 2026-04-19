@@ -67,7 +67,16 @@ export async function getSeriesCategories(credentials: XtreamCredentials) {
 }
 
 export async function getSeries(credentials: XtreamCredentials, categoryId?: string) {
-  return xtreamFetch<XtreamStream[]>(credentials, 'get_series', { category_id: categoryId });
+  const series = await xtreamFetch<XtreamStream[]>(credentials, 'get_series', { category_id: categoryId });
+  return series.map((item) => ({ ...item, stream_type: item.stream_type || 'series' }));
+}
+
+export function getContentId(stream: XtreamStream) {
+  return stream.stream_id ?? stream.series_id ?? 0;
+}
+
+export function getArtwork(stream: XtreamStream) {
+  return stream.stream_icon ?? stream.cover ?? stream.backdrop_path?.[0] ?? undefined;
 }
 
 export async function getShortEpg(credentials: XtreamCredentials, streamId: number) {
@@ -88,16 +97,18 @@ export function normalizeEpg(listings: EpgListing[]): NormalizedEpg {
 }
 
 export function buildLiveStreamUrl(credentials: XtreamCredentials, stream: XtreamStream) {
+  const streamId = getContentId(stream);
   const raw = stream.direct_source?.startsWith('http')
     ? stream.direct_source
-    : new URL(`/${credentials.username}/${credentials.password}/${stream.stream_id}`, credentials.server).toString();
+    : new URL(`/${credentials.username}/${credentials.password}/${streamId}`, credentials.server).toString();
   return buildStreamProxyUrl(raw);
 }
 
 export function buildVodStreamUrl(credentials: XtreamCredentials, stream: XtreamStream) {
+  const streamId = getContentId(stream);
   const raw = stream.direct_source?.startsWith('http')
     ? stream.direct_source
-    : new URL(`/movie/${credentials.username}/${credentials.password}/${stream.stream_id}.${stream.container_extension || 'm3u8'}`, credentials.server).toString();
+    : new URL(`/movie/${credentials.username}/${credentials.password}/${streamId}.${stream.container_extension || 'm3u8'}`, credentials.server).toString();
   return buildStreamProxyUrl(raw);
 }
 
@@ -117,4 +128,14 @@ export async function getHomeData(credentials: XtreamCredentials) {
     vodStreams,
     series,
   };
+}
+
+export async function getSearchCatalog(credentials: XtreamCredentials) {
+  const [live, vod, series] = await Promise.all([
+    getLiveStreams(credentials),
+    getVodStreams(credentials),
+    getSeries(credentials),
+  ]);
+
+  return { live, vod, series };
 }

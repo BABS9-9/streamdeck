@@ -34,9 +34,12 @@ export type XtreamCategory = {
 };
 
 export type XtreamStream = {
-  stream_id: number;
+  stream_id?: number;
+  series_id?: number;
   name: string;
   stream_icon?: string;
+  cover?: string;
+  backdrop_path?: string[];
   stream_type: string;
   category_id: string;
   container_extension?: string;

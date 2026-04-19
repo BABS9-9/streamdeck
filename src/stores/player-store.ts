@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { getArtwork, getContentId } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
 import { StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
 
@@ -33,19 +34,20 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   streamHealth: defaultStreamHealth,
   hydrate: () => set({ watchHistory: storage.getHistory() }),
   playStream: (stream, playbackUrl, providerId) => {
+    const contentId = getContentId(stream);
     const nextEntry: WatchHistoryItem = {
-      id: `${providerId}-${stream.stream_id}`,
-      kind: stream.stream_type === 'live' ? 'live' : 'movie',
+      id: `${providerId}-${contentId}`,
+      kind: stream.stream_type === 'live' ? 'live' : stream.stream_type === 'series' ? 'series' : 'movie',
       title: stream.name,
-      streamId: stream.stream_id,
+      streamId: contentId,
       providerId,
-      artwork: stream.stream_icon,
+      artwork: getArtwork(stream),
       progress: stream.stream_type === 'live' ? 1 : 0.35,
       updatedAt: Date.now(),
     };
     const nextHistory: WatchHistoryItem[] = [
       nextEntry,
-      ...get().watchHistory.filter((item) => item.id !== `${providerId}-${stream.stream_id}`),
+      ...get().watchHistory.filter((item) => item.id !== `${providerId}-${contentId}`),
     ].slice(0, 12);
     storage.saveHistory(nextHistory);
     set({

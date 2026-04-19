@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { buildLiveStreamUrl, getHomeData, getShortEpg } from '@/lib/xtream-api';
+import { buildLiveStreamUrl, getContentId, getHomeData, getShortEpg } from '@/lib/xtream-api';
 import { NormalizedEpg, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -49,11 +49,20 @@ export function HomeDashboard() {
         });
 
         const epgPairs = await Promise.all(
-          quickLive.map(async (stream) => [stream.stream_id, await getShortEpg(activeConnection, stream.stream_id)] as const)
+          quickLive.map(async (stream) => {
+            const streamId = getContentId(stream);
+            return [streamId, await getShortEpg(activeConnection, streamId)] as const;
+          })
         );
         if (cancelled) return;
-        setLiveNow(Object.fromEntries(epgPairs));
-        setHeroEpg(featured ? (Object.fromEntries(epgPairs)[featured.stream_id] ?? await getShortEpg(activeConnection, featured.stream_id)) : null);
+        const nextLiveNow = Object.fromEntries(epgPairs);
+        setLiveNow(nextLiveNow);
+        if (!featured) {
+          setHeroEpg(null);
+          return;
+        }
+        const featuredId = getContentId(featured);
+        setHeroEpg(nextLiveNow[featuredId] ?? await getShortEpg(activeConnection, featuredId));
       })
       .catch(() => {
         if (cancelled) return;
@@ -76,6 +85,7 @@ export function HomeDashboard() {
     () => [
       { label: 'Browse live channels', href: '/live', meta: `${home.summary.live} channels ready` },
       { label: 'Open movie library', href: '/movies', meta: `${home.summary.vod} titles loaded` },
+      { label: 'Search all providers', href: '/search', meta: 'Ranked results across live, movies, and series' },
       { label: 'Review settings', href: '/settings', meta: 'Connections and playback preferences' },
     ],
     [home.summary]
@@ -176,9 +186,9 @@ export function HomeDashboard() {
               <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${stream.stream_icon})` }} />
               <p className="mt-4 text-lg font-semibold text-white">{stream.name}</p>
               <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-slate-500">Now</p>
-              <p className="mt-1 text-sm text-slate-200">{liveNow[stream.stream_id]?.now?.title ?? 'Loading guide...'}</p>
+              <p className="mt-1 text-sm text-slate-200">{liveNow[getContentId(stream)]?.now?.title ?? 'Loading guide...'}</p>
               <p className="mt-3 text-[11px] uppercase tracking-[0.25em] text-slate-500">Next</p>
-              <p className="mt-1 text-sm text-slate-400">{liveNow[stream.stream_id]?.next?.title ?? 'Fetching next slot'}</p>
+              <p className="mt-1 text-sm text-slate-400">{liveNow[getContentId(stream)]?.next?.title ?? 'Fetching next slot'}</p>
               <button
                 onClick={() => playStream(stream, buildLiveStreamUrl(activeConnection, stream), activeConnection.id)}
                 className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"
