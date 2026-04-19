@@ -84,7 +84,8 @@ export function HomeDashboard() {
   const quickActions = useMemo(
     () => [
       { label: 'Browse live channels', href: '/live', meta: `${home.summary.live} channels ready` },
-      { label: 'Open movie library', href: '/movies', meta: `${home.summary.vod} titles loaded` },
+      { label: 'Open favorites', href: '/favorites', meta: 'Saved live channels and on-demand picks' },
+      { label: 'Resume watching', href: '/continue', meta: 'Unified history for this provider' },
       { label: 'Search all providers', href: '/search', meta: 'Ranked results across live, movies, and series' },
       { label: 'Review settings', href: '/settings', meta: 'Connections and playback preferences' },
     ],
@@ -165,7 +166,7 @@ export function HomeDashboard() {
           <h3 className="text-xl font-semibold text-white">Quick launch</h3>
           <span className="text-sm text-slate-500">{activeConnection.name}</span>
         </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href} className="rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:-translate-y-1 hover:border-violet-400/40 hover:bg-white/8">
               <p className="text-lg font-semibold text-white">{action.label}</p>

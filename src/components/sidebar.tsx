@@ -8,6 +8,8 @@ const nav = [
   ['/', 'Login'],
   ['/home', 'Home'],
   ['/live', 'Live TV'],
+  ['/favorites', 'Favorites'],
+  ['/continue', 'Continue Watching'],
   ['/search', 'Search'],
   ['/movies', 'Movies'],
   ['/series', 'Series'],
@@ -64,7 +66,7 @@ export function Sidebar() {
 
       <div className="mt-auto rounded-[1.5rem] border border-white/10 bg-black/20 p-4 text-sm text-slate-400">
         <p className="font-medium text-white">Phase 1 prototype</p>
-        <p className="mt-2 leading-6">Login, home, live browser, cross-provider search, inline guide, saved providers, and stream health are live in the current shell.</p>
+        <p className="mt-2 leading-6">Login, home, live browser, favorites, continue watching, cross-provider search, saved providers, and stream health are live in the current shell.</p>
       </div>
     </aside>
   );

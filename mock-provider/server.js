@@ -295,7 +295,10 @@ const server = http.createServer((req, res) => {
       })),
       xmltv: `${host}/xmltv.php?username=test&password=test`,
       sampleLive: `${host}/player_api.php?username=test&password=test&action=get_live_streams&category_id=1`,
+      sampleVod: `${host}/player_api.php?username=test&password=test&action=get_vod_streams&category_id=201`,
       sampleSeries: `${host}/player_api.php?username=test&password=test&action=get_series`,
+      sampleVodInfo: `${host}/player_api.php?username=test&password=test&action=get_vod_info&vod_id=5000`,
+      sampleSeriesInfo: `${host}/player_api.php?username=test&password=test&action=get_series_info&series_id=7001`,
     });
   }
 

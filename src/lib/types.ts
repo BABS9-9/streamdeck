@@ -78,6 +78,8 @@ export type WatchHistoryItem = {
   streamId: number;
   providerId: string;
   artwork?: string;
+  categoryId?: string;
+  playbackUrl?: string;
   progress: number;
   updatedAt: number;
 };

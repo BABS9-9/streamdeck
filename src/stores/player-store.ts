@@ -42,6 +42,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       streamId: contentId,
       providerId,
       artwork: getArtwork(stream),
+      categoryId: stream.category_id,
+      playbackUrl,
       progress: stream.stream_type === 'live' ? 1 : 0.35,
       updatedAt: Date.now(),
     };
