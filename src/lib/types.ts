@@ -56,6 +56,36 @@ export type XtreamStream = {
   direct_source?: string;
 };
 
+export type XtreamEpisode = {
+  id: number;
+  episode_num: number;
+  title: string;
+  plot?: string;
+  direct_source?: string;
+  info?: {
+    movie_image?: string;
+    plot?: string;
+    duration_secs?: number;
+    container_extension?: string;
+    backdrop_path?: string[];
+  };
+};
+
+export type XtreamSeason = {
+  season_number: number;
+  name: string;
+  air_date?: string;
+  episode_count?: number;
+  overview?: string;
+  cover?: string;
+};
+
+export type XtreamSeriesInfo = {
+  info: XtreamStream;
+  seasons: XtreamSeason[];
+  episodes: Record<string, XtreamEpisode[]>;
+};
+
 export type EpgListing = {
   id: number;
   title: string;

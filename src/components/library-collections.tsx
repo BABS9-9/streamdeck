@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { buildLiveStreamUrl, buildVodStreamUrl, getContentId, getSeries, getVodStreams, getLiveStreams, getArtwork } from '@/lib/xtream-api';
 import { XtreamStream } from '@/lib/types';
@@ -88,27 +89,35 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 : item.stream_type === 'series'
                   ? null
                   : buildVodStreamUrl(activeConnection, item);
+              const contentId = getContentId(item);
               return (
-                <article key={`${item.stream_type}-${getContentId(item)}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
+                <article key={`${item.stream_type}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                   <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${getArtwork(item)})` }} />
                   <div className="mt-4 flex items-start justify-between gap-3">
                     <div>
                       <p className="text-lg font-semibold text-white">{item.name}</p>
                       <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{item.stream_type}</p>
                     </div>
-                    <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">{getContentId(item)}</span>
+                    <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">{contentId}</span>
                   </div>
                   <p className="mt-3 line-clamp-3 text-sm text-slate-400">{item.plot || item.genre || 'Saved from your StreamDeck library.'}</p>
-                  <button
-                    onClick={() => {
-                      if (!playbackUrl) return;
-                      playStream(item, playbackUrl, activeConnection.id);
-                    }}
-                    disabled={!playbackUrl}
-                    className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
-                  >
-                    {playbackUrl ? 'Play from favorites' : 'Series episode picker next'}
-                  </button>
+                  {playbackUrl ? (
+                    <button
+                      onClick={() => {
+                        playStream(item, playbackUrl, activeConnection.id);
+                      }}
+                      className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"
+                    >
+                      Play from favorites
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/series?seriesId=${contentId}`}
+                      className="mt-4 block w-full rounded-2xl border border-white/10 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/5"
+                    >
+                      Open episode picker
+                    </Link>
+                  )}
                 </article>
               );
             })}

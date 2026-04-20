@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId, getSearchCatalog } from '@/lib/xtream-api';
 import { SavedConnection, XtreamStream } from '@/lib/types';
@@ -198,12 +199,13 @@ export function SearchBrowser() {
                       Play
                     </button>
                   ) : (
-                    <button
+                    <Link
+                      href={`/series?seriesId=${contentId}`}
                       onClick={() => setActiveConnection(result.provider.id)}
-                      className="flex-1 rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-200 hover:bg-white/5"
+                      className="flex-1 rounded-2xl border border-white/10 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/5"
                     >
                       Browse series
-                    </button>
+                    </Link>
                   )}
                   <div className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-400">
                     Score {Math.round(result.score)}

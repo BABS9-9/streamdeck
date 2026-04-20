@@ -4,6 +4,7 @@ import {
   XtreamAuthResponse,
   XtreamCategory,
   XtreamCredentials,
+  XtreamSeriesInfo,
   XtreamStream,
 } from './types';
 
@@ -71,6 +72,10 @@ export async function getSeries(credentials: XtreamCredentials, categoryId?: str
   return series.map((item) => ({ ...item, stream_type: item.stream_type || 'series' }));
 }
 
+export async function getSeriesInfo(credentials: XtreamCredentials, seriesId: number | string) {
+  return xtreamFetch<XtreamSeriesInfo>(credentials, 'get_series_info', { series_id: seriesId });
+}
+
 export function getContentId(stream: XtreamStream) {
   return stream.stream_id ?? stream.series_id ?? 0;
 }
@@ -109,6 +114,16 @@ export function buildVodStreamUrl(credentials: XtreamCredentials, stream: Xtream
   const raw = stream.direct_source?.startsWith('http')
     ? stream.direct_source
     : new URL(`/movie/${credentials.username}/${credentials.password}/${streamId}.${stream.container_extension || 'm3u8'}`, credentials.server).toString();
+  return buildStreamProxyUrl(raw);
+}
+
+export function buildSeriesEpisodeUrl(
+  credentials: XtreamCredentials,
+  episode: { id: number; direct_source?: string; info?: { container_extension?: string } }
+) {
+  const raw = episode.direct_source?.startsWith('http')
+    ? episode.direct_source
+    : new URL(`/series/${credentials.username}/${credentials.password}/${episode.id}.${episode.info?.container_extension || 'm3u8'}`, credentials.server).toString();
   return buildStreamProxyUrl(raw);
 }
 
