@@ -114,6 +114,13 @@ export type WatchHistoryItem = {
   updatedAt: number;
 };
 
+export type ProviderCatalog = {
+  live: XtreamStream[];
+  vod: XtreamStream[];
+  series: XtreamStream[];
+  updatedAt: number;
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;

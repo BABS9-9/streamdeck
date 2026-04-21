@@ -121,6 +121,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const connections = get().connections.filter((item) => item.id !== id);
     const nextActive = get().activeConnection?.id === id ? connections[0] ?? null : connections.find((item) => item.id === get().activeConnection?.id) ?? null;
     storage.saveConnections(connections);
+    storage.removeProviderCatalog(id);
     if (nextActive) {
       storage.setActiveConnectionId(nextActive.id);
     } else {

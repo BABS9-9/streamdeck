@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId, getSearchCatalog } from '@/lib/xtream-api';
-import { SavedConnection, XtreamStream } from '@/lib/types';
+import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
+import { ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 
@@ -30,16 +30,37 @@ const scoreResult = (query: string, item: XtreamStream, kind: SearchResult['kind
   return score;
 };
 
+const rankResults = (providerCatalogs: Array<{ provider: SavedConnection; catalog: Pick<ProviderCatalog, 'live' | 'vod' | 'series'> }>, trimmed: string) => {
+  return providerCatalogs
+    .flatMap(({ provider, catalog }) => {
+      const buckets: Array<[SearchResult['kind'], XtreamStream[]]> = [
+        ['live', catalog.live],
+        ['movie', catalog.vod],
+        ['series', catalog.series],
+      ];
+
+      return buckets.flatMap(([kind, items]) =>
+        items
+          .map((item) => ({ provider, item, kind, score: scoreResult(trimmed, item, kind) }))
+          .filter((result) => result.score >= 0)
+      );
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 48);
+};
+
 export function SearchBrowser() {
   const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const playStream = usePlayerStore((state) => state.playStream);
 
-  const [query, setQuery] = useState('sports');
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [query, setQuery] = useState('sports');
   const [loading, setLoading] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState('Searching all providers...');
   const [error, setError] = useState<string | null>(null);
+  const [usingCache, setUsingCache] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,44 +76,45 @@ export function SearchBrowser() {
       setResults([]);
       setLoading(false);
       setError(null);
+      setUsingCache(false);
       return;
     }
 
     const timer = setTimeout(async () => {
-      setLoading(true);
+      const cachedCatalogs = connections
+        .map((provider) => ({ provider, catalog: getCachedSearchCatalog(provider.id) }))
+        .filter((entry): entry is { provider: SavedConnection; catalog: ProviderCatalog } => Boolean(entry.catalog));
+
+      if (cachedCatalogs.length > 0) {
+        setResults(rankResults(cachedCatalogs, trimmed));
+        setUsingCache(true);
+        setLoading(true);
+        setLoadingLabel('Refreshing cached provider catalogs...');
+      } else {
+        setLoading(true);
+        setLoadingLabel('Searching all providers...');
+        setUsingCache(false);
+        setResults([]);
+      }
+
       setError(null);
+
       try {
         const providerCatalogs = await Promise.all(
           connections.map(async (provider) => ({
             provider,
-            catalog: await getSearchCatalog(provider),
+            catalog: await refreshSearchCatalog(provider),
           }))
         );
 
         if (cancelled) return;
 
-        const nextResults = providerCatalogs
-          .flatMap(({ provider, catalog }) => {
-            const buckets: Array<[SearchResult['kind'], XtreamStream[]]> = [
-              ['live', catalog.live],
-              ['movie', catalog.vod],
-              ['series', catalog.series],
-            ];
-
-            return buckets.flatMap(([kind, items]) =>
-              items
-                .map((item) => ({ provider, item, kind, score: scoreResult(trimmed, item, kind) }))
-                .filter((result) => result.score >= 0)
-            );
-          })
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 48);
-
-        setResults(nextResults);
+        setResults(rankResults(providerCatalogs, trimmed));
+        setUsingCache(cachedCatalogs.length > 0);
       } catch (searchError) {
         if (cancelled) return;
         setError(searchError instanceof Error ? searchError.message : 'Search failed');
-        setResults([]);
+        if (cachedCatalogs.length === 0) setResults([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -161,10 +183,11 @@ export function SearchBrowser() {
       </section>
 
       {error ? <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</div> : null}
-      {loading ? <div className="rounded-2xl border border-white/10 bg-black/20 p-6 text-sm text-slate-400">Searching all providers...</div> : null}
+      {loading ? <div className="rounded-2xl border border-white/10 bg-black/20 p-6 text-sm text-slate-400">{loadingLabel}</div> : null}
+      {usingCache && results.length > 0 ? <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">Loaded cached results instantly, now refreshing provider data in the background.</div> : null}
       {!loading && query.trim().length < 2 ? <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Type at least 2 characters to search across saved providers.</div> : null}
 
-      {!loading && results.length > 0 ? (
+      {results.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {results.map((result) => {
             const contentId = getContentId(result.item);
@@ -217,7 +240,7 @@ export function SearchBrowser() {
         </div>
       ) : null}
 
-      {!loading && query.trim().length >= 2 && results.length === 0 && !error ? (
+      {query.trim().length >= 2 && results.length === 0 && !error && !loading ? (
         <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">No matches yet. Try provider names, genres, or broader terms like news, movie, or sports.</div>
       ) : null}
     </div>

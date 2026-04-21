@@ -1,12 +1,14 @@
 import {
   EpgListing,
   NormalizedEpg,
+  ProviderCatalog,
   XtreamAuthResponse,
   XtreamCategory,
   XtreamCredentials,
   XtreamSeriesInfo,
   XtreamStream,
 } from './types';
+import { storage } from './storage';
 
 const buildPlayerApiUrl = (
   credentials: XtreamCredentials,
@@ -25,6 +27,7 @@ const buildPlayerApiUrl = (
 
 const buildProxyUrl = (url: string) => `/api/iptv?url=${encodeURIComponent(url)}`;
 const buildStreamProxyUrl = (url: string) => `/api/stream?url=${encodeURIComponent(url)}`;
+const SEARCH_CACHE_MAX_AGE_MS = 1000 * 60 * 20;
 
 const decodeBase64 = (value?: string | null) => {
   if (!value) return '';
@@ -145,12 +148,34 @@ export async function getHomeData(credentials: XtreamCredentials) {
   };
 }
 
-export async function getSearchCatalog(credentials: XtreamCredentials) {
+export function getCachedSearchCatalog(providerId: string, maxAgeMs = SEARCH_CACHE_MAX_AGE_MS) {
+  const cached = storage.getProviderCatalog(providerId);
+  if (!cached) return null;
+  if (Date.now() - cached.updatedAt > maxAgeMs) return null;
+  return cached;
+}
+
+export async function refreshSearchCatalog(provider: { id: string } & XtreamCredentials): Promise<ProviderCatalog> {
   const [live, vod, series] = await Promise.all([
-    getLiveStreams(credentials),
-    getVodStreams(credentials),
-    getSeries(credentials),
+    getLiveStreams(provider),
+    getVodStreams(provider),
+    getSeries(provider),
   ]);
 
-  return { live, vod, series };
+  const catalog: ProviderCatalog = {
+    live,
+    vod,
+    series,
+    updatedAt: Date.now(),
+  };
+
+  storage.saveProviderCatalog(provider.id, catalog);
+  return catalog;
+}
+
+export async function getSearchCatalog(provider: { id: string } & XtreamCredentials, options?: { preferCache?: boolean; maxAgeMs?: number }) {
+  const preferCache = options?.preferCache ?? false;
+  const cached = getCachedSearchCatalog(provider.id, options?.maxAgeMs);
+  if (preferCache && cached) return cached;
+  return refreshSearchCatalog(provider);
 }

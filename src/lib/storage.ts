@@ -1,10 +1,11 @@
-import { SavedConnection, WatchHistoryItem } from './types';
+import { ProviderCatalog, SavedConnection, WatchHistoryItem } from './types';
 
 const KEYS = {
   connections: 'streamdeck.connections',
   activeConnection: 'streamdeck.active-connection',
   favorites: 'streamdeck.favorites',
   history: 'streamdeck.history',
+  catalogs: 'streamdeck.catalogs',
 };
 
 const safeJsonParse = <T,>(value: string | null, fallback: T): T => {
@@ -62,5 +63,24 @@ export const storage = {
   saveHistory(history: WatchHistoryItem[]) {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.history, JSON.stringify(history));
+  },
+  getCatalogs(): Record<string, ProviderCatalog> {
+    if (!isBrowser()) return {};
+    return safeJsonParse(localStorage.getItem(KEYS.catalogs), {});
+  },
+  getProviderCatalog(providerId: string): ProviderCatalog | null {
+    return storage.getCatalogs()[providerId] ?? null;
+  },
+  saveProviderCatalog(providerId: string, catalog: ProviderCatalog) {
+    if (!isBrowser()) return;
+    const catalogs = storage.getCatalogs();
+    catalogs[providerId] = catalog;
+    localStorage.setItem(KEYS.catalogs, JSON.stringify(catalogs));
+  },
+  removeProviderCatalog(providerId: string) {
+    if (!isBrowser()) return;
+    const catalogs = storage.getCatalogs();
+    delete catalogs[providerId];
+    localStorage.setItem(KEYS.catalogs, JSON.stringify(catalogs));
   },
 };

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { buildLiveStreamUrl, buildVodStreamUrl, getContentId, getSeries, getVodStreams, getLiveStreams, getArtwork } from '@/lib/xtream-api';
+import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
 import { XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
@@ -20,26 +20,35 @@ export function LibraryCollections({ mode }: CollectionsProps) {
 
   const [catalog, setCatalog] = useState<Record<number, XtreamStream>>({});
   const [loading, setLoading] = useState(false);
+  const [cacheState, setCacheState] = useState<'idle' | 'cached' | 'fresh'>('idle');
 
   useEffect(() => {
     let cancelled = false;
     if (!activeConnection || mode !== 'favorites') return;
 
-    setLoading(true);
-    Promise.all([
-      getLiveStreams(activeConnection),
-      getVodStreams(activeConnection),
-      getSeries(activeConnection),
-    ]).then(([live, vod, series]) => {
-      if (cancelled) return;
-      const merged = [...live, ...vod, ...series];
-      setCatalog(Object.fromEntries(merged.map((item) => [getContentId(item), item])));
-      setLoading(false);
-    }).catch(() => {
-      if (cancelled) return;
+    const cached = getCachedSearchCatalog(activeConnection.id, Number.MAX_SAFE_INTEGER);
+    if (cached) {
+      const mergedCached = [...cached.live, ...cached.vod, ...cached.series];
+      setCatalog(Object.fromEntries(mergedCached.map((item) => [getContentId(item), item])));
+      setCacheState('cached');
+    } else {
       setCatalog({});
-      setLoading(false);
-    });
+      setCacheState('idle');
+    }
+
+    setLoading(true);
+    refreshSearchCatalog(activeConnection)
+      .then((freshCatalog) => {
+        if (cancelled) return;
+        const merged = [...freshCatalog.live, ...freshCatalog.vod, ...freshCatalog.series];
+        setCatalog(Object.fromEntries(merged.map((item) => [getContentId(item), item])));
+        setCacheState('fresh');
+        setLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
 
     return () => {
       cancelled = true;
@@ -80,7 +89,8 @@ export function LibraryCollections({ mode }: CollectionsProps) {
 
       {mode === 'favorites' ? (
         <section>
-          {loading ? <div className="rounded-3xl border border-white/10 bg-black/20 p-6 text-sm text-slate-400">Loading saved items…</div> : null}
+          {loading ? <div className="rounded-3xl border border-white/10 bg-black/20 p-6 text-sm text-slate-400">Refreshing saved items from provider catalog…</div> : null}
+          {cacheState === 'cached' ? <div className="mb-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">Loaded favorites from cached provider catalog first, then refreshed in the background.</div> : null}
           {!loading && favoriteItems.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Save channels or titles from Live, Movies, or Series and they will show up here for {activeConnection.name}.</div> : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {favoriteItems.map((item) => {
