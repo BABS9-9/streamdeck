@@ -1,4 +1,4 @@
-import { ProviderCatalog, ProviderHomeSnapshot, SavedConnection, WatchHistoryItem } from './types';
+import { LibraryCollection, ProviderCatalog, ProviderHomeSnapshot, SavedConnection, WatchHistoryItem } from './types';
 
 const KEYS = {
   connections: 'streamdeck.connections',
@@ -7,6 +7,7 @@ const KEYS = {
   history: 'streamdeck.history',
   catalogs: 'streamdeck.catalogs',
   homeSnapshots: 'streamdeck.home-snapshots',
+  collections: 'streamdeck.collections',
 };
 
 const safeJsonParse = <T,>(value: string | null, fallback: T): T => {
@@ -64,6 +65,14 @@ export const storage = {
   saveHistory(history: WatchHistoryItem[]) {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.history, JSON.stringify(history));
+  },
+  getCollections(): LibraryCollection[] {
+    if (!isBrowser()) return [];
+    return safeJsonParse(localStorage.getItem(KEYS.collections), []);
+  },
+  saveCollections(collections: LibraryCollection[]) {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.collections, JSON.stringify(collections));
   },
   getCatalogs(): Record<string, ProviderCatalog> {
     if (!isBrowser()) return {};

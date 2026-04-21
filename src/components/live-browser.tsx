@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
+import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { VideoPlayer } from './video-player';
@@ -14,6 +15,8 @@ export function LiveBrowser() {
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const collections = useCollectionsStore((state) => state.collections);
+  const addItemToCollection = useCollectionsStore((state) => state.addItemToCollection);
   const playStream = usePlayerStore((state) => state.playStream);
   const currentStream = usePlayerStore((state) => state.currentStream);
   const playbackUrl = usePlayerStore((state) => state.playbackUrl);
@@ -159,6 +162,27 @@ export function LiveBrowser() {
                   </button>
                   <button onClick={() => { setSelectedStream(stream); setPreviewUrl(buildLiveStreamUrl(activeConnection, stream)); }} className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-200 hover:bg-white/5">Preview</button>
                 </div>
+                              {collections.length > 0 ? (
+                  <select
+                    defaultValue=""
+                    onChange={(event) => {
+                      if (!event.target.value) return;
+                      addItemToCollection(event.target.value, {
+                        providerId: activeConnection.id,
+                        streamId: contentId,
+                        streamType: 'live',
+                        title: stream.name,
+                        artwork: stream.stream_icon,
+                        addedAt: Date.now(),
+                      });
+                      event.target.value = '';
+                    }}
+                    className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none"
+                  >
+                    <option value="">Add to collection…</option>
+                    {collections.map((collection) => <option key={collection.id} value={collection.id}>{collection.name}</option>)}
+                  </select>
+                ) : null}
               </article>
             );
           })}

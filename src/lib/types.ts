@@ -114,6 +114,25 @@ export type WatchHistoryItem = {
   updatedAt: number;
 };
 
+export type LibraryCollectionItem = {
+  providerId: string;
+  streamId: number;
+  streamType: 'live' | 'movie' | 'series';
+  title: string;
+  artwork?: string;
+  addedAt: number;
+};
+
+export type LibraryCollection = {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+  createdAt: number;
+  updatedAt: number;
+  items: LibraryCollectionItem[];
+};
+
 export type ProviderCatalog = {
   live: XtreamStream[];
   vod: XtreamStream[];

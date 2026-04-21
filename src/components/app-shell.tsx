@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import { Sidebar } from './sidebar';
 import { useAuthStore } from '@/stores/auth-store';
+import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 
@@ -10,14 +11,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const hydrateAuth = useAuthStore((state) => state.hydrate);
   const validateAllConnections = useAuthStore((state) => state.validateAllConnections);
   const initialized = useAuthStore((state) => state.initialized);
+  const hydrateCollections = useCollectionsStore((state) => state.hydrate);
   const hydrateFavorites = useFavoritesStore((state) => state.hydrate);
   const hydratePlayer = usePlayerStore((state) => state.hydrate);
 
   useEffect(() => {
     hydrateAuth();
+    hydrateCollections();
     hydrateFavorites();
     hydratePlayer();
-  }, [hydrateAuth, hydrateFavorites, hydratePlayer]);
+  }, [hydrateAuth, hydrateCollections, hydrateFavorites, hydratePlayer]);
 
   useEffect(() => {
     if (!initialized) return;
