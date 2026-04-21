@@ -70,6 +70,14 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     [activeConnection, watchHistory]
   );
 
+
+  const formatResume = (seconds?: number) => {
+    if (!seconds || seconds <= 0) return 'Ready to resume';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `Resume at ${mins}:${String(secs).padStart(2, '0')}`;
+  };
+
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Connect first.</div>;
   }
@@ -150,7 +158,8 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 <div className="mt-4 h-2 rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-violet-400" style={{ width: `${Math.max(8, item.progress * 100)}%` }} />
                 </div>
-                <p className="mt-3 text-sm text-slate-400">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
+                <p className="mt-3 text-sm text-slate-400">{formatResume(item.positionSeconds)}{item.durationSeconds ? ` • ${Math.round(item.progress * 100)}% of ${Math.floor(item.durationSeconds / 60)} min` : ''}</p>
+                <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
                 <button
                   onClick={() => {
                     if (!item.playbackUrl) return;

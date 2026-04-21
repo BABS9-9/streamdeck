@@ -111,6 +111,8 @@ export type WatchHistoryItem = {
   categoryId?: string;
   playbackUrl?: string;
   progress: number;
+  positionSeconds?: number;
+  durationSeconds?: number;
   updatedAt: number;
 };
 

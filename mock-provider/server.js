@@ -288,6 +288,12 @@ const server = http.createServer((req, res) => {
       vodStreams: vodStreams.length,
       series: series.length,
       searchHints: ['sports', 'news', 'movie', 'kids', 'atlas'],
+      playerCapabilities: {
+        livePreview: true,
+        vodResumeFriendly: true,
+        seriesResumeFriendly: true,
+        streamFormats: ['m3u8'],
+      },
       topCategories: liveCategories.map((category) => ({
         id: category.category_id,
         name: category.category_name,

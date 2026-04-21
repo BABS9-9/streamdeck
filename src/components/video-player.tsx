@@ -4,9 +4,21 @@ import Hls from 'hls.js';
 import { useEffect, useRef } from 'react';
 import { usePlayerStore } from '@/stores/player-store';
 
-export function VideoPlayer({ src, poster }: { src: string | null; poster?: string }) {
+export function VideoPlayer({
+  src,
+  poster,
+  resumeFromSeconds = 0,
+  allowResume = false,
+}: {
+  src: string | null;
+  poster?: string;
+  resumeFromSeconds?: number;
+  allowResume?: boolean;
+}) {
   const ref = useRef<HTMLVideoElement | null>(null);
+  const lastProgressRef = useRef(0);
   const updateStreamHealth = usePlayerStore((state) => state.updateStreamHealth);
+  const updatePlaybackProgress = usePlayerStore((state) => state.updatePlaybackProgress);
   const resetStreamHealth = usePlayerStore((state) => state.resetStreamHealth);
 
   useEffect(() => {
@@ -22,6 +34,7 @@ export function VideoPlayer({ src, poster }: { src: string | null; poster?: stri
 
     let hls: Hls | null = null;
     let metricsTimer: ReturnType<typeof setInterval> | null = null;
+    let resumed = false;
 
     const getBufferSeconds = () => {
       const currentTime = video.currentTime;
@@ -50,14 +63,31 @@ export function VideoPlayer({ src, poster }: { src: string | null; poster?: stri
       updateStreamHealth({ status: 'loading', codec: 'native', message: 'Starting native HLS playback' });
     };
 
+    const maybeResume = () => {
+      if (!allowResume || resumed || !resumeFromSeconds || !Number.isFinite(video.duration) || video.duration <= 0) return;
+      resumed = true;
+      video.currentTime = Math.min(resumeFromSeconds, Math.max(0, video.duration - 2));
+    };
+
     const handleWaiting = () => pushVideoMetrics('buffering');
     const handlePlaying = () => pushVideoMetrics('healthy');
+    const handleLoadedMetadata = () => maybeResume();
+    const handleTimeUpdate = () => {
+      const now = Date.now();
+      if (now - lastProgressRef.current < 3000) return;
+      lastProgressRef.current = now;
+      updatePlaybackProgress(video.currentTime, Number.isFinite(video.duration) ? video.duration : null);
+    };
+    const handleEnded = () => updatePlaybackProgress(Number.isFinite(video.duration) ? video.duration : video.currentTime, Number.isFinite(video.duration) ? video.duration : null);
     const handleError = () => {
       updateStreamHealth({ status: 'error', message: 'Playback error detected' });
     };
 
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('playing', handlePlaying);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('ended', handleEnded);
     video.addEventListener('error', handleError);
 
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -69,6 +99,7 @@ export function VideoPlayer({ src, poster }: { src: string | null; poster?: stri
       updateStreamHealth({ status: 'loading', message: 'Loading stream manifest' });
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        maybeResume();
         const level = hls?.levels?.[hls.currentLevel] ?? hls?.levels?.[0];
         updateStreamHealth({
           status: 'healthy',
@@ -105,10 +136,13 @@ export function VideoPlayer({ src, poster }: { src: string | null; poster?: stri
       video.pause();
       video.removeEventListener('waiting', handleWaiting);
       video.removeEventListener('playing', handlePlaying);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('ended', handleEnded);
       video.removeEventListener('error', handleError);
       if (hls) hls.destroy();
     };
-  }, [src, resetStreamHealth, updateStreamHealth]);
+  }, [allowResume, poster, resetStreamHealth, resumeFromSeconds, src, updatePlaybackProgress, updateStreamHealth]);
 
   return (
     <video
