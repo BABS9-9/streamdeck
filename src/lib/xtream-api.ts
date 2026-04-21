@@ -2,6 +2,7 @@ import {
   EpgListing,
   NormalizedEpg,
   ProviderCatalog,
+  ProviderHomeSnapshot,
   XtreamAuthResponse,
   XtreamCategory,
   XtreamCredentials,
@@ -28,6 +29,7 @@ const buildPlayerApiUrl = (
 const buildProxyUrl = (url: string) => `/api/iptv?url=${encodeURIComponent(url)}`;
 const buildStreamProxyUrl = (url: string) => `/api/stream?url=${encodeURIComponent(url)}`;
 const SEARCH_CACHE_MAX_AGE_MS = 1000 * 60 * 20;
+const HOME_CACHE_MAX_AGE_MS = 1000 * 60 * 15;
 
 const decodeBase64 = (value?: string | null) => {
   if (!value) return '';
@@ -146,6 +148,17 @@ export async function getHomeData(credentials: XtreamCredentials) {
     vodStreams,
     series,
   };
+}
+
+export function getCachedHomeSnapshot(providerId: string, maxAgeMs = HOME_CACHE_MAX_AGE_MS) {
+  const cached = storage.getProviderHomeSnapshot(providerId);
+  if (!cached) return null;
+  if (Date.now() - cached.updatedAt > maxAgeMs) return null;
+  return cached;
+}
+
+export function saveHomeSnapshot(providerId: string, snapshot: ProviderHomeSnapshot) {
+  storage.saveProviderHomeSnapshot(providerId, snapshot);
 }
 
 export function getCachedSearchCatalog(providerId: string, maxAgeMs = SEARCH_CACHE_MAX_AGE_MS) {

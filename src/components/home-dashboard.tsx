@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { buildLiveStreamUrl, getContentId, getHomeData, getShortEpg } from '@/lib/xtream-api';
-import { NormalizedEpg, XtreamStream } from '@/lib/types';
+import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
+import { NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 
@@ -14,11 +14,23 @@ type HomeState = {
   summary: { live: number; vod: number; series: number };
 };
 
+type CacheState = {
+  mode: 'live' | 'cached' | 'offline';
+  message: string | null;
+  updatedAt: number | null;
+};
+
 const emptyState: HomeState = {
   featured: null,
   spotlight: [],
   quickLive: [],
   summary: { live: 0, vod: 0, series: 0 },
+};
+
+const emptyCacheState: CacheState = {
+  mode: 'live',
+  message: null,
+  updatedAt: null,
 };
 
 export function HomeDashboard() {
@@ -31,22 +43,53 @@ export function HomeDashboard() {
   const [home, setHome] = useState<HomeState>(emptyState);
   const [heroEpg, setHeroEpg] = useState<NormalizedEpg | null>(null);
   const [liveNow, setLiveNow] = useState<Record<number, NormalizedEpg>>({});
+  const [cacheState, setCacheState] = useState<CacheState>(emptyCacheState);
 
   useEffect(() => {
     let cancelled = false;
     if (!activeConnection) return;
+
+    const applySnapshot = (snapshot: ProviderHomeSnapshot, mode: CacheState['mode'], message: string | null) => {
+      if (cancelled) return;
+      setHome({
+        featured: snapshot.featured,
+        summary: snapshot.summary,
+        spotlight: snapshot.spotlight,
+        quickLive: snapshot.quickLive,
+      });
+      setHeroEpg(snapshot.heroEpg);
+      setLiveNow(snapshot.liveNow);
+      setCacheState({ mode, message, updatedAt: snapshot.updatedAt });
+    };
+
+    const cached = getCachedHomeSnapshot(activeConnection.id, Number.POSITIVE_INFINITY);
+    if (cached) {
+      const cacheAgeMinutes = Math.round((Date.now() - cached.updatedAt) / 60000);
+      applySnapshot(
+        cached,
+        'cached',
+        cacheAgeMinutes <= 15
+          ? 'Loaded instantly from saved provider cache while refreshing live data.'
+          : `Loaded from saved cache (${cacheAgeMinutes} min old) while refreshing live data.`
+      );
+    } else {
+      setHome(emptyState);
+      setHeroEpg(null);
+      setLiveNow({});
+      setCacheState(emptyCacheState);
+    }
 
     getHomeData(activeConnection)
       .then(async (data) => {
         if (cancelled) return;
         const featured = data.liveStreams[0] ?? null;
         const quickLive = data.liveStreams.slice(0, 4);
-        setHome({
+        const nextHome = {
           featured,
           summary: { live: data.liveStreams.length, vod: data.vodStreams.length, series: data.series.length },
           spotlight: [...data.liveStreams.slice(1, 4), ...data.vodStreams.slice(0, 3)],
           quickLive,
-        });
+        };
 
         const epgPairs = await Promise.all(
           quickLive.map(async (stream) => {
@@ -56,19 +99,33 @@ export function HomeDashboard() {
         );
         if (cancelled) return;
         const nextLiveNow = Object.fromEntries(epgPairs);
+        const featuredId = featured ? getContentId(featured) : null;
+        const nextHeroEpg = !featuredId ? null : nextLiveNow[featuredId] ?? await getShortEpg(activeConnection, featuredId);
+        if (cancelled) return;
+
+        setHome(nextHome);
         setLiveNow(nextLiveNow);
-        if (!featured) {
-          setHeroEpg(null);
-          return;
-        }
-        const featuredId = getContentId(featured);
-        setHeroEpg(nextLiveNow[featuredId] ?? await getShortEpg(activeConnection, featuredId));
+        setHeroEpg(nextHeroEpg);
+        const snapshot: ProviderHomeSnapshot = {
+          ...nextHome,
+          heroEpg: nextHeroEpg,
+          liveNow: nextLiveNow,
+          updatedAt: Date.now(),
+        };
+        saveHomeSnapshot(activeConnection.id, snapshot);
+        setCacheState({ mode: 'live', message: cached ? 'Provider refreshed successfully. Home is live again.' : null, updatedAt: snapshot.updatedAt });
       })
       .catch(() => {
         if (cancelled) return;
+        if (cached) {
+          const cacheAgeMinutes = Math.round((Date.now() - cached.updatedAt) / 60000);
+          applySnapshot(cached, 'offline', `Provider refresh failed. Showing saved home data from ${cacheAgeMinutes} min ago.`);
+          return;
+        }
         setHome(emptyState);
         setHeroEpg(null);
         setLiveNow({});
+        setCacheState({ mode: 'offline', message: 'Provider is unavailable and no saved home cache exists yet.', updatedAt: null });
       });
 
     return () => {
@@ -97,12 +154,29 @@ export function HomeDashboard() {
     return `${activeConnection.name} · ${activeConnection.username}`;
   }, [activeConnection]);
 
+  const cacheTone = cacheState.mode === 'offline'
+    ? 'border-amber-400/30 bg-amber-500/10 text-amber-100'
+    : cacheState.mode === 'cached'
+      ? 'border-sky-400/30 bg-sky-500/10 text-sky-100'
+      : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100';
+
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Go back to login and connect first.</div>;
   }
 
   return (
     <div className="space-y-8">
+      {cacheState.message ? (
+        <section className={`rounded-[1.5rem] border px-5 py-4 text-sm ${cacheTone}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p>{cacheState.message}</p>
+            <span className="text-xs uppercase tracking-[0.22em] text-white/70">
+              {cacheState.updatedAt ? `Updated ${new Date(cacheState.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'No cached timestamp'}
+            </span>
+          </div>
+        </section>
+      ) : null}
+
       <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5">
         <div className="grid gap-8 p-8 lg:grid-cols-[1.2fr_0.8fr] lg:p-10">
           <div>

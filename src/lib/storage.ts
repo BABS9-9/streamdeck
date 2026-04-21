@@ -1,4 +1,4 @@
-import { ProviderCatalog, SavedConnection, WatchHistoryItem } from './types';
+import { ProviderCatalog, ProviderHomeSnapshot, SavedConnection, WatchHistoryItem } from './types';
 
 const KEYS = {
   connections: 'streamdeck.connections',
@@ -6,6 +6,7 @@ const KEYS = {
   favorites: 'streamdeck.favorites',
   history: 'streamdeck.history',
   catalogs: 'streamdeck.catalogs',
+  homeSnapshots: 'streamdeck.home-snapshots',
 };
 
 const safeJsonParse = <T,>(value: string | null, fallback: T): T => {
@@ -82,5 +83,24 @@ export const storage = {
     const catalogs = storage.getCatalogs();
     delete catalogs[providerId];
     localStorage.setItem(KEYS.catalogs, JSON.stringify(catalogs));
+  },
+  getHomeSnapshots(): Record<string, ProviderHomeSnapshot> {
+    if (!isBrowser()) return {};
+    return safeJsonParse(localStorage.getItem(KEYS.homeSnapshots), {});
+  },
+  getProviderHomeSnapshot(providerId: string): ProviderHomeSnapshot | null {
+    return storage.getHomeSnapshots()[providerId] ?? null;
+  },
+  saveProviderHomeSnapshot(providerId: string, snapshot: ProviderHomeSnapshot) {
+    if (!isBrowser()) return;
+    const snapshots = storage.getHomeSnapshots();
+    snapshots[providerId] = snapshot;
+    localStorage.setItem(KEYS.homeSnapshots, JSON.stringify(snapshots));
+  },
+  removeProviderHomeSnapshot(providerId: string) {
+    if (!isBrowser()) return;
+    const snapshots = storage.getHomeSnapshots();
+    delete snapshots[providerId];
+    localStorage.setItem(KEYS.homeSnapshots, JSON.stringify(snapshots));
   },
 };

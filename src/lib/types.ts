@@ -121,6 +121,16 @@ export type ProviderCatalog = {
   updatedAt: number;
 };
 
+export type ProviderHomeSnapshot = {
+  featured: XtreamStream | null;
+  spotlight: XtreamStream[];
+  quickLive: XtreamStream[];
+  summary: { live: number; vod: number; series: number };
+  heroEpg: NormalizedEpg | null;
+  liveNow: Record<number, NormalizedEpg>;
+  updatedAt: number;
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;
