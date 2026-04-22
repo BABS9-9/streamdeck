@@ -19,11 +19,14 @@ type PlayerState = {
   resumeFromSeconds: number;
   watchHistory: WatchHistoryItem[];
   streamHealth: StreamHealth;
+  dockMode: 'expanded' | 'compact';
   hydrate: () => void;
   playStream: (stream: XtreamStream, playbackUrl: string, providerId: string, meta?: PlaybackMeta) => void;
   updatePlaybackProgress: (positionSeconds: number, durationSeconds?: number | null) => void;
   updateStreamHealth: (health: Partial<StreamHealth>) => void;
   resetStreamHealth: () => void;
+  setDockMode: (mode: 'expanded' | 'compact') => void;
+  closePlayback: () => void;
 };
 
 const defaultStreamHealth: StreamHealth = {
@@ -44,7 +47,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   resumeFromSeconds: 0,
   watchHistory: [],
   streamHealth: defaultStreamHealth,
-  hydrate: () => set({ watchHistory: storage.getHistory() }),
+  dockMode: 'compact',
+  hydrate: () => set({ watchHistory: storage.getHistory(), dockMode: storage.getPlayerDockMode() }),
   playStream: (stream, playbackUrl, providerId, meta) => {
     const contentId = getContentId(stream);
     const existing = get().watchHistory.find((item) => item.id === `${providerId}-${contentId}`);
@@ -131,4 +135,15 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     },
   })),
   resetStreamHealth: () => set({ streamHealth: defaultStreamHealth }),
+  setDockMode: (mode) => {
+    storage.savePlayerDockMode(mode);
+    set({ dockMode: mode });
+  },
+  closePlayback: () => set({
+    currentStream: null,
+    playbackUrl: null,
+    currentProviderId: null,
+    resumeFromSeconds: 0,
+    streamHealth: defaultStreamHealth,
+  }),
 }));

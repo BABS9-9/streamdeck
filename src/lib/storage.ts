@@ -8,6 +8,7 @@ const KEYS = {
   catalogs: 'streamdeck.catalogs',
   homeSnapshots: 'streamdeck.home-snapshots',
   collections: 'streamdeck.collections',
+  playerDockMode: 'streamdeck.player-dock-mode',
 };
 
 const safeJsonParse = <T,>(value: string | null, fallback: T): T => {
@@ -73,6 +74,15 @@ export const storage = {
   saveCollections(collections: LibraryCollection[]) {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.collections, JSON.stringify(collections));
+  },
+  getPlayerDockMode(): 'expanded' | 'compact' {
+    if (!isBrowser()) return 'compact';
+    const mode = localStorage.getItem(KEYS.playerDockMode);
+    return mode === 'expanded' ? 'expanded' : 'compact';
+  },
+  savePlayerDockMode(mode: 'expanded' | 'compact') {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.playerDockMode, mode);
   },
   getCatalogs(): Record<string, ProviderCatalog> {
     if (!isBrowser()) return {};
