@@ -42,8 +42,11 @@ export function PlayerDock() {
             <p className="mt-1 text-sm text-slate-400">
               {currentStream.stream_type === 'live'
                 ? 'Live stream'
-                : `${formatSeconds(historyItem?.positionSeconds)} watched${historyItem?.durationSeconds ? ` of ${formatSeconds(historyItem.durationSeconds)}` : ''}`}
+                : `${historyItem?.kind === 'series' && historyItem.seasonNumber && historyItem.episodeNumber ? `S${historyItem.seasonNumber}E${historyItem.episodeNumber} · ` : ''}${formatSeconds(historyItem?.positionSeconds)} watched${historyItem?.durationSeconds ? ` of ${formatSeconds(historyItem.durationSeconds)}` : ''}`}
             </p>
+            {historyItem?.kind === 'series' && historyItem.seriesTitle ? (
+              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">{historyItem.seriesTitle}</p>
+            ) : null}
           </div>
           <span className={`rounded-full px-3 py-1 text-xs uppercase tracking-[0.22em] ${streamHealth.status === 'healthy' ? 'bg-emerald-400/15 text-emerald-200' : streamHealth.status === 'buffering' ? 'bg-amber-400/15 text-amber-200' : streamHealth.status === 'error' ? 'bg-rose-400/15 text-rose-200' : 'bg-white/10 text-slate-300'}`}>
             {streamHealth.status}

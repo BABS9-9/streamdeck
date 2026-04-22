@@ -110,6 +110,10 @@ export type WatchHistoryItem = {
   artwork?: string;
   categoryId?: string;
   playbackUrl?: string;
+  seriesId?: number;
+  seriesTitle?: string;
+  seasonNumber?: number;
+  episodeNumber?: number;
   progress: number;
   positionSeconds?: number;
   durationSeconds?: number;

@@ -70,6 +70,14 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     [activeConnection, watchHistory]
   );
 
+  const formatEpisodeLabel = (item: { kind: 'live' | 'movie' | 'series'; seasonNumber?: number; episodeNumber?: number; seriesTitle?: string }) => {
+    if (item.kind !== 'series') return item.kind;
+    const season = item.seasonNumber;
+    const episode = item.episodeNumber;
+    if (season && episode) return `Series · S${season}E${episode}`;
+    if (item.seriesTitle) return 'Series episode';
+    return 'Series';
+  };
 
   const formatResume = (seconds?: number) => {
     if (!seconds || seconds <= 0) return 'Ready to resume';
@@ -151,31 +159,49 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 <div className="mt-4 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-semibold text-white">{item.title}</p>
-                    <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{item.kind}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{formatEpisodeLabel(item)}</p>
                   </div>
                   <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">{Math.round(item.progress * 100)}%</span>
                 </div>
+                {item.kind === 'series' && item.seriesTitle ? (
+                  <p className="mt-2 text-sm text-slate-400">{item.seriesTitle}</p>
+                ) : null}
                 <div className="mt-4 h-2 rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-violet-400" style={{ width: `${Math.max(8, item.progress * 100)}%` }} />
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{formatResume(item.positionSeconds)}{item.durationSeconds ? ` • ${Math.round(item.progress * 100)}% of ${Math.floor(item.durationSeconds / 60)} min` : ''}</p>
                 <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
-                <button
-                  onClick={() => {
-                    if (!item.playbackUrl) return;
-                    playStream({
-                      name: item.title,
-                      stream_type: item.kind === 'live' ? 'live' : item.kind,
-                      stream_id: item.streamId,
-                      category_id: item.categoryId || 'resume',
-                      stream_icon: item.artwork,
-                    }, item.playbackUrl, activeConnection.id);
-                  }}
-                  disabled={!item.playbackUrl}
-                  className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
-                >
-                  Resume playback
-                </button>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <button
+                    onClick={() => {
+                      if (!item.playbackUrl) return;
+                      playStream({
+                        name: item.title,
+                        stream_type: item.kind === 'live' ? 'live' : item.kind,
+                        stream_id: item.streamId,
+                        category_id: item.categoryId || 'resume',
+                        stream_icon: item.artwork,
+                      }, item.playbackUrl, activeConnection.id, {
+                        seriesId: item.seriesId,
+                        seriesTitle: item.seriesTitle,
+                        seasonNumber: item.seasonNumber,
+                        episodeNumber: item.episodeNumber,
+                      });
+                    }}
+                    disabled={!item.playbackUrl}
+                    className="rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
+                  >
+                    Resume playback
+                  </button>
+                  {item.kind === 'series' && item.seriesId ? (
+                    <Link
+                      href={`/series?seriesId=${item.seriesId}`}
+                      className="rounded-2xl border border-white/10 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/5"
+                    >
+                      Open series
+                    </Link>
+                  ) : null}
+                </div>
               </article>
             ))}
           </div>

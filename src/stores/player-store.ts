@@ -5,6 +5,13 @@ import { getArtwork, getContentId } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
 import { StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
 
+type PlaybackMeta = {
+  seriesId?: number;
+  seriesTitle?: string;
+  seasonNumber?: number;
+  episodeNumber?: number;
+};
+
 type PlayerState = {
   currentStream: XtreamStream | null;
   playbackUrl: string | null;
@@ -13,7 +20,7 @@ type PlayerState = {
   watchHistory: WatchHistoryItem[];
   streamHealth: StreamHealth;
   hydrate: () => void;
-  playStream: (stream: XtreamStream, playbackUrl: string, providerId: string) => void;
+  playStream: (stream: XtreamStream, playbackUrl: string, providerId: string, meta?: PlaybackMeta) => void;
   updatePlaybackProgress: (positionSeconds: number, durationSeconds?: number | null) => void;
   updateStreamHealth: (health: Partial<StreamHealth>) => void;
   resetStreamHealth: () => void;
@@ -38,7 +45,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   watchHistory: [],
   streamHealth: defaultStreamHealth,
   hydrate: () => set({ watchHistory: storage.getHistory() }),
-  playStream: (stream, playbackUrl, providerId) => {
+  playStream: (stream, playbackUrl, providerId, meta) => {
     const contentId = getContentId(stream);
     const existing = get().watchHistory.find((item) => item.id === `${providerId}-${contentId}`);
     const nextEntry: WatchHistoryItem = {
@@ -50,6 +57,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       artwork: getArtwork(stream),
       categoryId: stream.category_id,
       playbackUrl,
+      seriesId: meta?.seriesId ?? existing?.seriesId,
+      seriesTitle: meta?.seriesTitle ?? existing?.seriesTitle,
+      seasonNumber: meta?.seasonNumber ?? existing?.seasonNumber,
+      episodeNumber: meta?.episodeNumber ?? existing?.episodeNumber,
       progress: existing?.progress ?? (stream.stream_type === 'live' ? 1 : 0.02),
       positionSeconds: existing?.positionSeconds ?? 0,
       durationSeconds: existing?.durationSeconds ?? undefined,
@@ -98,6 +109,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       artwork: getArtwork(currentStream),
       categoryId: currentStream.category_id,
       playbackUrl: playbackUrl ?? existing?.playbackUrl,
+      seriesId: existing?.seriesId,
+      seriesTitle: existing?.seriesTitle,
+      seasonNumber: existing?.seasonNumber,
+      episodeNumber: existing?.episodeNumber,
       progress,
       positionSeconds: isLive ? undefined : Math.max(0, Math.floor(positionSeconds)),
       durationSeconds: isLive ? undefined : safeDuration ? Math.floor(safeDuration) : existing?.durationSeconds,

@@ -177,7 +177,12 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
                               plot: episode.plot || episode.info?.plot,
                               direct_source: episode.direct_source,
                               container_extension: episode.info?.container_extension,
-                            }, buildSeriesEpisodeUrl(activeConnection, episode), activeConnection.id)}
+                            }, buildSeriesEpisodeUrl(activeConnection, episode), activeConnection.id, {
+                              seriesId: Number(selectedSeries.series_id ?? selectedSeriesId ?? episode.id),
+                              seriesTitle: selectedSeries.name,
+                              seasonNumber: selectedSeason,
+                              episodeNumber: episode.episode_num,
+                            })}
                             className="mt-4 rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"
                           >
                             Play episode
