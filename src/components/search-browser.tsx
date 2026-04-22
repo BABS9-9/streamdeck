@@ -53,6 +53,8 @@ export function SearchBrowser() {
   const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const validateConnection = useAuthStore((state) => state.validateConnection);
   const playStream = usePlayerStore((state) => state.playStream);
 
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -61,6 +63,7 @@ export function SearchBrowser() {
   const [loadingLabel, setLoadingLabel] = useState('Searching all providers...');
   const [error, setError] = useState<string | null>(null);
   const [usingCache, setUsingCache] = useState(false);
+  const [degradedProviders, setDegradedProviders] = useState<Array<{ provider: SavedConnection; message: string }>>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,7 +103,7 @@ export function SearchBrowser() {
       setError(null);
 
       try {
-        const providerCatalogs = await Promise.all(
+        const settled = await Promise.allSettled(
           connections.map(async (provider) => ({
             provider,
             catalog: await refreshSearchCatalog(provider),
@@ -109,8 +112,30 @@ export function SearchBrowser() {
 
         if (cancelled) return;
 
-        setResults(rankResults(providerCatalogs, trimmed));
-        setUsingCache(cachedCatalogs.length > 0);
+        const successfulCatalogs = settled
+          .filter((result): result is PromiseFulfilledResult<{ provider: SavedConnection; catalog: ProviderCatalog }> => result.status === 'fulfilled')
+          .map((result) => result.value);
+
+        const failedProviders = settled
+          .map((result, index) => ({ result, provider: connections[index] }))
+          .filter((entry): entry is { result: PromiseRejectedResult; provider: SavedConnection } => entry.result.status === 'rejected')
+          .map((entry) => ({
+            provider: entry.provider,
+            message: entry.result.reason instanceof Error ? entry.result.reason.message : 'Catalog refresh failed',
+          }));
+
+        setDegradedProviders(failedProviders);
+
+        if (successfulCatalogs.length > 0) {
+          setResults(rankResults(successfulCatalogs, trimmed));
+          setUsingCache(cachedCatalogs.length > 0 || failedProviders.length > 0);
+          if (failedProviders.length > 0) {
+            setError(null);
+          }
+        } else {
+          setError(failedProviders[0]?.message ?? 'Search failed');
+          if (cachedCatalogs.length === 0) setResults([]);
+        }
       } catch (searchError) {
         if (cancelled) return;
         setError(searchError instanceof Error ? searchError.message : 'Search failed');
@@ -132,6 +157,15 @@ export function SearchBrowser() {
       return acc;
     }, {});
   }, [results]);
+
+  const providerStateTone = (providerId: string) => {
+    const state = connectionStatus[providerId]?.state;
+    if (state === 'healthy') return 'border-emerald-400/40 bg-emerald-500/10 text-emerald-100';
+    if (state === 'checking') return 'border-amber-400/40 bg-amber-500/10 text-amber-100';
+    if (state === 'error') return 'border-rose-400/40 bg-rose-500/10 text-rose-100';
+    if (state === 'degraded') return 'border-amber-400/40 bg-amber-500/10 text-amber-100';
+    return 'border-white/10 bg-black/20 text-slate-400';
+  };
 
   if (connections.length === 0) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No saved providers yet. Connect on the login screen first.</div>;
@@ -175,8 +209,8 @@ export function SearchBrowser() {
 
         <div className="mt-5 flex flex-wrap gap-3 text-xs uppercase tracking-[0.22em] text-slate-500">
           {connections.map((connection) => (
-            <span key={connection.id} className={`rounded-full border px-3 py-2 ${activeConnection?.id === connection.id ? 'border-violet-400/40 bg-violet-500/10 text-violet-200' : 'border-white/10 bg-black/20'}`}>
-              {connection.name} · {groupedCounts[connection.id] || 0} hits
+            <span key={connection.id} className={`rounded-full border px-3 py-2 ${activeConnection?.id === connection.id ? 'border-violet-400/40 bg-violet-500/10 text-violet-200' : providerStateTone(connection.id)}`}>
+              {connection.name} · {groupedCounts[connection.id] || 0} hits · {connectionStatus[connection.id]?.state ?? 'idle'}
             </span>
           ))}
         </div>
@@ -184,7 +218,24 @@ export function SearchBrowser() {
 
       {error ? <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</div> : null}
       {loading ? <div className="rounded-2xl border border-white/10 bg-black/20 p-6 text-sm text-slate-400">{loadingLabel}</div> : null}
-      {usingCache && results.length > 0 ? <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">Loaded cached results instantly, now refreshing provider data in the background.</div> : null}
+      {usingCache && results.length > 0 ? <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">Loaded cached or partial results instantly, now refreshing provider data in the background.</div> : null}
+      {degradedProviders.length > 0 ? (
+        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+          <p className="font-medium text-white">Some providers failed to refresh, but search stayed up with partial results.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {degradedProviders.map(({ provider, message }) => (
+              <button
+                key={provider.id}
+                onClick={() => validateConnection(provider.id)}
+                className="rounded-full border border-white/20 bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.2em] text-white hover:bg-white/10"
+                title={message}
+              >
+                Retry {provider.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {!loading && query.trim().length < 2 ? <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Type at least 2 characters to search across saved providers.</div> : null}
 
       {results.length > 0 ? (

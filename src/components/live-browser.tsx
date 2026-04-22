@@ -13,6 +13,8 @@ export function LiveBrowser() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connections = useAuthStore((state) => state.connections);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const validateConnection = useAuthStore((state) => state.validateConnection);
   const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const collections = useCollectionsStore((state) => state.collections);
@@ -29,25 +31,42 @@ export function LiveBrowser() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [epg, setEpg] = useState<Record<number, NormalizedEpg>>({});
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     if (!activeConnection) return;
-    Promise.all([getLiveCategories(activeConnection), getLiveStreams(activeConnection)]).then(([cats, live]) => {
-      if (cancelled) return;
-      setCategories(cats);
-      setStreams(live);
-      setSelectedStream(live[0] ?? null);
-      setPreviewUrl(live[0] ? buildLiveStreamUrl(activeConnection, live[0]) : null);
-      Promise.all(
-        live.slice(0, 18).map(async (stream) => {
-          const streamId = getContentId(stream);
-          return [streamId, await getShortEpg(activeConnection, streamId)] as const;
-        })
-      ).then((entries) => {
-        if (!cancelled) setEpg(Object.fromEntries(entries));
+
+    setLoading(true);
+    setLoadError(null);
+
+    Promise.all([getLiveCategories(activeConnection), getLiveStreams(activeConnection)])
+      .then(([cats, live]) => {
+        if (cancelled) return;
+        setCategories(cats);
+        setStreams(live);
+        setSelectedStream(live[0] ?? null);
+        setPreviewUrl(live[0] ? buildLiveStreamUrl(activeConnection, live[0]) : null);
+        return Promise.all(
+          live.slice(0, 18).map(async (stream) => {
+            const streamId = getContentId(stream);
+            return [streamId, await getShortEpg(activeConnection, streamId)] as const;
+          })
+        );
+      })
+      .then((entries) => {
+        if (!entries || cancelled) return;
+        setEpg(Object.fromEntries(entries));
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setLoadError(error instanceof Error ? error.message : 'Unable to load live TV');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
-    });
+
     return () => {
       cancelled = true;
     };
@@ -64,6 +83,15 @@ export function LiveBrowser() {
     return categoryMatch && searchMatch;
   }), [streams, search, selectedCategory]);
 
+  const activeStatus = activeConnection ? connectionStatus[activeConnection.id] : null;
+  const statusTone = activeStatus?.state === 'healthy'
+    ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+    : activeStatus?.state === 'checking'
+      ? 'border-amber-400/20 bg-amber-500/10 text-amber-100'
+      : activeStatus?.state === 'error'
+        ? 'border-rose-400/20 bg-rose-500/10 text-rose-100'
+        : 'border-sky-400/20 bg-sky-500/10 text-sky-100';
+
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Return to login first.</div>;
   }
@@ -74,6 +102,29 @@ export function LiveBrowser() {
   return (
     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
       <section className="space-y-6">
+        {activeStatus ? (
+          <div className={`rounded-[1.5rem] border px-5 py-4 text-sm ${statusTone}`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-medium text-white">{activeConnection.name} provider status: {activeStatus.state}</p>
+                <p className="mt-1 text-white/80">{activeStatus.message ?? 'Provider status available.'}</p>
+              </div>
+              <button
+                onClick={() => validateConnection(activeConnection.id)}
+                className="rounded-full border border-white/20 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white hover:bg-white/10"
+              >
+                Retry check
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {loadError ? (
+          <div className="rounded-[1.5rem] border border-rose-400/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-100">
+            Live TV refresh failed. {loadError}
+          </div>
+        ) : null}
+
         <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -107,6 +158,8 @@ export function LiveBrowser() {
             ))}
           </div>
         </div>
+
+        {loading ? <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4 text-sm text-slate-400">Refreshing live categories, channels, and inline guide data...</div> : null}
 
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((stream) => {
@@ -227,6 +280,7 @@ export function LiveBrowser() {
             <li>• Hover or focus arms the preview player without navigating away from the grid.</li>
             <li>• Favorites stay one click from the main channel surface.</li>
             <li>• Provider switching is already wired into the browser header.</li>
+            <li>• When a provider degrades, Live now says so clearly and keeps the retry path in the same surface.</li>
           </ul>
         </div>
       </aside>

@@ -294,6 +294,11 @@ const server = http.createServer((req, res) => {
         seriesResumeFriendly: true,
         streamFormats: ['m3u8'],
       },
+      healthScenarios: {
+        healthy: 'Default mock mode, all Xtream endpoints respond with full catalogs.',
+        degradedSearch: 'Use this mock to verify the app keeps cached/partial cross-provider search results visible even when one provider fails to refresh.',
+        degradedLive: 'Use this mock to verify inline provider status banners and retry UX in the live browser when provider health is not healthy.',
+      },
       topCategories: liveCategories.map((category) => ({
         id: category.category_id,
         name: category.category_name,
