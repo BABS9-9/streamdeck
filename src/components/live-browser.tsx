@@ -83,6 +83,21 @@ export function LiveBrowser() {
     return categoryMatch && searchMatch;
   }), [streams, search, selectedCategory]);
 
+  const categorySummaries = useMemo(() => {
+    return categories.map((category) => {
+      const categoryStreams = streams.filter((stream) => stream.category_id === category.category_id);
+      const activeGuide = categoryStreams
+        .map((stream) => epg[getContentId(stream)]?.now?.title)
+        .find(Boolean) ?? 'Guide loading';
+      return {
+        ...category,
+        count: categoryStreams.length,
+        lead: categoryStreams[0] ?? null,
+        activeGuide,
+      };
+    });
+  }, [categories, epg, streams]);
+
   const activeStatus = activeConnection ? connectionStatus[activeConnection.id] : null;
   const statusTone = activeStatus?.state === 'healthy'
     ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
@@ -98,6 +113,15 @@ export function LiveBrowser() {
 
   const previewSource = playbackUrl ?? previewUrl;
   const displayStream = currentStream ?? selectedStream;
+  const selectedGuide = selectedStream ? epg[getContentId(selectedStream)] : null;
+  const selectedCategoryName = selectedCategory === 'all'
+    ? 'All categories'
+    : categories.find((item) => item.category_id === selectedCategory)?.category_name ?? 'Filtered category';
+  const selectedFavoritesCount = favorites.filter((contentId) => {
+    const stream = streams.find((item) => getContentId(item) === contentId);
+    if (!stream) return false;
+    return selectedCategory === 'all' || stream.category_id === selectedCategory;
+  }).length;
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -157,9 +181,82 @@ export function LiveBrowser() {
               </button>
             ))}
           </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-4">
+            {[
+              ['Visible channels', filtered.length],
+              ['Saved here', selectedFavoritesCount],
+              ['Categories', selectedCategory === 'all' ? categories.length : 1],
+              ['Preview target', selectedStream?.name ?? 'None'],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-[1.2rem] border border-white/10 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">{label}</p>
+                <p className="mt-2 line-clamp-2 text-sm font-medium text-white">{value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {categorySummaries.map((category) => {
+            const isSelected = selectedCategory === category.category_id;
+            return (
+              <button
+                key={category.category_id}
+                onClick={() => setSelectedCategory(category.category_id)}
+                className={`rounded-[1.6rem] border p-4 text-left transition ${isSelected ? 'border-violet-400 bg-violet-500/10' : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8'}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">{category.category_name}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500">{category.count} channels</p>
+                  </div>
+                  <span className="rounded-full bg-black/30 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-slate-300">
+                    {isSelected ? 'Active' : 'Open'}
+                  </span>
+                </div>
+                <div className="mt-4 aspect-[16/7] overflow-hidden rounded-[1.2rem] bg-black/30">
+                  <div
+                    className="h-full w-full bg-cover bg-center"
+                    style={{ backgroundImage: `url(${category.lead?.preview_art || category.lead?.stream_icon || ''})` }}
+                  />
+                </div>
+                <p className="mt-4 text-[11px] uppercase tracking-[0.24em] text-slate-500">Live now in {category.category_name}</p>
+                <p className="mt-2 text-sm text-slate-200">{category.activeGuide}</p>
+              </button>
+            );
+          })}
         </div>
 
         {loading ? <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4 text-sm text-slate-400">Refreshing live categories, channels, and inline guide data...</div> : null}
+
+        <div className="rounded-[1.8rem] border border-white/10 bg-black/20 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-violet-300">Channel surf rail</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">{selectedCategoryName}</h3>
+            </div>
+            <p className="text-sm text-slate-400">Focus a card and the preview player updates without leaving the grid.</p>
+          </div>
+          <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+            {filtered.slice(0, 10).map((stream) => {
+              const streamId = getContentId(stream);
+              const isActive = selectedStream ? getContentId(selectedStream) === streamId : false;
+              return (
+                <button
+                  key={`rail-${streamId}`}
+                  onClick={() => {
+                    setSelectedStream(stream);
+                    setPreviewUrl(buildLiveStreamUrl(activeConnection, stream));
+                  }}
+                  className={`min-w-[220px] rounded-[1.2rem] border p-3 text-left transition ${isActive ? 'border-violet-400 bg-violet-500/10' : 'border-white/10 bg-white/5 hover:border-white/20'}`}
+                >
+                  <p className="truncate text-sm font-semibold text-white">{stream.name}</p>
+                  <p className="mt-1 truncate text-xs text-slate-500">{epg[streamId]?.now?.title ?? 'Guide loading...'}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((stream) => {
@@ -190,7 +287,7 @@ export function LiveBrowser() {
                     {favourite ? '★ Saved' : '☆ Save'}
                   </button>
                 </div>
-                <div className="mt-4 aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${stream.stream_icon})` }} />
+                <div className="mt-4 aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${stream.preview_art || stream.stream_icon})` }} />
                 <div className="mt-3 flex items-center justify-between text-xs uppercase tracking-[0.25em] text-slate-500">
                   <span>{previewing ? 'Preview armed' : 'Hover to preview'}</span>
                   <span>{contentId}</span>
@@ -215,7 +312,7 @@ export function LiveBrowser() {
                   </button>
                   <button onClick={() => { setSelectedStream(stream); setPreviewUrl(buildLiveStreamUrl(activeConnection, stream)); }} className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-200 hover:bg-white/5">Preview</button>
                 </div>
-                              {collections.length > 0 ? (
+                {collections.length > 0 ? (
                   <select
                     defaultValue=""
                     onChange={(event) => {
@@ -245,12 +342,13 @@ export function LiveBrowser() {
       <aside className="space-y-6">
         <div className="rounded-[2rem] border border-white/10 bg-black/30 p-4">
           <div className="aspect-video overflow-hidden rounded-[1.4rem] bg-black">
-            <VideoPlayer src={previewSource} poster={displayStream?.stream_icon} />
+            <VideoPlayer src={previewSource} poster={displayStream?.stream_icon} muted />
           </div>
           <div className="mt-4 px-2 pb-2">
             <p className="text-xs uppercase tracking-[0.3em] text-violet-300">Instant channel preview</p>
             <h3 className="mt-2 text-2xl font-semibold text-white">{displayStream?.name ?? 'Select a channel'}</h3>
             <p className="mt-2 text-sm text-slate-400">{displayStream ? epg[getContentId(displayStream)]?.now?.title ?? 'Guide loading' : 'Choose a channel card to preview or play it here.'}</p>
+            {selectedGuide?.next ? <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-500">Next up: {selectedGuide.next.title}</p> : null}
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-[1.2rem] border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Health</p>
@@ -270,6 +368,23 @@ export function LiveBrowser() {
               </div>
             </div>
             {streamHealth.message ? <p className="mt-3 text-xs text-slate-500">{streamHealth.message}</p> : null}
+            {selectedGuide?.listings?.length ? (
+              <div className="mt-4 rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Guide timeline</p>
+                <div className="mt-3 space-y-3">
+                  {selectedGuide.listings.slice(0, 4).map((listing) => (
+                    <div key={listing.id} className="rounded-xl bg-black/20 p-3">
+                      <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+                        <span>{new Date(listing.start_timestamp * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+                        <span>{new Date(listing.stop_timestamp * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+                      </div>
+                      <p className="mt-2 text-sm font-medium text-white">{listing.title}</p>
+                      <p className="mt-1 text-xs text-slate-400">{listing.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -278,8 +393,8 @@ export function LiveBrowser() {
           <ul className="mt-4 space-y-3 text-sm text-slate-300">
             <li>• NOW and NEXT program data is shown inline, not hidden in a separate guide screen.</li>
             <li>• Hover or focus arms the preview player without navigating away from the grid.</li>
+            <li>• Category cards turn the top of Live into a TV-style surf surface, not a dead filter bar.</li>
             <li>• Favorites stay one click from the main channel surface.</li>
-            <li>• Provider switching is already wired into the browser header.</li>
             <li>• When a provider degrades, Live now says so clearly and keeps the retry path in the same surface.</li>
           </ul>
         </div>

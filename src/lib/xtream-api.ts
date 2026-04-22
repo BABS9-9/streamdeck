@@ -103,7 +103,7 @@ export function normalizeEpg(listings: EpgListing[]): NormalizedEpg {
   const nowTs = Math.floor(Date.now() / 1000);
   const current = listings.find((item) => item.start_timestamp <= nowTs && item.stop_timestamp > nowTs) ?? listings[0] ?? null;
   const upcoming = current ? listings.find((item) => item.start_timestamp >= current.stop_timestamp) ?? listings[1] ?? null : listings[1] ?? null;
-  return { now: current, next: upcoming };
+  return { now: current, next: upcoming, listings };
 }
 
 export function buildLiveStreamUrl(credentials: XtreamCredentials, stream: XtreamStream) {

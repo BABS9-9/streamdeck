@@ -47,12 +47,14 @@ export type XtreamStream = {
   stream_icon?: string;
   cover?: string;
   backdrop_path?: string[];
+  preview_art?: string;
   stream_type: string;
   category_id: string;
   container_extension?: string;
   rating?: string;
   plot?: string;
   genre?: string;
+  channel_group?: string;
   direct_source?: string;
 };
 
@@ -99,6 +101,7 @@ export type EpgListing = {
 export type NormalizedEpg = {
   now: EpgListing | null;
   next: EpgListing | null;
+  listings: EpgListing[];
 };
 
 export type WatchHistoryItem = {

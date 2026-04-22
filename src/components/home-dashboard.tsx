@@ -155,6 +155,15 @@ export function HomeDashboard() {
     return `${activeConnection.name} · ${activeConnection.username}`;
   }, [activeConnection]);
 
+  const liveCategoryBreakdown = useMemo(() => {
+    const counts = home.quickLive.reduce<Record<string, number>>((acc, stream) => {
+      const key = stream.channel_group || stream.genre || 'Live';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(counts).map(([name, count]) => ({ name, count }));
+  }, [home.quickLive]);
+
   const cacheTone = cacheState.mode === 'offline'
     ? 'border-amber-400/30 bg-amber-500/10 text-amber-100'
     : cacheState.mode === 'cached'
@@ -232,6 +241,18 @@ export function HomeDashboard() {
                 </div>
               ))}
             </div>
+            {liveCategoryBreakdown.length > 0 ? (
+              <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Quick live mix</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {liveCategoryBreakdown.map((category) => (
+                    <span key={category.name} className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-300">
+                      {category.name} · {category.count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
@@ -259,12 +280,26 @@ export function HomeDashboard() {
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {home.quickLive.map((stream) => (
             <article key={stream.stream_id} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
-              <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${stream.stream_icon})` }} />
+              <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${stream.preview_art || stream.stream_icon})` }} />
               <p className="mt-4 text-lg font-semibold text-white">{stream.name}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{stream.channel_group || 'Live channel'}</p>
               <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-slate-500">Now</p>
               <p className="mt-1 text-sm text-slate-200">{liveNow[getContentId(stream)]?.now?.title ?? 'Loading guide...'}</p>
               <p className="mt-3 text-[11px] uppercase tracking-[0.25em] text-slate-500">Next</p>
               <p className="mt-1 text-sm text-slate-400">{liveNow[getContentId(stream)]?.next?.title ?? 'Fetching next slot'}</p>
+              {liveNow[getContentId(stream)]?.listings?.length ? (
+                <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Guide strip</p>
+                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                    {liveNow[getContentId(stream)].listings.slice(0, 3).map((listing) => (
+                      <div key={listing.id} className="min-w-[140px] rounded-xl bg-white/5 p-2">
+                        <p className="text-[11px] text-slate-500">{new Date(listing.start_timestamp * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
+                        <p className="mt-1 text-xs text-slate-200">{listing.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <button
                 onClick={() => playStream(stream, buildLiveStreamUrl(activeConnection, stream), activeConnection.id)}
                 className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"

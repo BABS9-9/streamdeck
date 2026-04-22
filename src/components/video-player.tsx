@@ -9,11 +9,13 @@ export function VideoPlayer({
   poster,
   resumeFromSeconds = 0,
   allowResume = false,
+  muted = false,
 }: {
   src: string | null;
   poster?: string;
   resumeFromSeconds?: number;
   allowResume?: boolean;
+  muted?: boolean;
 }) {
   const ref = useRef<HTMLVideoElement | null>(null);
   const lastProgressRef = useRef(0);
@@ -150,6 +152,7 @@ export function VideoPlayer({
       className="h-full w-full rounded-2xl bg-black object-cover"
       controls
       autoPlay
+      muted={muted}
       playsInline
       poster={poster}
     />
