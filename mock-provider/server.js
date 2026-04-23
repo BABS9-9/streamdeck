@@ -100,7 +100,10 @@ const vodStreams = Array.from({ length: 24 }, (_, index) => ({
   genre: ['Action', 'Drama', 'Comedy', 'Family', 'Sci-Fi'][index % 5],
   director: ['A. North', 'M. Rivera', 'S. Kent'][index % 3],
   cast: 'Harper Quinn, Theo Vale, Sara North',
+  language: ['English', 'French', 'Spanish'][index % 3],
+  tagline: ['Every signal tells a story.', 'A premium fake catalog entry with real browse value.', 'Prototype movie night, but polished.'][index % 3],
   releasedate: `202${index % 6}-0${(index % 8) + 1}-1${index % 9}`,
+  year: String(2020 + (index % 6)),
   duration: `${100 + index} min`,
   youtube_trailer: '',
   direct_source: pickStream(index),
@@ -114,10 +117,10 @@ const seriesCategories = [
 ];
 
 const series = [
-  { series_id: 7001, name: 'Northern Signal', category_id: '301', cover: poster('series-1', 'Northern Signal'), backdrop_path: [hero('series-1-hero', 'Northern Signal')], plot: 'A newsroom thriller set in Toronto.', cast: 'Ava Cole, Ryan Hart', genre: 'Drama', rating: '8.2' },
-  { series_id: 7002, name: 'Pocket Rockets', category_id: '302', cover: poster('series-2', 'Pocket Rockets'), backdrop_path: [hero('series-2-hero', 'Pocket Rockets')], plot: 'Tiny heroes with oversized missions.', cast: 'Milo, June', genre: 'Kids', rating: '7.7' },
-  { series_id: 7003, name: 'Atlas Unknown', category_id: '303', cover: poster('series-3', 'Atlas Unknown'), backdrop_path: [hero('series-3-hero', 'Atlas Unknown')], plot: 'Field documentaries from overlooked places.', cast: 'Nina Vale', genre: 'Documentary', rating: '8.5' },
-  { series_id: 7004, name: 'Station Echo', category_id: '304', cover: poster('series-4', 'Station Echo'), backdrop_path: [hero('series-4-hero', 'Station Echo')], plot: 'A deep-space relay station goes silent.', cast: 'Jae Kim, L. Mercer', genre: 'Sci-Fi', rating: '8.0' },
+  { series_id: 7001, name: 'Northern Signal', category_id: '301', cover: poster('series-1', 'Northern Signal'), backdrop_path: [hero('series-1-hero', 'Northern Signal')], plot: 'A newsroom thriller set in Toronto.', cast: 'Ava Cole, Ryan Hart', director: 'N. Mercer', genre: 'Drama', language: 'English', year: '2025', tagline: 'The city breaks first on air.', rating: '8.2' },
+  { series_id: 7002, name: 'Pocket Rockets', category_id: '302', cover: poster('series-2', 'Pocket Rockets'), backdrop_path: [hero('series-2-hero', 'Pocket Rockets')], plot: 'Tiny heroes with oversized missions.', cast: 'Milo, June', director: 'C. Vale', genre: 'Kids', language: 'English', year: '2024', tagline: 'Small crew, huge saves.', rating: '7.7' },
+  { series_id: 7003, name: 'Atlas Unknown', category_id: '303', cover: poster('series-3', 'Atlas Unknown'), backdrop_path: [hero('series-3-hero', 'Atlas Unknown')], plot: 'Field documentaries from overlooked places.', cast: 'Nina Vale', director: 'R. Sol', genre: 'Documentary', language: 'English', year: '2025', tagline: 'Go further than the postcard.', rating: '8.5' },
+  { series_id: 7004, name: 'Station Echo', category_id: '304', cover: poster('series-4', 'Station Echo'), backdrop_path: [hero('series-4-hero', 'Station Echo')], plot: 'A deep-space relay station goes silent.', cast: 'Jae Kim, L. Mercer', director: 'I. Kade', genre: 'Sci-Fi', language: 'English', year: '2026', tagline: 'Silence is the first warning.', rating: '8.0' },
 ];
 
 const filterByCategory = (items, categoryId) => (!categoryId ? items : items.filter((item) => String(item.category_id) === String(categoryId)));
@@ -292,6 +295,8 @@ const server = http.createServer((req, res) => {
         livePreview: true,
         vodResumeFriendly: true,
         seriesResumeFriendly: true,
+        detailMetadata: true,
+        cachedCatalogFriendly: true,
         streamFormats: ['m3u8'],
       },
       healthScenarios: {

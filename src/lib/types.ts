@@ -54,6 +54,13 @@ export type XtreamStream = {
   rating?: string;
   plot?: string;
   genre?: string;
+  cast?: string;
+  director?: string;
+  duration?: string;
+  releasedate?: string;
+  year?: string;
+  language?: string;
+  tagline?: string;
   channel_group?: string;
   direct_source?: string;
 };
