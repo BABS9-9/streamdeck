@@ -310,6 +310,21 @@ const server = http.createServer((req, res) => {
         name: category.category_name,
         channels: liveStreams.filter((stream) => stream.category_id === category.category_id).length,
       })),
+      featuredChannels: liveStreams.slice(0, 4).map((stream) => ({
+        name: stream.name,
+        category: liveCategories.find((category) => category.category_id === stream.category_id)?.category_name || 'Live',
+        guide: getShortEpg(stream.stream_id).epg_listings[0] ? Buffer.from(getShortEpg(stream.stream_id).epg_listings[0].title, 'base64').toString('utf8') : 'Guide loading',
+      })),
+      sampleCredentials: {
+        server: host,
+        username: 'test',
+        password: 'test',
+      },
+      demoFlows: {
+        login: 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
+        home: 'Verify hero counts, quick-launch actions, and cached provider refresh messaging from one healthy source.',
+        live: 'Verify inline NOW/NEXT guide data, hover preview fallback, and surf-rail browsing against realistic fake categories.',
+      },
       xmltv: `${host}/xmltv.php?username=test&password=test`,
       sampleLive: `${host}/player_api.php?username=test&password=test&action=get_live_streams&category_id=1`,
       sampleVod: `${host}/player_api.php?username=test&password=test&action=get_vod_streams&category_id=201`,

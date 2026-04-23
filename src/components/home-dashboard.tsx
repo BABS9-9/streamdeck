@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { fetchMockProviderHealth } from '@/lib/mock-provider';
 import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
-import { NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 
@@ -44,10 +45,19 @@ export function HomeDashboard() {
   const [heroEpg, setHeroEpg] = useState<NormalizedEpg | null>(null);
   const [liveNow, setLiveNow] = useState<Record<number, NormalizedEpg>>({});
   const [cacheState, setCacheState] = useState<CacheState>(emptyCacheState);
+  const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     if (!activeConnection) return;
+
+    fetchMockProviderHealth(activeConnection)
+      .then((health) => {
+        if (!cancelled) setMockHealth(health);
+      })
+      .catch(() => {
+        if (!cancelled) setMockHealth(null);
+      });
 
     const applySnapshot = (snapshot: ProviderHomeSnapshot, mode: CacheState['mode'], message: string | null) => {
       if (cancelled) return;
@@ -183,6 +193,49 @@ export function HomeDashboard() {
             <span className="text-xs uppercase tracking-[0.22em] text-white/70">
               {cacheState.updatedAt ? `Updated ${new Date(cacheState.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'No cached timestamp'}
             </span>
+          </div>
+        </section>
+      ) : null}
+
+      {mockHealth ? (
+        <section className="rounded-[1.6rem] border border-violet-400/20 bg-violet-500/10 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-violet-300">Provider demo readiness</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">{mockHealth.service} is feeding the shell cleanly.</h3>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300">
+              {mockHealth.liveStreams} live · {mockHealth.vodStreams} VOD · {mockHealth.series} series
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_1fr]">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Home flow</p>
+              <p className="mt-2 text-sm text-slate-300">{mockHealth.demoFlows?.home}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Preview friendly</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  mockHealth.playerCapabilities.livePreview ? 'Live preview' : null,
+                  mockHealth.playerCapabilities.previewFallbackFriendly ? 'Fallback art' : null,
+                  mockHealth.playerCapabilities.cachedCatalogFriendly ? 'Cached catalogs' : null,
+                ].filter((item): item is string => Boolean(item)).map((item) => (
+                  <span key={item} className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">{item}</span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Featured mock channels</p>
+              <div className="mt-2 space-y-2">
+                {mockHealth.featuredChannels?.slice(0, 3).map((channel) => (
+                  <div key={channel.name} className="rounded-xl bg-white/5 px-3 py-2">
+                    <p className="text-sm font-medium text-white">{channel.name}</p>
+                    <p className="mt-1 text-xs text-slate-400">{channel.category} · {channel.guide}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       ) : null}

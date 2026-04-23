@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { fetchMockProviderHealth } from '@/lib/mock-provider';
 import { useAuthStore } from '@/stores/auth-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -30,10 +31,27 @@ export default function LoginPage() {
   const [server, setServer] = useState(MOCK_SERVER);
   const [username, setUsername] = useState('test');
   const [password, setPassword] = useState('test');
+  const [mockHealth, setMockHealth] = useState(null);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMockProviderHealth(MOCK_SERVER)
+      .then((health) => {
+        if (!cancelled) setMockHealth(health);
+      })
+      .catch(() => {
+        if (!cancelled) setMockHealth(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const helperText = useMemo(() => {
     if (connections.length === 0) return 'Use the local mock provider to test the full flow fast.';
@@ -71,6 +89,41 @@ export default function LoginPage() {
               </div>
             ))}
           </div>
+
+          {mockHealth ? (
+            <div className="mt-8 rounded-[1.6rem] border border-violet-400/15 bg-violet-500/5 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Mock provider readiness</p>
+                  <p className="mt-2 text-lg font-semibold text-white">{mockHealth.liveCategories} live groups, {mockHealth.liveStreams} channels, {mockHealth.vodStreams} movies, {mockHealth.series} series.</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300">
+                  localhost:3579 ready
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {mockHealth.topCategories.slice(0, 5).map((category) => (
+                  <span key={category.id} className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-300">
+                    {category.name} · {category.channels}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Login flow</p>
+                  <p className="mt-2 text-sm text-slate-300">{mockHealth.demoFlows?.login}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Home flow</p>
+                  <p className="mt-2 text-sm text-slate-300">{mockHealth.demoFlows?.home}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Live flow</p>
+                  <p className="mt-2 text-sm text-slate-300">{mockHealth.demoFlows?.live}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl shadow-violet-950/20 lg:p-10">
@@ -119,6 +172,11 @@ export default function LoginPage() {
             <p className="mt-2 leading-6 text-slate-400">
               New connections are health-checked on connect, and saved providers can be revalidated before you switch into playback.
             </p>
+            {mockHealth?.sampleCredentials ? (
+              <p className="mt-3 text-xs text-slate-500">
+                Demo credentials: {mockHealth.sampleCredentials.server} · {mockHealth.sampleCredentials.username}/{mockHealth.sampleCredentials.password}
+              </p>
+            ) : null}
           </div>
 
           <div className="mt-8 border-t border-white/10 pt-6">

@@ -176,3 +176,52 @@ export type StreamHealth = {
   updatedAt: number | null;
   message?: string | null;
 };
+
+export type MockProviderCategorySummary = {
+  id: string;
+  name: string;
+  channels: number;
+};
+
+export type MockProviderHealth = {
+  ok: boolean;
+  service: string;
+  port: number;
+  liveCategories: number;
+  liveStreams: number;
+  vodStreams: number;
+  series: number;
+  searchHints: string[];
+  playerCapabilities: {
+    livePreview: boolean;
+    vodResumeFriendly: boolean;
+    seriesResumeFriendly: boolean;
+    detailMetadata: boolean;
+    cachedCatalogFriendly: boolean;
+    previewFallbackFriendly: boolean;
+    streamFormats: string[];
+  };
+  healthScenarios: {
+    healthy: string;
+    degradedSearch: string;
+    degradedLive: string;
+  };
+  topCategories: MockProviderCategorySummary[];
+  featuredChannels?: { name: string; category: string; guide: string }[];
+  sampleCredentials?: {
+    server: string;
+    username: string;
+    password: string;
+  };
+  demoFlows?: {
+    login: string;
+    home: string;
+    live: string;
+  };
+  xmltv: string;
+  sampleLive: string;
+  sampleVod: string;
+  sampleSeries: string;
+  sampleVodInfo: string;
+  sampleSeriesInfo: string;
+};
