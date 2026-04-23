@@ -10,12 +10,14 @@ export function VideoPlayer({
   resumeFromSeconds = 0,
   allowResume = false,
   muted = false,
+  onStateChange,
 }: {
   src: string | null;
   poster?: string;
   resumeFromSeconds?: number;
   allowResume?: boolean;
   muted?: boolean;
+  onStateChange?: (state: 'idle' | 'loading' | 'playing' | 'buffering' | 'error') => void;
 }) {
   const ref = useRef<HTMLVideoElement | null>(null);
   const lastProgressRef = useRef(0);
@@ -27,6 +29,7 @@ export function VideoPlayer({
     const video = ref.current;
 
     if (!src) {
+      onStateChange?.('idle');
       resetStreamHealth();
       if (video) video.removeAttribute('src');
       return;
@@ -37,6 +40,7 @@ export function VideoPlayer({
     let hls: Hls | null = null;
     let metricsTimer: ReturnType<typeof setInterval> | null = null;
     let resumed = false;
+    onStateChange?.('loading');
 
     const getBufferSeconds = () => {
       const currentTime = video.currentTime;
@@ -62,6 +66,7 @@ export function VideoPlayer({
 
     const setNativeSource = () => {
       video.src = src;
+      onStateChange?.('loading');
       updateStreamHealth({ status: 'loading', codec: 'native', message: 'Starting native HLS playback' });
     };
 
@@ -71,8 +76,14 @@ export function VideoPlayer({
       video.currentTime = Math.min(resumeFromSeconds, Math.max(0, video.duration - 2));
     };
 
-    const handleWaiting = () => pushVideoMetrics('buffering');
-    const handlePlaying = () => pushVideoMetrics('healthy');
+    const handleWaiting = () => {
+      onStateChange?.('buffering');
+      pushVideoMetrics('buffering');
+    };
+    const handlePlaying = () => {
+      onStateChange?.('playing');
+      pushVideoMetrics('healthy');
+    };
     const handleLoadedMetadata = () => maybeResume();
     const handleTimeUpdate = () => {
       const now = Date.now();
@@ -82,6 +93,7 @@ export function VideoPlayer({
     };
     const handleEnded = () => updatePlaybackProgress(Number.isFinite(video.duration) ? video.duration : video.currentTime, Number.isFinite(video.duration) ? video.duration : null);
     const handleError = () => {
+      onStateChange?.('error');
       updateStreamHealth({ status: 'error', message: 'Playback error detected' });
     };
 
@@ -98,11 +110,13 @@ export function VideoPlayer({
       hls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 30 });
       hls.loadSource(src);
       hls.attachMedia(video);
+      onStateChange?.('loading');
       updateStreamHealth({ status: 'loading', message: 'Loading stream manifest' });
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         maybeResume();
         const level = hls?.levels?.[hls.currentLevel] ?? hls?.levels?.[0];
+        onStateChange?.('playing');
         updateStreamHealth({
           status: 'healthy',
           codec: level?.videoCodec ?? level?.codecSet ?? 'HLS',
@@ -120,12 +134,14 @@ export function VideoPlayer({
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
+        onStateChange?.(data.fatal ? 'error' : 'buffering');
         updateStreamHealth({
           status: data.fatal ? 'error' : 'degraded',
           message: data.details,
         });
       });
     } else {
+      onStateChange?.('error');
       updateStreamHealth({ status: 'error', message: 'HLS is not supported in this browser' });
     }
 
@@ -144,7 +160,7 @@ export function VideoPlayer({
       video.removeEventListener('error', handleError);
       if (hls) hls.destroy();
     };
-  }, [allowResume, poster, resetStreamHealth, resumeFromSeconds, src, updatePlaybackProgress, updateStreamHealth]);
+  }, [allowResume, onStateChange, poster, resetStreamHealth, resumeFromSeconds, src, updatePlaybackProgress, updateStreamHealth]);
 
   return (
     <video

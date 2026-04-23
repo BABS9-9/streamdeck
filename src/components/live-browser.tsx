@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -33,6 +33,9 @@ export function LiveBrowser() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [previewState, setPreviewState] = useState<'idle' | 'loading' | 'playing' | 'buffering' | 'error'>('idle');
+  const [showPreviewFallback, setShowPreviewFallback] = useState(false);
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +74,29 @@ export function LiveBrowser() {
       cancelled = true;
     };
   }, [activeConnection]);
+
+  const previewSource = playbackUrl ?? previewUrl;
+  const displayStream = currentStream ?? selectedStream;
+
+  useEffect(() => {
+    if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+
+    if (!previewSource || !displayStream) {
+      setPreviewState('idle');
+      setShowPreviewFallback(false);
+      return;
+    }
+
+    setPreviewState('loading');
+    setShowPreviewFallback(false);
+    fallbackTimerRef.current = setTimeout(() => {
+      setShowPreviewFallback(true);
+    }, 2200);
+
+    return () => {
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    };
+  }, [displayStream, previewSource]);
 
   const favorites = useMemo(
     () => (activeConnection ? getFavoritesForProvider(activeConnection.id) : []),
@@ -111,8 +137,6 @@ export function LiveBrowser() {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Return to login first.</div>;
   }
 
-  const previewSource = playbackUrl ?? previewUrl;
-  const displayStream = currentStream ?? selectedStream;
   const selectedGuide = selectedStream ? epg[getContentId(selectedStream)] : null;
   const selectedCategoryName = selectedCategory === 'all'
     ? 'All categories'
@@ -341,8 +365,44 @@ export function LiveBrowser() {
 
       <aside className="space-y-6">
         <div className="rounded-[2rem] border border-white/10 bg-black/30 p-4">
-          <div className="aspect-video overflow-hidden rounded-[1.4rem] bg-black">
-            <VideoPlayer src={previewSource} poster={displayStream?.stream_icon} muted />
+          <div className="relative aspect-video overflow-hidden rounded-[1.4rem] bg-black">
+            <VideoPlayer
+              src={previewSource}
+              poster={displayStream?.stream_icon}
+              muted
+              onStateChange={(state) => {
+                setPreviewState(state);
+                if (state === 'playing') {
+                  if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+                  setShowPreviewFallback(false);
+                }
+                if (state === 'error') {
+                  if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+                  setShowPreviewFallback(true);
+                }
+              }}
+            />
+            {showPreviewFallback && displayStream ? (
+              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black via-black/35 to-black/10 p-4">
+                <div className="w-full rounded-[1.2rem] border border-white/10 bg-black/60 p-4 backdrop-blur">
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-violet-300">Preview fallback</p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <div
+                      className="h-14 w-24 rounded-xl bg-cover bg-center"
+                      style={{ backgroundImage: `url(${displayStream.preview_art || displayStream.stream_icon || ''})` }}
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-white">{displayStream.name}</p>
+                      <p className="mt-1 text-xs text-slate-300">
+                        {previewState === 'error'
+                          ? 'Preview could not start. Artwork stays visible so browsing still feels stable.'
+                          : 'Preview is taking a moment, keeping artwork visible until playback catches up.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="mt-4 px-2 pb-2">
             <p className="text-xs uppercase tracking-[0.3em] text-violet-300">Instant channel preview</p>
@@ -352,7 +412,7 @@ export function LiveBrowser() {
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-[1.2rem] border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Health</p>
-                <p className={`mt-1 font-medium ${streamHealth.status === 'healthy' ? 'text-emerald-300' : streamHealth.status === 'buffering' ? 'text-amber-300' : streamHealth.status === 'error' ? 'text-rose-300' : 'text-slate-200'}`}>{streamHealth.status}</p>
+                <p className={`mt-1 font-medium ${streamHealth.status === 'healthy' ? 'text-emerald-300' : streamHealth.status === 'buffering' ? 'text-amber-300' : streamHealth.status === 'error' ? 'text-rose-300' : 'text-slate-200'}`}>{showPreviewFallback && previewState !== 'playing' ? 'fallback art' : streamHealth.status}</p>
               </div>
               <div>
                 <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Bitrate</p>
@@ -367,7 +427,9 @@ export function LiveBrowser() {
                 <p className="mt-1 font-medium text-white">{streamHealth.resolution ?? streamHealth.codec ?? 'Detecting'}</p>
               </div>
             </div>
-            {streamHealth.message ? <p className="mt-3 text-xs text-slate-500">{streamHealth.message}</p> : null}
+            {showPreviewFallback ? (
+              <p className="mt-3 text-xs text-slate-500">Preview fallback is active. The card artwork stays up while the player buffers or if autoplay/HLS startup fails.</p>
+            ) : streamHealth.message ? <p className="mt-3 text-xs text-slate-500">{streamHealth.message}</p> : null}
             {selectedGuide?.listings?.length ? (
               <div className="mt-4 rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
                 <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Guide timeline</p>

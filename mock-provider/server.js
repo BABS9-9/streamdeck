@@ -297,6 +297,7 @@ const server = http.createServer((req, res) => {
         seriesResumeFriendly: true,
         detailMetadata: true,
         cachedCatalogFriendly: true,
+        previewFallbackFriendly: true,
         streamFormats: ['m3u8'],
       },
       healthScenarios: {
