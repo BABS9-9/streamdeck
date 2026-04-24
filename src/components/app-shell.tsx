@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import { Sidebar } from './sidebar';
 import { PlayerDock } from './player-dock';
+import { MockScenarioControl } from './mock-scenario-control';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
@@ -31,7 +32,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.25),_transparent_30%),linear-gradient(180deg,#09090f_0%,#05050a_100%)] text-white">
       <Sidebar />
-      <main className="flex-1 px-4 py-6 pb-36 sm:px-6 sm:pb-40 lg:px-10">{children}</main>
+      <main className="flex-1 px-4 py-6 pb-36 sm:px-6 sm:pb-40 lg:px-10">
+        <MockScenarioControl />
+        {children}
+      </main>
       <PlayerDock />
     </div>
   );

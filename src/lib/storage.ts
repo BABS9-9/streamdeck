@@ -9,6 +9,7 @@ const KEYS = {
   homeSnapshots: 'streamdeck.home-snapshots',
   collections: 'streamdeck.collections',
   playerDockMode: 'streamdeck.player-dock-mode',
+  mockScenario: 'streamdeck.mock-scenario',
 };
 
 const safeJsonParse = <T,>(value: string | null, fallback: T): T => {
@@ -83,6 +84,15 @@ export const storage = {
   savePlayerDockMode(mode: 'expanded' | 'compact') {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.playerDockMode, mode);
+  },
+  getMockScenario(): 'healthy' | 'degradedSearch' | 'degradedLive' {
+    if (!isBrowser()) return 'healthy';
+    const scenario = localStorage.getItem(KEYS.mockScenario);
+    return scenario === 'degradedSearch' || scenario === 'degradedLive' ? scenario : 'healthy';
+  },
+  saveMockScenario(mode: 'healthy' | 'degradedSearch' | 'degradedLive') {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.mockScenario, mode);
   },
   getCatalogs(): Record<string, ProviderCatalog> {
     if (!isBrowser()) return {};

@@ -9,7 +9,15 @@ import {
   XtreamSeriesInfo,
   XtreamStream,
 } from './types';
+import { isMockProviderServer, getSelectedMockProviderScenario } from './mock-provider';
 import { storage } from './storage';
+
+const maybeApplyMockScenario = (url: URL, credentials: XtreamCredentials) => {
+  if (!isMockProviderServer(credentials.server)) return url;
+  const scenario = getSelectedMockProviderScenario();
+  if (scenario !== 'healthy') url.searchParams.set('scenario', scenario);
+  return url;
+};
 
 const buildPlayerApiUrl = (
   credentials: XtreamCredentials,
@@ -23,7 +31,7 @@ const buildPlayerApiUrl = (
   Object.entries(extra || {}).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
   });
-  return url.toString();
+  return maybeApplyMockScenario(url, credentials).toString();
 };
 
 const buildProxyUrl = (url: string) => `/api/iptv?url=${encodeURIComponent(url)}`;
@@ -110,7 +118,7 @@ export function buildLiveStreamUrl(credentials: XtreamCredentials, stream: Xtrea
   const streamId = getContentId(stream);
   const raw = stream.direct_source?.startsWith('http')
     ? stream.direct_source
-    : new URL(`/${credentials.username}/${credentials.password}/${streamId}`, credentials.server).toString();
+    : maybeApplyMockScenario(new URL(`/${credentials.username}/${credentials.password}/${streamId}`, credentials.server), credentials).toString();
   return buildStreamProxyUrl(raw);
 }
 
@@ -118,7 +126,7 @@ export function buildVodStreamUrl(credentials: XtreamCredentials, stream: Xtream
   const streamId = getContentId(stream);
   const raw = stream.direct_source?.startsWith('http')
     ? stream.direct_source
-    : new URL(`/movie/${credentials.username}/${credentials.password}/${streamId}.${stream.container_extension || 'm3u8'}`, credentials.server).toString();
+    : maybeApplyMockScenario(new URL(`/movie/${credentials.username}/${credentials.password}/${streamId}.${stream.container_extension || 'm3u8'}`, credentials.server), credentials).toString();
   return buildStreamProxyUrl(raw);
 }
 
@@ -128,7 +136,7 @@ export function buildSeriesEpisodeUrl(
 ) {
   const raw = episode.direct_source?.startsWith('http')
     ? episode.direct_source
-    : new URL(`/series/${credentials.username}/${credentials.password}/${episode.id}.${episode.info?.container_extension || 'm3u8'}`, credentials.server).toString();
+    : maybeApplyMockScenario(new URL(`/series/${credentials.username}/${credentials.password}/${episode.id}.${episode.info?.container_extension || 'm3u8'}`, credentials.server), credentials).toString();
   return buildStreamProxyUrl(raw);
 }
 
