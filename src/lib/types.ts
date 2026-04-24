@@ -183,6 +183,8 @@ export type MockProviderCategorySummary = {
   channels: number;
 };
 
+export type MockProviderScenario = 'healthy' | 'degradedSearch' | 'degradedLive';
+
 export type MockProviderHealth = {
   ok: boolean;
   service: string;
@@ -191,6 +193,7 @@ export type MockProviderHealth = {
   liveStreams: number;
   vodStreams: number;
   series: number;
+  activeScenario: MockProviderScenario;
   searchHints: string[];
   playerCapabilities: {
     livePreview: boolean;
@@ -201,11 +204,12 @@ export type MockProviderHealth = {
     previewFallbackFriendly: boolean;
     streamFormats: string[];
   };
-  healthScenarios: {
-    healthy: string;
-    degradedSearch: string;
-    degradedLive: string;
-  };
+  healthScenarios: Record<MockProviderScenario, {
+    label: string;
+    summary: string;
+    appImpact: string;
+    healthUrl: string;
+  }>;
   topCategories: MockProviderCategorySummary[];
   featuredChannels?: { name: string; category: string; guide: string }[];
   sampleCredentials?: {

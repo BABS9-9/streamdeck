@@ -40,6 +40,6 @@ StreamDeck should win by feeling like a real premium streaming product, not a ut
 
 ## Immediate implementation call
 - Ship now: saved-provider login, inline NOW/NEXT guide context, live browser preview with graceful artwork fallback, provider-aware history/favorites, stream health HUD, a global player dock with real resume tracking for movies and series, explicit degraded-provider messaging inside Live and Search, and instant-feeling cached Movies/Series browse surfaces with detail rails
-- Ship now as demo insurance too: provider-readiness surfaces on Login, Home, and Live so the mock Xtream adapter advertises sample credentials, category density, and preview-friendly capability flags directly in-product instead of hiding them in terminal-only health checks
-- Ship next: stronger cross-provider search ranking and persistence, deeper continue-watching resume accuracy, richer folder smart-rules, connection rename/remove/retry actions, and partial-result handling when one provider drops during multi-provider search
+- Ship now as demo insurance too: provider-readiness surfaces on Login, Home, and Live so the mock Xtream adapter advertises sample credentials, category density, preview-friendly capability flags, and scenario-based rehearsal links directly in-product instead of hiding them in terminal-only health checks
+- Ship next: stronger cross-provider search ranking and persistence, deeper continue-watching resume accuracy, richer folder smart-rules, connection rename/remove/retry actions, partial-result handling when one provider drops during multi-provider search, and one-click toggles into mock degraded-search / degraded-live rehearsal states for QA demos
 - Hold for later: browser recording constraints, shared watch-party infrastructure

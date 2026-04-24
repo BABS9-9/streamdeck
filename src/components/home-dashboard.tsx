@@ -237,6 +237,26 @@ export function HomeDashboard() {
               </div>
             </div>
           </div>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Mock rehearsal modes</p>
+                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, and degraded-live behavior so Home can rehearse fallback messaging before real providers misbehave.</p>
+              </div>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
+                Active: {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3 xl:grid-cols-3">
+              {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
+                <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>
+                  <p className="text-sm font-semibold text-white">{scenario.label}</p>
+                  <p className="mt-2 text-sm text-slate-400">{scenario.summary}</p>
+                  <p className="mt-3 text-xs text-slate-500">{scenario.appImpact}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
       ) : null}
 

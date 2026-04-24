@@ -1,4 +1,4 @@
-import { MockProviderHealth, XtreamCredentials } from './types';
+import { MockProviderHealth, MockProviderScenario, XtreamCredentials } from './types';
 
 const MOCK_HOST = 'http://localhost:3579';
 
@@ -12,14 +12,20 @@ export const isMockProviderServer = (server?: string | null) => {
   }
 };
 
-export async function fetchMockProviderHealth(serverOrCredentials?: string | XtreamCredentials | null) {
+export async function fetchMockProviderHealth(
+  serverOrCredentials?: string | XtreamCredentials | null,
+  scenario?: MockProviderScenario
+) {
   const server = typeof serverOrCredentials === 'string'
     ? serverOrCredentials
     : serverOrCredentials?.server;
 
   if (!isMockProviderServer(server)) return null;
 
-  const response = await fetch(`${MOCK_HOST}/health`, {
+  const healthUrl = new URL('/health', MOCK_HOST);
+  if (scenario && scenario !== 'healthy') healthUrl.searchParams.set('scenario', scenario);
+
+  const response = await fetch(healthUrl.toString(), {
     cache: 'no-store',
     headers: { Accept: 'application/json' },
   });

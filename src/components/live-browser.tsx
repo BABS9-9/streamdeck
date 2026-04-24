@@ -167,6 +167,18 @@ export function LiveBrowser() {
           </div>
         ) : null}
 
+        <div className="rounded-[1.5rem] border border-white/10 bg-black/20 px-5 py-4 text-sm text-slate-300">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Live rehearsal note</p>
+              <p className="mt-2">The mock provider now supports degraded-live and degraded-search rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source.</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
+              Mock-friendly retries ready
+            </span>
+          </div>
+        </div>
+
         {loadError ? (
           <div className="rounded-[1.5rem] border border-rose-400/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-100">
             Live TV refresh failed. {loadError}

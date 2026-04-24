@@ -3,6 +3,11 @@ const { URL } = require('url');
 
 const PORT = 3579;
 const host = `http://localhost:${PORT}`;
+const scenarioLabels = {
+  healthy: 'Healthy mock mode',
+  degradedSearch: 'Degraded search rehearsal',
+  degradedLive: 'Degraded live rehearsal',
+};
 const logo = (seed, label = '') => `https://dummyimage.com/320x180/111827/a78bfa.png&text=${encodeURIComponent(label || seed)}`;
 const poster = (seed, label = '') => `https://dummyimage.com/420x630/111827/e5e7eb.png&text=${encodeURIComponent(label || seed)}`;
 const hero = (seed, label = '') => `https://dummyimage.com/1280x720/0f172a/f8fafc.png&text=${encodeURIComponent(label || seed)}`;
@@ -252,20 +257,41 @@ const server = http.createServer((req, res) => {
   const username = url.searchParams.get('username') || 'demo';
   const password = url.searchParams.get('password') || 'demo';
   const categoryId = url.searchParams.get('category_id');
+  const scenario = url.searchParams.get('scenario') || 'healthy';
+  const degradedSearch = scenario === 'degradedSearch';
+  const degradedLive = scenario === 'degradedLive';
 
   if (path === '/player_api.php') {
     if (!action) return sendJson(res, authResponse(username, password));
     if (action === 'get_live_categories') return sendJson(res, liveCategories);
-    if (action === 'get_live_streams') return sendJson(res, filterByCategory(liveStreams, categoryId));
+    if (action === 'get_live_streams') {
+      if (degradedLive) {
+        res.writeHead(503, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ error: 'Mock live catalog temporarily unavailable', scenario }));
+      }
+      return sendJson(res, filterByCategory(liveStreams, categoryId));
+    }
     if (action === 'get_vod_categories') return sendJson(res, vodCategories);
-    if (action === 'get_vod_streams') return sendJson(res, filterByCategory(vodStreams, categoryId));
+    if (action === 'get_vod_streams') {
+      if (degradedSearch) {
+        res.writeHead(503, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ error: 'Mock VOD search catalog temporarily unavailable', scenario }));
+      }
+      return sendJson(res, filterByCategory(vodStreams, categoryId));
+    }
     if (action === 'get_vod_info') {
       const vodId = url.searchParams.get('vod_id');
       const selected = vodStreams.find((item) => String(item.stream_id) === String(vodId));
       return sendJson(res, { info: selected || null, movie_data: selected || null });
     }
     if (action === 'get_series_categories') return sendJson(res, seriesCategories);
-    if (action === 'get_series') return sendJson(res, filterByCategory(series, categoryId));
+    if (action === 'get_series') {
+      if (degradedSearch) {
+        res.writeHead(503, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ error: 'Mock series search catalog temporarily unavailable', scenario }));
+      }
+      return sendJson(res, filterByCategory(series, categoryId));
+    }
     if (action === 'get_series_info') return sendJson(res, getSeriesInfo(url.searchParams.get('series_id')));
     if (action === 'get_short_epg') return sendJson(res, getShortEpg(url.searchParams.get('stream_id') || '0'));
     return sendJson(res, { error: 'Unsupported action', action });
@@ -300,10 +326,26 @@ const server = http.createServer((req, res) => {
         previewFallbackFriendly: true,
         streamFormats: ['m3u8'],
       },
+      activeScenario: scenario,
       healthScenarios: {
-        healthy: 'Default mock mode, all Xtream endpoints respond with full catalogs.',
-        degradedSearch: 'Use this mock to verify the app keeps cached/partial cross-provider search results visible even when one provider fails to refresh.',
-        degradedLive: 'Use this mock to verify inline provider status banners and retry UX in the live browser when provider health is not healthy.',
+        healthy: {
+          label: scenarioLabels.healthy,
+          summary: 'Default mock mode, all Xtream endpoints respond with full catalogs.',
+          appImpact: 'Best for first-run login, home, and live demo validation.',
+          healthUrl: `${host}/health`,
+        },
+        degradedSearch: {
+          label: scenarioLabels.degradedSearch,
+          summary: 'VOD and series catalog requests fail while health stays reachable.',
+          appImpact: 'Use this to verify cached search results and partial-result messaging stay useful.',
+          healthUrl: `${host}/health?scenario=degradedSearch`,
+        },
+        degradedLive: {
+          label: scenarioLabels.degradedLive,
+          summary: 'Live stream catalog requests fail while health still documents the provider.',
+          appImpact: 'Use this to validate live-browser status banners, retries, and degraded preview messaging.',
+          healthUrl: `${host}/health?scenario=degradedLive`,
+        },
       },
       topCategories: liveCategories.map((category) => ({
         id: category.category_id,
@@ -321,9 +363,15 @@ const server = http.createServer((req, res) => {
         password: 'test',
       },
       demoFlows: {
-        login: 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
-        home: 'Verify hero counts, quick-launch actions, and cached provider refresh messaging from one healthy source.',
-        live: 'Verify inline NOW/NEXT guide data, hover preview fallback, and surf-rail browsing against realistic fake categories.',
+        login: degradedLive
+          ? 'Connect with the mock credentials, then verify the app explains that live browsing is degraded instead of failing silently.'
+          : 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
+        home: degradedSearch
+          ? 'Verify Home still feels useful while search-oriented catalogs degrade and cached content remains visible.'
+          : 'Verify hero counts, quick-launch actions, and cached provider refresh messaging from one healthy source.',
+        live: degradedLive
+          ? 'Verify inline provider status banners, retry actions, and graceful preview fallback when the live catalog is unavailable.'
+          : 'Verify inline NOW/NEXT guide data, hover preview fallback, and surf-rail browsing against realistic fake categories.',
       },
       xmltv: `${host}/xmltv.php?username=test&password=test`,
       sampleLive: `${host}/player_api.php?username=test&password=test&action=get_live_streams&category_id=1`,
