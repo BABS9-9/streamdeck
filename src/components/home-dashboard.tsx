@@ -247,12 +247,25 @@ export function HomeDashboard() {
                 Active: {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}
               </span>
             </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {Object.entries(mockHealth.endpointHealth || {}).map(([key, value]) => (
+                <span key={key} className={`rounded-full border px-3 py-2 text-[11px] uppercase tracking-[0.22em] ${value === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>
+                  {key} · {value}
+                </span>
+              ))}
+            </div>
             <div className="mt-4 grid gap-3 xl:grid-cols-3">
               {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
                 <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>
                   <p className="text-sm font-semibold text-white">{scenario.label}</p>
                   <p className="mt-2 text-sm text-slate-400">{scenario.summary}</p>
                   <p className="mt-3 text-xs text-slate-500">{scenario.appImpact}</p>
+                  <div className="mt-3 space-y-2">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Expected UX</p>
+                    <ul className="space-y-1 text-xs text-slate-400">
+                      {scenario.expectedUx.map((item) => <li key={item}>• {item}</li>)}
+                    </ul>
+                  </div>
                 </div>
               ))}
             </div>

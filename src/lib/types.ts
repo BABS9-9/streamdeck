@@ -204,11 +204,20 @@ export type MockProviderHealth = {
     previewFallbackFriendly: boolean;
     streamFormats: string[];
   };
+  endpointHealth: {
+    auth: 'healthy' | 'degraded';
+    liveCatalog: 'healthy' | 'degraded';
+    vodCatalog: 'healthy' | 'degraded';
+    seriesCatalog: 'healthy' | 'degraded';
+    epg: 'healthy' | 'degraded';
+  };
   healthScenarios: Record<MockProviderScenario, {
     label: string;
     summary: string;
     appImpact: string;
     healthUrl: string;
+    affectedEndpoints: string[];
+    expectedUx: string[];
   }>;
   topCategories: MockProviderCategorySummary[];
   featuredChannels?: { name: string; category: string; guide: string }[];

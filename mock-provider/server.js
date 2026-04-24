@@ -326,6 +326,13 @@ const server = http.createServer((req, res) => {
         previewFallbackFriendly: true,
         streamFormats: ['m3u8'],
       },
+      endpointHealth: {
+        auth: 'healthy',
+        liveCatalog: degradedLive ? 'degraded' : 'healthy',
+        vodCatalog: degradedSearch ? 'degraded' : 'healthy',
+        seriesCatalog: degradedSearch ? 'degraded' : 'healthy',
+        epg: 'healthy',
+      },
       activeScenario: scenario,
       healthScenarios: {
         healthy: {
@@ -333,18 +340,24 @@ const server = http.createServer((req, res) => {
           summary: 'Default mock mode, all Xtream endpoints respond with full catalogs.',
           appImpact: 'Best for first-run login, home, and live demo validation.',
           healthUrl: `${host}/health`,
+          affectedEndpoints: ['auth', 'get_live_streams', 'get_vod_streams', 'get_series', 'get_short_epg'],
+          expectedUx: ['Connect instantly', 'Browse live with inline guide', 'Search and detail panels stay fully populated'],
         },
         degradedSearch: {
           label: scenarioLabels.degradedSearch,
           summary: 'VOD and series catalog requests fail while health stays reachable.',
           appImpact: 'Use this to verify cached search results and partial-result messaging stay useful.',
           healthUrl: `${host}/health?scenario=degradedSearch`,
+          affectedEndpoints: ['get_vod_streams', 'get_series'],
+          expectedUx: ['Home stays usable', 'Search explains partial results', 'Movies and Series fall back gracefully'],
         },
         degradedLive: {
           label: scenarioLabels.degradedLive,
           summary: 'Live stream catalog requests fail while health still documents the provider.',
           appImpact: 'Use this to validate live-browser status banners, retries, and degraded preview messaging.',
           healthUrl: `${host}/health?scenario=degradedLive`,
+          affectedEndpoints: ['get_live_streams'],
+          expectedUx: ['Provider stays connectable', 'Live browser shows degraded state', 'Preview area explains fallback instead of looking broken'],
         },
       },
       topCategories: liveCategories.map((category) => ({

@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { fetchMockProviderHealth } from '@/lib/mock-provider';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
-import { NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
@@ -35,11 +36,20 @@ export function LiveBrowser() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewState, setPreviewState] = useState<'idle' | 'loading' | 'playing' | 'buffering' | 'error'>('idle');
   const [showPreviewFallback, setShowPreviewFallback] = useState(false);
+  const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
   const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     if (!activeConnection) return;
+
+    fetchMockProviderHealth(activeConnection)
+      .then((health) => {
+        if (!cancelled) setMockHealth(health);
+      })
+      .catch(() => {
+        if (!cancelled) setMockHealth(null);
+      });
 
     setLoading(true);
     setLoadError(null);
@@ -174,9 +184,36 @@ export function LiveBrowser() {
               <p className="mt-2">The mock provider now supports degraded-live and degraded-search rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
-              Mock-friendly retries ready
+              {mockHealth ? `Mode: ${mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}` : 'Mock-friendly retries ready'}
             </span>
           </div>
+          {mockHealth ? (
+            <>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {Object.entries(mockHealth.endpointHealth || {}).map(([key, value]) => (
+                  <span key={key} className={`rounded-full border px-3 py-2 text-[11px] uppercase tracking-[0.22em] ${value === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>
+                    {key} · {value}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
+                  <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>
+                    <p className="text-sm font-semibold text-white">{scenario.label}</p>
+                    <p className="mt-2 text-sm text-slate-400">{scenario.summary}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {scenario.affectedEndpoints.map((endpoint) => (
+                        <span key={endpoint} className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">{endpoint}</span>
+                      ))}
+                    </div>
+                    <ul className="mt-3 space-y-1 text-xs text-slate-500">
+                      {scenario.expectedUx.map((item) => <li key={item}>• {item}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
 
         {loadError ? (
