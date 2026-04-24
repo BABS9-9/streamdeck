@@ -34,6 +34,7 @@ export function LiveBrowser() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [guideMessage, setGuideMessage] = useState<string | null>(null);
   const [previewState, setPreviewState] = useState<'idle' | 'loading' | 'playing' | 'buffering' | 'error'>('idle');
   const [showPreviewFallback, setShowPreviewFallback] = useState(false);
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
@@ -53,6 +54,7 @@ export function LiveBrowser() {
 
     setLoading(true);
     setLoadError(null);
+    setGuideMessage(null);
 
     Promise.all([getLiveCategories(activeConnection), getLiveStreams(activeConnection)])
       .then(([cats, live]) => {
@@ -64,13 +66,22 @@ export function LiveBrowser() {
         return Promise.all(
           live.slice(0, 18).map(async (stream) => {
             const streamId = getContentId(stream);
-            return [streamId, await getShortEpg(activeConnection, streamId)] as const;
+            try {
+              return [streamId, await getShortEpg(activeConnection, streamId)] as const;
+            } catch {
+              return [streamId, null] as const;
+            }
           })
         );
       })
       .then((entries) => {
         if (!entries || cancelled) return;
-        setEpg(Object.fromEntries(entries));
+        const nextEpg = entries.reduce<Record<number, NormalizedEpg>>((acc, [streamId, guide]) => {
+          if (guide) acc[streamId] = guide;
+          return acc;
+        }, {});
+        setEpg(nextEpg);
+        setGuideMessage(Object.keys(nextEpg).length === 0 ? 'Guide data is temporarily unavailable. Channel browse and preview are still live.' : null);
       })
       .catch((error) => {
         if (cancelled) return;
@@ -124,7 +135,7 @@ export function LiveBrowser() {
       const categoryStreams = streams.filter((stream) => stream.category_id === category.category_id);
       const activeGuide = categoryStreams
         .map((stream) => epg[getContentId(stream)]?.now?.title)
-        .find(Boolean) ?? 'Guide loading';
+        .find(Boolean) ?? (guideMessage ? 'Guide unavailable right now' : 'Guide loading');
       return {
         ...category,
         count: categoryStreams.length,
@@ -132,7 +143,7 @@ export function LiveBrowser() {
         activeGuide,
       };
     });
-  }, [categories, epg, streams]);
+  }, [categories, epg, guideMessage, streams]);
 
   const activeStatus = activeConnection ? connectionStatus[activeConnection.id] : null;
   const statusTone = activeStatus?.state === 'healthy'
@@ -156,6 +167,7 @@ export function LiveBrowser() {
     if (!stream) return false;
     return selectedCategory === 'all' || stream.category_id === selectedCategory;
   }).length;
+  const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -181,7 +193,7 @@ export function LiveBrowser() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Live rehearsal note</p>
-              <p className="mt-2">The mock provider now supports degraded-live and degraded-search rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source.</p>
+              <p className="mt-2">The mock provider now supports degraded-live, degraded-search, and degraded-guide rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
               {mockHealth ? `Mode: ${mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}` : 'Mock-friendly retries ready'}
@@ -196,7 +208,7 @@ export function LiveBrowser() {
                   </span>
                 ))}
               </div>
-              <div className="mt-4 grid gap-3 lg:grid-cols-3">
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
                   <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>
                     <p className="text-sm font-semibold text-white">{scenario.label}</p>
@@ -206,15 +218,29 @@ export function LiveBrowser() {
                         <span key={endpoint} className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">{endpoint}</span>
                       ))}
                     </div>
-                    <ul className="mt-3 space-y-1 text-xs text-slate-500">
-                      {scenario.expectedUx.map((item) => <li key={item}>• {item}</li>)}
-                    </ul>
+                    <div className="mt-3 grid gap-3 xl:grid-cols-2">
+                      <ul className="space-y-1 text-xs text-slate-500">
+                        {scenario.expectedUx.map((item) => <li key={item}>• {item}</li>)}
+                      </ul>
+                      <ul className="space-y-1 text-xs text-slate-400">
+                        {scenario.verificationSteps.map((item) => <li key={item}>• {item}</li>)}
+                      </ul>
+                    </div>
                   </div>
                 ))}
               </div>
             </>
           ) : null}
         </div>
+
+        {guideMessage ? (
+          <div className="rounded-[1.5rem] border border-amber-400/20 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p>{guideMessage}</p>
+              <span className="text-xs uppercase tracking-[0.22em] text-amber-50/80">{activeScenario?.label ?? 'Guide fallback active'}</span>
+            </div>
+          </div>
+        ) : null}
 
         {loadError ? (
           <div className="rounded-[1.5rem] border border-rose-400/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-100">
@@ -324,7 +350,7 @@ export function LiveBrowser() {
                   className={`min-w-[220px] rounded-[1.2rem] border p-3 text-left transition ${isActive ? 'border-violet-400 bg-violet-500/10' : 'border-white/10 bg-white/5 hover:border-white/20'}`}
                 >
                   <p className="truncate text-sm font-semibold text-white">{stream.name}</p>
-                  <p className="mt-1 truncate text-xs text-slate-500">{epg[streamId]?.now?.title ?? 'Guide loading...'}</p>
+                  <p className="mt-1 truncate text-xs text-slate-500">{epg[streamId]?.now?.title ?? (guideMessage ? 'Guide unavailable' : 'Guide loading...')}</p>
                 </button>
               );
             })}
@@ -367,9 +393,9 @@ export function LiveBrowser() {
                 </div>
                 <div className="mt-4 space-y-2 text-sm">
                   <p className="text-slate-400">NOW</p>
-                  <p className="font-medium text-white">{guide?.now?.title ?? 'Loading EPG...'}</p>
+                  <p className="font-medium text-white">{guide?.now?.title ?? (guideMessage ? 'Guide unavailable right now' : 'Loading EPG...')}</p>
                   <p className="text-slate-400">NEXT</p>
-                  <p className="text-slate-200">{guide?.next?.title ?? 'Fetching next slot'}</p>
+                  <p className="text-slate-200">{guide?.next?.title ?? (guideMessage ? 'Preview and playback still work' : 'Fetching next slot')}</p>
                 </div>
                 <div className="mt-5 flex gap-3">
                   <button
@@ -456,7 +482,7 @@ export function LiveBrowser() {
           <div className="mt-4 px-2 pb-2">
             <p className="text-xs uppercase tracking-[0.3em] text-violet-300">Instant channel preview</p>
             <h3 className="mt-2 text-2xl font-semibold text-white">{displayStream?.name ?? 'Select a channel'}</h3>
-            <p className="mt-2 text-sm text-slate-400">{displayStream ? epg[getContentId(displayStream)]?.now?.title ?? 'Guide loading' : 'Choose a channel card to preview or play it here.'}</p>
+            <p className="mt-2 text-sm text-slate-400">{displayStream ? epg[getContentId(displayStream)]?.now?.title ?? (guideMessage ? 'Guide unavailable, preview still armed.' : 'Guide loading') : 'Choose a channel card to preview or play it here.'}</p>
             {selectedGuide?.next ? <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-500">Next up: {selectedGuide.next.title}</p> : null}
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-[1.2rem] border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
               <div>

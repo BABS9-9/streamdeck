@@ -7,6 +7,7 @@ const scenarioLabels = {
   healthy: 'Healthy mock mode',
   degradedSearch: 'Degraded search rehearsal',
   degradedLive: 'Degraded live rehearsal',
+  degradedEpg: 'Degraded guide rehearsal',
 };
 const logo = (seed, label = '') => `https://dummyimage.com/320x180/111827/a78bfa.png&text=${encodeURIComponent(label || seed)}`;
 const poster = (seed, label = '') => `https://dummyimage.com/420x630/111827/e5e7eb.png&text=${encodeURIComponent(label || seed)}`;
@@ -260,6 +261,7 @@ const server = http.createServer((req, res) => {
   const scenario = url.searchParams.get('scenario') || 'healthy';
   const degradedSearch = scenario === 'degradedSearch';
   const degradedLive = scenario === 'degradedLive';
+  const degradedEpg = scenario === 'degradedEpg';
 
   if (path === '/player_api.php') {
     if (!action) return sendJson(res, authResponse(username, password));
@@ -293,7 +295,13 @@ const server = http.createServer((req, res) => {
       return sendJson(res, filterByCategory(series, categoryId));
     }
     if (action === 'get_series_info') return sendJson(res, getSeriesInfo(url.searchParams.get('series_id')));
-    if (action === 'get_short_epg') return sendJson(res, getShortEpg(url.searchParams.get('stream_id') || '0'));
+    if (action === 'get_short_epg') {
+      if (degradedEpg) {
+        res.writeHead(503, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return res.end(JSON.stringify({ error: 'Mock EPG temporarily unavailable', scenario }));
+      }
+      return sendJson(res, getShortEpg(url.searchParams.get('stream_id') || '0'));
+    }
     return sendJson(res, { error: 'Unsupported action', action });
   }
 
@@ -331,7 +339,7 @@ const server = http.createServer((req, res) => {
         liveCatalog: degradedLive ? 'degraded' : 'healthy',
         vodCatalog: degradedSearch ? 'degraded' : 'healthy',
         seriesCatalog: degradedSearch ? 'degraded' : 'healthy',
-        epg: 'healthy',
+        epg: degradedEpg ? 'degraded' : 'healthy',
       },
       activeScenario: scenario,
       healthScenarios: {
@@ -342,6 +350,7 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health`,
           affectedEndpoints: ['auth', 'get_live_streams', 'get_vod_streams', 'get_series', 'get_short_epg'],
           expectedUx: ['Connect instantly', 'Browse live with inline guide', 'Search and detail panels stay fully populated'],
+          verificationSteps: ['Connect with mock credentials', 'Open Home and confirm hero guide loads', 'Open Live and confirm NOW and NEXT labels stay populated'],
         },
         degradedSearch: {
           label: scenarioLabels.degradedSearch,
@@ -350,6 +359,7 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health?scenario=degradedSearch`,
           affectedEndpoints: ['get_vod_streams', 'get_series'],
           expectedUx: ['Home stays usable', 'Search explains partial results', 'Movies and Series fall back gracefully'],
+          verificationSteps: ['Switch to Degraded search', 'Open Search and verify partial-result messaging', 'Open Movies and Series and confirm degraded states still feel intentional'],
         },
         degradedLive: {
           label: scenarioLabels.degradedLive,
@@ -358,6 +368,16 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health?scenario=degradedLive`,
           affectedEndpoints: ['get_live_streams'],
           expectedUx: ['Provider stays connectable', 'Live browser shows degraded state', 'Preview area explains fallback instead of looking broken'],
+          verificationSteps: ['Switch to Degraded live', 'Validate the login and home shell still render', 'Open Live and verify retry plus fallback messaging instead of a dead surface'],
+        },
+        degradedEpg: {
+          label: scenarioLabels.degradedEpg,
+          summary: 'Live guide requests fail while catalogs and playback paths still respond.',
+          appImpact: 'Use this to verify Home and Live survive guide outages without collapsing the whole browse flow.',
+          healthUrl: `${host}/health?scenario=degradedEpg`,
+          affectedEndpoints: ['get_short_epg'],
+          expectedUx: ['Connect normally', 'Home shows guide fallback copy instead of emptying', 'Live still browses and previews channels while guide chips explain the outage'],
+          verificationSteps: ['Switch to Degraded guide', 'Open Home and verify guide copy downgrades gracefully', 'Open Live and confirm cards still browse and preview even when NOW and NEXT are unavailable'],
         },
       },
       topCategories: liveCategories.map((category) => ({
@@ -378,13 +398,19 @@ const server = http.createServer((req, res) => {
       demoFlows: {
         login: degradedLive
           ? 'Connect with the mock credentials, then verify the app explains that live browsing is degraded instead of failing silently.'
-          : 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
+          : degradedEpg
+            ? 'Connect normally, then verify the app calls out guide degradation without making login feel broken.'
+            : 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
         home: degradedSearch
           ? 'Verify Home still feels useful while search-oriented catalogs degrade and cached content remains visible.'
-          : 'Verify hero counts, quick-launch actions, and cached provider refresh messaging from one healthy source.',
+          : degradedEpg
+            ? 'Verify Home still loads counts, quick actions, and featured content while guide copy falls back gracefully.'
+            : 'Verify hero counts, quick-launch actions, and cached provider refresh messaging from one healthy source.',
         live: degradedLive
           ? 'Verify inline provider status banners, retry actions, and graceful preview fallback when the live catalog is unavailable.'
-          : 'Verify inline NOW/NEXT guide data, hover preview fallback, and surf-rail browsing against realistic fake categories.',
+          : degradedEpg
+            ? 'Verify channel browsing and preview remain intact while NOW and NEXT labels explain the guide outage.'
+            : 'Verify inline NOW/NEXT guide data, hover preview fallback, and surf-rail browsing against realistic fake categories.',
       },
       xmltv: `${host}/xmltv.php?username=test&password=test`,
       sampleLive: `${host}/player_api.php?username=test&password=test&action=get_live_streams&category_id=1`,

@@ -33,6 +33,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('test');
   const [mockHealth, setMockHealth] = useState(null);
 
+  const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
+
   useEffect(() => {
     hydrate();
   }, [hydrate]);
@@ -153,6 +155,14 @@ export default function LoginPage() {
                     </div>
                   ))}
                 </div>
+                {activeScenario?.verificationSteps?.length ? (
+                  <div className="mt-4 rounded-2xl border border-violet-400/20 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Active rehearsal checklist</p>
+                    <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                      {activeScenario.verificationSteps.map((step) => <li key={step}>• {step}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -207,6 +217,11 @@ export default function LoginPage() {
             {mockHealth?.sampleCredentials ? (
               <p className="mt-3 text-xs text-slate-500">
                 Demo credentials: {mockHealth.sampleCredentials.server} · {mockHealth.sampleCredentials.username}/{mockHealth.sampleCredentials.password}
+              </p>
+            ) : null}
+            {activeScenario ? (
+              <p className="mt-3 text-xs text-violet-200">
+                Active rehearsal mode: {activeScenario.label}. {activeScenario.appImpact}
               </p>
             ) : null}
           </div>

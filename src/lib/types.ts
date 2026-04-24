@@ -183,7 +183,7 @@ export type MockProviderCategorySummary = {
   channels: number;
 };
 
-export type MockProviderScenario = 'healthy' | 'degradedSearch' | 'degradedLive';
+export type MockProviderScenario = 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg';
 
 export type MockProviderHealth = {
   ok: boolean;
@@ -218,6 +218,7 @@ export type MockProviderHealth = {
     healthUrl: string;
     affectedEndpoints: string[];
     expectedUx: string[];
+    verificationSteps: string[];
   }>;
   topCategories: MockProviderCategorySummary[];
   featuredChannels?: { name: string; category: string; guide: string }[];

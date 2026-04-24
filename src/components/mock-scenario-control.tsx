@@ -9,6 +9,7 @@ const labels: Record<MockProviderScenario, string> = {
   healthy: 'Healthy',
   degradedSearch: 'Degraded search',
   degradedLive: 'Degraded live',
+  degradedEpg: 'Degraded guide',
 };
 
 export function MockScenarioControl() {

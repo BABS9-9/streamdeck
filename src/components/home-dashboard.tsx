@@ -46,6 +46,7 @@ export function HomeDashboard() {
   const [liveNow, setLiveNow] = useState<Record<number, NormalizedEpg>>({});
   const [cacheState, setCacheState] = useState<CacheState>(emptyCacheState);
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [guideMessage, setGuideMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +71,7 @@ export function HomeDashboard() {
       setHeroEpg(snapshot.heroEpg);
       setLiveNow(snapshot.liveNow);
       setCacheState({ mode, message, updatedAt: snapshot.updatedAt });
+      setGuideMessage(null);
     };
 
     const cached = getCachedHomeSnapshot(activeConnection.id, Number.POSITIVE_INFINITY);
@@ -87,6 +89,7 @@ export function HomeDashboard() {
       setHeroEpg(null);
       setLiveNow({});
       setCacheState(emptyCacheState);
+      setGuideMessage(null);
     }
 
     getHomeData(activeConnection)
@@ -104,18 +107,33 @@ export function HomeDashboard() {
         const epgPairs = await Promise.all(
           quickLive.map(async (stream) => {
             const streamId = getContentId(stream);
-            return [streamId, await getShortEpg(activeConnection, streamId)] as const;
+            try {
+              return [streamId, await getShortEpg(activeConnection, streamId)] as const;
+            } catch {
+              return [streamId, null] as const;
+            }
           })
         );
         if (cancelled) return;
-        const nextLiveNow = Object.fromEntries(epgPairs);
+        const nextLiveNow = epgPairs.reduce<Record<number, NormalizedEpg>>((acc, [streamId, guide]) => {
+          if (guide) acc[streamId] = guide;
+          return acc;
+        }, {});
         const featuredId = featured ? getContentId(featured) : null;
-        const nextHeroEpg = !featuredId ? null : nextLiveNow[featuredId] ?? await getShortEpg(activeConnection, featuredId);
+        let nextHeroEpg = featuredId ? nextLiveNow[featuredId] ?? null : null;
+        if (!nextHeroEpg && featuredId) {
+          try {
+            nextHeroEpg = await getShortEpg(activeConnection, featuredId);
+          } catch {
+            nextHeroEpg = null;
+          }
+        }
         if (cancelled) return;
 
         setHome(nextHome);
         setLiveNow(nextLiveNow);
         setHeroEpg(nextHeroEpg);
+        setGuideMessage(Object.keys(nextLiveNow).length === 0 ? 'Guide data is temporarily unavailable. Home is staying useful with cached artwork, counts, and launch actions.' : null);
         const snapshot: ProviderHomeSnapshot = {
           ...nextHome,
           heroEpg: nextHeroEpg,
@@ -179,6 +197,7 @@ export function HomeDashboard() {
     : cacheState.mode === 'cached'
       ? 'border-sky-400/30 bg-sky-500/10 text-sky-100'
       : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100';
+  const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
 
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Go back to login and connect first.</div>;
@@ -192,6 +211,17 @@ export function HomeDashboard() {
             <p>{cacheState.message}</p>
             <span className="text-xs uppercase tracking-[0.22em] text-white/70">
               {cacheState.updatedAt ? `Updated ${new Date(cacheState.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'No cached timestamp'}
+            </span>
+          </div>
+        </section>
+      ) : null}
+
+      {guideMessage ? (
+        <section className="rounded-[1.5rem] border border-amber-400/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p>{guideMessage}</p>
+            <span className="text-xs uppercase tracking-[0.22em] text-amber-50/80">
+              {activeScenario?.label ?? 'Guide fallback active'}
             </span>
           </div>
         </section>
@@ -241,7 +271,7 @@ export function HomeDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Mock rehearsal modes</p>
-                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, and degraded-live behavior so Home can rehearse fallback messaging before real providers misbehave.</p>
+                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, degraded-live, and degraded-guide behavior so Home can rehearse fallback messaging before real providers misbehave.</p>
               </div>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
                 Active: {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}
@@ -254,17 +284,25 @@ export function HomeDashboard() {
                 </span>
               ))}
             </div>
-            <div className="mt-4 grid gap-3 xl:grid-cols-3">
+            <div className="mt-4 grid gap-3 xl:grid-cols-2">
               {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
                 <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>
                   <p className="text-sm font-semibold text-white">{scenario.label}</p>
                   <p className="mt-2 text-sm text-slate-400">{scenario.summary}</p>
                   <p className="mt-3 text-xs text-slate-500">{scenario.appImpact}</p>
-                  <div className="mt-3 space-y-2">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Expected UX</p>
-                    <ul className="space-y-1 text-xs text-slate-400">
-                      {scenario.expectedUx.map((item) => <li key={item}>• {item}</li>)}
-                    </ul>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                    <div className="space-y-2">
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Expected UX</p>
+                      <ul className="space-y-1 text-xs text-slate-400">
+                        {scenario.expectedUx.map((item) => <li key={item}>• {item}</li>)}
+                      </ul>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Verify now</p>
+                      <ul className="space-y-1 text-xs text-slate-400">
+                        {scenario.verificationSteps.map((item) => <li key={item}>• {item}</li>)}
+                      </ul>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -313,8 +351,8 @@ export function HomeDashboard() {
               ) : null}
             </div>
             <p className="mt-5 text-sm text-slate-400">Now playing</p>
-            <p className="mt-3 text-xl font-semibold text-white">{heroEpg?.now?.title ?? 'Fetching guide...'}</p>
-            <p className="mt-2 text-sm text-slate-400">Next: {heroEpg?.next?.title ?? 'Loading next slot'}</p>
+            <p className="mt-3 text-xl font-semibold text-white">{heroEpg?.now?.title ?? (guideMessage ? 'Guide temporarily unavailable' : 'Fetching guide...')}</p>
+            <p className="mt-2 text-sm text-slate-400">Next: {heroEpg?.next?.title ?? (guideMessage ? 'Browse live to keep surfing while guide recovers' : 'Loading next slot')}</p>
             <div className="mt-8 grid grid-cols-3 gap-3">
               {[
                 ['Live', home.summary.live],
@@ -370,9 +408,9 @@ export function HomeDashboard() {
               <p className="mt-4 text-lg font-semibold text-white">{stream.name}</p>
               <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{stream.channel_group || 'Live channel'}</p>
               <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-slate-500">Now</p>
-              <p className="mt-1 text-sm text-slate-200">{liveNow[getContentId(stream)]?.now?.title ?? 'Loading guide...'}</p>
+              <p className="mt-1 text-sm text-slate-200">{liveNow[getContentId(stream)]?.now?.title ?? (guideMessage ? 'Guide unavailable right now' : 'Loading guide...')}</p>
               <p className="mt-3 text-[11px] uppercase tracking-[0.25em] text-slate-500">Next</p>
-              <p className="mt-1 text-sm text-slate-400">{liveNow[getContentId(stream)]?.next?.title ?? 'Fetching next slot'}</p>
+              <p className="mt-1 text-sm text-slate-400">{liveNow[getContentId(stream)]?.next?.title ?? (guideMessage ? 'Preview and playback still work' : 'Fetching next slot')}</p>
               {liveNow[getContentId(stream)]?.listings?.length ? (
                 <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Guide strip</p>
