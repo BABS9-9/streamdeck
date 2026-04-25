@@ -368,7 +368,7 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health?scenario=degradedLive`,
           affectedEndpoints: ['get_live_streams'],
           expectedUx: ['Provider stays connectable', 'Live browser shows degraded state', 'Preview area explains fallback instead of looking broken'],
-          verificationSteps: ['Tap Degraded live in-product', 'Validate the login and home shell still render', 'Open Live and verify retry plus fallback messaging instead of a dead surface'],
+          verificationSteps: ['Tap Degraded live in-product', 'Validate the login and home shell still render', 'Open Live and verify the browser refreshes in place with retry plus fallback messaging instead of a dead surface'],
         },
         degradedEpg: {
           label: scenarioLabels.degradedEpg,
@@ -377,7 +377,7 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health?scenario=degradedEpg`,
           affectedEndpoints: ['get_short_epg'],
           expectedUx: ['Connect normally', 'Home shows guide fallback copy instead of emptying', 'Live still browses and previews channels while guide chips explain the outage'],
-          verificationSteps: ['Tap Degraded guide in-product', 'Open Home and verify guide copy downgrades gracefully', 'Open Live and confirm cards still browse and preview even when NOW and NEXT are unavailable'],
+          verificationSteps: ['Tap Degraded guide in-product', 'Open Home and verify guide copy downgrades gracefully without a manual reload', 'Open Live and confirm cards still browse and preview even when NOW and NEXT are unavailable'],
         },
       },
       topCategories: liveCategories.map((category) => ({
@@ -402,15 +402,15 @@ const server = http.createServer((req, res) => {
             ? 'Connect normally, then verify the app calls out guide degradation without making login feel broken.'
             : 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
         home: degradedSearch
-          ? 'Verify Home still feels useful while search-oriented catalogs degrade and cached content remains visible.'
+          ? 'Verify Home still feels useful while search-oriented catalogs degrade and cached content remains visible, and that the rehearsal switch refreshes the surface in place.'
           : degradedEpg
-            ? 'Verify Home still loads counts, quick actions, and featured content while guide copy falls back gracefully.'
-            : 'Verify hero counts, quick-launch actions, and cached provider refresh messaging from one healthy source.',
+            ? 'Verify Home still loads counts, quick actions, and featured content while guide copy falls back gracefully without a manual reload.'
+            : 'Verify hero counts, quick-launch actions, cached provider refresh messaging, and instant in-place rehearsal refresh from one healthy source.',
         live: degradedLive
-          ? 'Verify inline provider status banners, retry actions, and graceful preview fallback when the live catalog is unavailable.'
+          ? 'Verify inline provider status banners, retry actions, graceful preview fallback, and in-place browser refresh when the live catalog becomes unavailable.'
           : degradedEpg
-            ? 'Verify channel browsing and preview remain intact while NOW and NEXT labels explain the guide outage.'
-            : 'Verify inline NOW/NEXT guide data, hover preview fallback, and surf-rail browsing against realistic fake categories.',
+            ? 'Verify channel browsing and preview remain intact while NOW and NEXT labels explain the guide outage without forcing a full reload.'
+            : 'Verify inline NOW/NEXT guide data, hover preview fallback, surf-rail browsing, and in-place rehearsal refresh against realistic fake categories.',
         search: degradedSearch
           ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, offers direct retry actions, and refreshes immediately when the rehearsal mode changes.'
           : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell, then use the rehearsal toggles to force an instant refresh.',

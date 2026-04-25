@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { fetchMockProviderHealth } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -47,12 +47,24 @@ export function HomeDashboard() {
   const [cacheState, setCacheState] = useState<CacheState>(emptyCacheState);
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
   const [guideMessage, setGuideMessage] = useState<string | null>(null);
+  const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
+  const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
+
+  useEffect(() => {
+    setScenario(getSelectedMockProviderScenario());
+    return subscribeToMockProviderScenario((nextScenario) => {
+      setScenario(nextScenario);
+      setScenarioRefreshing(true);
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     if (!activeConnection) return;
 
-    fetchMockProviderHealth(activeConnection)
+    const scenarioLabel = scenario.replace(/([A-Z])/g, ' $1').toLowerCase();
+
+    fetchMockProviderHealth(activeConnection, scenario)
       .then((health) => {
         if (!cancelled) setMockHealth(health);
       })
@@ -80,9 +92,11 @@ export function HomeDashboard() {
       applySnapshot(
         cached,
         'cached',
-        cacheAgeMinutes <= 15
-          ? 'Loaded instantly from saved provider cache while refreshing live data.'
-          : `Loaded from saved cache (${cacheAgeMinutes} min old) while refreshing live data.`
+        scenarioRefreshing
+          ? `Applying ${scenarioLabel} rehearsal while keeping saved Home data live.`
+          : cacheAgeMinutes <= 15
+            ? 'Loaded instantly from saved provider cache while refreshing live data.'
+            : `Loaded from saved cache (${cacheAgeMinutes} min old) while refreshing live data.`
       );
     } else {
       setHome(emptyState);
@@ -141,25 +155,28 @@ export function HomeDashboard() {
           updatedAt: Date.now(),
         };
         saveHomeSnapshot(activeConnection.id, snapshot);
-        setCacheState({ mode: 'live', message: cached ? 'Provider refreshed successfully. Home is live again.' : null, updatedAt: snapshot.updatedAt });
+        setCacheState({ mode: 'live', message: cached ? (scenarioRefreshing ? `Home refreshed in place for ${scenarioLabel}.` : 'Provider refreshed successfully. Home is live again.') : null, updatedAt: snapshot.updatedAt });
+        setScenarioRefreshing(false);
       })
       .catch(() => {
         if (cancelled) return;
         if (cached) {
           const cacheAgeMinutes = Math.round((Date.now() - cached.updatedAt) / 60000);
-          applySnapshot(cached, 'offline', `Provider refresh failed. Showing saved home data from ${cacheAgeMinutes} min ago.`);
+          applySnapshot(cached, 'offline', scenarioRefreshing ? `Home could not fully reload for ${scenarioLabel}, so saved provider data stayed on screen.` : `Provider refresh failed. Showing saved home data from ${cacheAgeMinutes} min ago.`);
+          setScenarioRefreshing(false);
           return;
         }
         setHome(emptyState);
         setHeroEpg(null);
         setLiveNow({});
-        setCacheState({ mode: 'offline', message: 'Provider is unavailable and no saved home cache exists yet.', updatedAt: null });
+        setCacheState({ mode: 'offline', message: scenarioRefreshing ? `Home could not reload for ${scenarioLabel} and there is no saved home cache yet.` : 'Provider is unavailable and no saved home cache exists yet.', updatedAt: null });
+        setScenarioRefreshing(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [activeConnection]);
+  }, [activeConnection, scenario, scenarioRefreshing]);
 
   const providerHistory = useMemo(
     () => (activeConnection ? watchHistory.filter((item) => item.providerId === activeConnection.id) : []),
@@ -271,7 +288,7 @@ export function HomeDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Mock rehearsal modes</p>
-                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, degraded-live, and degraded-guide behavior so Home can rehearse fallback messaging before real providers misbehave.</p>
+                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, degraded-live, and degraded-guide behavior so Home can rehearse fallback messaging before real providers misbehave, and this surface now refreshes in place as soon as the rehearsal mode changes.</p>
               </div>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
                 Active: {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}
@@ -284,6 +301,11 @@ export function HomeDashboard() {
                 </span>
               ))}
             </div>
+            {scenarioRefreshing ? (
+              <div className="mt-4 rounded-2xl border border-violet-400/20 bg-black/20 p-4 text-sm text-violet-100">
+                Applying {scenario.replace(/([A-Z])/g, ' $1').toLowerCase()} rehearsal and refreshing Home in place.
+              </div>
+            ) : null}
             <div className="mt-4 grid gap-3 xl:grid-cols-2">
               {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
                 <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>

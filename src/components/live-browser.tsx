@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { fetchMockProviderHealth } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderHealth, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -38,13 +38,25 @@ export function LiveBrowser() {
   const [previewState, setPreviewState] = useState<'idle' | 'loading' | 'playing' | 'buffering' | 'error'>('idle');
   const [showPreviewFallback, setShowPreviewFallback] = useState(false);
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
+  const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
   const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setScenario(getSelectedMockProviderScenario());
+    return subscribeToMockProviderScenario((nextScenario) => {
+      setScenario(nextScenario);
+      setScenarioRefreshing(true);
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     if (!activeConnection) return;
 
-    fetchMockProviderHealth(activeConnection)
+    const scenarioLabel = scenario.replace(/([A-Z])/g, ' $1').toLowerCase();
+
+    fetchMockProviderHealth(activeConnection, scenario)
       .then((health) => {
         if (!cancelled) setMockHealth(health);
       })
@@ -82,10 +94,12 @@ export function LiveBrowser() {
         }, {});
         setEpg(nextEpg);
         setGuideMessage(Object.keys(nextEpg).length === 0 ? 'Guide data is temporarily unavailable. Channel browse and preview are still live.' : null);
+        setScenarioRefreshing(false);
       })
       .catch((error) => {
         if (cancelled) return;
-        setLoadError(error instanceof Error ? error.message : 'Unable to load live TV');
+        setLoadError(scenarioRefreshing ? `Unable to reload Live for ${scenarioLabel}. ${error instanceof Error ? error.message : 'Unable to load live TV'}` : error instanceof Error ? error.message : 'Unable to load live TV');
+        setScenarioRefreshing(false);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -94,7 +108,7 @@ export function LiveBrowser() {
     return () => {
       cancelled = true;
     };
-  }, [activeConnection]);
+  }, [activeConnection, scenario, scenarioRefreshing]);
 
   const previewSource = playbackUrl ?? previewUrl;
   const displayStream = currentStream ?? selectedStream;
@@ -193,7 +207,7 @@ export function LiveBrowser() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Live rehearsal note</p>
-              <p className="mt-2">The mock provider now supports degraded-live, degraded-search, and degraded-guide rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source.</p>
+              <p className="mt-2">The mock provider now supports degraded-live, degraded-search, and degraded-guide rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source, and this browser now hot-refreshes in place as soon as the rehearsal mode changes.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
               {mockHealth ? `Mode: ${mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}` : 'Mock-friendly retries ready'}
@@ -201,6 +215,11 @@ export function LiveBrowser() {
           </div>
           {mockHealth ? (
             <>
+              {scenarioRefreshing ? (
+                <div className="mt-4 rounded-2xl border border-violet-400/20 bg-black/20 p-4 text-sm text-violet-100">
+                  Applying {scenario.replace(/([A-Z])/g, ' $1').toLowerCase()} rehearsal and refreshing Live in place.
+                </div>
+              ) : null}
               <div className="mt-4 flex flex-wrap gap-2">
                 {Object.entries(mockHealth.endpointHealth || {}).map(([key, value]) => (
                   <span key={key} className={`rounded-full border px-3 py-2 text-[11px] uppercase tracking-[0.22em] ${value === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>

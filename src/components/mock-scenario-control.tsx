@@ -16,19 +16,24 @@ export function MockScenarioControl() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const validateConnection = useAuthStore((state) => state.validateConnection);
   const [scenario, setScenario] = useState<MockProviderScenario>('healthy');
+  const [applyingScenario, setApplyingScenario] = useState<MockProviderScenario | null>(null);
 
   useEffect(() => {
     setScenario(getSelectedMockProviderScenario());
-    return subscribeToMockProviderScenario(setScenario);
+    return subscribeToMockProviderScenario((nextScenario) => {
+      setScenario(nextScenario);
+      setApplyingScenario(null);
+    });
   }, []);
 
   if (!activeConnection || !activeConnection.server.includes('localhost:3579')) return null;
 
   const applyScenario = async (nextScenario: MockProviderScenario) => {
+    if (nextScenario === scenario) return;
+    setApplyingScenario(nextScenario);
     setSelectedMockProviderScenario(nextScenario);
     setScenario(nextScenario);
     await validateConnection(activeConnection.id);
-    window.location.reload();
   };
 
   return (
@@ -36,7 +41,7 @@ export function MockScenarioControl() {
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Mock provider scenario</p>
-          <p className="mt-1 text-slate-300">Switch rehearsal mode in-app and rerun login, home, live, and playback flows against the same mock Xtream adapter.</p>
+          <p className="mt-1 text-slate-300">Switch rehearsal mode in-app and hot-refresh login, home, live, search, movies, and series against the same mock Xtream adapter.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(labels) as MockProviderScenario[]).map((key) => (
@@ -46,7 +51,7 @@ export function MockScenarioControl() {
               onClick={() => applyScenario(key)}
               className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
             >
-              {labels[key]}
+              {applyingScenario === key ? `Applying ${labels[key]}` : labels[key]}
             </button>
           ))}
         </div>
