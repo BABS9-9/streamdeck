@@ -359,7 +359,7 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health?scenario=degradedSearch`,
           affectedEndpoints: ['get_vod_streams', 'get_series'],
           expectedUx: ['Home stays usable', 'Search explains partial results', 'Movies and Series fall back gracefully'],
-          verificationSteps: ['Switch to Degraded search', 'Open Search and verify partial-result messaging', 'Open Movies and Series and confirm degraded states still feel intentional'],
+          verificationSteps: ['Tap Degraded search in-product', 'Open Search and verify partial-result messaging refreshes immediately', 'Open Movies and Series and confirm degraded states still feel intentional without a manual reload'],
         },
         degradedLive: {
           label: scenarioLabels.degradedLive,
@@ -368,7 +368,7 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health?scenario=degradedLive`,
           affectedEndpoints: ['get_live_streams'],
           expectedUx: ['Provider stays connectable', 'Live browser shows degraded state', 'Preview area explains fallback instead of looking broken'],
-          verificationSteps: ['Switch to Degraded live', 'Validate the login and home shell still render', 'Open Live and verify retry plus fallback messaging instead of a dead surface'],
+          verificationSteps: ['Tap Degraded live in-product', 'Validate the login and home shell still render', 'Open Live and verify retry plus fallback messaging instead of a dead surface'],
         },
         degradedEpg: {
           label: scenarioLabels.degradedEpg,
@@ -377,7 +377,7 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health?scenario=degradedEpg`,
           affectedEndpoints: ['get_short_epg'],
           expectedUx: ['Connect normally', 'Home shows guide fallback copy instead of emptying', 'Live still browses and previews channels while guide chips explain the outage'],
-          verificationSteps: ['Switch to Degraded guide', 'Open Home and verify guide copy downgrades gracefully', 'Open Live and confirm cards still browse and preview even when NOW and NEXT are unavailable'],
+          verificationSteps: ['Tap Degraded guide in-product', 'Open Home and verify guide copy downgrades gracefully', 'Open Live and confirm cards still browse and preview even when NOW and NEXT are unavailable'],
         },
       },
       topCategories: liveCategories.map((category) => ({
@@ -412,14 +412,14 @@ const server = http.createServer((req, res) => {
             ? 'Verify channel browsing and preview remain intact while NOW and NEXT labels explain the guide outage.'
             : 'Verify inline NOW/NEXT guide data, hover preview fallback, and surf-rail browsing against realistic fake categories.',
         search: degradedSearch
-          ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, and offers direct retry actions.'
-          : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell.',
+          ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, offers direct retry actions, and refreshes immediately when the rehearsal mode changes.'
+          : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell, then use the rehearsal toggles to force an instant refresh.',
         movies: degradedSearch
-          ? 'Verify Movies falls back to saved catalog state with intentional degraded copy instead of blanking the browse surface.'
-          : 'Verify the movie library loads from cache first, then refreshes into the cinematic detail rail cleanly.',
+          ? 'Verify Movies falls back to saved catalog state with intentional degraded copy instead of blanking the browse surface, and that the scenario switch refreshes without a manual reload.'
+          : 'Verify the movie library loads from cache first, then refreshes into the cinematic detail rail cleanly as soon as the rehearsal mode changes.',
         series: degradedSearch
-          ? 'Verify Series keeps the drill-down shell usable from saved catalog data even when search-oriented provider endpoints are degraded.'
-          : 'Verify series list, season switches, and episode launch all stay connected to the real mock Xtream payloads.',
+          ? 'Verify Series keeps the drill-down shell usable from saved catalog data even when search-oriented provider endpoints are degraded, with the new scenario switch refreshing immediately.'
+          : 'Verify series list, season switches, and episode launch all stay connected to the real mock Xtream payloads, then flip rehearsal modes and watch the drill-down refresh live.',
       },
       scenarioUrls: {
         healthy: `${host}/health`,

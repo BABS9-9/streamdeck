@@ -74,6 +74,7 @@ export function SearchBrowser() {
   const [degradedProviders, setDegradedProviders] = useState<Array<{ provider: SavedConnection; message: string }>>([]);
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
   const [scenario, setScenario] = useState<MockProviderScenario>('healthy');
+  const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
 
   useEffect(() => {
     setScenario(getSelectedMockProviderScenario());
@@ -102,6 +103,7 @@ export function SearchBrowser() {
     if (connections.length === 0) {
       setResults([]);
       setLoading(false);
+      setScenarioRefreshing(false);
       return;
     }
 
@@ -123,10 +125,10 @@ export function SearchBrowser() {
         setResults(rankResults(cachedCatalogs, trimmed));
         setUsingCache(true);
         setLoading(true);
-        setLoadingLabel('Refreshing cached provider catalogs...');
+        setLoadingLabel(scenarioRefreshing ? `Applying ${scenarioLabels[scenario].toLowerCase()} rehearsal...` : 'Refreshing cached provider catalogs...');
       } else {
         setLoading(true);
-        setLoadingLabel('Searching all providers...');
+        setLoadingLabel(scenarioRefreshing ? `Applying ${scenarioLabels[scenario].toLowerCase()} rehearsal...` : 'Searching all providers...');
         setUsingCache(false);
         setResults([]);
       }
@@ -172,7 +174,10 @@ export function SearchBrowser() {
         setError(searchError instanceof Error ? searchError.message : 'Search failed');
         if (cachedCatalogs.length === 0) setResults([]);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setScenarioRefreshing(false);
+        }
       }
     }, 250);
 
@@ -180,7 +185,7 @@ export function SearchBrowser() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [connections, query]);
+  }, [connections, query, scenario, scenarioRefreshing]);
 
   const groupedCounts = useMemo(() => {
     return results.reduce<Record<string, number>>((acc, result) => {
@@ -196,6 +201,12 @@ export function SearchBrowser() {
     if (state === 'error') return 'border-rose-400/40 bg-rose-500/10 text-rose-100';
     if (state === 'degraded') return 'border-amber-400/40 bg-amber-500/10 text-amber-100';
     return 'border-white/10 bg-black/20 text-slate-400';
+  };
+
+  const applyScenario = (nextScenario: MockProviderScenario) => {
+    if (nextScenario === scenario) return;
+    setScenarioRefreshing(true);
+    setSelectedMockProviderScenario(nextScenario);
   };
 
   if (connections.length === 0) {
@@ -270,13 +281,22 @@ export function SearchBrowser() {
             {(Object.keys(scenarioLabels) as MockProviderScenario[]).map((key) => (
               <button
                 key={key}
-                onClick={() => setSelectedMockProviderScenario(key)}
+                onClick={() => applyScenario(key)}
                 className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
               >
                 {scenarioLabels[key]}
               </button>
             ))}
           </div>
+          {mockHealth.scenarioUrls ? (
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
+              {(Object.entries(mockHealth.scenarioUrls) as Array<[MockProviderScenario, string]>).map(([key, url]) => (
+                <a key={key} href={url} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-black/20 px-3 py-2 hover:bg-white/5">
+                  {scenarioLabels[key]} health
+                </a>
+              ))}
+            </div>
+          ) : null}
           {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.verificationSteps?.length ? (
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
               <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Active verification steps</p>

@@ -34,6 +34,7 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
   const [scenario, setScenario] = useState<MockProviderScenario>('healthy');
+  const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
 
   useEffect(() => {
     setScenario(getSelectedMockProviderScenario());
@@ -67,7 +68,11 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
     if (cachedItems?.length) {
       setItems(cachedItems);
       setCacheMode('cached');
-      setCacheMessage('Loaded instantly from cached provider catalog while refreshing the library.');
+      setCacheMessage(
+        scenarioRefreshing
+          ? `Applying ${scenarioLabels[scenario].toLowerCase()} rehearsal while keeping the last saved library visible.`
+          : 'Loaded instantly from cached provider catalog while refreshing the library.'
+      );
       setLoading(false);
     } else {
       setItems([]);
@@ -81,26 +86,38 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
       setItems(nextItems);
       setLoading(false);
       setCacheMode('live');
-      setCacheMessage(cachedItems?.length ? 'Library refreshed successfully. Premium browse surface is live again.' : null);
+      setCacheMessage(
+        cachedItems?.length
+          ? scenarioRefreshing
+            ? `${kind === 'movies' ? 'Movies' : 'Series'} reloaded immediately for ${scenarioLabels[scenario].toLowerCase()}.`
+            : 'Library refreshed successfully. Premium browse surface is live again.'
+          : null
+      );
+      setScenarioRefreshing(false);
       refreshSearchCatalog(activeConnection).catch(() => null);
     }).catch(() => {
       if (cancelled) return;
       if (cachedItems?.length) {
         setItems(cachedItems);
         setCacheMode('offline');
-        setCacheMessage('Provider refresh failed. Showing the saved library cache so browsing stays usable.');
+        setCacheMessage(
+          scenarioRefreshing
+            ? `${kind === 'movies' ? 'Movies' : 'Series'} could not fully reload for ${scenarioLabels[scenario].toLowerCase()}, so the saved library cache stayed live.`
+            : 'Provider refresh failed. Showing the saved library cache so browsing stays usable.'
+        );
       } else {
         setItems([]);
         setCacheMode('offline');
         setCacheMessage('Provider is unavailable and there is no saved library cache yet.');
       }
       setLoading(false);
+      setScenarioRefreshing(false);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [activeConnection, kind]);
+  }, [activeConnection, kind, scenario, scenarioRefreshing]);
 
   const providerHistory = useMemo(
     () => (activeConnection ? watchHistory.filter((item) => item.providerId === activeConnection.id && item.kind !== 'live') : []),
@@ -188,6 +205,12 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const libraryFlowCopy = kind === 'movies' ? mockHealth?.demoFlows?.movies : mockHealth?.demoFlows?.series;
 
+  const applyScenario = (nextScenario: MockProviderScenario) => {
+    if (nextScenario === scenario) return;
+    setScenarioRefreshing(true);
+    setSelectedMockProviderScenario(nextScenario);
+  };
+
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Return to login first.</div>;
   }
@@ -219,13 +242,22 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
               {(Object.keys(scenarioLabels) as MockProviderScenario[]).map((key) => (
                 <button
                   key={key}
-                  onClick={() => setSelectedMockProviderScenario(key)}
+                  onClick={() => applyScenario(key)}
                   className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
                 >
                   {scenarioLabels[key]}
                 </button>
               ))}
             </div>
+            {mockHealth.scenarioUrls ? (
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
+                {(Object.entries(mockHealth.scenarioUrls) as Array<[MockProviderScenario, string]>).map(([key, url]) => (
+                  <a key={key} href={url} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-black/20 px-3 py-2 hover:bg-white/5">
+                    {scenarioLabels[key]} health
+                  </a>
+                ))}
+              </div>
+            ) : null}
             {activeScenario?.verificationSteps?.length ? (
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Active verification steps</p>
@@ -360,13 +392,22 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
             {(Object.keys(scenarioLabels) as MockProviderScenario[]).map((key) => (
               <button
                 key={key}
-                onClick={() => setSelectedMockProviderScenario(key)}
+                onClick={() => applyScenario(key)}
                 className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
               >
                 {scenarioLabels[key]}
               </button>
             ))}
           </div>
+          {mockHealth.scenarioUrls ? (
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
+              {(Object.entries(mockHealth.scenarioUrls) as Array<[MockProviderScenario, string]>).map(([key, url]) => (
+                <a key={key} href={url} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-black/20 px-3 py-2 hover:bg-white/5">
+                  {scenarioLabels[key]} health
+                </a>
+              ))}
+            </div>
+          ) : null}
           {activeScenario?.verificationSteps?.length ? (
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
               <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Active verification steps</p>
