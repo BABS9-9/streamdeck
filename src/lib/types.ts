@@ -231,7 +231,11 @@ export type MockProviderHealth = {
     login: string;
     home: string;
     live: string;
+    search?: string;
+    movies?: string;
+    series?: string;
   };
+  scenarioUrls?: Record<MockProviderScenario, string>;
   xmltv: string;
   sampleLive: string;
   sampleVod: string;

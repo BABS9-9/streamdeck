@@ -411,6 +411,21 @@ const server = http.createServer((req, res) => {
           : degradedEpg
             ? 'Verify channel browsing and preview remain intact while NOW and NEXT labels explain the guide outage.'
             : 'Verify inline NOW/NEXT guide data, hover preview fallback, and surf-rail browsing against realistic fake categories.',
+        search: degradedSearch
+          ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, and offers direct retry actions.'
+          : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell.',
+        movies: degradedSearch
+          ? 'Verify Movies falls back to saved catalog state with intentional degraded copy instead of blanking the browse surface.'
+          : 'Verify the movie library loads from cache first, then refreshes into the cinematic detail rail cleanly.',
+        series: degradedSearch
+          ? 'Verify Series keeps the drill-down shell usable from saved catalog data even when search-oriented provider endpoints are degraded.'
+          : 'Verify series list, season switches, and episode launch all stay connected to the real mock Xtream payloads.',
+      },
+      scenarioUrls: {
+        healthy: `${host}/health`,
+        degradedSearch: `${host}/health?scenario=degradedSearch`,
+        degradedLive: `${host}/health?scenario=degradedLive`,
+        degradedEpg: `${host}/health?scenario=degradedEpg`,
       },
       xmltv: `${host}/xmltv.php?username=test&password=test`,
       sampleLive: `${host}/player_api.php?username=test&password=test&action=get_live_streams&category_id=1`,

@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
-import { ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 
@@ -49,6 +50,13 @@ const rankResults = (providerCatalogs: Array<{ provider: SavedConnection; catalo
     .slice(0, 48);
 };
 
+const scenarioLabels: Record<MockProviderScenario, string> = {
+  healthy: 'Healthy',
+  degradedSearch: 'Degraded search',
+  degradedLive: 'Degraded live',
+  degradedEpg: 'Degraded guide',
+};
+
 export function SearchBrowser() {
   const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
@@ -64,6 +72,29 @@ export function SearchBrowser() {
   const [error, setError] = useState<string | null>(null);
   const [usingCache, setUsingCache] = useState(false);
   const [degradedProviders, setDegradedProviders] = useState<Array<{ provider: SavedConnection; message: string }>>([]);
+  const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [scenario, setScenario] = useState<MockProviderScenario>('healthy');
+
+  useEffect(() => {
+    setScenario(getSelectedMockProviderScenario());
+    return subscribeToMockProviderScenario(setScenario);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMockProviderHealth(activeConnection, scenario)
+      .then((health) => {
+        if (!cancelled) setMockHealth(health);
+      })
+      .catch(() => {
+        if (!cancelled) setMockHealth(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConnection, scenario]);
 
   useEffect(() => {
     let cancelled = false;
@@ -215,6 +246,47 @@ export function SearchBrowser() {
           ))}
         </div>
       </section>
+
+      {mockHealth ? (
+        <section className="rounded-[1.6rem] border border-violet-400/20 bg-violet-500/10 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-violet-300">Search rehearsal visibility</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Search now knows when the mock provider is rehearsing degraded catalog states.</h3>
+              <p className="mt-2 max-w-3xl text-sm text-slate-300">{mockHealth.demoFlows?.search || 'Use the mock adapter to verify cached search, partial-result messaging, and retry behavior.'}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300">
+              {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}
+            </span>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {Object.entries(mockHealth.endpointHealth || {}).map(([key, value]) => (
+              <span key={key} className={`rounded-full border px-3 py-2 text-[11px] uppercase tracking-[0.22em] ${value === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>
+                {key} · {value}
+              </span>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(Object.keys(scenarioLabels) as MockProviderScenario[]).map((key) => (
+              <button
+                key={key}
+                onClick={() => setSelectedMockProviderScenario(key)}
+                className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
+              >
+                {scenarioLabels[key]}
+              </button>
+            ))}
+          </div>
+          {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.verificationSteps?.length ? (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Active verification steps</p>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                {mockHealth.healthScenarios[mockHealth.activeScenario].verificationSteps.map((step) => <li key={step}>• {step}</li>)}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       {error ? <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</div> : null}
       {loading ? <div className="rounded-2xl border border-white/10 bg-black/20 p-6 text-sm text-slate-400">{loadingLabel}</div> : null}
