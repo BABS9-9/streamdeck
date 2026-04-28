@@ -8,12 +8,27 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 
+const normalizeLibraryKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+const buildVariantKey = (title: string, kind: 'live' | 'movie' | 'series', year?: string, seriesTitle?: string) => {
+  const name = normalizeLibraryKey(seriesTitle || title);
+  return `${kind}:${name}:${year || ''}`;
+};
+
+type ProviderVariant = {
+  providerId: string;
+  providerName: string;
+  title: string;
+};
+
 type CollectionsProps = {
   mode: 'favorites' | 'continue';
 };
 
 export function LibraryCollections({ mode }: CollectionsProps) {
+  const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
+  const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const playStream = usePlayerStore((state) => state.playStream);
@@ -21,6 +36,24 @@ export function LibraryCollections({ mode }: CollectionsProps) {
   const [catalog, setCatalog] = useState<Record<number, XtreamStream>>({});
   const [loading, setLoading] = useState(false);
   const [cacheState, setCacheState] = useState<'idle' | 'cached' | 'fresh'>('idle');
+  const [providerVariants, setProviderVariants] = useState<Record<string, ProviderVariant[]>>({});
+
+  useEffect(() => {
+    const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
+      const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+      if (!connectionCatalog) return acc;
+      [...connectionCatalog.live, ...connectionCatalog.vod, ...connectionCatalog.series].forEach((item) => {
+        const key = buildVariantKey(item.name, item.stream_type as 'live' | 'movie' | 'series', item.year);
+        const variants = acc[key] || [];
+        if (!variants.some((variant) => variant.providerId === connection.id)) {
+          variants.push({ providerId: connection.id, providerName: connection.name, title: item.name });
+        }
+        acc[key] = variants;
+      });
+      return acc;
+    }, {});
+    setProviderVariants(cachedVariants);
+  }, [connections]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +86,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     return () => {
       cancelled = true;
     };
-  }, [activeConnection, mode]);
+  }, [activeConnection, connections, mode]);
 
   const favoriteIds = useMemo(
     () => (activeConnection ? getFavoritesForProvider(activeConnection.id) : []),
@@ -70,6 +103,22 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     [activeConnection, watchHistory]
   );
 
+  const variantSummary = useMemo(() => {
+    const summary: Record<string, ProviderVariant[]> = {};
+
+    favoriteItems.forEach((item) => {
+      const key = buildVariantKey(item.name, item.stream_type as 'live' | 'movie' | 'series', item.year);
+      summary[`favorite:${getContentId(item)}`] = (providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection?.id);
+    });
+
+    continueItems.forEach((item) => {
+      const key = buildVariantKey(item.title, item.kind, undefined, item.seriesTitle);
+      summary[`continue:${item.id}`] = (providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection?.id);
+    });
+
+    return summary;
+  }, [activeConnection?.id, continueItems, favoriteItems, providerVariants]);
+
   const formatEpisodeLabel = (item: { kind: 'live' | 'movie' | 'series'; seasonNumber?: number; episodeNumber?: number; seriesTitle?: string }) => {
     if (item.kind !== 'series') return item.kind;
     const season = item.seasonNumber;
@@ -84,6 +133,26 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `Resume at ${mins}:${String(secs).padStart(2, '0')}`;
+  };
+
+  const renderProviderVariants = (variants: ProviderVariant[]) => {
+    if (variants.length === 0) return null;
+    return (
+      <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
+        <p className="uppercase tracking-[0.2em] text-emerald-200">Also available elsewhere</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {variants.map((variant) => (
+            <button
+              key={`${variant.providerId}-${variant.title}`}
+              onClick={() => setActiveConnection(variant.providerId)}
+              className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+            >
+              {variant.providerName}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   if (!activeConnection) {
@@ -127,6 +196,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                     <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">{contentId}</span>
                   </div>
                   <p className="mt-3 line-clamp-3 text-sm text-slate-400">{item.plot || item.genre || 'Saved from your StreamDeck library.'}</p>
+                  {renderProviderVariants(variantSummary[`favorite:${contentId}`] || [])}
                   {playbackUrl ? (
                     <button
                       onClick={() => {
@@ -171,6 +241,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{formatResume(item.positionSeconds)}{item.durationSeconds ? ` • ${Math.round(item.progress * 100)}% of ${Math.floor(item.durationSeconds / 60)} min` : ''}</p>
                 <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
+                {renderProviderVariants(variantSummary[`continue:${item.id}`] || [])}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <button
                     onClick={() => {
