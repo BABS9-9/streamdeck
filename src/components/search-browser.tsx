@@ -13,39 +13,138 @@ type SearchResult = {
   item: XtreamStream;
   kind: 'live' | 'movie' | 'series';
   score: number;
+  matchReason: string;
+  duplicateCount: number;
+  providerCount: number;
 };
 
-const scoreResult = (query: string, item: XtreamStream, kind: SearchResult['kind']) => {
-  const lowerQuery = query.toLowerCase();
-  const haystack = `${item.name} ${item.genre || ''} ${item.plot || ''}`.toLowerCase();
-  if (!haystack.includes(lowerQuery)) return -1;
+const SEARCH_ALIASES: Record<string, string[]> = {
+  sports: ['sport', 'sports', 'fight', 'goal', 'match', 'arena'],
+  news: ['news', 'headline', 'report', 'desk', 'wire'],
+  movie: ['movie', 'movies', 'cinema', 'film', 'premiere'],
+  kids: ['kids', 'kid', 'cartoon', 'family', 'junior'],
+};
 
-  let score = 20;
-  if (item.name.toLowerCase() === lowerQuery) score += 90;
-  else if (item.name.toLowerCase().startsWith(lowerQuery)) score += 55;
-  else score += Math.max(10, 35 - item.name.toLowerCase().indexOf(lowerQuery));
+const normalizeSearchText = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
+const getSearchTerms = (query: string) => {
+  const normalized = normalizeSearchText(query);
+  const tokens = normalized.split(/\s+/).filter(Boolean);
+  const expanded = new Set(tokens);
+  tokens.forEach((token) => {
+    SEARCH_ALIASES[token]?.forEach((alias) => expanded.add(alias));
+  });
+  return { normalized, tokens, expandedTokens: [...expanded] };
+};
+
+const buildSearchKey = (item: XtreamStream, kind: SearchResult['kind']) => {
+  const normalizedName = normalizeSearchText(item.name);
+  const year = item.year || item.releasedate?.slice(0, 4) || '';
+  return `${kind}:${normalizedName}:${year}`;
+};
+
+const scoreResult = (query: ReturnType<typeof getSearchTerms>, item: XtreamStream, kind: SearchResult['kind']) => {
+  const normalizedName = normalizeSearchText(item.name);
+  const haystack = normalizeSearchText(`${item.name} ${item.genre || ''} ${item.plot || ''} ${item.channel_group || ''} ${item.tagline || ''}`);
+  if (!haystack) return null;
+
+  let score = 0;
+  let matchedTerms = 0;
+
+  if (normalizedName === query.normalized) score += 140;
+  else if (normalizedName.startsWith(query.normalized)) score += 90;
+
+  query.expandedTokens.forEach((term) => {
+    if (!haystack.includes(term)) return;
+    matchedTerms += 1;
+    const nameIndex = normalizedName.indexOf(term);
+    if (nameIndex === 0) score += 28;
+    else if (nameIndex > 0) score += Math.max(10, 24 - nameIndex);
+    else if ((item.genre || '').toLowerCase().includes(term)) score += 14;
+    else if ((item.channel_group || '').toLowerCase().includes(term)) score += 12;
+    else score += 8;
+  });
+
+  if (matchedTerms === 0) return null;
+
+  score += matchedTerms * 6;
   if (kind === 'live') score += 12;
   if (kind === 'movie') score += 6;
+  if (query.tokens.length > 1 && matchedTerms >= query.tokens.length) score += 18;
   if (item.rating) score += Number(item.rating);
-  return score;
+
+  const matchReason = normalizedName === query.normalized
+    ? 'Exact title match'
+    : normalizedName.startsWith(query.normalized)
+      ? 'Title starts with your search'
+      : matchedTerms >= Math.max(2, query.tokens.length)
+        ? `Matched ${matchedTerms} search signals`
+        : (item.genre || '').toLowerCase().includes(query.tokens[0] || '')
+          ? `Genre match in ${item.genre}`
+          : kind === 'live'
+            ? 'Strong live-channel match'
+            : 'Relevant catalog match';
+
+  return { score, matchReason };
 };
 
 const rankResults = (providerCatalogs: Array<{ provider: SavedConnection; catalog: Pick<ProviderCatalog, 'live' | 'vod' | 'series'> }>, trimmed: string) => {
-  return providerCatalogs
-    .flatMap(({ provider, catalog }) => {
-      const buckets: Array<[SearchResult['kind'], XtreamStream[]]> = [
-        ['live', catalog.live],
-        ['movie', catalog.vod],
-        ['series', catalog.series],
-      ];
+  const query = getSearchTerms(trimmed);
+  const deduped = new Map<string, SearchResult>();
 
-      return buckets.flatMap(([kind, items]) =>
-        items
-          .map((item) => ({ provider, item, kind, score: scoreResult(trimmed, item, kind) }))
-          .filter((result) => result.score >= 0)
-      );
-    })
+  providerCatalogs.forEach(({ provider, catalog }) => {
+    const buckets: Array<[SearchResult['kind'], XtreamStream[]]> = [
+      ['live', catalog.live],
+      ['movie', catalog.vod],
+      ['series', catalog.series],
+    ];
+
+    buckets.forEach(([kind, items]) => {
+      items.forEach((item) => {
+        const scored = scoreResult(query, item, kind);
+        if (!scored) return;
+
+        const key = buildSearchKey(item, kind);
+        const existing = deduped.get(key);
+
+        if (!existing) {
+          deduped.set(key, {
+            provider,
+            item,
+            kind,
+            score: scored.score,
+            matchReason: scored.matchReason,
+            duplicateCount: 0,
+            providerCount: 1,
+          });
+          return;
+        }
+
+        if (scored.score > existing.score) {
+          deduped.set(key, {
+            provider,
+            item,
+            kind,
+            score: scored.score,
+            matchReason: `${scored.matchReason} • best version across providers`,
+            duplicateCount: existing.duplicateCount + 1,
+            providerCount: existing.providerCount + 1,
+          });
+          return;
+        }
+
+        deduped.set(key, {
+          ...existing,
+          score: existing.score + 2,
+          matchReason: `${existing.matchReason} • also found on ${existing.providerCount + 1} providers`,
+          duplicateCount: existing.duplicateCount + 1,
+          providerCount: existing.providerCount + 1,
+        });
+      });
+    });
+  });
+
+  return [...deduped.values()]
     .sort((a, b) => b.score - a.score)
     .slice(0, 48);
 };
@@ -194,6 +293,8 @@ export function SearchBrowser() {
     }, {});
   }, [results]);
 
+  const duplicateGroups = useMemo(() => results.filter((result) => result.duplicateCount > 0).length, [results]);
+
   const providerStateTone = (providerId: string) => {
     const state = connectionStatus[providerId]?.state;
     if (state === 'healthy') return 'border-emerald-400/40 bg-emerald-500/10 text-emerald-100';
@@ -256,6 +357,19 @@ export function SearchBrowser() {
             </span>
           ))}
         </div>
+        {query.trim().length >= 2 ? (
+          <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-400">
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+              {results.length} ranked result{results.length === 1 ? '' : 's'}
+            </span>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+              {duplicateGroups} duplicate group{duplicateGroups === 1 ? '' : 's'} collapsed
+            </span>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+              Best provider version shown first
+            </span>
+          </div>
+        ) : null}
       </section>
 
       {mockHealth ? (
@@ -352,6 +466,14 @@ export function SearchBrowser() {
                   </button>
                 </div>
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">{result.item.plot || result.item.genre || 'Ready for playback and browsing in the active provider shell.'}</p>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
+                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">{result.matchReason}</span>
+                  {result.providerCount > 1 ? (
+                    <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-emerald-100">
+                      Also on {result.providerCount - 1} more provider{result.providerCount - 1 === 1 ? '' : 's'}
+                    </span>
+                  ) : null}
+                </div>
                 <div className="mt-4 flex gap-3">
                   {isPlayable ? (
                     <button
