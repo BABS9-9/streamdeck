@@ -1,14 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { fetchMockProviderHealth, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
-import { MockProviderHealth, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderScenario, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { VideoPlayer } from './video-player';
+
+const scenarioLabels: Record<MockProviderScenario, string> = {
+  healthy: 'Healthy',
+  degradedSearch: 'Degraded search',
+  degradedLive: 'Degraded live',
+  degradedEpg: 'Degraded guide',
+};
 
 export function LiveBrowser() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
@@ -168,6 +175,13 @@ export function LiveBrowser() {
         ? 'border-rose-400/20 bg-rose-500/10 text-rose-100'
         : 'border-sky-400/20 bg-sky-500/10 text-sky-100';
 
+  const applyScenario = (nextScenario: MockProviderScenario) => {
+    if (nextScenario === scenario) return;
+    setScenarioRefreshing(true);
+    setSelectedMockProviderScenario(nextScenario);
+    setScenario(nextScenario);
+  };
+
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Return to login first.</div>;
   }
@@ -227,6 +241,27 @@ export function LiveBrowser() {
                   </span>
                 ))}
               </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {(Object.keys(scenarioLabels) as MockProviderScenario[]).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => applyScenario(key)}
+                    className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
+                  >
+                    {scenarioRefreshing && scenario === key ? `Applying ${scenarioLabels[key]}` : scenarioLabels[key]}
+                  </button>
+                ))}
+              </div>
+              {mockHealth.scenarioUrls ? (
+                <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
+                  {(Object.entries(mockHealth.scenarioUrls) as Array<[MockProviderScenario, string]>).map(([key, url]) => (
+                    <a key={key} href={url} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-black/20 px-3 py-2 hover:bg-white/5">
+                      {scenarioLabels[key]} health
+                    </a>
+                  ))}
+                </div>
+              ) : null}
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
                   <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>

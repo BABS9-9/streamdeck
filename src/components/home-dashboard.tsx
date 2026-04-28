@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { fetchMockProviderHealth, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
-import { MockProviderHealth, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 
@@ -32,6 +32,13 @@ const emptyCacheState: CacheState = {
   mode: 'live',
   message: null,
   updatedAt: null,
+};
+
+const scenarioLabels: Record<MockProviderScenario, string> = {
+  healthy: 'Healthy',
+  degradedSearch: 'Degraded search',
+  degradedLive: 'Degraded live',
+  degradedEpg: 'Degraded guide',
 };
 
 export function HomeDashboard() {
@@ -200,6 +207,13 @@ export function HomeDashboard() {
     return `${activeConnection.name} · ${activeConnection.username}`;
   }, [activeConnection]);
 
+  const applyScenario = (nextScenario: MockProviderScenario) => {
+    if (nextScenario === scenario) return;
+    setScenarioRefreshing(true);
+    setSelectedMockProviderScenario(nextScenario);
+    setScenario(nextScenario);
+  };
+
   const liveCategoryBreakdown = useMemo(() => {
     const counts = home.quickLive.reduce<Record<string, number>>((acc, stream) => {
       const key = stream.channel_group || stream.genre || 'Live';
@@ -301,6 +315,27 @@ export function HomeDashboard() {
                 </span>
               ))}
             </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(Object.keys(scenarioLabels) as MockProviderScenario[]).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => applyScenario(key)}
+                  className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
+                >
+                  {scenarioRefreshing && scenario === key ? `Applying ${scenarioLabels[key]}` : scenarioLabels[key]}
+                </button>
+              ))}
+            </div>
+            {mockHealth.scenarioUrls ? (
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
+                {(Object.entries(mockHealth.scenarioUrls) as Array<[MockProviderScenario, string]>).map(([key, url]) => (
+                  <a key={key} href={url} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-black/20 px-3 py-2 hover:bg-white/5">
+                    {scenarioLabels[key]} health
+                  </a>
+                ))}
+              </div>
+            ) : null}
             {scenarioRefreshing ? (
               <div className="mt-4 rounded-2xl border border-violet-400/20 bg-black/20 p-4 text-sm text-violet-100">
                 Applying {scenario.replace(/([A-Z])/g, ' $1').toLowerCase()} rehearsal and refreshing Home in place.

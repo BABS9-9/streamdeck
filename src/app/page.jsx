@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { fetchMockProviderHealth } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { useAuthStore } from '@/stores/auth-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -14,6 +14,13 @@ const statusTone = {
   healthy: 'text-emerald-300',
   degraded: 'text-amber-300',
   error: 'text-rose-300',
+};
+
+const scenarioLabels = {
+  healthy: 'Healthy',
+  degradedSearch: 'Degraded search',
+  degradedLive: 'Degraded live',
+  degradedEpg: 'Degraded guide',
 };
 
 export default function LoginPage() {
@@ -32,6 +39,8 @@ export default function LoginPage() {
   const [username, setUsername] = useState('test');
   const [password, setPassword] = useState('test');
   const [mockHealth, setMockHealth] = useState(null);
+  const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
+  const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
 
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
 
@@ -40,25 +49,46 @@ export default function LoginPage() {
   }, [hydrate]);
 
   useEffect(() => {
+    setScenario(getSelectedMockProviderScenario());
+    return subscribeToMockProviderScenario((nextScenario) => {
+      setScenario(nextScenario);
+      setScenarioRefreshing(true);
+    });
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
-    fetchMockProviderHealth(MOCK_SERVER)
+    fetchMockProviderHealth(MOCK_SERVER, scenario)
       .then((health) => {
-        if (!cancelled) setMockHealth(health);
+        if (!cancelled) {
+          setMockHealth(health);
+          setScenarioRefreshing(false);
+        }
       })
       .catch(() => {
-        if (!cancelled) setMockHealth(null);
+        if (!cancelled) {
+          setMockHealth(null);
+          setScenarioRefreshing(false);
+        }
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [scenario]);
 
   const helperText = useMemo(() => {
     if (connections.length === 0) return 'Use the local mock provider to test the full flow fast.';
     return `${connections.length} saved connection${connections.length === 1 ? '' : 's'} ready for hot-swap.`;
   }, [connections.length]);
+
+  const applyScenario = (nextScenario) => {
+    if (nextScenario === scenario) return;
+    setScenarioRefreshing(true);
+    setSelectedMockProviderScenario(nextScenario);
+    setScenario(nextScenario);
+  };
 
   const handleConnect = async (event) => {
     event.preventDefault();
@@ -141,14 +171,40 @@ export default function LoginPage() {
                     </span>
                   ))}
                 </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {Object.keys(scenarioLabels).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => applyScenario(key)}
+                      className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
+                    >
+                      {scenarioRefreshing && scenario === key ? `Applying ${scenarioLabels[key]}` : scenarioLabels[key]}
+                    </button>
+                  ))}
+                </div>
+                {mockHealth.scenarioUrls ? (
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
+                    {Object.entries(mockHealth.scenarioUrls).map(([key, url]) => (
+                      <a key={key} href={url} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-black/20 px-3 py-2 hover:bg-white/5">
+                        {scenarioLabels[key]} health
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+                {scenarioRefreshing ? (
+                  <div className="mt-4 rounded-2xl border border-violet-400/20 bg-black/20 p-4 text-sm text-violet-100">
+                    Applying {scenario.replace(/([A-Z])/g, ' $1').toLowerCase()} rehearsal and refreshing Login in place.
+                  </div>
+                ) : null}
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
-                    <div key={key} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <p className="text-sm font-semibold text-white">{scenario.label}</p>
-                      <p className="mt-2 text-sm text-slate-400">{scenario.summary}</p>
-                      <p className="mt-3 text-xs text-slate-500">{scenario.appImpact}</p>
+                  {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenarioCard]) => (
+                    <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>
+                      <p className="text-sm font-semibold text-white">{scenarioCard.label}</p>
+                      <p className="mt-2 text-sm text-slate-400">{scenarioCard.summary}</p>
+                      <p className="mt-3 text-xs text-slate-500">{scenarioCard.appImpact}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {scenario.affectedEndpoints.map((endpoint) => (
+                        {scenarioCard.affectedEndpoints.map((endpoint) => (
                           <span key={endpoint} className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">{endpoint}</span>
                         ))}
                       </div>
