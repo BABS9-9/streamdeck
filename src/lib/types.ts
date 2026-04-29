@@ -239,7 +239,15 @@ export type MockProviderHealth = {
     maxConnections: number;
     timezone: string;
     supportsMultiConnection: boolean;
+    warning?: string | null;
   };
+  trustSignals?: Array<{
+    id: string;
+    label: string;
+    tone: 'healthy' | 'warning';
+    detail: string;
+  }>;
+  recoveryActions?: string[];
   recommendedDemoSequence?: string[];
   sampleCredentials?: {
     server: string;

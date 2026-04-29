@@ -192,6 +192,19 @@ export default function LoginPage() {
                   ) : null}
                 </>
               ) : null}
+              {mockHealth.trustSignals?.length ? (
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Trust signals</p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    {mockHealth.trustSignals.map((signal) => (
+                      <div key={signal.id} className={`rounded-2xl border p-4 ${signal.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
+                        <p className={`text-sm font-semibold ${signal.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{signal.label}</p>
+                        <p className="mt-2 text-sm text-slate-300">{signal.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -254,6 +267,14 @@ export default function LoginPage() {
                     <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Active rehearsal checklist</p>
                     <ul className="mt-3 space-y-2 text-sm text-slate-300">
                       {activeScenario.verificationSteps.map((step) => <li key={step}>• {step}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
+                {mockHealth.recoveryActions?.length ? (
+                  <div className="mt-4 rounded-2xl border border-amber-400/20 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Recovery actions</p>
+                    <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                      {mockHealth.recoveryActions.map((step) => <li key={step}>• {step}</li>)}
                     </ul>
                   </div>
                 ) : null}

@@ -246,6 +246,80 @@ const buildMockAccountProfile = (scenario = 'healthy') => ({
   warning: scenario === 'lineSaturated' ? 'All provider lines are in use, so playback can fail even while auth still succeeds.' : null,
 });
 
+const buildTrustSignals = (scenario = 'healthy') => {
+  const lineSaturated = scenario === 'lineSaturated';
+  const degradedLive = scenario === 'degradedLive';
+  const degradedSearch = scenario === 'degradedSearch';
+  const degradedEpg = scenario === 'degradedEpg';
+
+  return [
+    {
+      id: 'account-status',
+      label: lineSaturated ? 'Capacity risk' : 'Account healthy',
+      tone: lineSaturated ? 'warning' : 'healthy',
+      detail: lineSaturated ? 'Auth succeeds, but every line is already in use.' : 'Account is active and playback can start immediately.',
+    },
+    {
+      id: 'guide-readiness',
+      label: degradedEpg ? 'Guide degraded' : 'Guide ready',
+      tone: degradedEpg ? 'warning' : 'healthy',
+      detail: degradedEpg ? 'NOW and NEXT should fall back cleanly without collapsing browse surfaces.' : 'Inline NOW and NEXT should stay populated across Home and Live.',
+    },
+    {
+      id: 'live-catalog',
+      label: degradedLive ? 'Live catalog unstable' : 'Live catalog ready',
+      tone: degradedLive ? 'warning' : 'healthy',
+      detail: degradedLive ? 'Live category fetches should show retries and fallback copy.' : 'Live browse, surf rails, and preview should all hydrate normally.',
+    },
+    {
+      id: 'search-catalog',
+      label: degradedSearch ? 'Search catalogs partial' : 'Search catalogs ready',
+      tone: degradedSearch ? 'warning' : 'healthy',
+      detail: degradedSearch ? 'Movies and Series should lean on cache and partial-result messaging.' : 'Cross-provider search and detail surfaces should fill normally.',
+    },
+  ];
+};
+
+const buildRecoveryActions = (scenario = 'healthy') => {
+  if (scenario === 'lineSaturated') {
+    return [
+      'Warn before playback that provider line capacity is already maxed.',
+      'Suggest switching to another saved provider for the same title or channel.',
+      'Let the user retry validation later instead of pretending the account is fully healthy.',
+    ];
+  }
+
+  if (scenario === 'degradedLive') {
+    return [
+      'Keep Home and Login usable while Live shows a degraded-state banner.',
+      'Offer retry from the Live surface before pushing the user back to setup.',
+      'Keep preview artwork visible so the screen never looks dead during recovery.',
+    ];
+  }
+
+  if (scenario === 'degradedEpg') {
+    return [
+      'Downgrade guide chips to clear fallback copy instead of empty whitespace.',
+      'Keep browse counts, quick actions, and preview working while guide calls recover.',
+      'Link the user to Live so they can keep surfing even with NOW and NEXT missing.',
+    ];
+  }
+
+  if (scenario === 'degradedSearch') {
+    return [
+      'Keep cached Movies and Series results visible while catalog refresh fails.',
+      'Call out partial provider truth explicitly instead of showing an empty state.',
+      'Expose a quick retry path without clearing the current browse context.',
+    ];
+  }
+
+  return [
+    'Connect with mock credentials and verify the provider trust cockpit stays green.',
+    'Open Home and confirm guide data, counts, and quick actions load together.',
+    'Open Live and confirm surf rails, preview, and guide strips stay aligned.',
+  ];
+};
+
 const sendJson = (res, data) => {
   res.writeHead(200, {
     'Content-Type': 'application/json',
@@ -415,6 +489,8 @@ const server = http.createServer((req, res) => {
         guide: getShortEpg(stream.stream_id).epg_listings[0] ? Buffer.from(getShortEpg(stream.stream_id).epg_listings[0].title, 'base64').toString('utf8') : 'Guide loading',
       })),
       accountProfile: buildMockAccountProfile(scenario),
+      trustSignals: buildTrustSignals(scenario),
+      recoveryActions: buildRecoveryActions(scenario),
       recommendedDemoSequence: degradedLive
         ? ['Connect with mock credentials', 'Open Home to confirm provider context still feels healthy', 'Open Live and verify degraded live fallback plus retry copy']
         : degradedEpg
