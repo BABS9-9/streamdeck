@@ -17,6 +17,13 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedEpg: 'Degraded guide',
 };
 
+const formatExpiry = (value?: string | null) => {
+  if (!value) return 'Unknown expiry';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown expiry';
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 export function LiveBrowser() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connections = useAuthStore((state) => state.connections);
@@ -283,6 +290,14 @@ export function LiveBrowser() {
                   </div>
                 ))}
               </div>
+              {mockHealth.recommendedDemoSequence?.length ? (
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Live rehearsal sequence</p>
+                  <ol className="mt-3 space-y-2 text-sm text-slate-300">
+                    {mockHealth.recommendedDemoSequence.map((item, index) => <li key={item}>{index + 1}. {item}</li>)}
+                  </ol>
+                </div>
+              ) : null}
             </>
           ) : null}
         </div>
@@ -347,6 +362,25 @@ export function LiveBrowser() {
               </div>
             ))}
           </div>
+          {activeConnection.lastAuthSummary ? (
+            <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Provider trust cockpit</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm text-slate-300">
+                <div>
+                  <p className="text-xs text-slate-500">Account</p>
+                  <p className="mt-1 text-white">{activeConnection.lastAuthSummary.status}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Expiry + timezone</p>
+                  <p className="mt-1 text-white">{formatExpiry(activeConnection.lastAuthSummary.expiresAt)} · {activeConnection.lastAuthSummary.timezone}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Line capacity</p>
+                  <p className="mt-1 text-white">{activeConnection.lastAuthSummary.activeConnections}/{activeConnection.lastAuthSummary.maxConnections} active lines</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">

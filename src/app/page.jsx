@@ -23,6 +23,13 @@ const scenarioLabels = {
   degradedEpg: 'Degraded guide',
 };
 
+const formatExpiry = (value) => {
+  if (!value) return 'Unknown expiry';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown expiry';
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const hydrate = useAuthStore((state) => state.hydrate);
@@ -154,6 +161,21 @@ export default function LoginPage() {
                   <p className="mt-2 text-sm text-slate-300">{mockHealth.demoFlows?.live}</p>
                 </div>
               </div>
+              {mockHealth.accountProfile ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                  {[
+                    ['Account', mockHealth.accountProfile.status],
+                    ['Expiry', mockHealth.accountProfile.expiryLabel],
+                    ['Capacity', `${mockHealth.accountProfile.activeConnections}/${mockHealth.accountProfile.maxConnections} in use`],
+                    ['Timezone', mockHealth.accountProfile.timezone],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
+                      <p className="mt-2 text-sm text-slate-200">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -217,6 +239,14 @@ export default function LoginPage() {
                     <ul className="mt-3 space-y-2 text-sm text-slate-300">
                       {activeScenario.verificationSteps.map((step) => <li key={step}>• {step}</li>)}
                     </ul>
+                  </div>
+                ) : null}
+                {mockHealth.recommendedDemoSequence?.length ? (
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Suggested demo path</p>
+                    <ol className="mt-3 space-y-2 text-sm text-slate-300">
+                      {mockHealth.recommendedDemoSequence.map((step, index) => <li key={step}>{index + 1}. {step}</li>)}
+                    </ol>
                   </div>
                 ) : null}
               </div>
@@ -312,6 +342,14 @@ export default function LoginPage() {
                         ) : null}
                       </div>
                       <p className="mt-1 text-sm text-slate-400">{connection.username}</p>
+                      {connection.lastAuthSummary ? (
+                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-400">
+                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{connection.lastAuthSummary.status}</span>
+                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">exp {formatExpiry(connection.lastAuthSummary.expiresAt)}</span>
+                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{connection.lastAuthSummary.activeConnections}/{connection.lastAuthSummary.maxConnections} lines</span>
+                          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{connection.lastAuthSummary.timezone}</span>
+                        </div>
+                      ) : null}
                       {connectionStatus[connection.id]?.message ? (
                         <p className="mt-2 text-xs text-slate-500">{connectionStatus[connection.id].message}</p>
                       ) : null}

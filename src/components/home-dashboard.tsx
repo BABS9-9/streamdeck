@@ -41,6 +41,13 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedEpg: 'Degraded guide',
 };
 
+const formatExpiry = (value: string | null | undefined) => {
+  if (!value) return 'Unknown expiry';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown expiry';
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 export function HomeDashboard() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connections = useAuthStore((state) => state.connections);
@@ -298,6 +305,21 @@ export function HomeDashboard() {
               </div>
             </div>
           </div>
+          {mockHealth.accountProfile ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
+              {[
+                ['Account', mockHealth.accountProfile.status],
+                ['Expiry', mockHealth.accountProfile.expiryLabel],
+                ['Capacity', `${mockHealth.accountProfile.activeConnections}/${mockHealth.accountProfile.maxConnections} in use`],
+                ['Timezone', mockHealth.accountProfile.timezone],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
+                  <p className="mt-2 text-sm text-slate-200">{value}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
           <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -364,6 +386,14 @@ export function HomeDashboard() {
                 </div>
               ))}
             </div>
+            {mockHealth.recommendedDemoSequence?.length ? (
+              <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Recommended rehearsal path</p>
+                <ol className="mt-3 space-y-2 text-sm text-slate-300">
+                  {mockHealth.recommendedDemoSequence.map((item, index) => <li key={item}>{index + 1}. {item}</li>)}
+                </ol>
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -422,6 +452,21 @@ export function HomeDashboard() {
                 </div>
               ))}
             </div>
+            {activeConnection.lastAuthSummary ? (
+              <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Provider trust cockpit</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs text-slate-500">Account</p>
+                    <p className="mt-1 text-sm text-slate-200">{activeConnection.lastAuthSummary.status} · expires {formatExpiry(activeConnection.lastAuthSummary.expiresAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Capacity</p>
+                    <p className="mt-1 text-sm text-slate-200">{activeConnection.lastAuthSummary.activeConnections}/{activeConnection.lastAuthSummary.maxConnections} active lines · {activeConnection.lastAuthSummary.timezone}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
             {liveCategoryBreakdown.length > 0 ? (
               <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
                 <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Quick live mix</p>

@@ -4,10 +4,20 @@ export type XtreamCredentials = {
   password: string;
 };
 
+export type ProviderAuthSummary = {
+  status: string;
+  expiresAt: string | null;
+  activeConnections: number | null;
+  maxConnections: number | null;
+  timezone: string | null;
+  serverTime: string | null;
+};
+
 export type SavedConnection = XtreamCredentials & {
   id: string;
   name: string;
   connectedAt: number;
+  lastAuthSummary?: ProviderAuthSummary;
 };
 
 export type ConnectionStatus = {
@@ -222,6 +232,15 @@ export type MockProviderHealth = {
   }>;
   topCategories: MockProviderCategorySummary[];
   featuredChannels?: { name: string; category: string; guide: string }[];
+  accountProfile?: {
+    status: string;
+    expiryLabel: string;
+    activeConnections: number;
+    maxConnections: number;
+    timezone: string;
+    supportsMultiConnection: boolean;
+  };
+  recommendedDemoSequence?: string[];
   sampleCredentials?: {
     server: string;
     username: string;

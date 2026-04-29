@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { authenticate } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
-import { ConnectionStatus, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
+import { ConnectionStatus, ProviderAuthSummary, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
 
 type AuthState = {
   connections: SavedConnection[];
@@ -45,6 +45,15 @@ const buildErrorStatus = (message: string): ConnectionStatus => ({
   serverTime: null,
 });
 
+const buildAuthSummary = (session: XtreamAuthResponse): ProviderAuthSummary => ({
+  status: session.user_info.status,
+  expiresAt: session.user_info.exp_date ? new Date(Number(session.user_info.exp_date) * 1000).toISOString() : null,
+  activeConnections: Number(session.user_info.active_cons || 0),
+  maxConnections: Number(session.user_info.max_connections || 0),
+  timezone: session.server_info.timezone || null,
+  serverTime: session.server_info.time_now || null,
+});
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   connections: [],
   activeConnection: null,
@@ -72,6 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         id: connectionId,
         name: new URL(credentials.server).host,
         connectedAt: Date.now(),
+        lastAuthSummary: buildAuthSummary(session),
         ...credentials,
       };
       const existing = get().connections.filter((item) => item.id !== connection.id);
@@ -140,7 +150,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set((state) => ({ connectionStatus: { ...state.connectionStatus, [id]: checkingStatus } }));
     try {
       const session = await authenticate(connection);
+      const nextConnections = get().connections.map((item) => item.id === id
+        ? { ...item, lastAuthSummary: buildAuthSummary(session) }
+        : item);
+      storage.saveConnections(nextConnections);
       set((state) => ({
+        connections: nextConnections,
+        activeConnection: get().activeConnection?.id === id ? nextConnections.find((item) => item.id === id) ?? state.activeConnection : state.activeConnection,
         session: get().activeConnection?.id === id ? session : state.session,
         connectionStatus: {
           ...state.connectionStatus,

@@ -232,6 +232,15 @@ const authResponse = (username, password) => ({
   },
 });
 
+const mockAccountProfile = {
+  status: 'Active',
+  expiryLabel: '30 days remaining',
+  activeConnections: 1,
+  maxConnections: 5,
+  timezone: 'America/Toronto',
+  supportsMultiConnection: true,
+};
+
 const sendJson = (res, data) => {
   res.writeHead(200, {
     'Content-Type': 'application/json',
@@ -390,6 +399,14 @@ const server = http.createServer((req, res) => {
         category: liveCategories.find((category) => category.category_id === stream.category_id)?.category_name || 'Live',
         guide: getShortEpg(stream.stream_id).epg_listings[0] ? Buffer.from(getShortEpg(stream.stream_id).epg_listings[0].title, 'base64').toString('utf8') : 'Guide loading',
       })),
+      accountProfile: mockAccountProfile,
+      recommendedDemoSequence: degradedLive
+        ? ['Connect with mock credentials', 'Open Home to confirm provider context still feels healthy', 'Open Live and verify degraded live fallback plus retry copy']
+        : degradedEpg
+          ? ['Connect with mock credentials', 'Open Home and confirm guide fallback copy', 'Open Live and verify preview stays usable while NOW and NEXT degrade']
+          : degradedSearch
+            ? ['Connect with mock credentials', 'Open Home to confirm the shell stays useful', 'Open Search, Movies, and Series to verify partial-result behavior']
+            : ['Connect with mock credentials', 'Open Home and verify provider trust + hero guide data', 'Open Live and surf preview cards with inline NOW and NEXT'],
       sampleCredentials: {
         server: host,
         username: 'test',
