@@ -21,6 +21,7 @@ const scenarioLabels = {
   degradedSearch: 'Degraded search',
   degradedLive: 'Degraded live',
   degradedEpg: 'Degraded guide',
+  lineSaturated: 'Lines maxed',
 };
 
 const formatExpiry = (value) => {
@@ -28,6 +29,13 @@ const formatExpiry = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Unknown expiry';
   return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const getLinePressure = (summary) => {
+  if (!summary?.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
+  return summary.activeConnections >= summary.maxConnections
+    ? `All ${summary.maxConnections} provider lines are currently in use. Playback may fail even though auth still succeeds.`
+    : null;
 };
 
 export default function LoginPage() {
@@ -50,6 +58,7 @@ export default function LoginPage() {
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
 
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
+  const mockLinePressure = getLinePressure(mockHealth?.accountProfile);
 
   useEffect(() => {
     hydrate();
@@ -162,7 +171,8 @@ export default function LoginPage() {
                 </div>
               </div>
               {mockHealth.accountProfile ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                <>
+                  <div className="mt-4 grid gap-3 md:grid-cols-4">
                   {[
                     ['Account', mockHealth.accountProfile.status],
                     ['Expiry', mockHealth.accountProfile.expiryLabel],
@@ -174,7 +184,13 @@ export default function LoginPage() {
                       <p className="mt-2 text-sm text-slate-200">{value}</p>
                     </div>
                   ))}
-                </div>
+                  </div>
+                  {mockLinePressure ? (
+                    <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                      {mockLinePressure}
+                    </div>
+                  ) : null}
+                </>
               ) : null}
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -343,12 +359,17 @@ export default function LoginPage() {
                       </div>
                       <p className="mt-1 text-sm text-slate-400">{connection.username}</p>
                       {connection.lastAuthSummary ? (
-                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-400">
+                        <>
+                          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-400">
                           <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{connection.lastAuthSummary.status}</span>
                           <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">exp {formatExpiry(connection.lastAuthSummary.expiresAt)}</span>
                           <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{connection.lastAuthSummary.activeConnections}/{connection.lastAuthSummary.maxConnections} lines</span>
                           <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{connection.lastAuthSummary.timezone}</span>
-                        </div>
+                          </div>
+                          {getLinePressure(connection.lastAuthSummary) ? (
+                            <p className="mt-3 text-xs text-amber-300">{getLinePressure(connection.lastAuthSummary)}</p>
+                          ) : null}
+                        </>
                       ) : null}
                       {connectionStatus[connection.id]?.message ? (
                         <p className="mt-2 text-xs text-slate-500">{connectionStatus[connection.id].message}</p>

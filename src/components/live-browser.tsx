@@ -15,6 +15,7 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedSearch: 'Degraded search',
   degradedLive: 'Degraded live',
   degradedEpg: 'Degraded guide',
+  lineSaturated: 'Lines maxed',
 };
 
 const formatExpiry = (value?: string | null) => {
@@ -22,6 +23,13 @@ const formatExpiry = (value?: string | null) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Unknown expiry';
   return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const getLinePressure = (summary?: { activeConnections: number | null; maxConnections: number | null } | null) => {
+  if (!summary?.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
+  return summary.activeConnections >= summary.maxConnections
+    ? `All ${summary.maxConnections} provider lines are currently in use. Surface this before the user mistakes account pressure for stream failure.`
+    : null;
 };
 
 export function LiveBrowser() {
@@ -203,6 +211,7 @@ export function LiveBrowser() {
     return selectedCategory === 'all' || stream.category_id === selectedCategory;
   }).length;
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
+  const providerLinePressure = getLinePressure(activeConnection?.lastAuthSummary);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -302,6 +311,15 @@ export function LiveBrowser() {
           ) : null}
         </div>
 
+        {providerLinePressure ? (
+          <div className="rounded-[1.5rem] border border-amber-400/20 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p>{providerLinePressure}</p>
+              <span className="text-xs uppercase tracking-[0.22em] text-amber-50/80">Provider capacity risk</span>
+            </div>
+          </div>
+        ) : null}
+
         {guideMessage ? (
           <div className="rounded-[1.5rem] border border-amber-400/20 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -363,23 +381,30 @@ export function LiveBrowser() {
             ))}
           </div>
           {activeConnection.lastAuthSummary ? (
-            <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-black/20 p-4">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Provider trust cockpit</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm text-slate-300">
-                <div>
-                  <p className="text-xs text-slate-500">Account</p>
-                  <p className="mt-1 text-white">{activeConnection.lastAuthSummary.status}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Expiry + timezone</p>
-                  <p className="mt-1 text-white">{formatExpiry(activeConnection.lastAuthSummary.expiresAt)} · {activeConnection.lastAuthSummary.timezone}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Line capacity</p>
-                  <p className="mt-1 text-white">{activeConnection.lastAuthSummary.activeConnections}/{activeConnection.lastAuthSummary.maxConnections} active lines</p>
+            <>
+              <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Provider trust cockpit</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm text-slate-300">
+                  <div>
+                    <p className="text-xs text-slate-500">Account</p>
+                    <p className="mt-1 text-white">{activeConnection.lastAuthSummary.status}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Expiry + timezone</p>
+                    <p className="mt-1 text-white">{formatExpiry(activeConnection.lastAuthSummary.expiresAt)} · {activeConnection.lastAuthSummary.timezone}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Line capacity</p>
+                    <p className="mt-1 text-white">{activeConnection.lastAuthSummary.activeConnections}/{activeConnection.lastAuthSummary.maxConnections} active lines</p>
+                  </div>
                 </div>
               </div>
-            </div>
+              {providerLinePressure ? (
+                <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-sm text-amber-100">
+                  {providerLinePressure}
+                </div>
+              ) : null}
+            </>
           ) : null}
         </div>
 

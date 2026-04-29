@@ -16,6 +16,7 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedSearch: 'Degraded search',
   degradedLive: 'Degraded live',
   degradedEpg: 'Degraded guide',
+  lineSaturated: 'Lines maxed',
 };
 
 export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'series'; initialSeriesId?: number | null }) {

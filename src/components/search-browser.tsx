@@ -154,6 +154,7 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedSearch: 'Degraded search',
   degradedLive: 'Degraded live',
   degradedEpg: 'Degraded guide',
+  lineSaturated: 'Lines maxed',
 };
 
 export function SearchBrowser() {

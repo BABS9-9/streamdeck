@@ -30,11 +30,15 @@ const checkingStatus: ConnectionStatus = {
 };
 
 const buildHealthyStatus = (session: XtreamAuthResponse): ConnectionStatus => ({
-  state: session.user_info.auth === 1 ? 'healthy' : 'degraded',
+  state: session.user_info.auth === 1 && Number(session.user_info.active_cons || 0) < Number(session.user_info.max_connections || 0) && session.user_info.status === 'Active' ? 'healthy' : 'degraded',
   checkedAt: Date.now(),
-  message: session.user_info.auth === 1
-    ? `${session.user_info.active_cons}/${session.user_info.max_connections} active connections used`
-    : 'Provider responded, but auth is not fully healthy',
+  message: session.user_info.auth !== 1
+    ? 'Provider responded, but auth is not fully healthy'
+    : Number(session.user_info.active_cons || 0) >= Number(session.user_info.max_connections || 0)
+      ? `All ${session.user_info.max_connections} provider lines are currently in use`
+      : session.user_info.status !== 'Active'
+        ? `Provider status is ${session.user_info.status}`
+        : `${session.user_info.active_cons}/${session.user_info.max_connections} active connections used`,
   serverTime: session.server_info.time_now,
 });
 
