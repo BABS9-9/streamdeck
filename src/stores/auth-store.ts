@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { isMockProviderServer } from '@/lib/mock-provider';
 import { authenticate } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
 import { ConnectionStatus, ProviderAuthSummary, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
@@ -20,6 +21,7 @@ type AuthState = {
   removeConnection: (id: string) => void;
   validateConnection: (id: string) => Promise<boolean>;
   validateAllConnections: () => Promise<void>;
+  revalidateMockConnections: () => Promise<void>;
 };
 
 const checkingStatus: ConnectionStatus = {
@@ -180,5 +182,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   validateAllConnections: async () => {
     await Promise.all(get().connections.map((connection) => get().validateConnection(connection.id)));
+  },
+  revalidateMockConnections: async () => {
+    const mockConnections = get().connections.filter((connection) => isMockProviderServer(connection.server));
+    if (mockConnections.length === 0) return;
+    await Promise.all(mockConnections.map((connection) => get().validateConnection(connection.id)));
   },
 }));

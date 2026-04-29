@@ -38,6 +38,7 @@ export function LiveBrowser() {
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const validateConnection = useAuthStore((state) => state.validateConnection);
+  const revalidateMockConnections = useAuthStore((state) => state.revalidateMockConnections);
   const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const collections = useCollectionsStore((state) => state.collections);
@@ -69,8 +70,9 @@ export function LiveBrowser() {
     return subscribeToMockProviderScenario((nextScenario) => {
       setScenario(nextScenario);
       setScenarioRefreshing(true);
+      revalidateMockConnections().catch(() => {});
     });
-  }, []);
+  }, [revalidateMockConnections]);
 
   useEffect(() => {
     let cancelled = false;
@@ -237,7 +239,7 @@ export function LiveBrowser() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Live rehearsal note</p>
-              <p className="mt-2">The mock provider now supports degraded-live, degraded-search, and degraded-guide rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source, and this browser now hot-refreshes in place as soon as the rehearsal mode changes.</p>
+              <p className="mt-2">The mock provider now supports degraded-live, degraded-search, and degraded-guide rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source, and this browser now hot-refreshes in place plus revalidates saved mock-provider account truth as soon as the rehearsal mode changes.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
               {mockHealth ? `Mode: ${mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}` : 'Mock-friendly retries ready'}

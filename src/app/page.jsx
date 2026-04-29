@@ -44,6 +44,7 @@ export default function LoginPage() {
   const connect = useAuthStore((state) => state.connect);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const validateConnection = useAuthStore((state) => state.validateConnection);
+  const revalidateMockConnections = useAuthStore((state) => state.revalidateMockConnections);
   const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
@@ -93,6 +94,11 @@ export default function LoginPage() {
       cancelled = true;
     };
   }, [scenario]);
+
+  useEffect(() => {
+    if (!scenarioRefreshing || connections.length === 0) return;
+    revalidateMockConnections().catch(() => {});
+  }, [connections.length, revalidateMockConnections, scenarioRefreshing]);
 
   const helperText = useMemo(() => {
     if (connections.length === 0) return 'Use the local mock provider to test the full flow fast.';
@@ -335,7 +341,7 @@ export default function LoginPage() {
           <div className="mt-8 rounded-[1.4rem] border border-violet-400/15 bg-violet-500/5 p-4 text-sm text-slate-300">
             <p className="font-medium text-white">Provider validation is now built into the shell.</p>
             <p className="mt-2 leading-6 text-slate-400">
-              New connections are health-checked on connect, and saved providers can be revalidated before you switch into playback.
+              New connections are health-checked on connect, and mock rehearsal mode changes now revalidate saved mock providers automatically before you switch into playback.
             </p>
             {mockHealth?.sampleCredentials ? (
               <p className="mt-3 text-xs text-slate-500">

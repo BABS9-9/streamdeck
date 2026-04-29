@@ -60,6 +60,7 @@ export function HomeDashboard() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connections = useAuthStore((state) => state.connections);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const revalidateMockConnections = useAuthStore((state) => state.revalidateMockConnections);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const playStream = usePlayerStore((state) => state.playStream);
 
@@ -77,8 +78,9 @@ export function HomeDashboard() {
     return subscribeToMockProviderScenario((nextScenario) => {
       setScenario(nextScenario);
       setScenarioRefreshing(true);
+      revalidateMockConnections().catch(() => {});
     });
-  }, []);
+  }, [revalidateMockConnections]);
 
   useEffect(() => {
     let cancelled = false;
@@ -351,7 +353,7 @@ export function HomeDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Mock rehearsal modes</p>
-                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, degraded-live, and degraded-guide behavior so Home can rehearse fallback messaging before real providers misbehave, and this surface now refreshes in place as soon as the rehearsal mode changes.</p>
+                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, degraded-live, and degraded-guide behavior so Home can rehearse fallback messaging before real providers misbehave, and this surface now refreshes in place plus revalidates saved mock-provider account truth as soon as the rehearsal mode changes.</p>
               </div>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
                 Active: {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}
