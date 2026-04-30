@@ -19,6 +19,12 @@ type ProviderVariant = {
   providerId: string;
   providerName: string;
   title: string;
+  streamId: number;
+  kind: 'live' | 'movie' | 'series';
+  artwork?: string;
+  categoryId?: string;
+  playbackUrl?: string | null;
+  seriesId?: number;
 };
 
 type CollectionsProps = {
@@ -29,6 +35,8 @@ export function LibraryCollections({ mode }: CollectionsProps) {
   const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const validateConnection = useAuthStore((state) => state.validateConnection);
   const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const playStream = usePlayerStore((state) => state.playStream);
@@ -43,10 +51,21 @@ export function LibraryCollections({ mode }: CollectionsProps) {
       const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
       if (!connectionCatalog) return acc;
       [...connectionCatalog.live, ...connectionCatalog.vod, ...connectionCatalog.series].forEach((item) => {
-        const key = buildVariantKey(item.name, item.stream_type as 'live' | 'movie' | 'series', item.year);
+        const kind = item.stream_type as 'live' | 'movie' | 'series';
+        const key = buildVariantKey(item.name, kind, item.year);
         const variants = acc[key] || [];
-        if (!variants.some((variant) => variant.providerId === connection.id)) {
-          variants.push({ providerId: connection.id, providerName: connection.name, title: item.name });
+        if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === getContentId(item))) {
+          variants.push({
+            providerId: connection.id,
+            providerName: connection.name,
+            title: item.name,
+            streamId: getContentId(item),
+            kind,
+            artwork: getArtwork(item),
+            categoryId: item.category_id,
+            playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
+            seriesId: item.series_id,
+          });
         }
         acc[key] = variants;
       });
@@ -135,20 +154,85 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     return `Resume at ${mins}:${String(secs).padStart(2, '0')}`;
   };
 
+  const activeConnectionStatus = activeConnection ? connectionStatus[activeConnection.id] : null;
+  const activeSummary = activeConnection?.lastAuthSummary;
+  const activeProviderNeedsRecovery = activeSummary?.status !== 'Active'
+    || (!!activeSummary?.maxConnections && (activeSummary.activeConnections ?? 0) >= activeSummary.maxConnections)
+    || activeConnectionStatus?.state === 'error';
+
+  const activeRecoveryMessage = activeConnectionStatus?.state === 'error'
+    ? activeConnectionStatus.message || 'This provider is failing validation right now.'
+    : activeSummary?.status !== 'Active'
+      ? `Provider status is ${activeSummary?.status || 'not active'}. Renew or switch before relying on saved playback.`
+      : !!activeSummary?.maxConnections && (activeSummary.activeConnections ?? 0) >= activeSummary.maxConnections
+        ? `All ${activeSummary.maxConnections} lines are in use on ${activeConnection?.name}. Use an alternate provider copy if one exists.`
+        : null;
+
+  const launchVariant = (variant: ProviderVariant) => {
+    setActiveConnection(variant.providerId);
+
+    const stream = {
+      name: variant.title,
+      stream_type: variant.kind,
+      stream_id: variant.kind === 'series' ? undefined : variant.streamId,
+      series_id: variant.kind === 'series' ? variant.seriesId ?? variant.streamId : undefined,
+      category_id: variant.categoryId || 'alternate',
+      stream_icon: variant.artwork,
+      cover: variant.artwork,
+    } as XtreamStream;
+
+    if (variant.kind === 'series') return;
+    if (!variant.playbackUrl) return;
+    playStream(stream, variant.playbackUrl, variant.providerId);
+  };
+
   const renderProviderVariants = (variants: ProviderVariant[]) => {
     if (variants.length === 0) return null;
     return (
       <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
-        <p className="uppercase tracking-[0.2em] text-emerald-200">Also available elsewhere</p>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="uppercase tracking-[0.2em] text-emerald-200">Also available elsewhere</p>
+            <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">Use a healthier provider copy instead of dead-ending on an expired or maxed account.</p>
+          </div>
+          {activeProviderNeedsRecovery ? (
+            <span className="rounded-full border border-amber-300/30 bg-amber-500/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-amber-100">
+              Recovery mode
+            </span>
+          ) : null}
+        </div>
+        <div className="mt-3 space-y-2">
           {variants.map((variant) => (
-            <button
-              key={`${variant.providerId}-${variant.title}`}
-              onClick={() => setActiveConnection(variant.providerId)}
-              className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
-            >
-              {variant.providerName}
-            </button>
+            <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
+                <p className="mt-1 text-sm text-white">{variant.kind === 'live' ? 'Live copy ready' : variant.kind === 'movie' ? 'Movie copy ready' : 'Series copy ready'}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {variant.kind === 'series' ? (
+                  <Link
+                    href={`/series?seriesId=${variant.seriesId ?? variant.streamId}`}
+                    onClick={() => setActiveConnection(variant.providerId)}
+                    className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                  >
+                    Open on {variant.providerName}
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => launchVariant(variant)}
+                    className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                  >
+                    Play on {variant.providerName}
+                  </button>
+                )}
+                <button
+                  onClick={() => setActiveConnection(variant.providerId)}
+                  className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                >
+                  Switch only
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -170,6 +254,22 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         <p className="text-xs uppercase tracking-[0.35em] text-violet-300">{mode === 'favorites' ? 'Saved collection' : 'Unified resume rail'}</p>
         <h2 className="mt-3 text-3xl font-semibold text-white">{title}</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">{subtitle}</p>
+        {activeRecoveryMessage ? (
+          <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-amber-200">Saved-library recovery</p>
+                <p className="mt-2 leading-6">{activeRecoveryMessage}</p>
+              </div>
+              <button
+                onClick={() => void validateConnection(activeConnection.id)}
+                className="rounded-full border border-amber-300/30 bg-black/20 px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-amber-50 hover:bg-black/30"
+              >
+                Recheck provider
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {mode === 'favorites' ? (
@@ -240,6 +340,9 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   <div className="h-full rounded-full bg-violet-400" style={{ width: `${Math.max(8, item.progress * 100)}%` }} />
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{formatResume(item.positionSeconds)}{item.durationSeconds ? ` • ${Math.round(item.progress * 100)}% of ${Math.floor(item.durationSeconds / 60)} min` : ''}</p>
+                {activeProviderNeedsRecovery ? (
+                  <p className="mt-2 text-xs leading-5 text-amber-200">If this resume item stalls on the active provider, use an alternate provider copy below instead of losing the spot.</p>
+                ) : null}
                 <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
                 {renderProviderVariants(variantSummary[`continue:${item.id}`] || [])}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
