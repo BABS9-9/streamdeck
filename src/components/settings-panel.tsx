@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { MockProviderHealth, MockProviderScenario, ProviderAuthSummary } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -13,11 +15,97 @@ const statusTone: Record<string, string> = {
   error: 'border-rose-400/30 bg-rose-500/10 text-rose-200',
 };
 
+const scenarioLabels: Record<MockProviderScenario, string> = {
+  healthy: 'Healthy',
+  degradedSearch: 'Degraded search',
+  degradedLive: 'Degraded live',
+  degradedEpg: 'Degraded guide',
+  lineSaturated: 'Lines maxed',
+};
+
+const formatExpiry = (value: string | null | undefined) => {
+  if (!value) return 'Unknown expiry';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown expiry';
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const getLinePressure = (summary?: { activeConnections: number | null; maxConnections: number | null } | null) => {
+  if (!summary?.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
+  return summary.activeConnections >= summary.maxConnections
+    ? `All ${summary.maxConnections} provider lines are currently in use. Keep this visible before users blame playback.`
+    : null;
+};
+
+const renderProviderFacts = (summary?: ProviderAuthSummary) => {
+  if (!summary) {
+    return <p className="mt-3 text-xs text-slate-500">No auth summary yet. Run a validation pass to hydrate provider trust details.</p>;
+  }
+
+  return (
+    <div className="mt-4 grid gap-3 md:grid-cols-4">
+      {[
+        ['Status', summary.status],
+        ['Expiry', formatExpiry(summary.expiresAt)],
+        ['Capacity', `${summary.activeConnections ?? 0}/${summary.maxConnections ?? '?'} in use`],
+        ['Timezone', summary.timezone || 'Unknown timezone'],
+      ].map(([label, value]) => (
+        <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
+          <p className="mt-2 text-sm text-slate-200">{value}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export function SettingsPanel() {
   const { connections, activeConnection, setActiveConnection, renameConnection, removeConnection, validateConnection, validateAllConnections, connectionStatus } = useAuthStore();
   const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const [draftNames, setDraftNames] = useState<Record<string, string>>({});
+  const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [scenario, setScenario] = useState<MockProviderScenario>(getSelectedMockProviderScenario());
+  const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
+
+  useEffect(() => {
+    setScenario(getSelectedMockProviderScenario());
+    return subscribeToMockProviderScenario((nextScenario) => {
+      setScenario(nextScenario);
+      setScenarioRefreshing(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMockProviderHealth(activeConnection, scenario)
+      .then((health) => {
+        if (!cancelled) {
+          setMockHealth(health);
+          setScenarioRefreshing(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMockHealth(null);
+          setScenarioRefreshing(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConnection, scenario]);
+
+  const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
+  const mockLinePressure = getLinePressure(mockHealth?.accountProfile);
+
+  const applyScenario = (nextScenario: MockProviderScenario) => {
+    if (nextScenario === scenario) return;
+    setScenarioRefreshing(true);
+    setSelectedMockProviderScenario(nextScenario);
+  };
 
   return (
     <div className="space-y-6">
@@ -81,6 +169,13 @@ export function SettingsPanel() {
                     </button>
                   </div>
 
+                  {renderProviderFacts(connection.lastAuthSummary)}
+                  {getLinePressure(connection.lastAuthSummary) ? (
+                    <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs leading-5 text-amber-100">
+                      {getLinePressure(connection.lastAuthSummary)}
+                    </div>
+                  ) : null}
+
                   <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
                     <input
                       value={draftName}
@@ -121,20 +216,96 @@ export function SettingsPanel() {
           </div>
         </div>
         <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
-          <h3 className="text-lg font-semibold text-white">What ships next</h3>
-          <ul className="mt-4 space-y-3 text-sm text-slate-300">
-            <li>• Expand continue watching into a shared live + VOD rail with stronger resume positions.</li>
-            <li>• Add cross-provider search with ranked live, movie, and series results.</li>
-            <li>• Turn folders into a first-class organization layer beyond favorites.</li>
-            <li>• Deepen the player into full-screen live and VOD routes with richer telemetry overlays.</li>
-          </ul>
+          <h3 className="text-lg font-semibold text-white">Provider trust cockpit</h3>
+          <p className="mt-2 text-sm leading-7 text-slate-300">
+            Settings should be the operator surface for trust, recovery, and rehearsal state, not just a rename screen.
+          </p>
+          {mockHealth ? (
+            <>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.6rem] border border-violet-400/20 bg-violet-500/10 p-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Mock provider</p>
+                  <p className="mt-2 text-sm text-slate-200">{activeScenario?.summary || 'Use this panel to verify trust, recovery, and degraded-provider rehearsal states.'}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.22em] text-slate-200">
+                  {activeScenario?.label ?? scenarioLabels[scenario]}
+                </span>
+              </div>
+
+              {mockHealth.accountProfile ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                  {[
+                    ['Account', mockHealth.accountProfile.status],
+                    ['Expiry', mockHealth.accountProfile.expiryLabel],
+                    ['Capacity', `${mockHealth.accountProfile.activeConnections}/${mockHealth.accountProfile.maxConnections} in use`],
+                    ['Timezone', mockHealth.accountProfile.timezone],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
+                      <p className="mt-2 text-sm text-slate-200">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {mockLinePressure ? (
+                <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                  {mockLinePressure}
+                </div>
+              ) : null}
+
+              {mockHealth.trustSignals?.length ? (
+                <div className="mt-4 rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
+                  <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Trust signals</p>
+                  <div className="mt-4 space-y-3">
+                    {mockHealth.trustSignals.map((signal) => (
+                      <div key={signal.id} className={`rounded-2xl border p-4 ${signal.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
+                        <p className={`text-sm font-semibold ${signal.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{signal.label}</p>
+                        <p className="mt-2 text-sm text-slate-300">{signal.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {(Object.keys(scenarioLabels) as MockProviderScenario[]).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => applyScenario(key)}
+                    className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
+                  >
+                    {scenarioRefreshing && scenario === key ? `Applying ${scenarioLabels[key]}` : scenarioLabels[key]}
+                  </button>
+                ))}
+              </div>
+
+              {mockHealth.recoveryActions?.length ? (
+                <div className="mt-4 rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
+                  <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Recovery actions</p>
+                  <ul className="mt-4 space-y-3 text-sm text-slate-300">
+                    {mockHealth.recoveryActions.map((action) => <li key={action}>• {action}</li>)}
+                  </ul>
+                </div>
+              ) : null}
+
+              {activeScenario?.verificationSteps?.length ? (
+                <div className="mt-4 rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
+                  <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Verification checklist</p>
+                  <ul className="mt-4 space-y-3 text-sm text-slate-300">
+                    {activeScenario.verificationSteps.map((step) => <li key={step}>• {step}</li>)}
+                  </ul>
+                </div>
+              ) : null}
+            </>
+          ) : null}
 
           <div className="mt-6 rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
             <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Architecture check</p>
             <ul className="mt-4 space-y-3 text-sm text-slate-300">
-              <li>• Provider identity is stable and already scopes favorites plus watch history.</li>
-              <li>• Connection management is now editable in-app, not trapped in the login entry point.</li>
-              <li>• This keeps the multi-provider differentiator real enough for demo flows today.</li>
+              <li>• Provider identity is stable and already scopes favorites, watch history, and auth summary state.</li>
+              <li>• Search, Login, Home, Live, and Settings now all share the same trust language instead of drifting by surface.</li>
+              <li>• Mock-provider rehearsal can now validate recovery guidance and line-capacity risk from the same settings cockpit.</li>
             </ul>
           </div>
         </div>

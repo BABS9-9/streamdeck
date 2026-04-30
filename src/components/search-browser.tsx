@@ -157,6 +157,20 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   lineSaturated: 'Lines maxed',
 };
 
+const formatExpiry = (value: string | null | undefined) => {
+  if (!value) return 'Unknown expiry';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown expiry';
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const getLinePressure = (summary?: { activeConnections: number | null; maxConnections: number | null } | null) => {
+  if (!summary?.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
+  return summary.activeConnections >= summary.maxConnections
+    ? `All ${summary.maxConnections} provider lines are currently in use. Search can still work while playback becomes risky.`
+    : null;
+};
+
 export function SearchBrowser() {
   const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
@@ -295,6 +309,8 @@ export function SearchBrowser() {
   }, [results]);
 
   const duplicateGroups = useMemo(() => results.filter((result) => result.duplicateCount > 0).length, [results]);
+  const activeScenarioDetails = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
+  const mockLinePressure = getLinePressure(mockHealth?.accountProfile);
 
   const providerStateTone = (providerId: string) => {
     const state = connectionStatus[providerId]?.state;
@@ -403,6 +419,55 @@ export function SearchBrowser() {
               </button>
             ))}
           </div>
+          {mockHealth.accountProfile ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
+              {[
+                ['Account', mockHealth.accountProfile.status],
+                ['Expiry', mockHealth.accountProfile.expiryLabel],
+                ['Capacity', `${mockHealth.accountProfile.activeConnections}/${mockHealth.accountProfile.maxConnections} in use`],
+                ['Timezone', mockHealth.accountProfile.timezone],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
+                  <p className="mt-2 text-sm text-slate-200">{value}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {mockLinePressure ? (
+            <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+              {mockLinePressure}
+            </div>
+          ) : null}
+          {mockHealth.trustSignals?.length ? (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Trust signals</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {mockHealth.trustSignals.map((signal) => (
+                  <div key={signal.id} className={`rounded-2xl border p-4 ${signal.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
+                    <p className={`text-sm font-semibold ${signal.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{signal.label}</p>
+                    <p className="mt-2 text-sm text-slate-300">{signal.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {activeScenarioDetails?.expectedUx?.length ? (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Expected search behavior</p>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                {activeScenarioDetails.expectedUx.map((item) => <li key={item}>• {item}</li>)}
+              </ul>
+            </div>
+          ) : null}
+          {mockHealth.recoveryActions?.length ? (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Recovery actions</p>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                {mockHealth.recoveryActions.map((action) => <li key={action}>• {action}</li>)}
+              </ul>
+            </div>
+          ) : null}
           {mockHealth.scenarioUrls ? (
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
               {(Object.entries(mockHealth.scenarioUrls) as Array<[MockProviderScenario, string]>).map(([key, url]) => (
@@ -451,6 +516,8 @@ export function SearchBrowser() {
             const contentId = getContentId(result.item);
             const artwork = getArtwork(result.item);
             const isPlayable = result.kind !== 'series';
+            const authSummary = result.provider.lastAuthSummary;
+            const providerLinePressure = getLinePressure(authSummary);
             return (
               <article key={`${result.provider.id}-${result.kind}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                 <div className="aspect-video rounded-2xl bg-cover bg-center bg-no-repeat" style={{ backgroundImage: artwork ? `url(${artwork})` : undefined }} />
@@ -469,12 +536,22 @@ export function SearchBrowser() {
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">{result.item.plot || result.item.genre || 'Ready for playback and browsing in the active provider shell.'}</p>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
                   <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">{result.matchReason}</span>
+                  {authSummary ? (
+                    <span className={`rounded-full border px-3 py-2 ${providerLinePressure ? 'border-amber-400/20 bg-amber-500/10 text-amber-100' : 'border-sky-400/20 bg-sky-500/10 text-sky-100'}`}>
+                      {authSummary.activeConnections ?? 0}/{authSummary.maxConnections ?? '?'} lines · expires {formatExpiry(authSummary.expiresAt)}
+                    </span>
+                  ) : null}
                   {result.providerCount > 1 ? (
                     <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-emerald-100">
                       Also on {result.providerCount - 1} more provider{result.providerCount - 1 === 1 ? '' : 's'}
                     </span>
                   ) : null}
                 </div>
+                {providerLinePressure ? (
+                  <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs leading-5 text-amber-100">
+                    {providerLinePressure}
+                  </div>
+                ) : null}
                 <div className="mt-4 flex gap-3">
                   {isPlayable ? (
                     <button
