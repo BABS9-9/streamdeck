@@ -40,6 +40,7 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedLive: 'Degraded live',
   degradedEpg: 'Degraded guide',
   lineSaturated: 'Lines maxed',
+  expiredAccount: 'Expired account',
 };
 
 const formatExpiry = (value: string | null | undefined) => {
@@ -49,8 +50,10 @@ const formatExpiry = (value: string | null | undefined) => {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const getLinePressure = (summary?: { activeConnections: number | null; maxConnections: number | null } | null) => {
-  if (!summary?.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
+const getAccountPressure = (summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null) => {
+  if (!summary) return null;
+  if (summary.status && summary.status !== 'Active') return `Provider account is ${String(summary.status).toLowerCase()}. Keep renewal or provider-switch guidance visible before the user blames playback.`;
+  if (!summary.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
   return summary.activeConnections >= summary.maxConnections
     ? `All ${summary.maxConnections} provider lines are currently in use. Keep this warning visible before the user blames playback.`
     : null;
@@ -246,8 +249,8 @@ export function HomeDashboard() {
       ? 'border-sky-400/30 bg-sky-500/10 text-sky-100'
       : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100';
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
-  const providerLinePressure = getLinePressure(activeConnection?.lastAuthSummary);
-  const mockLinePressure = getLinePressure(mockHealth?.accountProfile);
+  const providerAccountPressure = getAccountPressure(activeConnection?.lastAuthSummary);
+  const mockAccountPressure = getAccountPressure(mockHealth?.accountProfile);
 
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Go back to login and connect first.</div>;
@@ -332,9 +335,9 @@ export function HomeDashboard() {
                 </div>
               ))}
               </div>
-              {mockLinePressure ? (
+              {mockAccountPressure ? (
                 <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
-                  {mockLinePressure}
+                  {mockAccountPressure}
                 </div>
               ) : null}
             </>
@@ -502,9 +505,9 @@ export function HomeDashboard() {
                     <p className="mt-1 text-sm text-slate-200">{activeConnection.lastAuthSummary.activeConnections}/{activeConnection.lastAuthSummary.maxConnections} active lines · {activeConnection.lastAuthSummary.timezone}</p>
                   </div>
                 </div>
-                {providerLinePressure ? (
+                {providerAccountPressure ? (
                   <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-sm text-amber-100">
-                    {providerLinePressure}
+                    {providerAccountPressure}
                   </div>
                 ) : null}
               </div>

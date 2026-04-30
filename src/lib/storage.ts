@@ -85,12 +85,12 @@ export const storage = {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.playerDockMode, mode);
   },
-  getMockScenario(): 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' {
+  getMockScenario(): 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' | 'expiredAccount' {
     if (!isBrowser()) return 'healthy';
     const scenario = localStorage.getItem(KEYS.mockScenario);
-    return scenario === 'degradedSearch' || scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? scenario : 'healthy';
+    return scenario === 'degradedSearch' || scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' || scenario === 'expiredAccount' ? scenario : 'healthy';
   },
-  saveMockScenario(mode: 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated') {
+  saveMockScenario(mode: 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' | 'expiredAccount') {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.mockScenario, mode);
   },

@@ -9,6 +9,7 @@ const scenarioLabels = {
   degradedLive: 'Degraded live rehearsal',
   degradedEpg: 'Degraded guide rehearsal',
   lineSaturated: 'Line saturation rehearsal',
+  expiredAccount: 'Expired account rehearsal',
 };
 const logo = (seed, label = '') => `https://dummyimage.com/320x180/111827/a78bfa.png&text=${encodeURIComponent(label || seed)}`;
 const poster = (seed, label = '') => `https://dummyimage.com/420x630/111827/e5e7eb.png&text=${encodeURIComponent(label || seed)}`;
@@ -212,13 +213,14 @@ const buildXmltv = () => {
 
 const authResponse = (username, password, scenario = 'healthy') => {
   const lineSaturated = scenario === 'lineSaturated';
+  const expiredAccount = scenario === 'expiredAccount';
   return ({
   user_info: {
     username,
     password,
-    auth: 1,
-    status: 'Active',
-    exp_date: `${Math.floor(Date.now() / 1000) + 86400 * (lineSaturated ? 7 : 30)}`,
+    auth: expiredAccount ? 0 : 1,
+    status: expiredAccount ? 'Expired' : 'Active',
+    exp_date: `${Math.floor(Date.now() / 1000) + 86400 * (expiredAccount ? -2 : lineSaturated ? 7 : 30)}`,
     is_trial: '0',
     active_cons: lineSaturated ? '5' : '1',
     max_connections: '5',
@@ -237,17 +239,22 @@ const authResponse = (username, password, scenario = 'healthy') => {
 };
 
 const buildMockAccountProfile = (scenario = 'healthy') => ({
-  status: 'Active',
-  expiryLabel: scenario === 'lineSaturated' ? '7 days remaining' : '30 days remaining',
+  status: scenario === 'expiredAccount' ? 'Expired' : 'Active',
+  expiryLabel: scenario === 'expiredAccount' ? 'Expired 2 days ago' : scenario === 'lineSaturated' ? '7 days remaining' : '30 days remaining',
   activeConnections: scenario === 'lineSaturated' ? 5 : 1,
   maxConnections: 5,
   timezone: 'America/Toronto',
   supportsMultiConnection: true,
-  warning: scenario === 'lineSaturated' ? 'All provider lines are in use, so playback can fail even while auth still succeeds.' : null,
+  warning: scenario === 'expiredAccount'
+    ? 'Account auth is expired, so catalog and playback calls should guide the user toward reconnecting or switching providers.'
+    : scenario === 'lineSaturated'
+      ? 'All provider lines are in use, so playback can fail even while auth still succeeds.'
+      : null,
 });
 
 const buildTrustSignals = (scenario = 'healthy') => {
   const lineSaturated = scenario === 'lineSaturated';
+  const expiredAccount = scenario === 'expiredAccount';
   const degradedLive = scenario === 'degradedLive';
   const degradedSearch = scenario === 'degradedSearch';
   const degradedEpg = scenario === 'degradedEpg';
@@ -255,9 +262,9 @@ const buildTrustSignals = (scenario = 'healthy') => {
   return [
     {
       id: 'account-status',
-      label: lineSaturated ? 'Capacity risk' : 'Account healthy',
-      tone: lineSaturated ? 'warning' : 'healthy',
-      detail: lineSaturated ? 'Auth succeeds, but every line is already in use.' : 'Account is active and playback can start immediately.',
+      label: expiredAccount ? 'Account expired' : lineSaturated ? 'Capacity risk' : 'Account healthy',
+      tone: expiredAccount || lineSaturated ? 'warning' : 'healthy',
+      detail: expiredAccount ? 'Auth should downgrade immediately and the app should route users toward reconnecting or switching providers.' : lineSaturated ? 'Auth succeeds, but every line is already in use.' : 'Account is active and playback can start immediately.',
     },
     {
       id: 'guide-readiness',
@@ -281,6 +288,14 @@ const buildTrustSignals = (scenario = 'healthy') => {
 };
 
 const buildRecoveryActions = (scenario = 'healthy') => {
+  if (scenario === 'expiredAccount') {
+    return [
+      'Downgrade provider trust immediately instead of pretending the account is still usable.',
+      'Keep cached Home rails visible when possible, but block fresh provider fetches behind explicit recovery guidance.',
+      'Offer a clear next step: re-enter credentials, switch saved providers, or retry validation after renewal.',
+    ];
+  }
+
   if (scenario === 'lineSaturated') {
     return [
       'Warn before playback that provider line capacity is already maxed.',
@@ -351,9 +366,14 @@ const server = http.createServer((req, res) => {
   const degradedLive = scenario === 'degradedLive';
   const degradedEpg = scenario === 'degradedEpg';
   const lineSaturated = scenario === 'lineSaturated';
+  const expiredAccount = scenario === 'expiredAccount';
 
   if (path === '/player_api.php') {
     if (!action) return sendJson(res, authResponse(username, password, scenario));
+    if (expiredAccount) {
+      res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      return res.end(JSON.stringify({ error: 'Mock provider account expired', scenario }));
+    }
     if (action === 'get_live_categories') return sendJson(res, liveCategories);
     if (action === 'get_live_streams') {
       if (degradedLive) {
@@ -424,11 +444,11 @@ const server = http.createServer((req, res) => {
         streamFormats: ['m3u8'],
       },
       endpointHealth: {
-        auth: lineSaturated ? 'degraded' : 'healthy',
-        liveCatalog: degradedLive ? 'degraded' : 'healthy',
-        vodCatalog: degradedSearch ? 'degraded' : 'healthy',
-        seriesCatalog: degradedSearch ? 'degraded' : 'healthy',
-        epg: degradedEpg ? 'degraded' : 'healthy',
+        auth: lineSaturated || expiredAccount ? 'degraded' : 'healthy',
+        liveCatalog: degradedLive || expiredAccount ? 'degraded' : 'healthy',
+        vodCatalog: degradedSearch || expiredAccount ? 'degraded' : 'healthy',
+        seriesCatalog: degradedSearch || expiredAccount ? 'degraded' : 'healthy',
+        epg: degradedEpg || expiredAccount ? 'degraded' : 'healthy',
       },
       activeScenario: scenario,
       healthScenarios: {
@@ -477,6 +497,15 @@ const server = http.createServer((req, res) => {
           expectedUx: ['Login shows provider-risk copy instead of a false green state', 'Home trust cockpit warns that capacity is maxed', 'Live surfaces the same account pressure before the user blames playback'],
           verificationSteps: ['Tap Lines maxed in-product', 'Reconnect or revalidate mock provider and confirm status downgrades from healthy to degraded', 'Open Home and Live and verify account-capacity warnings appear inline without hiding browse actions'],
         },
+        expiredAccount: {
+          label: scenarioLabels.expiredAccount,
+          summary: 'Auth reports the account as expired and fresh catalog requests are rejected.',
+          appImpact: 'Use this to verify Login, Home, and Live show explicit recovery guidance while cached browse state stays as useful as possible.',
+          healthUrl: `${host}/health?scenario=expiredAccount`,
+          affectedEndpoints: ['auth', 'get_live_categories', 'get_live_streams', 'get_vod_streams', 'get_series', 'get_short_epg'],
+          expectedUx: ['Login downgrades trust immediately', 'Home falls back to cached content with renewal guidance', 'Live stops pretending playback issues are stream-only when the account is expired'],
+          verificationSteps: ['Tap Expired account in-product', 'Reconnect or revalidate mock provider and confirm the account status flips to expired', 'Open Home and Live and verify recovery guidance stays visible even if fresh provider data is blocked'],
+        },
       },
       topCategories: liveCategories.map((category) => ({
         id: category.category_id,
@@ -499,7 +528,9 @@ const server = http.createServer((req, res) => {
             ? ['Connect with mock credentials', 'Open Home to confirm the shell stays useful', 'Open Search, Movies, and Series to verify partial-result behavior']
             : lineSaturated
               ? ['Connect with mock credentials', 'Revalidate provider and confirm the trust cockpit warns that all lines are in use', 'Open Home and Live and verify capacity-risk messaging stays visible before playback']
-              : ['Connect with mock credentials', 'Open Home and verify provider trust + hero guide data', 'Open Live and surf preview cards with inline NOW and NEXT'],
+              : expiredAccount
+                ? ['Connect with mock credentials', 'Revalidate provider and confirm trust downgrades to expired', 'Open Home and Live and verify cached data plus renewal guidance stay visible together']
+                : ['Connect with mock credentials', 'Open Home and verify provider trust + hero guide data', 'Open Live and surf preview cards with inline NOW and NEXT'],
       sampleCredentials: {
         server: host,
         username: 'test',
@@ -512,21 +543,27 @@ const server = http.createServer((req, res) => {
             ? 'Connect normally, then verify the app calls out guide degradation without making login feel broken.'
             : lineSaturated
               ? 'Connect normally, then verify Login downgrades provider trust from healthy to capacity-risk without pretending the account is fine.'
-              : 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
+              : expiredAccount
+                ? 'Connect or revalidate the mock provider, then verify Login makes the expired account explicit and points the user toward renewal or another saved provider.'
+                : 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
         home: degradedSearch
           ? 'Verify Home still feels useful while search-oriented catalogs degrade and cached content remains visible, and that the rehearsal switch refreshes the surface in place.'
           : degradedEpg
             ? 'Verify Home still loads counts, quick actions, and featured content while guide copy falls back gracefully without a manual reload.'
             : lineSaturated
               ? 'Verify Home keeps browse counts and quick actions live, but the provider trust cockpit clearly warns that line capacity is maxed before users hit playback.'
-              : 'Verify hero counts, quick-launch actions, cached provider refresh messaging, and instant in-place rehearsal refresh from one healthy source.',
+              : expiredAccount
+                ? 'Verify Home falls back to saved provider state when fresh catalog requests are blocked, while renewal and provider-switch guidance stays visible above the rails.'
+                : 'Verify hero counts, quick-launch actions, cached provider refresh messaging, and instant in-place rehearsal refresh from one healthy source.',
         live: degradedLive
           ? 'Verify inline provider status banners, retry actions, graceful preview fallback, and in-place browser refresh when the live catalog becomes unavailable.'
           : degradedEpg
             ? 'Verify channel browsing and preview remain intact while NOW and NEXT labels explain the guide outage without forcing a full reload.'
             : lineSaturated
               ? 'Verify Live keeps browsing available while account-capacity warnings stay visible in the provider trust cockpit before the user blames the stream itself.'
-              : 'Verify inline NOW/NEXT guide data, hover preview fallback, surf-rail browsing, and in-place rehearsal refresh against realistic fake categories.',
+              : expiredAccount
+                ? 'Verify Live stops blaming the stream, surfaces the expired-account recovery path clearly, and keeps any saved context more useful than a blank error wall.'
+                : 'Verify inline NOW/NEXT guide data, hover preview fallback, surf-rail browsing, and in-place rehearsal refresh against realistic fake categories.',
         search: degradedSearch
           ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, offers direct retry actions, and refreshes immediately when the rehearsal mode changes.'
           : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell, then use the rehearsal toggles to force an instant refresh.',
@@ -543,6 +580,7 @@ const server = http.createServer((req, res) => {
         degradedLive: `${host}/health?scenario=degradedLive`,
         degradedEpg: `${host}/health?scenario=degradedEpg`,
         lineSaturated: `${host}/health?scenario=lineSaturated`,
+        expiredAccount: `${host}/health?scenario=expiredAccount`,
       },
       xmltv: `${host}/xmltv.php?username=test&password=test`,
       sampleLive: `${host}/player_api.php?username=test&password=test&action=get_live_streams&category_id=1`,

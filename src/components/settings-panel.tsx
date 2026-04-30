@@ -21,6 +21,7 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedLive: 'Degraded live',
   degradedEpg: 'Degraded guide',
   lineSaturated: 'Lines maxed',
+  expiredAccount: 'Expired account',
 };
 
 const formatExpiry = (value: string | null | undefined) => {

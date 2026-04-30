@@ -11,6 +11,7 @@ const labels: Record<MockProviderScenario, string> = {
   degradedLive: 'Degraded live',
   degradedEpg: 'Degraded guide',
   lineSaturated: 'Lines maxed',
+  expiredAccount: 'Expired account',
 };
 
 export function MockScenarioControl() {

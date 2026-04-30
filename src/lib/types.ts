@@ -193,7 +193,7 @@ export type MockProviderCategorySummary = {
   channels: number;
 };
 
-export type MockProviderScenario = 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated';
+export type MockProviderScenario = 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' | 'expiredAccount';
 
 export type MockProviderHealth = {
   ok: boolean;

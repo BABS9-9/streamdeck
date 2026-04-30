@@ -16,6 +16,7 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedLive: 'Degraded live',
   degradedEpg: 'Degraded guide',
   lineSaturated: 'Lines maxed',
+  expiredAccount: 'Expired account',
 };
 
 const formatExpiry = (value?: string | null) => {
@@ -25,8 +26,10 @@ const formatExpiry = (value?: string | null) => {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const getLinePressure = (summary?: { activeConnections: number | null; maxConnections: number | null } | null) => {
-  if (!summary?.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
+const getAccountPressure = (summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null) => {
+  if (!summary) return null;
+  if (summary.status && summary.status !== 'Active') return `Provider account is ${String(summary.status).toLowerCase()}. Surface the recovery path before the user mistakes account expiry for stream failure.`;
+  if (!summary.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
   return summary.activeConnections >= summary.maxConnections
     ? `All ${summary.maxConnections} provider lines are currently in use. Surface this before the user mistakes account pressure for stream failure.`
     : null;
@@ -213,7 +216,7 @@ export function LiveBrowser() {
     return selectedCategory === 'all' || stream.category_id === selectedCategory;
   }).length;
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
-  const providerLinePressure = getLinePressure(activeConnection?.lastAuthSummary);
+  const providerAccountPressure = getAccountPressure(activeConnection?.lastAuthSummary);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -331,10 +334,10 @@ export function LiveBrowser() {
           ) : null}
         </div>
 
-        {providerLinePressure ? (
+        {providerAccountPressure ? (
           <div className="rounded-[1.5rem] border border-amber-400/20 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p>{providerLinePressure}</p>
+              <p>{providerAccountPressure}</p>
               <span className="text-xs uppercase tracking-[0.22em] text-amber-50/80">Provider capacity risk</span>
             </div>
           </div>
@@ -419,9 +422,9 @@ export function LiveBrowser() {
                   </div>
                 </div>
               </div>
-              {providerLinePressure ? (
+              {providerAccountPressure ? (
                 <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-sm text-amber-100">
-                  {providerLinePressure}
+                  {providerAccountPressure}
                 </div>
               ) : null}
             </>

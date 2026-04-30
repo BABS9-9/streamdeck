@@ -22,6 +22,7 @@ const scenarioLabels = {
   degradedLive: 'Degraded live',
   degradedEpg: 'Degraded guide',
   lineSaturated: 'Lines maxed',
+  expiredAccount: 'Expired account',
 };
 
 const formatExpiry = (value) => {
@@ -31,8 +32,10 @@ const formatExpiry = (value) => {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const getLinePressure = (summary) => {
-  if (!summary?.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
+const getAccountPressure = (summary) => {
+  if (!summary) return null;
+  if (summary.status && summary.status !== 'Active') return `Provider account is ${String(summary.status).toLowerCase()}. Guide the user toward renewal, updated credentials, or another saved provider before they hit playback.`;
+  if (!summary.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
   return summary.activeConnections >= summary.maxConnections
     ? `All ${summary.maxConnections} provider lines are currently in use. Playback may fail even though auth still succeeds.`
     : null;
@@ -59,7 +62,7 @@ export default function LoginPage() {
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
 
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
-  const mockLinePressure = getLinePressure(mockHealth?.accountProfile);
+  const mockAccountPressure = getAccountPressure(mockHealth?.accountProfile);
 
   useEffect(() => {
     hydrate();
@@ -191,9 +194,9 @@ export default function LoginPage() {
                     </div>
                   ))}
                   </div>
-                  {mockLinePressure ? (
+                  {mockAccountPressure ? (
                     <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
-                      {mockLinePressure}
+                      {mockAccountPressure}
                     </div>
                   ) : null}
                 </>
