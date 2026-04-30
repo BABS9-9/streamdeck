@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId } from '@/lib/xtream-api';
-import { XtreamStream } from '@/lib/types';
+import { SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -16,8 +16,62 @@ const tone: Record<string, string> = {
   rose: 'from-rose-500/25 to-pink-500/10 border-rose-400/30',
 };
 
+const normalizeLibraryKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+const buildVariantKey = (title: string, kind: 'live' | 'movie' | 'series', year?: string) => {
+  return `${kind}:${normalizeLibraryKey(title)}:${year || ''}`;
+};
+
+type ProviderVariant = {
+  providerId: string;
+  providerName: string;
+  title: string;
+  streamId: number;
+  kind: 'live' | 'movie' | 'series';
+  artwork?: string;
+  categoryId?: string;
+  playbackUrl?: string | null;
+  seriesId?: number;
+  weight: number;
+  warning?: string | null;
+};
+
+const getConnectionTrust = (connection: SavedConnection, statusState?: string) => {
+  const summary = connection.lastAuthSummary;
+  const isExpired = summary?.status && summary.status !== 'Active';
+  const isMaxed = !!summary?.maxConnections && (summary.activeConnections ?? 0) >= summary.maxConnections;
+  const isError = statusState === 'error';
+  const isDegraded = statusState === 'degraded';
+
+  let weight = 100;
+  let warning: string | null = null;
+
+  if (isExpired) {
+    weight -= 80;
+    warning = `Status ${summary?.status}`;
+  }
+  if (isMaxed) {
+    weight -= 35;
+    warning = warning || 'All lines in use';
+  }
+  if (isDegraded) {
+    weight -= 18;
+    warning = warning || 'Provider degraded';
+  }
+  if (isError) {
+    weight -= 60;
+    warning = warning || 'Validation failing';
+  }
+
+  return { weight, warning, needsRecovery: Boolean(isExpired || isMaxed || isError) };
+};
+
 export function CollectionsManager() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
+  const connections = useAuthStore((state) => state.connections);
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const validateConnection = useAuthStore((state) => state.validateConnection);
   const collections = useCollectionsStore((state) => state.collections);
   const createCollection = useCollectionsStore((state) => state.createCollection);
   const removeCollection = useCollectionsStore((state) => state.removeCollection);
@@ -37,7 +91,39 @@ export function CollectionsManager() {
     return [...cached.live, ...cached.vod, ...cached.series];
   }, [activeConnection]);
 
+  const activeTrust = activeConnection ? getConnectionTrust(activeConnection, connectionStatus[activeConnection.id]?.state) : null;
+
   const providerCollections = useMemo(() => collections.filter((collection) => collection.items.some((item) => item.providerId === activeConnection?.id) || collection.items.length === 0), [activeConnection?.id, collections]);
+
+  const providerVariants = useMemo(() => {
+    return connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
+      const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+      if (!connectionCatalog) return acc;
+      const trust = getConnectionTrust(connection, connectionStatus[connection.id]?.state);
+      [...connectionCatalog.live, ...connectionCatalog.vod, ...connectionCatalog.series].forEach((item) => {
+        const kind = item.stream_type === 'live' ? 'live' : item.stream_type === 'series' ? 'series' : 'movie';
+        const key = buildVariantKey(item.name, kind, item.year);
+        const variants = acc[key] || [];
+        if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === getContentId(item))) {
+          variants.push({
+            providerId: connection.id,
+            providerName: connection.name,
+            title: item.name,
+            streamId: getContentId(item),
+            kind,
+            artwork: getArtwork(item),
+            categoryId: item.category_id,
+            playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
+            seriesId: item.series_id,
+            weight: trust.weight,
+            warning: trust.warning,
+          });
+        }
+        acc[key] = variants.sort((left, right) => right.weight - left.weight || left.providerName.localeCompare(right.providerName));
+      });
+      return acc;
+    }, {});
+  }, [connections, connectionStatus]);
 
   const discovery = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -45,6 +131,23 @@ export function CollectionsManager() {
       .filter((item) => !query || item.name.toLowerCase().includes(query) || item.genre?.toLowerCase().includes(query))
       .slice(0, 12);
   }, [catalog, search]);
+
+  const launchVariant = (variant: ProviderVariant) => {
+    setActiveConnection(variant.providerId);
+    const stream = {
+      name: variant.title,
+      stream_type: variant.kind,
+      stream_id: variant.kind === 'series' ? undefined : variant.streamId,
+      series_id: variant.kind === 'series' ? variant.seriesId ?? variant.streamId : undefined,
+      category_id: variant.categoryId || 'alternate',
+      stream_icon: variant.artwork,
+      cover: variant.artwork,
+    } as XtreamStream;
+
+    if (variant.kind === 'series') return;
+    if (!variant.playbackUrl) return;
+    playStream(stream, variant.playbackUrl, variant.providerId);
+  };
 
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Connect first.</div>;
@@ -56,6 +159,24 @@ export function CollectionsManager() {
         <p className="text-xs uppercase tracking-[0.35em] text-violet-300">Custom folders</p>
         <h2 className="mt-3 text-3xl font-semibold text-white">Build your own channel and title collections.</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">This turns favorites into real curation. Make folders like Game Day, News Morning, Kids Bedtime, or Weekend Movies, then launch directly from one place.</p>
+        {activeTrust?.needsRecovery ? (
+          <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-amber-200">Collection recovery mode</p>
+                <p className="mt-2 leading-6">
+                  {activeTrust.warning || 'The active provider needs attention.'} Launching a healthier provider copy from a collection is now the fastest recovery path.
+                </p>
+              </div>
+              <button
+                onClick={() => void validateConnection(activeConnection.id)}
+                className="rounded-full border border-amber-300/30 bg-black/20 px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-amber-50 hover:bg-black/30"
+              >
+                Recheck provider
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
@@ -135,7 +256,15 @@ export function CollectionsManager() {
       </section>
 
       <section>
-        <h3 className="text-xl font-semibold text-white">Launch from collections</h3>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xl font-semibold text-white">Launch from collections</h3>
+            <p className="mt-2 text-sm text-slate-400">Collections now understand alternate provider copies, so a saved lineup still works when the active source expires or saturates.</p>
+          </div>
+          <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-300">
+            {providerCollections.length} collection{providerCollections.length === 1 ? '' : 's'} in scope
+          </div>
+        </div>
         <div className="mt-4 grid gap-4 xl:grid-cols-2">
           {providerCollections.map((collection) => (
             <article key={collection.id} className="rounded-[1.8rem] border border-white/10 bg-white/5 p-5">
@@ -157,12 +286,31 @@ export function CollectionsManager() {
                       : catalogItem.stream_type === 'series'
                         ? undefined
                         : buildVodStreamUrl(activeConnection, catalogItem);
+                  const variantKey = buildVariantKey(item.title, item.streamType, catalogItem?.year);
+                  const alternateVariants = (providerVariants[variantKey] || []).filter((variant) => !(variant.providerId === activeConnection.id && variant.streamId === item.streamId));
+                  const recommendedVariant = alternateVariants[0];
+                  const canUseCurrentProvider = item.providerId === activeConnection.id && ((item.streamType === 'series') || (!!catalogItem && !!playbackUrl));
 
                   return (
-                    <div key={`${collection.id}-${item.streamId}`} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div key={`${collection.id}-${item.providerId}-${item.streamId}`} className="rounded-2xl border border-white/10 bg-black/20 p-4">
                       <div className="aspect-video rounded-xl bg-cover bg-center" style={{ backgroundImage: `url(${item.artwork})` }} />
-                      <p className="mt-3 font-medium text-white">{item.title}</p>
-                      <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{item.streamType}</p>
+                      <div className="mt-3 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-white">{item.title}</p>
+                          <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{item.streamType}</p>
+                        </div>
+                        {recommendedVariant ? (
+                          <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-emerald-100">
+                            Alt ready
+                          </span>
+                        ) : null}
+                      </div>
+                      {item.providerId !== activeConnection.id ? (
+                        <p className="mt-3 text-xs leading-5 text-slate-400">Saved from another provider. Switch or launch the healthier copy below.</p>
+                      ) : null}
+                      {activeTrust?.needsRecovery && recommendedVariant ? (
+                        <p className="mt-3 text-xs leading-5 text-amber-200">Active provider is under pressure. Recommended recovery path: {recommendedVariant.providerName}{recommendedVariant.warning ? ` • ${recommendedVariant.warning}` : ''}.</p>
+                      ) : null}
                       <div className="mt-4 flex gap-2">
                         {item.streamType === 'series' ? (
                           <Link href={`/series?seriesId=${item.streamId}`} className="flex-1 rounded-xl bg-violet-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-violet-400">Open</Link>
@@ -172,14 +320,80 @@ export function CollectionsManager() {
                               if (!catalogItem || !playbackUrl) return;
                               playStream(catalogItem, playbackUrl, activeConnection.id);
                             }}
-                            disabled={!catalogItem || !playbackUrl}
+                            disabled={!canUseCurrentProvider || !!(activeTrust?.needsRecovery && recommendedVariant)}
                             className="flex-1 rounded-xl bg-violet-500 px-3 py-2 text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
                           >
-                            Play
+                            Play current
                           </button>
                         )}
                         <button onClick={() => removeItemFromCollection(collection.id, item.providerId, item.streamId)} className="rounded-xl border border-white/10 px-3 py-2 text-sm text-slate-200 hover:bg-white/5">Remove</button>
                       </div>
+                      {recommendedVariant ? (
+                        <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <p className="uppercase tracking-[0.18em] text-emerald-200">Recommended alternate</p>
+                              <p className="mt-1 text-sm text-white">{recommendedVariant.providerName}</p>
+                              {recommendedVariant.warning ? <p className="mt-1 text-[11px] text-emerald-100/80">{recommendedVariant.warning}</p> : null}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {recommendedVariant.kind === 'series' ? (
+                                <Link
+                                  href={`/series?seriesId=${recommendedVariant.seriesId ?? recommendedVariant.streamId}`}
+                                  onClick={() => setActiveConnection(recommendedVariant.providerId)}
+                                  className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                >
+                                  Open alternate
+                                </Link>
+                              ) : (
+                                <button
+                                  onClick={() => launchVariant(recommendedVariant)}
+                                  className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                >
+                                  Play alternate
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setActiveConnection(recommendedVariant.providerId)}
+                                className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                              >
+                                Switch only
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+                      {alternateVariants.length > 1 ? (
+                        <div className="mt-3 space-y-2 rounded-2xl border border-white/10 bg-black/10 p-3">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Other provider copies</p>
+                          {alternateVariants.slice(1, 3).map((variant) => (
+                            <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
+                              <div>
+                                <p className="text-sm text-white">{variant.providerName}</p>
+                                {variant.warning ? <p className="text-[11px] text-slate-400">{variant.warning}</p> : null}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {variant.kind === 'series' ? (
+                                  <Link
+                                    href={`/series?seriesId=${variant.seriesId ?? variant.streamId}`}
+                                    onClick={() => setActiveConnection(variant.providerId)}
+                                    className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                  >
+                                    Open
+                                  </Link>
+                                ) : (
+                                  <button
+                                    onClick={() => launchVariant(variant)}
+                                    className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                  >
+                                    Play
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
