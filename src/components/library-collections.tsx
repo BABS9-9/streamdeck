@@ -123,6 +123,14 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     [activeConnection, watchHistory]
   );
 
+  const seriesResumeLookup = useMemo(() => {
+    return Object.fromEntries(
+      watchHistory
+        .filter((item) => item.kind === 'series' && item.seriesTitle && item.seasonNumber && item.episodeNumber)
+        .map((item) => [normalizeLibraryKey(item.seriesTitle || item.title), item])
+    );
+  }, [watchHistory]);
+
   const variantSummary = useMemo(() => {
     const summary: Record<string, ProviderVariant[]> = {};
 
@@ -220,7 +228,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     }
   };
 
-  const renderProviderVariants = (variants: ProviderVariant[]) => {
+  const renderProviderVariants = (variants: ProviderVariant[], options?: { seriesTitle?: string; seasonNumber?: number; episodeNumber?: number }) => {
     if (variants.length === 0) return null;
     return (
       <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
@@ -243,15 +251,44 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 <p className="mt-1 text-sm text-white">{variant.kind === 'live' ? 'Live copy ready' : variant.kind === 'movie' ? 'Movie copy ready' : 'Series copy ready'}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {variant.kind === 'series' ? (
-                  <Link
-                    href={`/series?seriesId=${variant.seriesId ?? variant.streamId}`}
-                    onClick={() => setActiveConnection(variant.providerId)}
-                    className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
-                  >
-                    Open on {variant.providerName}
-                  </Link>
-                ) : (
+                {variant.kind === 'series' ? (() => {
+                  const seriesTitle = options?.seriesTitle;
+                  const seasonNumber = options?.seasonNumber;
+                  const episodeNumber = options?.episodeNumber;
+                  if (seriesTitle && seasonNumber && episodeNumber) {
+                    return (
+                      <>
+                        <button
+                          onClick={() => void launchSeriesVariant(variant, {
+                            title: seriesTitle,
+                            seasonNumber,
+                            episodeNumber,
+                          })}
+                          disabled={seriesRecoveryKey === `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${seasonNumber || 0}-${episodeNumber || 0}`}
+                          className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {seriesRecoveryKey === `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${seasonNumber || 0}-${episodeNumber || 0}` ? 'Starting…' : `Resume on ${variant.providerName}`}
+                        </button>
+                        <Link
+                          href={`/series?seriesId=${variant.seriesId ?? variant.streamId}&season=${seasonNumber}&episode=${episodeNumber}`}
+                          onClick={() => setActiveConnection(variant.providerId)}
+                          className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                        >
+                          Open series
+                        </Link>
+                      </>
+                    );
+                  }
+                  return (
+                    <Link
+                      href={`/series?seriesId=${variant.seriesId ?? variant.streamId}`}
+                      onClick={() => setActiveConnection(variant.providerId)}
+                      className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                    >
+                      Open on {variant.providerName}
+                    </Link>
+                  );
+                })() : (
                   <button
                     onClick={() => launchVariant(variant)}
                     className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
@@ -319,6 +356,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   ? null
                   : buildVodStreamUrl(activeConnection, item);
               const contentId = getContentId(item);
+              const seriesResume = item.stream_type === 'series' ? seriesResumeLookup[normalizeLibraryKey(item.name)] : null;
               return (
                 <article key={`${item.stream_type}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                   <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${getArtwork(item)})` }} />
@@ -330,7 +368,16 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                     <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">{contentId}</span>
                   </div>
                   <p className="mt-3 line-clamp-3 text-sm text-slate-400">{item.plot || item.genre || 'Saved from your StreamDeck library.'}</p>
-                  {renderProviderVariants(variantSummary[`favorite:${contentId}`] || [])}
+                  {item.stream_type === 'series' && seriesResume ? (
+                    <p className="mt-3 text-xs leading-5 text-emerald-200">Resume context found for S{seriesResume.seasonNumber}E{seriesResume.episodeNumber}, so alternate provider copies can jump straight back into the episode.</p>
+                  ) : null}
+                  {renderProviderVariants(variantSummary[`favorite:${contentId}`] || [], item.stream_type === 'series' && seriesResume
+                    ? {
+                        seriesTitle: item.name,
+                        seasonNumber: seriesResume.seasonNumber,
+                        episodeNumber: seriesResume.episodeNumber,
+                      }
+                    : undefined)}
                   {playbackUrl ? (
                     <button
                       onClick={() => {
@@ -339,6 +386,27 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                       className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"
                     >
                       Play from favorites
+                    </button>
+                  ) : seriesResume ? (
+                    <button
+                      onClick={() => void launchSeriesVariant({
+                        providerId: activeConnection.id,
+                        providerName: activeConnection.name,
+                        title: item.name,
+                        streamId: contentId,
+                        kind: 'series',
+                        artwork: getArtwork(item),
+                        categoryId: item.category_id,
+                        seriesId: item.series_id ?? contentId,
+                      }, {
+                        title: item.name,
+                        seasonNumber: seriesResume.seasonNumber,
+                        episodeNumber: seriesResume.episodeNumber,
+                      })}
+                      disabled={seriesRecoveryKey === `${activeConnection.id}-${item.series_id ?? contentId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}`}
+                      className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {seriesRecoveryKey === `${activeConnection.id}-${item.series_id ?? contentId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}` ? 'Starting episode…' : `Resume S${seriesResume.seasonNumber}E${seriesResume.episodeNumber}`}
                     </button>
                   ) : (
                     <Link
