@@ -193,7 +193,7 @@ export type MockProviderCategorySummary = {
   channels: number;
 };
 
-export type MockProviderScenario = 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' | 'expiredAccount';
+export type MockProviderScenario = 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' | 'expiredAccount' | 'authUnstable';
 
 export type MockProviderHealth = {
   ok: boolean;
@@ -247,6 +247,11 @@ export type MockProviderHealth = {
     tone: 'healthy' | 'warning';
     detail: string;
   }>;
+  operatorHeadline?: {
+    tone: 'healthy' | 'warning';
+    title: string;
+    detail: string;
+  };
   recoveryActions?: string[];
   recommendedDemoSequence?: string[];
   sampleCredentials?: {

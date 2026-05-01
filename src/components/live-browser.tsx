@@ -17,6 +17,7 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedEpg: 'Degraded guide',
   lineSaturated: 'Lines maxed',
   expiredAccount: 'Expired account',
+  authUnstable: 'Auth unstable',
 };
 
 const formatExpiry = (value?: string | null) => {
@@ -242,7 +243,7 @@ export function LiveBrowser() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Live rehearsal note</p>
-              <p className="mt-2">The mock provider now supports degraded-live, degraded-search, and degraded-guide rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source, and this browser now hot-refreshes in place plus revalidates saved mock-provider account truth as soon as the rehearsal mode changes.</p>
+              <p className="mt-2">The mock provider now supports degraded-live, degraded-search, degraded-guide, and auth-unstable rehearsal states, so Live can be demoed against failure paths without touching a real IPTV source, and this browser now hot-refreshes in place plus revalidates saved mock-provider account truth as soon as the rehearsal mode changes.</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
               {mockHealth ? `Mode: ${mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}` : 'Mock-friendly retries ready'}
@@ -340,6 +341,13 @@ export function LiveBrowser() {
               <p>{providerAccountPressure}</p>
               <span className="text-xs uppercase tracking-[0.22em] text-amber-50/80">Provider capacity risk</span>
             </div>
+          </div>
+        ) : null}
+
+        {mockHealth?.operatorHeadline ? (
+          <div className={`rounded-[1.5rem] border px-5 py-4 ${mockHealth.operatorHeadline.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>
+            <p className="font-medium text-white">{mockHealth.operatorHeadline.title}</p>
+            <p className="mt-2 text-sm text-current/90">{mockHealth.operatorHeadline.detail}</p>
           </div>
         ) : null}
 

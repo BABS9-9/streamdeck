@@ -23,6 +23,7 @@ const scenarioLabels = {
   degradedEpg: 'Degraded guide',
   lineSaturated: 'Lines maxed',
   expiredAccount: 'Expired account',
+  authUnstable: 'Auth unstable',
 };
 
 const formatExpiry = (value) => {
@@ -212,6 +213,12 @@ export default function LoginPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              ) : null}
+              {mockHealth.operatorHeadline ? (
+                <div className={`mt-4 rounded-2xl border p-4 ${mockHealth.operatorHeadline.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
+                  <p className={`text-sm font-semibold ${mockHealth.operatorHeadline.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{mockHealth.operatorHeadline.title}</p>
+                  <p className="mt-2 text-sm text-slate-300">{mockHealth.operatorHeadline.detail}</p>
                 </div>
               ) : null}
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">

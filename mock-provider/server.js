@@ -10,6 +10,7 @@ const scenarioLabels = {
   degradedEpg: 'Degraded guide rehearsal',
   lineSaturated: 'Line saturation rehearsal',
   expiredAccount: 'Expired account rehearsal',
+  authUnstable: 'Auth unstable rehearsal',
 };
 const logo = (seed, label = '') => `https://dummyimage.com/320x180/111827/a78bfa.png&text=${encodeURIComponent(label || seed)}`;
 const poster = (seed, label = '') => `https://dummyimage.com/420x630/111827/e5e7eb.png&text=${encodeURIComponent(label || seed)}`;
@@ -214,13 +215,14 @@ const buildXmltv = () => {
 const authResponse = (username, password, scenario = 'healthy') => {
   const lineSaturated = scenario === 'lineSaturated';
   const expiredAccount = scenario === 'expiredAccount';
+  const authUnstable = scenario === 'authUnstable';
   return ({
   user_info: {
     username,
     password,
-    auth: expiredAccount ? 0 : 1,
-    status: expiredAccount ? 'Expired' : 'Active',
-    exp_date: `${Math.floor(Date.now() / 1000) + 86400 * (expiredAccount ? -2 : lineSaturated ? 7 : 30)}`,
+    auth: expiredAccount || authUnstable ? 0 : 1,
+    status: expiredAccount ? 'Expired' : authUnstable ? 'Unstable' : 'Active',
+    exp_date: `${Math.floor(Date.now() / 1000) + 86400 * (expiredAccount ? -2 : authUnstable ? 2 : lineSaturated ? 7 : 30)}`,
     is_trial: '0',
     active_cons: lineSaturated ? '5' : '1',
     max_connections: '5',
@@ -239,8 +241,8 @@ const authResponse = (username, password, scenario = 'healthy') => {
 };
 
 const buildMockAccountProfile = (scenario = 'healthy') => ({
-  status: scenario === 'expiredAccount' ? 'Expired' : 'Active',
-  expiryLabel: scenario === 'expiredAccount' ? 'Expired 2 days ago' : scenario === 'lineSaturated' ? '7 days remaining' : '30 days remaining',
+  status: scenario === 'expiredAccount' ? 'Expired' : scenario === 'authUnstable' ? 'Unstable' : 'Active',
+  expiryLabel: scenario === 'expiredAccount' ? 'Expired 2 days ago' : scenario === 'authUnstable' ? '2 days remaining' : scenario === 'lineSaturated' ? '7 days remaining' : '30 days remaining',
   activeConnections: scenario === 'lineSaturated' ? 5 : 1,
   maxConnections: 5,
   timezone: 'America/Toronto',
@@ -249,7 +251,9 @@ const buildMockAccountProfile = (scenario = 'healthy') => ({
     ? 'Account auth is expired, so catalog and playback calls should guide the user toward reconnecting or switching providers.'
     : scenario === 'lineSaturated'
       ? 'All provider lines are in use, so playback can fail even while auth still succeeds.'
-      : null,
+      : scenario === 'authUnstable'
+        ? 'Auth checks are failing right now, but cached browse surfaces should stay useful while the user retries or switches providers.'
+        : null,
 });
 
 const buildTrustSignals = (scenario = 'healthy') => {
@@ -258,13 +262,14 @@ const buildTrustSignals = (scenario = 'healthy') => {
   const degradedLive = scenario === 'degradedLive';
   const degradedSearch = scenario === 'degradedSearch';
   const degradedEpg = scenario === 'degradedEpg';
+  const authUnstable = scenario === 'authUnstable';
 
   return [
     {
       id: 'account-status',
-      label: expiredAccount ? 'Account expired' : lineSaturated ? 'Capacity risk' : 'Account healthy',
-      tone: expiredAccount || lineSaturated ? 'warning' : 'healthy',
-      detail: expiredAccount ? 'Auth should downgrade immediately and the app should route users toward reconnecting or switching providers.' : lineSaturated ? 'Auth succeeds, but every line is already in use.' : 'Account is active and playback can start immediately.',
+      label: expiredAccount ? 'Account expired' : authUnstable ? 'Auth unstable' : lineSaturated ? 'Capacity risk' : 'Account healthy',
+      tone: expiredAccount || lineSaturated || authUnstable ? 'warning' : 'healthy',
+      detail: expiredAccount ? 'Auth should downgrade immediately and the app should route users toward reconnecting or switching providers.' : authUnstable ? 'Fresh auth checks are failing even though cached browsing can still stay useful.' : lineSaturated ? 'Auth succeeds, but every line is already in use.' : 'Account is active and playback can start immediately.',
     },
     {
       id: 'guide-readiness',
@@ -287,6 +292,38 @@ const buildTrustSignals = (scenario = 'healthy') => {
   ];
 };
 
+const buildOperatorHeadline = (scenario = 'healthy') => {
+  if (scenario === 'expiredAccount') {
+    return {
+      tone: 'warning',
+      title: 'Renew or switch providers before browsing deeper',
+      detail: 'This account is expired. Keep cached context visible, but push the user toward renewal, updated credentials, or another saved provider before they blame playback.',
+    };
+  }
+
+  if (scenario === 'authUnstable') {
+    return {
+      tone: 'warning',
+      title: 'Trust is unstable, but the session context should stay alive',
+      detail: 'Fresh auth checks are failing. Keep the active provider visible, preserve cached rails, and make retry or switch-provider actions obvious on Login, Home, and Live.',
+    };
+  }
+
+  if (scenario === 'lineSaturated') {
+    return {
+      tone: 'warning',
+      title: 'The account is real, but capacity is maxed',
+      detail: 'Warn before playback and steer users toward another saved provider or a retry later, instead of implying the stream itself is broken.',
+    };
+  }
+
+  return {
+    tone: 'healthy',
+    title: 'Provider trust is aligned with playback',
+    detail: 'Login, Home, and Live can all treat this provider as ready for normal browsing and playback rehearsal.',
+  };
+};
+
 const buildRecoveryActions = (scenario = 'healthy') => {
   if (scenario === 'expiredAccount') {
     return [
@@ -294,6 +331,15 @@ const buildRecoveryActions = (scenario = 'healthy') => {
       'Keep cached Home rails visible when possible, but block fresh provider fetches behind explicit recovery guidance.',
       'Offer a clear next step: re-enter credentials, switch saved providers, or retry validation after renewal.',
       'If the same series exists on another saved provider, resume the matched episode directly instead of dropping the user at a generic detail page.',
+    ];
+  }
+
+  if (scenario === 'authUnstable') {
+    return [
+      'Keep the active provider visible, but mark trust as unstable instead of ejecting the user into setup.',
+      'Let Login, Home, and Live explain that cached browsing can continue while auth retries fail.',
+      'Offer quick revalidate and switch-provider actions before the user assumes the whole app is broken.',
+      'Do not clear saved rails or guide context just because the latest trust check failed.',
     ];
   }
 
@@ -369,12 +415,13 @@ const server = http.createServer((req, res) => {
   const degradedEpg = scenario === 'degradedEpg';
   const lineSaturated = scenario === 'lineSaturated';
   const expiredAccount = scenario === 'expiredAccount';
+  const authUnstable = scenario === 'authUnstable';
 
   if (path === '/player_api.php') {
     if (!action) return sendJson(res, authResponse(username, password, scenario));
-    if (expiredAccount) {
+    if (expiredAccount || authUnstable) {
       res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-      return res.end(JSON.stringify({ error: 'Mock provider account expired', scenario }));
+      return res.end(JSON.stringify({ error: expiredAccount ? 'Mock provider account expired' : 'Mock provider auth temporarily unstable', scenario }));
     }
     if (action === 'get_live_categories') return sendJson(res, liveCategories);
     if (action === 'get_live_streams') {
@@ -446,7 +493,7 @@ const server = http.createServer((req, res) => {
         streamFormats: ['m3u8'],
       },
       endpointHealth: {
-        auth: lineSaturated || expiredAccount ? 'degraded' : 'healthy',
+        auth: lineSaturated || expiredAccount || authUnstable ? 'degraded' : 'healthy',
         liveCatalog: degradedLive || expiredAccount ? 'degraded' : 'healthy',
         vodCatalog: degradedSearch || expiredAccount ? 'degraded' : 'healthy',
         seriesCatalog: degradedSearch || expiredAccount ? 'degraded' : 'healthy',
@@ -508,6 +555,15 @@ const server = http.createServer((req, res) => {
           expectedUx: ['Login downgrades trust immediately', 'Home falls back to cached content with renewal guidance', 'Live stops pretending playback issues are stream-only when the account is expired'],
           verificationSteps: ['Tap Expired account in-product', 'Reconnect or revalidate mock provider and confirm the account status flips to expired', 'Open Home and Live and verify recovery guidance stays visible even if fresh provider data is blocked'],
         },
+        authUnstable: {
+          label: scenarioLabels.authUnstable,
+          summary: 'Fresh auth checks fail, but the provider still advertises enough health metadata to keep cached browse surfaces useful.',
+          appImpact: 'Use this to verify Login, Home, and Live degrade trust clearly without dumping the user out of the active provider context.',
+          healthUrl: `${host}/health?scenario=authUnstable`,
+          affectedEndpoints: ['auth'],
+          expectedUx: ['Login flags trust as unstable instead of silently failing', 'Home keeps cached rails and quick actions visible while auth is retried', 'Live keeps browsing context and shows a direct retry or switch-provider path'],
+          verificationSteps: ['Tap Auth unstable in-product', 'Revalidate the mock provider and confirm trust drops to unstable', 'Open Home and Live and verify cached context stays visible while retry guidance is explicit'],
+        },
       },
       topCategories: liveCategories.map((category) => ({
         id: category.category_id,
@@ -521,6 +577,7 @@ const server = http.createServer((req, res) => {
       })),
       accountProfile: buildMockAccountProfile(scenario),
       trustSignals: buildTrustSignals(scenario),
+      operatorHeadline: buildOperatorHeadline(scenario),
       recoveryActions: buildRecoveryActions(scenario),
       recommendedDemoSequence: degradedLive
         ? ['Connect with mock credentials', 'Open Home to confirm provider context still feels healthy', 'Open Live and verify degraded live fallback plus retry copy']
@@ -532,7 +589,9 @@ const server = http.createServer((req, res) => {
               ? ['Connect with mock credentials', 'Revalidate provider and confirm the trust cockpit warns that all lines are in use', 'Open Home and Live and verify capacity-risk messaging stays visible before playback']
               : expiredAccount
                 ? ['Connect with mock credentials', 'Revalidate provider and confirm trust downgrades to expired', 'Open Home and Live and verify cached data plus renewal guidance stay visible together']
-                : ['Connect with mock credentials', 'Open Home and verify provider trust + hero guide data', 'Open Live and surf preview cards with inline NOW and NEXT'],
+                : authUnstable
+                  ? ['Connect with mock credentials', 'Revalidate provider and confirm trust downgrades to unstable without wiping the saved connection', 'Open Home and Live and verify cached context plus retry guidance stay visible together']
+                  : ['Connect with mock credentials', 'Open Home and verify provider trust + hero guide data', 'Open Live and surf preview cards with inline NOW and NEXT'],
       sampleCredentials: {
         server: host,
         username: 'test',
@@ -547,7 +606,9 @@ const server = http.createServer((req, res) => {
               ? 'Connect normally, then verify Login downgrades provider trust from healthy to capacity-risk without pretending the account is fine.'
               : expiredAccount
                 ? 'Connect or revalidate the mock provider, then verify Login makes the expired account explicit and points the user toward renewal or another saved provider.'
-                : 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
+                : authUnstable
+                  ? 'Connect or revalidate the mock provider, then verify Login keeps the saved connection visible while trust drops to unstable and retry guidance appears inline.'
+                  : 'Use the saved mock credentials to connect instantly and validate multi-provider login UX.',
         home: degradedSearch
           ? 'Verify Home still feels useful while search-oriented catalogs degrade and cached content remains visible, and that the rehearsal switch refreshes the surface in place.'
           : degradedEpg
@@ -556,7 +617,9 @@ const server = http.createServer((req, res) => {
               ? 'Verify Home keeps browse counts and quick actions live, but the provider trust cockpit clearly warns that line capacity is maxed before users hit playback.'
               : expiredAccount
                 ? 'Verify Home falls back to saved provider state when fresh catalog requests are blocked, while renewal and provider-switch guidance stays visible above the rails.'
-                : 'Verify hero counts, quick-launch actions, cached provider refresh messaging, and instant in-place rehearsal refresh from one healthy source.',
+                : authUnstable
+                  ? 'Verify Home keeps cached rails and quick actions visible while auth revalidation fails, and that retry plus switch-provider guidance stays above the content.'
+                  : 'Verify hero counts, quick-launch actions, cached provider refresh messaging, and instant in-place rehearsal refresh from one healthy source.',
         live: degradedLive
           ? 'Verify inline provider status banners, retry actions, graceful preview fallback, and in-place browser refresh when the live catalog becomes unavailable.'
           : degradedEpg
@@ -565,7 +628,9 @@ const server = http.createServer((req, res) => {
               ? 'Verify Live keeps browsing available while account-capacity warnings stay visible in the provider trust cockpit before the user blames the stream itself.'
               : expiredAccount
                 ? 'Verify Live stops blaming the stream, surfaces the expired-account recovery path clearly, and keeps any saved context more useful than a blank error wall.'
-                : 'Verify inline NOW/NEXT guide data, hover preview fallback, surf-rail browsing, and in-place rehearsal refresh against realistic fake categories.',
+                : authUnstable
+                  ? 'Verify Live keeps the current browse context visible while auth checks fail, and that retry or provider-switch guidance is clearer than a generic playback error.'
+                  : 'Verify inline NOW/NEXT guide data, hover preview fallback, surf-rail browsing, and in-place rehearsal refresh against realistic fake categories.',
         search: degradedSearch
           ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, offers direct retry actions, and refreshes immediately when the rehearsal mode changes.'
           : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell, then use the rehearsal toggles to force an instant refresh.',
@@ -583,6 +648,7 @@ const server = http.createServer((req, res) => {
         degradedEpg: `${host}/health?scenario=degradedEpg`,
         lineSaturated: `${host}/health?scenario=lineSaturated`,
         expiredAccount: `${host}/health?scenario=expiredAccount`,
+        authUnstable: `${host}/health?scenario=authUnstable`,
       },
       xmltv: `${host}/xmltv.php?username=test&password=test`,
       sampleLive: `${host}/player_api.php?username=test&password=test&action=get_live_streams&category_id=1`,

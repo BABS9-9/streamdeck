@@ -41,6 +41,7 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   degradedEpg: 'Degraded guide',
   lineSaturated: 'Lines maxed',
   expiredAccount: 'Expired account',
+  authUnstable: 'Auth unstable',
 };
 
 const formatExpiry = (value: string | null | undefined) => {
@@ -340,6 +341,12 @@ export function HomeDashboard() {
                   {mockAccountPressure}
                 </div>
               ) : null}
+              {mockHealth.operatorHeadline ? (
+                <div className={`mt-4 rounded-2xl border p-4 ${mockHealth.operatorHeadline.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
+                  <p className={`text-sm font-semibold ${mockHealth.operatorHeadline.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{mockHealth.operatorHeadline.title}</p>
+                  <p className="mt-2 text-sm text-slate-200">{mockHealth.operatorHeadline.detail}</p>
+                </div>
+              ) : null}
             </>
           ) : null}
           {mockHealth.trustSignals?.length ? (
@@ -356,7 +363,7 @@ export function HomeDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Mock rehearsal modes</p>
-                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, degraded-live, and degraded-guide behavior so Home can rehearse fallback messaging before real providers misbehave, and this surface now refreshes in place plus revalidates saved mock-provider account truth as soon as the rehearsal mode changes.</p>
+                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, degraded-live, degraded-guide, and auth-unstable behavior so Home can rehearse fallback messaging before real providers misbehave, and this surface now refreshes in place plus revalidates saved mock-provider account truth as soon as the rehearsal mode changes.</p>
               </div>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
                 Active: {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}
