@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId } from '@/lib/xtream-api';
+import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
@@ -84,6 +84,7 @@ export function CollectionsManager() {
   const [description, setDescription] = useState('');
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>('');
   const [search, setSearch] = useState('');
+  const [seriesRecoveryKey, setSeriesRecoveryKey] = useState<string | null>(null);
 
   const catalog = useMemo(() => {
     if (!activeConnection) return [] as XtreamStream[];
@@ -156,6 +157,39 @@ export function CollectionsManager() {
     if (variant.kind === 'series') return;
     if (!variant.playbackUrl) return;
     playStream(stream, variant.playbackUrl, variant.providerId);
+  };
+
+  const launchSeriesVariant = async (variant: ProviderVariant, seriesTitle: string, seasonNumber?: number, episodeNumber?: number) => {
+    const provider = connections.find((connection) => connection.id === variant.providerId);
+    if (!provider) return;
+
+    const recoveryKey = `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${seasonNumber || 0}-${episodeNumber || 0}`;
+    setSeriesRecoveryKey(recoveryKey);
+
+    try {
+      const resolved = await resolveSeriesEpisodePlayback(provider, variant.seriesId ?? variant.streamId, seasonNumber, episodeNumber);
+      setActiveConnection(variant.providerId);
+      if (!resolved) return;
+
+      playStream({
+        stream_id: resolved.episode.id,
+        name: resolved.episode.title,
+        stream_type: 'series',
+        category_id: variant.categoryId || 'alternate',
+        stream_icon: resolved.episode.info?.movie_image || variant.artwork,
+        cover: resolved.episode.info?.movie_image || variant.artwork,
+        plot: resolved.episode.plot || resolved.episode.info?.plot,
+        direct_source: resolved.episode.direct_source,
+        container_extension: resolved.episode.info?.container_extension,
+      }, resolved.playbackUrl, variant.providerId, {
+        seriesId: Number(variant.seriesId ?? variant.streamId),
+        seriesTitle,
+        seasonNumber: resolved.resolvedSeasonNumber,
+        episodeNumber: resolved.episode.episode_num,
+      });
+    } finally {
+      setSeriesRecoveryKey((current) => (current === recoveryKey ? null : current));
+    }
   };
 
   if (!activeConnection) {
@@ -323,7 +357,26 @@ export function CollectionsManager() {
                       ) : null}
                       <div className="mt-4 flex gap-2">
                         {item.streamType === 'series' ? (
-                          <Link href={`/series?seriesId=${item.streamId}${seriesResume?.seasonNumber ? `&season=${seriesResume.seasonNumber}` : ''}${seriesResume?.episodeNumber ? `&episode=${seriesResume.episodeNumber}` : ''}`} className="flex-1 rounded-xl bg-violet-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-violet-400">{seriesResume ? 'Resume' : 'Open'}</Link>
+                          seriesResume ? (
+                            <button
+                              onClick={() => void launchSeriesVariant({
+                                providerId: activeConnection.id,
+                                providerName: activeConnection.name,
+                                title: item.title,
+                                streamId: item.streamId,
+                                kind: 'series',
+                                artwork: item.artwork,
+                                seriesId: item.streamId,
+                                weight: activeTrust?.weight ?? 100,
+                              }, item.title, seriesResume.seasonNumber, seriesResume.episodeNumber)}
+                              disabled={seriesRecoveryKey === `${activeConnection.id}-${item.streamId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}`}
+                              className="flex-1 rounded-xl bg-violet-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {seriesRecoveryKey === `${activeConnection.id}-${item.streamId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}` ? 'Starting…' : 'Resume'}
+                            </button>
+                          ) : (
+                            <Link href={`/series?seriesId=${item.streamId}`} className="flex-1 rounded-xl bg-violet-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-violet-400">Open</Link>
+                          )
                         ) : (
                           <button
                             onClick={() => {
@@ -348,13 +401,22 @@ export function CollectionsManager() {
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {recommendedVariant.kind === 'series' ? (
-                                <Link
-                                  href={`/series?seriesId=${recommendedVariant.seriesId ?? recommendedVariant.streamId}${seriesResume?.seasonNumber ? `&season=${seriesResume.seasonNumber}` : ''}${seriesResume?.episodeNumber ? `&episode=${seriesResume.episodeNumber}` : ''}`}
-                                  onClick={() => setActiveConnection(recommendedVariant.providerId)}
-                                  className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
-                                >
-                                  Open alternate
-                                </Link>
+                                <>
+                                  <button
+                                    onClick={() => void launchSeriesVariant(recommendedVariant, item.title, seriesResume?.seasonNumber, seriesResume?.episodeNumber)}
+                                    disabled={seriesRecoveryKey === `${recommendedVariant.providerId}-${recommendedVariant.seriesId ?? recommendedVariant.streamId}-${seriesResume?.seasonNumber || 0}-${seriesResume?.episodeNumber || 0}`}
+                                    className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {seriesRecoveryKey === `${recommendedVariant.providerId}-${recommendedVariant.seriesId ?? recommendedVariant.streamId}-${seriesResume?.seasonNumber || 0}-${seriesResume?.episodeNumber || 0}` ? 'Starting…' : 'Resume alternate'}
+                                  </button>
+                                  <Link
+                                    href={`/series?seriesId=${recommendedVariant.seriesId ?? recommendedVariant.streamId}${seriesResume?.seasonNumber ? `&season=${seriesResume.seasonNumber}` : ''}${seriesResume?.episodeNumber ? `&episode=${seriesResume.episodeNumber}` : ''}`}
+                                    onClick={() => setActiveConnection(recommendedVariant.providerId)}
+                                    className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                                  >
+                                    Open series
+                                  </Link>
+                                </>
                               ) : (
                                 <button
                                   onClick={() => launchVariant(recommendedVariant)}
@@ -384,13 +446,13 @@ export function CollectionsManager() {
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {variant.kind === 'series' ? (
-                                  <Link
-                                    href={`/series?seriesId=${variant.seriesId ?? variant.streamId}`}
-                                    onClick={() => setActiveConnection(variant.providerId)}
-                                    className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                  <button
+                                    onClick={() => void launchSeriesVariant(variant, item.title, seriesResume?.seasonNumber, seriesResume?.episodeNumber)}
+                                    disabled={seriesRecoveryKey === `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${seriesResume?.seasonNumber || 0}-${seriesResume?.episodeNumber || 0}`}
+                                    className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
-                                    Open
-                                  </Link>
+                                    {seriesRecoveryKey === `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${seriesResume?.seasonNumber || 0}-${seriesResume?.episodeNumber || 0}` ? 'Starting…' : 'Resume'}
+                                  </button>
                                 ) : (
                                   <button
                                     onClick={() => launchVariant(variant)}

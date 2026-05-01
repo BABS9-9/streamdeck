@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
+import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
@@ -45,6 +45,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
   const [loading, setLoading] = useState(false);
   const [cacheState, setCacheState] = useState<'idle' | 'cached' | 'fresh'>('idle');
   const [providerVariants, setProviderVariants] = useState<Record<string, ProviderVariant[]>>({});
+  const [seriesRecoveryKey, setSeriesRecoveryKey] = useState<string | null>(null);
 
   useEffect(() => {
     const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
@@ -184,6 +185,39 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     if (variant.kind === 'series') return;
     if (!variant.playbackUrl) return;
     playStream(stream, variant.playbackUrl, variant.providerId);
+  };
+
+  const launchSeriesVariant = async (variant: ProviderVariant, item: { title: string; seasonNumber?: number; episodeNumber?: number }) => {
+    const provider = connections.find((connection) => connection.id === variant.providerId);
+    if (!provider) return;
+
+    const recoveryKey = `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${item.seasonNumber || 0}-${item.episodeNumber || 0}`;
+    setSeriesRecoveryKey(recoveryKey);
+
+    try {
+      const resolved = await resolveSeriesEpisodePlayback(provider, variant.seriesId ?? variant.streamId, item.seasonNumber, item.episodeNumber);
+      setActiveConnection(variant.providerId);
+      if (!resolved) return;
+
+      playStream({
+        stream_id: resolved.episode.id,
+        name: resolved.episode.title,
+        stream_type: 'series',
+        category_id: variant.categoryId || 'alternate',
+        stream_icon: resolved.episode.info?.movie_image || variant.artwork,
+        cover: resolved.episode.info?.movie_image || variant.artwork,
+        plot: resolved.episode.plot || resolved.episode.info?.plot,
+        direct_source: resolved.episode.direct_source,
+        container_extension: resolved.episode.info?.container_extension,
+      }, resolved.playbackUrl, variant.providerId, {
+        seriesId: Number(variant.seriesId ?? variant.streamId),
+        seriesTitle: item.title,
+        seasonNumber: resolved.resolvedSeasonNumber,
+        episodeNumber: resolved.episode.episode_num,
+      });
+    } finally {
+      setSeriesRecoveryKey((current) => (current === recoveryKey ? null : current));
+    }
   };
 
   const renderProviderVariants = (variants: ProviderVariant[]) => {
@@ -382,13 +416,22 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {variant.kind === 'series' && seriesHref ? (
-                                  <Link
-                                    href={seriesHref}
-                                    onClick={() => setActiveConnection(variant.providerId)}
-                                    className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
-                                  >
-                                    Resume on {variant.providerName}
-                                  </Link>
+                                  <>
+                                    <button
+                                      onClick={() => void launchSeriesVariant(variant, item)}
+                                      disabled={seriesRecoveryKey === `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${item.seasonNumber || 0}-${item.episodeNumber || 0}`}
+                                      className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      {seriesRecoveryKey === `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${item.seasonNumber || 0}-${item.episodeNumber || 0}` ? 'Starting…' : `Resume on ${variant.providerName}`}
+                                    </button>
+                                    <Link
+                                      href={seriesHref}
+                                      onClick={() => setActiveConnection(variant.providerId)}
+                                      className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                                    >
+                                      Open series
+                                    </Link>
+                                  </>
                                 ) : variant.kind === 'series' ? (
                                   <Link
                                     href={`/series?seriesId=${variant.seriesId ?? variant.streamId}`}

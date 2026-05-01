@@ -293,6 +293,7 @@ const buildRecoveryActions = (scenario = 'healthy') => {
       'Downgrade provider trust immediately instead of pretending the account is still usable.',
       'Keep cached Home rails visible when possible, but block fresh provider fetches behind explicit recovery guidance.',
       'Offer a clear next step: re-enter credentials, switch saved providers, or retry validation after renewal.',
+      'If the same series exists on another saved provider, resume the matched episode directly instead of dropping the user at a generic detail page.',
     ];
   }
 
@@ -301,6 +302,7 @@ const buildRecoveryActions = (scenario = 'healthy') => {
       'Warn before playback that provider line capacity is already maxed.',
       'Suggest switching to another saved provider for the same title or channel.',
       'Let the user retry validation later instead of pretending the account is fully healthy.',
+      'Preserve season and episode resume context when a healthier provider copy is available.',
     ];
   }
 
@@ -572,7 +574,7 @@ const server = http.createServer((req, res) => {
           : 'Verify the movie library loads from cache first, then refreshes into the cinematic detail rail cleanly as soon as the rehearsal mode changes.',
         series: degradedSearch
           ? 'Verify Series keeps the drill-down shell usable from saved catalog data even when search-oriented provider endpoints are degraded, with the new scenario switch refreshing immediately.'
-          : 'Verify series list, season switches, and episode launch all stay connected to the real mock Xtream payloads, then flip rehearsal modes and watch the drill-down refresh live.',
+          : 'Verify series list, season switches, episode launch, and alternate-provider resume all stay connected to the real mock Xtream payloads, then flip rehearsal modes and watch the drill-down refresh live.',
       },
       scenarioUrls: {
         healthy: `${host}/health`,

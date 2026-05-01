@@ -6,6 +6,7 @@ import {
   XtreamAuthResponse,
   XtreamCategory,
   XtreamCredentials,
+  XtreamEpisode,
   XtreamSeriesInfo,
   XtreamStream,
 } from './types';
@@ -87,6 +88,39 @@ export async function getSeries(credentials: XtreamCredentials, categoryId?: str
 
 export async function getSeriesInfo(credentials: XtreamCredentials, seriesId: number | string) {
   return xtreamFetch<XtreamSeriesInfo>(credentials, 'get_series_info', { series_id: seriesId });
+}
+
+export async function resolveSeriesEpisodePlayback(
+  credentials: XtreamCredentials,
+  seriesId: number | string,
+  seasonNumber?: number | null,
+  episodeNumber?: number | null
+): Promise<{
+  info: XtreamSeriesInfo;
+  episode: XtreamEpisode;
+  resolvedSeasonNumber: number;
+  playbackUrl: string;
+} | null> {
+  const info = await getSeriesInfo(credentials, seriesId);
+  const seasonKeys = Object.keys(info.episodes || {});
+  if (seasonKeys.length === 0) return null;
+
+  const resolvedSeasonNumber = seasonNumber && info.episodes[String(seasonNumber)]?.length
+    ? seasonNumber
+    : Number(seasonKeys[0]);
+  const seasonEpisodes = info.episodes[String(resolvedSeasonNumber)] || [];
+  if (seasonEpisodes.length === 0) return null;
+
+  const episode = episodeNumber
+    ? seasonEpisodes.find((item) => item.episode_num === episodeNumber) || seasonEpisodes[0]
+    : seasonEpisodes[0];
+
+  return {
+    info,
+    episode,
+    resolvedSeasonNumber,
+    playbackUrl: buildSeriesEpisodeUrl(credentials, episode),
+  };
 }
 
 export function getContentId(stream: XtreamStream) {
