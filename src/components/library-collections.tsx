@@ -344,7 +344,81 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   <p className="mt-2 text-xs leading-5 text-amber-200">If this resume item stalls on the active provider, use an alternate provider copy below instead of losing the spot.</p>
                 ) : null}
                 <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
-                {renderProviderVariants(variantSummary[`continue:${item.id}`] || [])}
+                {(() => {
+                  const variants = variantSummary[`continue:${item.id}`] || [];
+                  if (variants.length === 0) return null;
+                  return (
+                    <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="uppercase tracking-[0.2em] text-emerald-200">Also available elsewhere</p>
+                          <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">Recover this resume item on a healthier provider copy without losing your spot.</p>
+                        </div>
+                        {activeProviderNeedsRecovery ? (
+                          <span className="rounded-full border border-amber-300/30 bg-amber-500/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-amber-100">
+                            Recovery mode
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {variants.map((variant) => {
+                          const seriesHref = item.kind === 'series'
+                            ? `/series?seriesId=${variant.seriesId ?? variant.streamId}${item.seasonNumber ? `&season=${item.seasonNumber}` : ''}${item.episodeNumber ? `&episode=${item.episodeNumber}` : ''}`
+                            : null;
+
+                          return (
+                            <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+                              <div>
+                                <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
+                                <p className="mt-1 text-sm text-white">
+                                  {variant.kind === 'series' && item.seasonNumber && item.episodeNumber
+                                    ? `Resume from S${item.seasonNumber}E${item.episodeNumber}`
+                                    : variant.kind === 'live'
+                                      ? 'Live copy ready'
+                                      : variant.kind === 'movie'
+                                        ? 'Movie copy ready'
+                                        : 'Series copy ready'}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {variant.kind === 'series' && seriesHref ? (
+                                  <Link
+                                    href={seriesHref}
+                                    onClick={() => setActiveConnection(variant.providerId)}
+                                    className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                  >
+                                    Resume on {variant.providerName}
+                                  </Link>
+                                ) : variant.kind === 'series' ? (
+                                  <Link
+                                    href={`/series?seriesId=${variant.seriesId ?? variant.streamId}`}
+                                    onClick={() => setActiveConnection(variant.providerId)}
+                                    className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                  >
+                                    Open on {variant.providerName}
+                                  </Link>
+                                ) : (
+                                  <button
+                                    onClick={() => launchVariant(variant)}
+                                    className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                  >
+                                    Play on {variant.providerName}
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => setActiveConnection(variant.providerId)}
+                                  className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                                >
+                                  Switch only
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <button
                     onClick={() => {
@@ -369,7 +443,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   </button>
                   {item.kind === 'series' && item.seriesId ? (
                     <Link
-                      href={`/series?seriesId=${item.seriesId}`}
+                      href={`/series?seriesId=${item.seriesId}${item.seasonNumber ? `&season=${item.seasonNumber}` : ''}${item.episodeNumber ? `&episode=${item.episodeNumber}` : ''}`}
                       className="rounded-2xl border border-white/10 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/5"
                     >
                       Open series

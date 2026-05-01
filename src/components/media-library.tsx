@@ -20,7 +20,17 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   expiredAccount: 'Expired account',
 };
 
-export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'series'; initialSeriesId?: number | null }) {
+export function MediaLibrary({
+  kind,
+  initialSeriesId,
+  initialSeasonNumber,
+  initialEpisodeNumber,
+}: {
+  kind: 'movies' | 'series';
+  initialSeriesId?: number | null;
+  initialSeasonNumber?: number | null;
+  initialEpisodeNumber?: number | null;
+}) {
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const playStream = usePlayerStore((state) => state.playStream);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
@@ -175,7 +185,10 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
       .then((info) => {
         if (cancelled) return;
         setSeriesInfo(info);
-        setSelectedSeason(info.seasons[0]?.season_number ?? 1);
+        const requestedSeason = initialSeasonNumber && info.seasons.some((season) => season.season_number === initialSeasonNumber)
+          ? initialSeasonNumber
+          : info.seasons[0]?.season_number ?? 1;
+        setSelectedSeason(requestedSeason);
       })
       .catch(() => {
         if (cancelled) return;
@@ -185,7 +198,7 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
     return () => {
       cancelled = true;
     };
-  }, [activeConnection, kind, selectedSeriesId]);
+  }, [activeConnection, initialSeasonNumber, kind, selectedSeriesId]);
 
   const featuredMovie = useMemo(
     () => filteredItems.find((item) => getContentId(item) === selectedMovieId) ?? filteredItems[0] ?? null,
@@ -196,6 +209,11 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
     if (!seriesInfo) return [] as XtreamEpisode[];
     return seriesInfo.episodes[String(selectedSeason)] ?? [];
   }, [selectedSeason, seriesInfo]);
+
+  const highlightedEpisodeId = useMemo(() => {
+    if (!initialEpisodeNumber || selectedEpisodes.length === 0) return null;
+    return selectedEpisodes.find((episode) => episode.episode_num === initialEpisodeNumber)?.id ?? null;
+  }, [initialEpisodeNumber, selectedEpisodes]);
 
   const recentItems = useMemo(() => providerHistory.slice(0, 4), [providerHistory]);
 
@@ -475,7 +493,14 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
               </div>
               <p className="mt-3 text-sm leading-7 text-slate-300">{selectedSeries.plot || 'Select a mock series to load the real season and episode payload.'}</p>
               <p className="mt-3 text-sm text-slate-400">{selectedSeries.tagline || ''}{selectedSeries.cast ? `${selectedSeries.tagline ? ' · ' : ''}${selectedSeries.cast}` : ''}</p>
-              {selectedSeriesResume ? <p className="mt-3 text-xs uppercase tracking-[0.22em] text-violet-200">Resume available · {formatPercent(selectedSeriesResume.progress)}</p> : null}
+              {selectedSeriesResume ? (
+                <p className="mt-3 text-xs uppercase tracking-[0.22em] text-violet-200">
+                  Resume available · {formatPercent(selectedSeriesResume.progress)}
+                  {selectedSeriesResume.seasonNumber && selectedSeriesResume.episodeNumber
+                    ? ` · S${selectedSeriesResume.seasonNumber}E${selectedSeriesResume.episodeNumber}`
+                    : ''}
+                </p>
+              ) : null}
               <div className="mt-5 flex flex-wrap gap-2">
                 {(seriesInfo?.seasons || []).map((season) => (
                   <button
@@ -492,7 +517,7 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
                 {selectedEpisodes.length > 0 ? selectedEpisodes.map((episode) => {
                   const episodeArtwork = episode.info?.movie_image || selectedSeries.cover || selectedSeries.stream_icon;
                   return (
-                    <article key={episode.id} className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                    <article key={episode.id} className={`rounded-[1.4rem] border p-4 ${highlightedEpisodeId === episode.id ? 'border-violet-400 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>
                       <div className="flex flex-col gap-4 md:flex-row md:items-start">
                         <div className="h-24 w-full rounded-2xl bg-cover bg-center md:w-40" style={{ backgroundImage: `url(${episodeArtwork})` }} />
                         <div className="min-w-0 flex-1">
@@ -523,7 +548,7 @@ export function MediaLibrary({ kind, initialSeriesId }: { kind: 'movies' | 'seri
                             })}
                             className="mt-4 rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"
                           >
-                            Play episode
+                            {highlightedEpisodeId === episode.id ? 'Resume this episode' : 'Play episode'}
                           </button>
                         </div>
                       </div>

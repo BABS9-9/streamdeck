@@ -78,6 +78,7 @@ export function CollectionsManager() {
   const addItemToCollection = useCollectionsStore((state) => state.addItemToCollection);
   const removeItemFromCollection = useCollectionsStore((state) => state.removeItemFromCollection);
   const playStream = usePlayerStore((state) => state.playStream);
+  const watchHistory = usePlayerStore((state) => state.watchHistory);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -124,6 +125,14 @@ export function CollectionsManager() {
       return acc;
     }, {});
   }, [connections, connectionStatus]);
+
+  const seriesResumeLookup = useMemo(() => {
+    return Object.fromEntries(
+      watchHistory
+        .filter((item) => item.kind === 'series' && item.seriesTitle && item.seasonNumber && item.episodeNumber)
+        .map((item) => [normalizeLibraryKey(item.seriesTitle || item.title), item])
+    );
+  }, [watchHistory]);
 
   const discovery = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -290,6 +299,7 @@ export function CollectionsManager() {
                   const alternateVariants = (providerVariants[variantKey] || []).filter((variant) => !(variant.providerId === activeConnection.id && variant.streamId === item.streamId));
                   const recommendedVariant = alternateVariants[0];
                   const canUseCurrentProvider = item.providerId === activeConnection.id && ((item.streamType === 'series') || (!!catalogItem && !!playbackUrl));
+                  const seriesResume = item.streamType === 'series' ? seriesResumeLookup[normalizeLibraryKey(item.title)] : null;
 
                   return (
                     <div key={`${collection.id}-${item.providerId}-${item.streamId}`} className="rounded-2xl border border-white/10 bg-black/20 p-4">
@@ -313,7 +323,7 @@ export function CollectionsManager() {
                       ) : null}
                       <div className="mt-4 flex gap-2">
                         {item.streamType === 'series' ? (
-                          <Link href={`/series?seriesId=${item.streamId}`} className="flex-1 rounded-xl bg-violet-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-violet-400">Open</Link>
+                          <Link href={`/series?seriesId=${item.streamId}${seriesResume?.seasonNumber ? `&season=${seriesResume.seasonNumber}` : ''}${seriesResume?.episodeNumber ? `&episode=${seriesResume.episodeNumber}` : ''}`} className="flex-1 rounded-xl bg-violet-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-violet-400">{seriesResume ? 'Resume' : 'Open'}</Link>
                         ) : (
                           <button
                             onClick={() => {
@@ -339,7 +349,7 @@ export function CollectionsManager() {
                             <div className="flex flex-wrap gap-2">
                               {recommendedVariant.kind === 'series' ? (
                                 <Link
-                                  href={`/series?seriesId=${recommendedVariant.seriesId ?? recommendedVariant.streamId}`}
+                                  href={`/series?seriesId=${recommendedVariant.seriesId ?? recommendedVariant.streamId}${seriesResume?.seasonNumber ? `&season=${seriesResume.seasonNumber}` : ''}${seriesResume?.episodeNumber ? `&episode=${seriesResume.episodeNumber}` : ''}`}
                                   onClick={() => setActiveConnection(recommendedVariant.providerId)}
                                   className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
                                 >
