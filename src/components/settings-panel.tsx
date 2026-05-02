@@ -39,6 +39,33 @@ const getLinePressure = (summary?: { activeConnections: number | null; maxConnec
     : null;
 };
 
+const getProviderRecoveryWarning = (summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null) => {
+  if (!summary) return null;
+  if (summary.status && summary.status !== 'Active') return `Provider account is ${String(summary.status).toLowerCase()}. Settings should steer the user toward renewal, fresh credentials, or a healthier saved provider.`;
+  return getLinePressure(summary);
+};
+
+const getProviderTrustScore = (
+  summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null,
+  state?: { state?: string | null } | null
+) => {
+  let score = 0;
+
+  if (state?.state === 'healthy') score += 120;
+  else if (state?.state === 'degraded') score += 35;
+  else if (state?.state === 'checking') score += 10;
+  else if (state?.state === 'error') score -= 35;
+
+  if (summary?.status === 'Active') score += 45;
+  else if (summary?.status) score -= 55;
+
+  if (typeof summary?.maxConnections === 'number' && typeof summary?.activeConnections === 'number') {
+    score += Math.max(-40, 30 - Math.max(0, summary.activeConnections - summary.maxConnections + 1) * 22);
+  }
+
+  return score;
+};
+
 const renderProviderFacts = (summary?: ProviderAuthSummary) => {
   if (!summary) {
     return <p className="mt-3 text-xs text-slate-500">No auth summary yet. Run a validation pass to hydrate provider trust details.</p>;
@@ -101,7 +128,12 @@ export function SettingsPanel() {
   }, [activeConnection, scenario]);
 
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
-  const mockLinePressure = getLinePressure(mockHealth?.accountProfile);
+  const mockRecoveryWarning = getProviderRecoveryWarning(mockHealth?.accountProfile);
+  const healthiestConnection = activeConnection
+    ? [...connections]
+        .filter((connection) => connection.id !== activeConnection.id)
+        .sort((a, b) => getProviderTrustScore(b.lastAuthSummary, connectionStatus[b.id]) - getProviderTrustScore(a.lastAuthSummary, connectionStatus[a.id]))[0] ?? null
+    : null;
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
@@ -172,9 +204,20 @@ export function SettingsPanel() {
                   </div>
 
                   {renderProviderFacts(connection.lastAuthSummary)}
-                  {getLinePressure(connection.lastAuthSummary) ? (
+                  {getProviderRecoveryWarning(connection.lastAuthSummary) ? (
                     <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs leading-5 text-amber-100">
-                      {getLinePressure(connection.lastAuthSummary)}
+                      {getProviderRecoveryWarning(connection.lastAuthSummary)}
+                      {isActive && healthiestConnection ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => setActiveConnection(healthiestConnection.id)}
+                            className="rounded-xl bg-white/10 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
+                          >
+                            Switch to healthiest saved provider
+                          </button>
+                          <span className="self-center text-[11px] text-amber-50/80">{healthiestConnection.name}</span>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
 
@@ -250,9 +293,20 @@ export function SettingsPanel() {
                 </div>
               ) : null}
 
-              {mockLinePressure ? (
+              {mockRecoveryWarning ? (
                 <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
-                  {mockLinePressure}
+                  {mockRecoveryWarning}
+                  {healthiestConnection ? (
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      <button
+                        onClick={() => setActiveConnection(healthiestConnection.id)}
+                        className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
+                      >
+                        Switch to healthiest saved provider
+                      </button>
+                      <span className="self-center text-xs text-amber-50/80">{healthiestConnection.name}</span>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -306,7 +360,7 @@ export function SettingsPanel() {
             <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Architecture check</p>
             <ul className="mt-4 space-y-3 text-sm text-slate-300">
               <li>• Provider identity is stable and already scopes favorites, watch history, and auth summary state.</li>
-              <li>• Search, Login, Home, Live, and Settings now all share the same trust language instead of drifting by surface.</li>
+              <li>• Search, Login, Home, Live, and Settings now all share the same trust language and healthiest-provider recovery move instead of drifting by surface.</li>
               <li>• Mock-provider rehearsal can now validate recovery guidance and line-capacity risk from the same settings cockpit.</li>
             </ul>
           </div>
