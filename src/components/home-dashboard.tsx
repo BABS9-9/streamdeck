@@ -60,11 +60,30 @@ const getAccountPressure = (summary?: { status?: string | null; activeConnection
     : null;
 };
 
+const getHealthScore = (connection: { lastAuthSummary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null }, status?: { state?: string | null } | null) => {
+  let score = 0;
+
+  if (status?.state === 'healthy') score += 100;
+  else if (status?.state === 'degraded') score += 45;
+  else if (status?.state === 'checking') score += 20;
+  else if (status?.state === 'error') score -= 25;
+
+  if (connection.lastAuthSummary?.status === 'Active') score += 40;
+  else if (connection.lastAuthSummary?.status) score -= 40;
+
+  if (typeof connection.lastAuthSummary?.maxConnections === 'number' && typeof connection.lastAuthSummary?.activeConnections === 'number') {
+    score += Math.max(-30, 30 - Math.max(0, connection.lastAuthSummary.activeConnections - connection.lastAuthSummary.maxConnections + 1) * 20);
+  }
+
+  return score;
+};
+
 export function HomeDashboard() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connections = useAuthStore((state) => state.connections);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const revalidateMockConnections = useAuthStore((state) => state.revalidateMockConnections);
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const playStream = usePlayerStore((state) => state.playStream);
 
@@ -227,6 +246,12 @@ export function HomeDashboard() {
     if (!activeConnection) return 'No provider';
     return `${activeConnection.name} · ${activeConnection.username}`;
   }, [activeConnection]);
+  const healthiestConnection = useMemo(() => {
+    if (!activeConnection || connections.length < 2) return null;
+    return [...connections]
+      .filter((connection) => connection.id !== activeConnection.id)
+      .sort((a, b) => getHealthScore(b, connectionStatus[b.id]) - getHealthScore(a, connectionStatus[a.id]))[0] ?? null;
+  }, [activeConnection, connectionStatus, connections]);
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
@@ -514,7 +539,19 @@ export function HomeDashboard() {
                 </div>
                 {providerAccountPressure ? (
                   <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-sm text-amber-100">
-                    {providerAccountPressure}
+                    <p>{providerAccountPressure}</p>
+                    {healthiestConnection ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setActiveConnection(healthiestConnection.id)}
+                          className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
+                        >
+                          Switch to healthiest saved provider
+                        </button>
+                        <span className="text-xs text-amber-50/80">{healthiestConnection.name}</span>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

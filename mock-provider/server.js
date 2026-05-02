@@ -252,7 +252,7 @@ const buildMockAccountProfile = (scenario = 'healthy') => ({
     : scenario === 'lineSaturated'
       ? 'All provider lines are in use, so playback can fail even while auth still succeeds.'
       : scenario === 'authUnstable'
-        ? 'Auth checks are failing right now, but cached browse surfaces should stay useful while the user retries or switches providers.'
+        ? 'Auth checks are failing right now, but cached browse surfaces should stay useful while the user retries or switches to the healthiest saved provider.'
         : null,
 });
 

@@ -42,6 +42,25 @@ const getAccountPressure = (summary) => {
     : null;
 };
 
+const getHealthScore = (connection, status) => {
+  const summary = connection?.lastAuthSummary;
+  let score = 0;
+
+  if (status?.state === 'healthy') score += 100;
+  else if (status?.state === 'degraded') score += 45;
+  else if (status?.state === 'checking') score += 20;
+  else if (status?.state === 'error') score -= 25;
+
+  if (summary?.status === 'Active') score += 40;
+  else if (summary?.status) score -= 40;
+
+  if (typeof summary?.maxConnections === 'number' && typeof summary?.activeConnections === 'number') {
+    score += Math.max(-30, 30 - Math.max(0, summary.activeConnections - summary.maxConnections + 1) * 20);
+  }
+
+  return score;
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const hydrate = useAuthStore((state) => state.hydrate);
@@ -64,6 +83,12 @@ export default function LoginPage() {
 
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const mockAccountPressure = getAccountPressure(mockHealth?.accountProfile);
+  const healthiestConnection = useMemo(() => {
+    if (connections.length < 2) return null;
+    return [...connections]
+      .sort((a, b) => getHealthScore(b, connectionStatus[b.id]) - getHealthScore(a, connectionStatus[a.id]))
+      .find((connection) => connection.id !== activeConnection?.id) ?? null;
+  }, [activeConnection?.id, connectionStatus, connections]);
 
   useEffect(() => {
     hydrate();
@@ -198,6 +223,21 @@ export default function LoginPage() {
                   {mockAccountPressure ? (
                     <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
                       {mockAccountPressure}
+                      {healthiestConnection ? (
+                        <div className="mt-3 flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveConnection(healthiestConnection.id);
+                              router.push('/home');
+                            }}
+                            className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
+                          >
+                            Switch to healthiest saved provider
+                          </button>
+                          <span className="self-center text-xs text-amber-50/80">{healthiestConnection.name}</span>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </>
@@ -403,8 +443,8 @@ export default function LoginPage() {
                           <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{connection.lastAuthSummary.activeConnections}/{connection.lastAuthSummary.maxConnections} lines</span>
                           <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">{connection.lastAuthSummary.timezone}</span>
                           </div>
-                          {getLinePressure(connection.lastAuthSummary) ? (
-                            <p className="mt-3 text-xs text-amber-300">{getLinePressure(connection.lastAuthSummary)}</p>
+                          {getAccountPressure(connection.lastAuthSummary) ? (
+                            <p className="mt-3 text-xs text-amber-300">{getAccountPressure(connection.lastAuthSummary)}</p>
                           ) : null}
                         </>
                       ) : null}
@@ -420,6 +460,11 @@ export default function LoginPage() {
                       >
                         Retry
                       </button>
+                      {healthiestConnection?.id === connection.id ? (
+                        <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.22em] text-emerald-200">
+                          healthiest backup
+                        </span>
+                      ) : null}
                       <span className="text-xs uppercase tracking-[0.25em] text-slate-500">{isActive ? 'active' : 'switch'}</span>
                     </div>
                   </div>
