@@ -632,8 +632,8 @@ const server = http.createServer((req, res) => {
                   ? 'Verify Live keeps the current browse context visible while auth checks fail, and that retry or provider-switch guidance is clearer than a generic playback error.'
                   : 'Verify inline NOW/NEXT guide data, hover preview fallback, surf-rail browsing, and in-place rehearsal refresh against realistic fake categories.',
         search: degradedSearch
-          ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, offers direct retry actions, and refreshes immediately when the rehearsal mode changes.'
-          : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell, then use the rehearsal toggles to force an instant refresh.',
+          ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, offers direct retry actions, keeps alternate provider copies launchable from the same result card, and refreshes immediately when the rehearsal mode changes.'
+          : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell, with the healthiest copy first and alternate provider copies still launchable from the same result card.',
         movies: degradedSearch
           ? 'Verify Movies falls back to saved catalog state with intentional degraded copy instead of blanking the browse surface, and that the scenario switch refreshes without a manual reload.'
           : 'Verify the movie library loads from cache first, then refreshes into the cinematic detail rail cleanly as soon as the rehearsal mode changes.',

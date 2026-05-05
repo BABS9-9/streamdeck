@@ -17,6 +17,13 @@ type SearchResult = {
   matchReason: string;
   duplicateCount: number;
   providerCount: number;
+  variants: Array<{
+    provider: SavedConnection;
+    item: XtreamStream;
+    compositeScore: number;
+    trustScore: number;
+    isPrimary: boolean;
+  }>;
 };
 
 const SEARCH_ALIASES: Record<string, string[]> = {
@@ -122,6 +129,13 @@ const rankResults = (
             matchReason: scored.matchReason,
             duplicateCount: 0,
             providerCount: 1,
+            variants: [{
+              provider,
+              item,
+              compositeScore: scored.score + trustScore,
+              trustScore,
+              isPrimary: true,
+            }],
           });
           return;
         }
@@ -130,6 +144,21 @@ const rankResults = (
         const existingTrust = getProviderTrustScore(existing.provider, connectionStatus[existing.provider.id]);
         const candidateCompositeScore = scored.score + candidateTrust;
         const existingCompositeScore = existing.score;
+        const variants = [
+          ...existing.variants.map((variant) => ({
+            ...variant,
+            isPrimary: false,
+          })),
+          {
+            provider,
+            item,
+            compositeScore: candidateCompositeScore,
+            trustScore: candidateTrust,
+            isPrimary: false,
+          },
+        ].sort((a, b) => b.compositeScore - a.compositeScore);
+
+        variants[0] = { ...variants[0], isPrimary: true };
 
         if (candidateCompositeScore > existingCompositeScore) {
           deduped.set(key, {
@@ -140,6 +169,7 @@ const rankResults = (
             matchReason: `${scored.matchReason} • healthiest ranked provider copy`,
             duplicateCount: existing.duplicateCount + 1,
             providerCount: existing.providerCount + 1,
+            variants,
           });
           return;
         }
@@ -150,6 +180,7 @@ const rankResults = (
           matchReason: `${existing.matchReason} • also found on ${existing.providerCount + 1} providers`,
           duplicateCount: existing.duplicateCount + 1,
           providerCount: existing.providerCount + 1,
+          variants,
         });
       });
     });
@@ -195,6 +226,12 @@ const getHealthiestAlternateConnection = (connections: SavedConnection[], active
   return [...connections]
     .filter((connection) => connection.id !== activeConnection.id)
     .sort((a, b) => getProviderTrustScore(b, connectionStatus[b.id]) - getProviderTrustScore(a, connectionStatus[a.id]))[0] ?? null;
+};
+
+const getVariantActionLabel = (kind: SearchResult['kind']) => {
+  if (kind === 'live') return 'Play live';
+  if (kind === 'movie') return 'Play movie';
+  return 'Browse series';
 };
 
 export function SearchBrowser() {
@@ -559,6 +596,7 @@ export function SearchBrowser() {
             const providerLinePressure = getLinePressure(authSummary);
             const providerRecoveryWarning = getProviderRecoveryWarning(authSummary);
             const healthiestAlternateConnection = getHealthiestAlternateConnection(connections, result.provider, connectionStatus);
+            const alternateVariants = result.variants.filter((variant) => !variant.isPrimary);
             return (
               <article key={`${result.provider.id}-${result.kind}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                 <div className="aspect-video rounded-2xl bg-cover bg-center bg-no-repeat" style={{ backgroundImage: artwork ? `url(${artwork})` : undefined }} />
@@ -602,6 +640,61 @@ export function SearchBrowser() {
                         <span className="self-center text-[11px] text-amber-50/80">{healthiestAlternateConnection.name}</span>
                       </div>
                     ) : null}
+                  </div>
+                ) : null}
+                {alternateVariants.length > 0 ? (
+                  <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="uppercase tracking-[0.2em] text-emerald-200">Provider variants</p>
+                        <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">The healthiest copy won the main card, but alternate provider copies are still launchable from here.</p>
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-emerald-100">
+                        {result.providerCount} providers
+                      </span>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {alternateVariants.slice(0, 3).map((variant) => {
+                        const variantContentId = getContentId(variant.item);
+                        const variantLabel = getVariantActionLabel(result.kind);
+                        return (
+                          <div key={`${variant.provider.id}-${variantContentId}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+                            <div>
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.provider.name}</p>
+                              <p className="mt-1 text-sm text-white">Trust {Math.round(variant.trustScore)} · score {Math.round(variant.compositeScore)}</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {result.kind === 'series' ? (
+                                <Link
+                                  href={`/series?seriesId=${variant.item.series_id ?? variantContentId}`}
+                                  onClick={() => setActiveConnection(variant.provider.id)}
+                                  className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                >
+                                  {variantLabel}
+                                </Link>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setActiveConnection(variant.provider.id);
+                                    const url = result.kind === 'live' ? buildLiveStreamUrl(variant.provider, variant.item) : buildVodStreamUrl(variant.provider, variant.item);
+                                    playStream(variant.item, url, variant.provider.id);
+                                  }}
+                                  className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                >
+                                  {variantLabel}
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setActiveConnection(variant.provider.id)}
+                                className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                              >
+                                Switch only
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : null}
                 <div className="mt-4 flex gap-3">
