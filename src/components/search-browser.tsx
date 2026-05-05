@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { getProviderTrustScore } from '@/lib/provider-trust';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
-import { MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
+import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 
@@ -88,7 +89,11 @@ const scoreResult = (query: ReturnType<typeof getSearchTerms>, item: XtreamStrea
   return { score, matchReason };
 };
 
-const rankResults = (providerCatalogs: Array<{ provider: SavedConnection; catalog: Pick<ProviderCatalog, 'live' | 'vod' | 'series'> }>, trimmed: string) => {
+const rankResults = (
+  providerCatalogs: Array<{ provider: SavedConnection; catalog: Pick<ProviderCatalog, 'live' | 'vod' | 'series'> }>,
+  trimmed: string,
+  connectionStatus: Record<string, ConnectionStatus>
+) => {
   const query = getSearchTerms(trimmed);
   const deduped = new Map<string, SearchResult>();
 
@@ -108,11 +113,12 @@ const rankResults = (providerCatalogs: Array<{ provider: SavedConnection; catalo
         const existing = deduped.get(key);
 
         if (!existing) {
+          const trustScore = getProviderTrustScore(provider, connectionStatus[provider.id]);
           deduped.set(key, {
             provider,
             item,
             kind,
-            score: scored.score,
+            score: scored.score + trustScore,
             matchReason: scored.matchReason,
             duplicateCount: 0,
             providerCount: 1,
@@ -120,13 +126,18 @@ const rankResults = (providerCatalogs: Array<{ provider: SavedConnection; catalo
           return;
         }
 
-        if (scored.score > existing.score) {
+        const candidateTrust = getProviderTrustScore(provider, connectionStatus[provider.id]);
+        const existingTrust = getProviderTrustScore(existing.provider, connectionStatus[existing.provider.id]);
+        const candidateCompositeScore = scored.score + candidateTrust;
+        const existingCompositeScore = existing.score;
+
+        if (candidateCompositeScore > existingCompositeScore) {
           deduped.set(key, {
             provider,
             item,
             kind,
-            score: scored.score,
-            matchReason: `${scored.matchReason} • best version across providers`,
+            score: candidateCompositeScore,
+            matchReason: `${scored.matchReason} • healthiest ranked provider copy`,
             duplicateCount: existing.duplicateCount + 1,
             providerCount: existing.providerCount + 1,
           });
@@ -135,7 +146,7 @@ const rankResults = (providerCatalogs: Array<{ provider: SavedConnection; catalo
 
         deduped.set(key, {
           ...existing,
-          score: existing.score + 2,
+          score: Math.max(existing.score, scored.score + existingTrust) + 2,
           matchReason: `${existing.matchReason} • also found on ${existing.providerCount + 1} providers`,
           duplicateCount: existing.duplicateCount + 1,
           providerCount: existing.providerCount + 1,
@@ -177,24 +188,6 @@ const getProviderRecoveryWarning = (summary?: { status?: string | null; activeCo
   if (!summary) return null;
   if (summary.status && summary.status !== 'Active') return `Provider account is ${String(summary.status).toLowerCase()}. Keep cached search useful, but steer playback toward a healthier saved provider.`;
   return getLinePressure(summary);
-};
-
-const getProviderTrustScore = (provider: SavedConnection, state?: { state?: string | null } | null) => {
-  let score = 0;
-
-  if (state?.state === 'healthy') score += 120;
-  else if (state?.state === 'degraded') score += 35;
-  else if (state?.state === 'checking') score += 10;
-  else if (state?.state === 'error') score -= 35;
-
-  if (provider.lastAuthSummary?.status === 'Active') score += 45;
-  else if (provider.lastAuthSummary?.status) score -= 55;
-
-  if (typeof provider.lastAuthSummary?.maxConnections === 'number' && typeof provider.lastAuthSummary?.activeConnections === 'number') {
-    score += Math.max(-40, 30 - Math.max(0, provider.lastAuthSummary.activeConnections - provider.lastAuthSummary.maxConnections + 1) * 22);
-  }
-
-  return score;
 };
 
 const getHealthiestAlternateConnection = (connections: SavedConnection[], activeConnection: SavedConnection | null, connectionStatus: Record<string, { state?: string | null }>) => {
@@ -269,7 +262,7 @@ export function SearchBrowser() {
         .filter((entry): entry is { provider: SavedConnection; catalog: ProviderCatalog } => Boolean(entry.catalog));
 
       if (cachedCatalogs.length > 0) {
-        setResults(rankResults(cachedCatalogs, trimmed));
+        setResults(rankResults(cachedCatalogs, trimmed, connectionStatus));
         setUsingCache(true);
         setLoading(true);
         setLoadingLabel(scenarioRefreshing ? `Applying ${scenarioLabels[scenario].toLowerCase()} rehearsal...` : 'Refreshing cached provider catalogs...');
@@ -307,7 +300,7 @@ export function SearchBrowser() {
         setDegradedProviders(failedProviders);
 
         if (successfulCatalogs.length > 0) {
-          setResults(rankResults(successfulCatalogs, trimmed));
+          setResults(rankResults(successfulCatalogs, trimmed, connectionStatus));
           setUsingCache(cachedCatalogs.length > 0 || failedProviders.length > 0);
           if (failedProviders.length > 0) {
             setError(null);
@@ -332,7 +325,7 @@ export function SearchBrowser() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [connections, query, scenario, scenarioRefreshing]);
+  }, [connectionStatus, connections, query, scenario, scenarioRefreshing]);
 
   const groupedCounts = useMemo(() => {
     return results.reduce<Record<string, number>>((acc, result) => {
@@ -591,7 +584,7 @@ export function SearchBrowser() {
                   ) : null}
                   {result.providerCount > 1 ? (
                     <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-emerald-100">
-                      Also on {result.providerCount - 1} more provider{result.providerCount - 1 === 1 ? '' : 's'}
+                      Also on {result.providerCount - 1} more provider{result.providerCount - 1 === 1 ? '' : 's'} · best trust-ranked copy shown
                     </span>
                   ) : null}
                 </div>

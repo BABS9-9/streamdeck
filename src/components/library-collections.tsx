@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { getProviderTrustScore } from '@/lib/provider-trust';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -133,19 +134,27 @@ export function LibraryCollections({ mode }: CollectionsProps) {
 
   const variantSummary = useMemo(() => {
     const summary: Record<string, ProviderVariant[]> = {};
+    const sortVariants = (variants: ProviderVariant[]) => {
+      return [...variants].sort((a, b) => {
+        const providerA = connections.find((connection) => connection.id === a.providerId);
+        const providerB = connections.find((connection) => connection.id === b.providerId);
+        return getProviderTrustScore(providerB || { lastAuthSummary: undefined }, connectionStatus[b.providerId])
+          - getProviderTrustScore(providerA || { lastAuthSummary: undefined }, connectionStatus[a.providerId]);
+      });
+    };
 
     favoriteItems.forEach((item) => {
       const key = buildVariantKey(item.name, item.stream_type as 'live' | 'movie' | 'series', item.year);
-      summary[`favorite:${getContentId(item)}`] = (providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection?.id);
+      summary[`favorite:${getContentId(item)}`] = sortVariants((providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection?.id));
     });
 
     continueItems.forEach((item) => {
       const key = buildVariantKey(item.title, item.kind, undefined, item.seriesTitle);
-      summary[`continue:${item.id}`] = (providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection?.id);
+      summary[`continue:${item.id}`] = sortVariants((providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection?.id));
     });
 
     return summary;
-  }, [activeConnection?.id, continueItems, favoriteItems, providerVariants]);
+  }, [activeConnection?.id, connectionStatus, connections, continueItems, favoriteItems, providerVariants]);
 
   const formatEpisodeLabel = (item: { kind: 'live' | 'movie' | 'series'; seasonNumber?: number; episodeNumber?: number; seriesTitle?: string }) => {
     if (item.kind !== 'series') return item.kind;
@@ -249,6 +258,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
               <div>
                 <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
                 <p className="mt-1 text-sm text-white">{variant.kind === 'live' ? 'Live copy ready' : variant.kind === 'movie' ? 'Movie copy ready' : 'Series copy ready'}</p>
+                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">Trust-ranked fallback</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {variant.kind === 'series' ? (() => {
@@ -481,6 +491,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                                         ? 'Movie copy ready'
                                         : 'Series copy ready'}
                                 </p>
+                                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">Trust-ranked fallback</p>
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {variant.kind === 'series' && seriesHref ? (
