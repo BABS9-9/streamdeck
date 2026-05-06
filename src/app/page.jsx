@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { getHealthiestSavedProvider, getRecoveryActionLabel, getRecoverySupportLabel } from '@/lib/provider-recovery';
 import { useAuthStore } from '@/stores/auth-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -42,25 +43,6 @@ const getAccountPressure = (summary) => {
     : null;
 };
 
-const getHealthScore = (connection, status) => {
-  const summary = connection?.lastAuthSummary;
-  let score = 0;
-
-  if (status?.state === 'healthy') score += 100;
-  else if (status?.state === 'degraded') score += 45;
-  else if (status?.state === 'checking') score += 20;
-  else if (status?.state === 'error') score -= 25;
-
-  if (summary?.status === 'Active') score += 40;
-  else if (summary?.status) score -= 40;
-
-  if (typeof summary?.maxConnections === 'number' && typeof summary?.activeConnections === 'number') {
-    score += Math.max(-30, 30 - Math.max(0, summary.activeConnections - summary.maxConnections + 1) * 20);
-  }
-
-  return score;
-};
-
 export default function LoginPage() {
   const router = useRouter();
   const hydrate = useAuthStore((state) => state.hydrate);
@@ -83,12 +65,11 @@ export default function LoginPage() {
 
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const mockAccountPressure = getAccountPressure(mockHealth?.accountProfile);
-  const healthiestConnection = useMemo(() => {
-    if (connections.length < 2) return null;
-    return [...connections]
-      .sort((a, b) => getHealthScore(b, connectionStatus[b.id]) - getHealthScore(a, connectionStatus[a.id]))
-      .find((connection) => connection.id !== activeConnection?.id) ?? null;
-  }, [activeConnection?.id, connectionStatus, connections]);
+  const healthiestConnection = useMemo(() => getHealthiestSavedProvider({
+    connections,
+    connectionStatus,
+    activeConnectionId: activeConnection?.id,
+  }), [activeConnection?.id, connectionStatus, connections]);
 
   useEffect(() => {
     hydrate();
@@ -259,6 +240,26 @@ export default function LoginPage() {
                 <div className={`mt-4 rounded-2xl border p-4 ${mockHealth.operatorHeadline.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
                   <p className={`text-sm font-semibold ${mockHealth.operatorHeadline.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{mockHealth.operatorHeadline.title}</p>
                   <p className="mt-2 text-sm text-slate-300">{mockHealth.operatorHeadline.detail}</p>
+                </div>
+              ) : null}
+              {healthiestConnection && mockHealth?.surfaceRecoveryPlans?.login ? (
+                <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{mockHealth.surfaceRecoveryPlans.login.title}</p>
+                  <p className="mt-2 text-sm text-slate-200">{mockHealth.surfaceRecoveryPlans.login.detail}</p>
+                  <p className="mt-2 text-xs text-sky-100/80">{getRecoverySupportLabel('login')}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveConnection(healthiestConnection.id);
+                        router.push('/home');
+                      }}
+                      className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
+                    >
+                      {getRecoveryActionLabel('login', healthiestConnection.name)}
+                    </button>
+                    <span className="text-xs text-sky-50/80">{healthiestConnection.name} · {mockHealth.surfaceRecoveryPlans.login.cta}</span>
+                  </div>
                 </div>
               ) : null}
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">

@@ -254,6 +254,23 @@ export type MockProviderHealth = {
   };
   recoveryActions?: string[];
   recommendedDemoSequence?: string[];
+  surfaceRecoveryPlans?: {
+    login: {
+      title: string;
+      detail: string;
+      cta: string;
+    };
+    home: {
+      title: string;
+      detail: string;
+      cta: string;
+    };
+    live: {
+      title: string;
+      detail: string;
+      cta: string;
+    };
+  };
   sampleCredentials?: {
     server: string;
     username: string;

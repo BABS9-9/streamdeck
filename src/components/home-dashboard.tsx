@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { getHealthiestSavedProvider, getRecoveryActionLabel, getRecoverySupportLabel } from '@/lib/provider-recovery';
 import { getProviderTrustScore } from '@/lib/provider-trust';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedHomeSnapshot, getCachedSearchCatalog, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
@@ -290,9 +291,11 @@ export function HomeDashboard() {
   }, [activeConnection]);
   const healthiestConnection = useMemo(() => {
     if (!activeConnection || connections.length < 2) return null;
-    return [...connections]
-      .filter((connection) => connection.id !== activeConnection.id)
-      .sort((a, b) => getProviderTrustScore(b, connectionStatus[b.id]) - getProviderTrustScore(a, connectionStatus[a.id]))[0] ?? null;
+    return getHealthiestSavedProvider({
+      connections,
+      connectionStatus,
+      activeConnectionId: activeConnection.id,
+    });
   }, [activeConnection, connectionStatus, connections]);
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
@@ -419,6 +422,23 @@ export function HomeDashboard() {
                 <div className={`mt-4 rounded-2xl border p-4 ${mockHealth.operatorHeadline.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
                   <p className={`text-sm font-semibold ${mockHealth.operatorHeadline.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{mockHealth.operatorHeadline.title}</p>
                   <p className="mt-2 text-sm text-slate-200">{mockHealth.operatorHeadline.detail}</p>
+                </div>
+              ) : null}
+              {healthiestConnection && mockHealth.surfaceRecoveryPlans?.home ? (
+                <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sky-100">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{mockHealth.surfaceRecoveryPlans.home.title}</p>
+                  <p className="mt-2 text-sm text-slate-100">{mockHealth.surfaceRecoveryPlans.home.detail}</p>
+                  <p className="mt-2 text-xs text-sky-100/80">{getRecoverySupportLabel('home')}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setActiveConnection(healthiestConnection.id)}
+                      className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
+                    >
+                      {getRecoveryActionLabel('home', healthiestConnection.name)}
+                    </button>
+                    <span className="text-xs text-sky-50/80">{healthiestConnection.name} · {mockHealth.surfaceRecoveryPlans.home.cta}</span>
+                  </div>
                 </div>
               ) : null}
             </>

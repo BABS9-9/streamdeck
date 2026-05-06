@@ -292,6 +292,42 @@ const buildTrustSignals = (scenario = 'healthy') => {
   ];
 };
 
+const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
+  login: {
+    title: scenario === 'healthy' ? 'Fastest recovery route' : 'Fastest safe login recovery',
+    detail: scenario === 'expiredAccount'
+      ? 'If the active provider is expired, jump straight into Home on the healthiest saved provider instead of reconnecting into a dead catalog.'
+      : scenario === 'lineSaturated'
+        ? 'If this provider is out of lines, switch straight into Home on the healthiest saved provider before the user blames playback.'
+        : scenario === 'authUnstable'
+          ? 'If auth checks are wobbling, keep the saved connection visible but let the user jump straight into Home on the healthiest provider.'
+          : 'Keep the login flow moving by switching directly into Home on the healthiest saved provider when this source gets risky.',
+    cta: scenario === 'healthy' ? 'Open healthiest saved provider in Home' : 'Recover into Home on healthiest provider',
+  },
+  home: {
+    title: scenario === 'healthy' ? 'Home recovery route' : 'Keep Home alive',
+    detail: scenario === 'expiredAccount'
+      ? 'Preserve the same browse session by moving Home onto the healthiest saved provider while the expired source falls back to cache.'
+      : scenario === 'lineSaturated'
+        ? 'Preserve the same featured rails and quick actions by moving Home onto the healthiest saved provider before launch attempts fail.'
+        : scenario === 'authUnstable'
+          ? 'Keep the cached Home rails alive, but point the primary recovery action toward the healthiest saved provider instead of a blind retry.'
+          : 'Move Home onto the healthiest saved provider before stale trust on the current source infects the rest of the browse session.',
+    cta: 'Switch Home to healthiest provider',
+  },
+  live: {
+    title: scenario === 'healthy' ? 'Live recovery route' : 'Keep Live surfing alive',
+    detail: scenario === 'expiredAccount'
+      ? 'If the active account is expired, jump straight into Live on the healthiest saved provider instead of forcing the user to back out and reconnect.'
+      : scenario === 'lineSaturated'
+        ? 'If the active provider is out of lines, move Live onto the healthiest saved provider before the user blames the channel card.'
+        : scenario === 'authUnstable'
+          ? 'Keep the current browse context visible, but make the fastest escape hatch a one-tap jump into Live on the healthiest saved provider.'
+          : 'When provider trust degrades, Live should pivot straight into the healthiest saved provider without losing channel-surf momentum.',
+    cta: 'Open Live on healthiest provider',
+  },
+});
+
 const buildOperatorHeadline = (scenario = 'healthy') => {
   if (scenario === 'expiredAccount') {
     return {
@@ -579,6 +615,7 @@ const server = http.createServer((req, res) => {
       trustSignals: buildTrustSignals(scenario),
       operatorHeadline: buildOperatorHeadline(scenario),
       recoveryActions: buildRecoveryActions(scenario),
+      surfaceRecoveryPlans: buildSurfaceRecoveryPlans(scenario),
       recommendedDemoSequence: degradedLive
         ? ['Connect with mock credentials', 'Open Home to confirm provider context still feels healthy', 'Open Live and verify degraded live fallback plus retry copy']
         : degradedEpg

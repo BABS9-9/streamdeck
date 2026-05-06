@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { getHealthiestSavedProvider, getRecoveryActionLabel, getRecoverySupportLabel } from '@/lib/provider-recovery';
 import { getProviderTrustScore } from '@/lib/provider-trust';
 import { buildLiveStreamUrl, getCachedSearchCatalog, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
@@ -49,24 +50,6 @@ const getAccountPressure = (summary?: { status?: string | null; activeConnection
   return summary.activeConnections >= summary.maxConnections
     ? `All ${summary.maxConnections} provider lines are currently in use. Surface this before the user mistakes account pressure for stream failure.`
     : null;
-};
-
-const getHealthScore = (connection: { lastAuthSummary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null }, status?: { state?: string | null } | null) => {
-  let score = 0;
-
-  if (status?.state === 'healthy') score += 100;
-  else if (status?.state === 'degraded') score += 45;
-  else if (status?.state === 'checking') score += 20;
-  else if (status?.state === 'error') score -= 25;
-
-  if (connection.lastAuthSummary?.status === 'Active') score += 40;
-  else if (connection.lastAuthSummary?.status) score -= 40;
-
-  if (typeof connection.lastAuthSummary?.maxConnections === 'number' && typeof connection.lastAuthSummary?.activeConnections === 'number') {
-    score += Math.max(-30, 30 - Math.max(0, connection.lastAuthSummary.activeConnections - connection.lastAuthSummary.maxConnections + 1) * 20);
-  }
-
-  return score;
 };
 
 export function LiveBrowser() {
@@ -286,9 +269,11 @@ export function LiveBrowser() {
   const providerAccountPressure = getAccountPressure(activeConnection?.lastAuthSummary);
   const healthiestConnection = useMemo(() => {
     if (!activeConnection || connections.length < 2) return null;
-    return [...connections]
-      .filter((connection) => connection.id !== activeConnection.id)
-      .sort((a, b) => getHealthScore(b, connectionStatus[b.id]) - getHealthScore(a, connectionStatus[a.id]))[0] ?? null;
+    return getHealthiestSavedProvider({
+      connections,
+      connectionStatus,
+      activeConnectionId: activeConnection.id,
+    });
   }, [activeConnection, connectionStatus, connections]);
 
   const getLiveVariants = (stream: XtreamStream) => {
@@ -460,6 +445,24 @@ export function LiveBrowser() {
           <div className={`rounded-[1.5rem] border px-5 py-4 ${mockHealth.operatorHeadline.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>
             <p className="font-medium text-white">{mockHealth.operatorHeadline.title}</p>
             <p className="mt-2 text-sm text-current/90">{mockHealth.operatorHeadline.detail}</p>
+          </div>
+        ) : null}
+
+        {healthiestConnection && mockHealth?.surfaceRecoveryPlans?.live ? (
+          <div className="rounded-[1.5rem] border border-sky-400/20 bg-sky-500/10 px-5 py-4 text-sky-100">
+            <p className="text-xs uppercase tracking-[0.22em] text-sky-200">{mockHealth.surfaceRecoveryPlans.live.title}</p>
+            <p className="mt-2 text-sm text-slate-100">{mockHealth.surfaceRecoveryPlans.live.detail}</p>
+            <p className="mt-2 text-xs text-sky-100/80">{getRecoverySupportLabel('live')}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveConnection(healthiestConnection.id)}
+                className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
+              >
+                {getRecoveryActionLabel('live', healthiestConnection.name)}
+              </button>
+              <span className="text-xs text-sky-50/80">{healthiestConnection.name} · {mockHealth.surfaceRecoveryPlans.live.cta}</span>
+            </div>
           </div>
         ) : null}
 
