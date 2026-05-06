@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
+import { getProviderTrustScore } from '@/lib/provider-trust';
+import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedHomeSnapshot, getCachedSearchCatalog, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -19,6 +20,19 @@ type CacheState = {
   mode: 'live' | 'cached' | 'offline';
   message: string | null;
   updatedAt: number | null;
+};
+
+type ProviderVariant = {
+  providerId: string;
+  providerName: string;
+  kind: 'live' | 'movie' | 'series';
+  streamId: number;
+  title: string;
+  artwork?: string;
+  categoryId?: string;
+  seriesId?: number;
+  playbackUrl?: string | null;
+  trustScore: number;
 };
 
 const emptyState: HomeState = {
@@ -60,23 +74,8 @@ const getAccountPressure = (summary?: { status?: string | null; activeConnection
     : null;
 };
 
-const getHealthScore = (connection: { lastAuthSummary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null }, status?: { state?: string | null } | null) => {
-  let score = 0;
-
-  if (status?.state === 'healthy') score += 100;
-  else if (status?.state === 'degraded') score += 45;
-  else if (status?.state === 'checking') score += 20;
-  else if (status?.state === 'error') score -= 25;
-
-  if (connection.lastAuthSummary?.status === 'Active') score += 40;
-  else if (connection.lastAuthSummary?.status) score -= 40;
-
-  if (typeof connection.lastAuthSummary?.maxConnections === 'number' && typeof connection.lastAuthSummary?.activeConnections === 'number') {
-    score += Math.max(-30, 30 - Math.max(0, connection.lastAuthSummary.activeConnections - connection.lastAuthSummary.maxConnections + 1) * 20);
-  }
-
-  return score;
-};
+const normalizeVariantKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const buildVariantKey = (title: string, kind: 'live' | 'movie' | 'series', year?: string) => `${kind}:${normalizeVariantKey(title)}:${year || ''}`;
 
 export function HomeDashboard() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
@@ -95,6 +94,7 @@ export function HomeDashboard() {
   const [guideMessage, setGuideMessage] = useState<string | null>(null);
   const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
+  const [providerVariants, setProviderVariants] = useState<Record<string, ProviderVariant[]>>({});
 
   useEffect(() => {
     setScenario(getSelectedMockProviderScenario());
@@ -230,6 +230,48 @@ export function HomeDashboard() {
     [activeConnection, watchHistory]
   );
 
+  useEffect(() => {
+    const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
+      const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+      if (!connectionCatalog) return acc;
+
+      const buckets: Array<['live' | 'movie' | 'series', XtreamStream[]]> = [
+        ['live', connectionCatalog.live],
+        ['movie', connectionCatalog.vod],
+        ['series', connectionCatalog.series],
+      ];
+
+      buckets.forEach(([kind, items]) => {
+        items.forEach((item) => {
+          const key = buildVariantKey(item.name, kind, item.year);
+          const variants = acc[key] || [];
+          const streamId = getContentId(item);
+
+          if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === streamId)) {
+            variants.push({
+              providerId: connection.id,
+              providerName: connection.name,
+              kind,
+              streamId,
+              title: item.name,
+              artwork: getArtwork(item),
+              categoryId: item.category_id,
+              seriesId: item.series_id,
+              playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
+              trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
+            });
+          }
+
+          acc[key] = variants;
+        });
+      });
+
+      return acc;
+    }, {});
+
+    setProviderVariants(cachedVariants);
+  }, [connectionStatus, connections]);
+
   const quickActions = useMemo(
     () => [
       { label: 'Browse live channels', href: '/live', meta: `${home.summary.live} channels ready` },
@@ -250,7 +292,7 @@ export function HomeDashboard() {
     if (!activeConnection || connections.length < 2) return null;
     return [...connections]
       .filter((connection) => connection.id !== activeConnection.id)
-      .sort((a, b) => getHealthScore(b, connectionStatus[b.id]) - getHealthScore(a, connectionStatus[a.id]))[0] ?? null;
+      .sort((a, b) => getProviderTrustScore(b, connectionStatus[b.id]) - getProviderTrustScore(a, connectionStatus[a.id]))[0] ?? null;
   }, [activeConnection, connectionStatus, connections]);
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
@@ -277,6 +319,13 @@ export function HomeDashboard() {
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const providerAccountPressure = getAccountPressure(activeConnection?.lastAuthSummary);
   const mockAccountPressure = getAccountPressure(mockHealth?.accountProfile);
+  const featuredVariants = useMemo(() => {
+    if (!home.featured || !activeConnection) return [] as ProviderVariant[];
+    const key = buildVariantKey(home.featured.name, 'live', home.featured.year);
+    return (providerVariants[key] || [])
+      .filter((variant) => variant.providerId !== activeConnection.id)
+      .sort((a, b) => b.trustScore - a.trustScore);
+  }, [activeConnection, home.featured, providerVariants]);
 
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Go back to login and connect first.</div>;
@@ -491,6 +540,50 @@ export function HomeDashboard() {
                 Open live browser
               </Link>
             </div>
+            {featuredVariants.length > 0 ? (
+              <div className="mt-5 rounded-[1.3rem] border border-emerald-400/20 bg-emerald-500/10 p-4 text-emerald-100">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200">Featured provider variants</p>
+                    <p className="mt-2 text-sm text-white">The featured channel also exists on healthier saved providers.</p>
+                    <p className="mt-2 text-xs leading-5 text-emerald-100/80">Home discovery now uses the same trust-ranked fallback language as Search and detail rails.</p>
+                  </div>
+                  {providerAccountPressure ? (
+                    <span className="rounded-full border border-amber-300/30 bg-amber-500/15 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-100">
+                      Recovery mode
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mt-3 space-y-2">
+                  {featuredVariants.slice(0, 2).map((variant) => (
+                    <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
+                        <p className="mt-1 text-sm text-white">Trust-ranked live fallback</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => {
+                            if (!variant.playbackUrl || !home.featured) return;
+                            setActiveConnection(variant.providerId);
+                            playStream({ ...home.featured, stream_id: variant.streamId, category_id: variant.categoryId || home.featured.category_id, stream_icon: variant.artwork || home.featured.stream_icon }, variant.playbackUrl, variant.providerId);
+                          }}
+                          className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                        >
+                          Play on {variant.providerName}
+                        </button>
+                        <button
+                          onClick={() => setActiveConnection(variant.providerId)}
+                          className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                        >
+                          Switch only
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-6">
             <div className="flex items-start justify-between gap-4">
@@ -632,13 +725,44 @@ export function HomeDashboard() {
           <Link href="/live" className="text-sm text-violet-300 hover:text-violet-200">Open browser</Link>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {home.spotlight.map((item) => (
-            <article key={`${item.stream_type}-${item.stream_id}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
-              <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${item.stream_icon})` }} />
-              <p className="mt-4 text-lg font-semibold text-white">{item.name}</p>
-              <p className="mt-2 text-sm text-slate-400">{item.stream_type === 'live' ? 'Live channel' : item.genre || 'On-demand title'}</p>
-            </article>
-          ))}
+          {home.spotlight.map((item) => {
+            const kind = item.stream_type === 'live' ? 'live' : item.stream_type === 'series' ? 'series' : 'movie';
+            const variants = (providerVariants[buildVariantKey(item.name, kind, item.year)] || [])
+              .filter((variant) => variant.providerId !== activeConnection.id)
+              .sort((a, b) => b.trustScore - a.trustScore);
+            return (
+              <article key={`${item.stream_type}-${item.stream_id}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
+                <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${item.stream_icon})` }} />
+                <p className="mt-4 text-lg font-semibold text-white">{item.name}</p>
+                <p className="mt-2 text-sm text-slate-400">{item.stream_type === 'live' ? 'Live channel' : item.genre || 'On-demand title'}</p>
+                {variants[0] ? (
+                  <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
+                    <p className="uppercase tracking-[0.2em] text-emerald-200">Also available elsewhere</p>
+                    <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">{variants.length} healthier provider option{variants.length === 1 ? '' : 's'} ready from Home discovery.</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {variants.slice(0, 2).map((variant) => (
+                        <button
+                          key={`${variant.providerId}-${variant.streamId}`}
+                          onClick={() => {
+                            if (variant.kind === 'series') {
+                              setActiveConnection(variant.providerId);
+                              return;
+                            }
+                            if (!variant.playbackUrl) return;
+                            setActiveConnection(variant.providerId);
+                            playStream({ ...item, stream_id: variant.streamId, category_id: variant.categoryId || item.category_id, stream_icon: variant.artwork || item.stream_icon }, variant.playbackUrl, variant.providerId);
+                          }}
+                          className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                        >
+                          {variant.kind === 'series' ? `Switch to ${variant.providerName}` : `Play on ${variant.providerName}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
       </section>
 

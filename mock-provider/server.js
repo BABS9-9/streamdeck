@@ -614,12 +614,12 @@ const server = http.createServer((req, res) => {
           : degradedEpg
             ? 'Verify Home still loads counts, quick actions, and featured content while guide copy falls back gracefully without a manual reload.'
             : lineSaturated
-              ? 'Verify Home keeps browse counts and quick actions live, but the provider trust cockpit clearly warns that line capacity is maxed before users hit playback.'
+              ? 'Verify Home keeps browse counts and quick actions live, but the provider trust cockpit clearly warns that line capacity is maxed before users hit playback, with healthier saved-provider copies still launchable from discovery rails.'
               : expiredAccount
-                ? 'Verify Home falls back to saved provider state when fresh catalog requests are blocked, while renewal and provider-switch guidance stays visible above the rails.'
+                ? 'Verify Home falls back to saved provider state when fresh catalog requests are blocked, while renewal and provider-switch guidance stays visible above the rails and alternate provider copies stay actionable from spotlight cards.'
                 : authUnstable
-                  ? 'Verify Home keeps cached rails and quick actions visible while auth revalidation fails, and that retry plus switch-provider guidance stays above the content.'
-                  : 'Verify hero counts, quick-launch actions, cached provider refresh messaging, and instant in-place rehearsal refresh from one healthy source.',
+                  ? 'Verify Home keeps cached rails and quick actions visible while auth revalidation fails, and that retry plus switch-provider guidance stays above the content while healthier provider variants remain launchable from discovery rails.'
+                  : 'Verify hero counts, quick-launch actions, cached provider refresh messaging, instant in-place rehearsal refresh, and alternate-provider launch paths from Home discovery rails from one healthy source.',
         live: degradedLive
           ? 'Verify inline provider status banners, retry actions, graceful preview fallback, and in-place browser refresh when the live catalog becomes unavailable.'
           : degradedEpg
