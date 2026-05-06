@@ -1,15 +1,31 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { getProviderTrustScore } from '@/lib/provider-trust';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, getSeries, getSeriesInfo, getVodStreams, refreshSearchCatalog } from '@/lib/xtream-api';
+import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, getSeries, getSeriesInfo, getVodStreams, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, XtreamEpisode, XtreamSeriesInfo, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 
 type CacheMode = 'live' | 'cached' | 'offline';
 
+type ProviderVariant = {
+  providerId: string;
+  providerName: string;
+  title: string;
+  streamId: number;
+  kind: 'movie' | 'series';
+  artwork?: string;
+  categoryId?: string;
+  seriesId?: number;
+  year?: string;
+  plot?: string;
+};
+
 const formatPercent = (value: number) => `${Math.round(value * 100)}% watched`;
+const normalizeVariantKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const buildVariantKey = (title: string, kind: 'movie' | 'series', year?: string) => `${kind}:${normalizeVariantKey(title)}:${year || ''}`;
 
 const scenarioLabels: Record<MockProviderScenario, string> = {
   healthy: 'Healthy',
@@ -33,6 +49,9 @@ export function MediaLibrary({
   initialEpisodeNumber?: number | null;
 }) {
   const activeConnection = useAuthStore((state) => state.activeConnection);
+  const connections = useAuthStore((state) => state.connections);
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const playStream = usePlayerStore((state) => state.playStream);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
 
@@ -48,11 +67,54 @@ export function MediaLibrary({
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
   const [scenario, setScenario] = useState<MockProviderScenario>('healthy');
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
+  const [providerVariants, setProviderVariants] = useState<Record<string, ProviderVariant[]>>({});
+  const [variantRecoveryKey, setVariantRecoveryKey] = useState<string | null>(null);
 
   useEffect(() => {
     setScenario(getSelectedMockProviderScenario());
     return subscribeToMockProviderScenario(setScenario);
   }, []);
+
+  useEffect(() => {
+    const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
+      const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+      if (!connectionCatalog) return acc;
+
+      const buckets: Array<['movie' | 'series', XtreamStream[]]> = [
+        ['movie', connectionCatalog.vod],
+        ['series', connectionCatalog.series],
+      ];
+
+      buckets.forEach(([variantKind, bucketItems]) => {
+        bucketItems.forEach((item) => {
+          const key = buildVariantKey(item.name, variantKind, item.year);
+          const variants = acc[key] || [];
+          const contentId = getContentId(item);
+
+          if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === contentId)) {
+            variants.push({
+              providerId: connection.id,
+              providerName: connection.name,
+              title: item.name,
+              streamId: contentId,
+              kind: variantKind,
+              artwork: getArtwork(item),
+              categoryId: item.category_id,
+              seriesId: item.series_id,
+              year: item.year,
+              plot: item.plot,
+            });
+          }
+
+          acc[key] = variants;
+        });
+      });
+
+      return acc;
+    }, {});
+
+    setProviderVariants(cachedVariants);
+  }, [connections]);
 
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +280,30 @@ export function MediaLibrary({
 
   const recentItems = useMemo(() => providerHistory.slice(0, 4), [providerHistory]);
 
+  const sortVariants = (variants: ProviderVariant[]) => {
+    return [...variants].sort((a, b) => {
+      const providerA = connections.find((connection) => connection.id === a.providerId);
+      const providerB = connections.find((connection) => connection.id === b.providerId);
+      return getProviderTrustScore(providerB || { lastAuthSummary: undefined }, connectionStatus[b.providerId])
+        - getProviderTrustScore(providerA || { lastAuthSummary: undefined }, connectionStatus[a.providerId]);
+    });
+  };
+
+  const movieVariants = useMemo(() => {
+    if (!featuredMovie || !activeConnection) return [] as ProviderVariant[];
+    const key = buildVariantKey(featuredMovie.name, 'movie', featuredMovie.year);
+    return sortVariants((providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection.id));
+  }, [activeConnection, connections, connectionStatus, featuredMovie, providerVariants]);
+
+  const selectedSeries = seriesInfo?.info ?? filteredItems.find((item) => getContentId(item) === selectedSeriesId) ?? null;
+  const selectedSeriesResume = selectedSeries ? resumeLookup[getContentId(selectedSeries)] : null;
+
+  const selectedSeriesVariants = useMemo(() => {
+    if (!selectedSeries || !activeConnection) return [] as ProviderVariant[];
+    const key = buildVariantKey(selectedSeries.name, 'series', selectedSeries.year);
+    return sortVariants((providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection.id));
+  }, [activeConnection, connections, connectionStatus, providerVariants, selectedSeries]);
+
   const bannerTone = cacheMode === 'offline'
     ? 'border-amber-400/30 bg-amber-500/10 text-amber-100'
     : cacheMode === 'cached'
@@ -225,11 +311,144 @@ export function MediaLibrary({
       : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100';
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const libraryFlowCopy = kind === 'movies' ? mockHealth?.demoFlows?.movies : mockHealth?.demoFlows?.series;
+  const activeConnectionStatus = activeConnection ? connectionStatus[activeConnection.id] : null;
+  const activeSummary = activeConnection?.lastAuthSummary;
+  const activeProviderNeedsRecovery = activeSummary?.status !== 'Active'
+    || (!!activeSummary?.maxConnections && (activeSummary.activeConnections ?? 0) >= activeSummary.maxConnections)
+    || activeConnectionStatus?.state === 'error';
+
+  const activeRecoveryMessage = activeConnectionStatus?.state === 'error'
+    ? activeConnectionStatus.message || 'This provider is failing validation right now.'
+    : activeSummary?.status !== 'Active'
+      ? `Provider status is ${activeSummary?.status || 'not active'}. Keep detail browsing alive, but steer playback toward a healthier saved provider copy.`
+      : !!activeSummary?.maxConnections && (activeSummary.activeConnections ?? 0) >= activeSummary.maxConnections
+        ? `All ${activeSummary.maxConnections} lines are in use on ${activeConnection?.name}. Use a healthier provider copy if one exists.`
+        : null;
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
     setScenarioRefreshing(true);
     setSelectedMockProviderScenario(nextScenario);
+  };
+
+  const launchMovieVariant = (variant: ProviderVariant) => {
+    const provider = connections.find((connection) => connection.id === variant.providerId);
+    if (!provider) return;
+
+    setActiveConnection(variant.providerId);
+    playStream({
+      stream_id: variant.streamId,
+      name: variant.title,
+      stream_type: 'movie',
+      category_id: variant.categoryId || 'alternate',
+      stream_icon: variant.artwork,
+      cover: variant.artwork,
+      plot: variant.plot,
+    }, buildVodStreamUrl(provider, {
+      stream_id: variant.streamId,
+      name: variant.title,
+      stream_type: 'movie',
+      category_id: variant.categoryId || 'alternate',
+      stream_icon: variant.artwork,
+      cover: variant.artwork,
+    }), variant.providerId);
+  };
+
+  const launchSeriesVariant = async (variant: ProviderVariant) => {
+    const provider = connections.find((connection) => connection.id === variant.providerId);
+    if (!provider || !selectedSeries) return;
+
+    const preferredSeason = selectedSeriesResume?.seasonNumber ?? initialSeasonNumber ?? selectedSeason;
+    const preferredEpisode = selectedSeriesResume?.episodeNumber ?? initialEpisodeNumber ?? undefined;
+    const recoveryKey = `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${preferredSeason || 0}-${preferredEpisode || 0}`;
+    setVariantRecoveryKey(recoveryKey);
+
+    try {
+      const resolved = await resolveSeriesEpisodePlayback(provider, variant.seriesId ?? variant.streamId, preferredSeason, preferredEpisode);
+      setActiveConnection(variant.providerId);
+      if (!resolved) return;
+
+      playStream({
+        stream_id: resolved.episode.id,
+        name: resolved.episode.title,
+        stream_type: 'series',
+        category_id: variant.categoryId || 'alternate',
+        stream_icon: resolved.episode.info?.movie_image || variant.artwork,
+        cover: resolved.episode.info?.movie_image || variant.artwork,
+        plot: resolved.episode.plot || resolved.episode.info?.plot,
+        direct_source: resolved.episode.direct_source,
+        container_extension: resolved.episode.info?.container_extension,
+      }, resolved.playbackUrl, variant.providerId, {
+        seriesId: Number(variant.seriesId ?? variant.streamId),
+        seriesTitle: selectedSeries.name,
+        seasonNumber: resolved.resolvedSeasonNumber,
+        episodeNumber: resolved.episode.episode_num,
+      });
+    } finally {
+      setVariantRecoveryKey((current) => (current === recoveryKey ? null : current));
+    }
+  };
+
+  const renderProviderVariants = (variants: ProviderVariant[], options?: { type: 'movie' | 'series'; resumeLabel?: string | null }) => {
+    if (variants.length === 0) return null;
+
+    return (
+      <div className="mt-6 rounded-[1.4rem] border border-emerald-400/20 bg-emerald-500/10 p-4 text-emerald-100">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.24em] text-emerald-200">Provider variants</p>
+            <h4 className="mt-2 text-lg font-semibold text-white">This title also exists on healthier saved providers.</h4>
+            <p className="mt-2 text-sm leading-6 text-emerald-100/80">Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first.</p>
+          </div>
+          {activeProviderNeedsRecovery ? (
+            <span className="rounded-full border border-amber-300/30 bg-amber-500/15 px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-amber-100">
+              Recovery mode
+            </span>
+          ) : null}
+        </div>
+        <div className="mt-4 space-y-3">
+          {variants.map((variant) => {
+            const provider = connections.find((connection) => connection.id === variant.providerId);
+            const trustScore = getProviderTrustScore(provider || { lastAuthSummary: undefined }, connectionStatus[variant.providerId]);
+            const trustLabel = trustScore >= 150 ? 'Highest trust' : trustScore >= 90 ? 'Healthy backup' : 'Fallback copy';
+            const isSeries = options?.type === 'series';
+            const recoveryKey = `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${selectedSeriesResume?.seasonNumber ?? initialSeasonNumber ?? selectedSeason ?? 0}-${selectedSeriesResume?.episodeNumber ?? initialEpisodeNumber ?? 0}`;
+
+            return (
+              <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="rounded-[1.2rem] border border-white/10 bg-black/20 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">{variant.providerName}</p>
+                    <p className="mt-1 text-sm text-white">{trustLabel}</p>
+                    <p className="mt-1 text-xs text-slate-300">
+                      {isSeries
+                        ? options?.resumeLabel || 'Episode-aware recovery is ready on this provider copy.'
+                        : 'Direct movie playback is ready on this provider copy.'}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => isSeries ? launchSeriesVariant(variant) : launchMovieVariant(variant)}
+                      className="rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-medium text-black hover:bg-emerald-400"
+                    >
+                      {isSeries
+                        ? variantRecoveryKey === recoveryKey ? 'Switching…' : options?.resumeLabel || 'Resume on provider'
+                        : 'Play on provider'}
+                    </button>
+                    <button
+                      onClick={() => setActiveConnection(variant.providerId)}
+                      className="rounded-2xl border border-white/10 px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5"
+                    >
+                      Switch provider only
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   if (!activeConnection) {
@@ -353,10 +572,18 @@ export function MediaLibrary({
                 </div>
                 <p className="mt-4 text-sm leading-7 text-slate-300">{featuredMovie.plot || featuredMovie.tagline || 'Select a movie card to inspect its richer provider metadata.'}</p>
                 <p className="mt-3 text-sm text-slate-400">{featuredMovie.director ? `Directed by ${featuredMovie.director}` : ''}{featuredMovie.cast ? `${featuredMovie.director ? ' · ' : ''}${featuredMovie.cast}` : ''}</p>
+                {activeProviderNeedsRecovery && activeRecoveryMessage ? (
+                  <div className="mt-5 rounded-[1.2rem] border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Active provider warning</p>
+                    <p className="mt-2 leading-6">{activeRecoveryMessage}</p>
+                  </div>
+                ) : null}
                 <div className="mt-5 flex flex-wrap gap-3">
                   <button onClick={() => playStream(featuredMovie, buildVodStreamUrl(activeConnection, featuredMovie), activeConnection.id)} className="rounded-2xl bg-violet-500 px-5 py-3 text-sm font-medium text-white hover:bg-violet-400">{resumeLookup[getContentId(featuredMovie)] ? 'Resume movie' : 'Play movie'}</button>
                   <button onClick={() => setSelectedMovieId(filteredItems[0] ? getContentId(filteredItems[0]) : null)} className="rounded-2xl border border-white/10 px-5 py-3 text-sm text-slate-200 hover:bg-white/5">Reset selection</button>
                 </div>
+
+                {renderProviderVariants(movieVariants, { type: 'movie' })}
 
                 {recentItems.length > 0 ? (
                   <div className="mt-8 rounded-[1.3rem] border border-white/10 bg-white/5 p-4">
@@ -383,9 +610,6 @@ export function MediaLibrary({
       </div>
     );
   }
-
-  const selectedSeries = seriesInfo?.info ?? filteredItems.find((item) => getContentId(item) === selectedSeriesId) ?? null;
-  const selectedSeriesResume = selectedSeries ? resumeLookup[getContentId(selectedSeries)] : null;
 
   return (
     <div className="space-y-6">
@@ -502,6 +726,12 @@ export function MediaLibrary({
                     : ''}
                 </p>
               ) : null}
+              {activeProviderNeedsRecovery && activeRecoveryMessage ? (
+                <div className="mt-5 rounded-[1.2rem] border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Active provider warning</p>
+                  <p className="mt-2 leading-6">{activeRecoveryMessage}</p>
+                </div>
+              ) : null}
               <div className="mt-5 flex flex-wrap gap-2">
                 {(seriesInfo?.seasons || []).map((season) => (
                   <button
@@ -513,6 +743,15 @@ export function MediaLibrary({
                   </button>
                 ))}
               </div>
+
+              {renderProviderVariants(selectedSeriesVariants, {
+                type: 'series',
+                resumeLabel: selectedSeriesResume?.seasonNumber && selectedSeriesResume.episodeNumber
+                  ? `Resume S${selectedSeriesResume.seasonNumber}E${selectedSeriesResume.episodeNumber}`
+                  : highlightedEpisodeId
+                    ? 'Resume highlighted episode'
+                    : 'Open healthiest provider copy',
+              })}
 
               <div className="mt-6 space-y-3">
                 {selectedEpisodes.length > 0 ? selectedEpisodes.map((episode) => {
