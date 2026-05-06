@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
+import { getProviderTrustScore } from '@/lib/provider-trust';
+import { buildLiveStreamUrl, getCachedSearchCatalog, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
@@ -19,6 +20,20 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   expiredAccount: 'Expired account',
   authUnstable: 'Auth unstable',
 };
+
+type ProviderVariant = {
+  providerId: string;
+  providerName: string;
+  streamId: number;
+  title: string;
+  categoryId?: string;
+  artwork?: string;
+  playbackUrl: string;
+  trustScore: number;
+};
+
+const normalizeVariantKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const buildVariantKey = (title: string) => `live:${normalizeVariantKey(title)}`;
 
 const formatExpiry = (value?: string | null) => {
   if (!value) return 'Unknown expiry';
@@ -85,6 +100,7 @@ export function LiveBrowser() {
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
   const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
+  const [providerVariants, setProviderVariants] = useState<Record<string, ProviderVariant[]>>({});
   const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -95,6 +111,38 @@ export function LiveBrowser() {
       revalidateMockConnections().catch(() => {});
     });
   }, [revalidateMockConnections]);
+
+  useEffect(() => {
+    const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
+      const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+      if (!connectionCatalog) return acc;
+
+      connectionCatalog.live.forEach((item) => {
+        const key = buildVariantKey(item.name);
+        const variants = acc[key] || [];
+        const streamId = getContentId(item);
+
+        if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === streamId)) {
+          variants.push({
+            providerId: connection.id,
+            providerName: connection.name,
+            streamId,
+            title: item.name,
+            categoryId: item.category_id,
+            artwork: item.preview_art || item.stream_icon,
+            playbackUrl: buildLiveStreamUrl(connection, item),
+            trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
+          });
+        }
+
+        acc[key] = variants;
+      });
+
+      return acc;
+    }, {});
+
+    setProviderVariants(cachedVariants);
+  }, [connectionStatus, connections]);
 
   useEffect(() => {
     let cancelled = false;
@@ -242,6 +290,32 @@ export function LiveBrowser() {
       .filter((connection) => connection.id !== activeConnection.id)
       .sort((a, b) => getHealthScore(b, connectionStatus[b.id]) - getHealthScore(a, connectionStatus[a.id]))[0] ?? null;
   }, [activeConnection, connectionStatus, connections]);
+
+  const getLiveVariants = (stream: XtreamStream) => {
+    if (!activeConnection) return [] as ProviderVariant[];
+    const key = buildVariantKey(stream.name);
+    return (providerVariants[key] || [])
+      .filter((variant) => variant.providerId !== activeConnection.id)
+      .sort((a, b) => b.trustScore - a.trustScore);
+  };
+
+  const launchVariant = (variant: ProviderVariant) => {
+    const provider = connections.find((connection) => connection.id === variant.providerId);
+    if (!provider) return;
+
+    setActiveConnection(variant.providerId);
+    const variantStream: XtreamStream = {
+      stream_id: variant.streamId,
+      name: variant.title,
+      stream_type: 'live',
+      category_id: variant.categoryId || 'alternate',
+      stream_icon: variant.artwork,
+      preview_art: variant.artwork,
+    };
+    setSelectedStream(variantStream);
+    setPreviewUrl(variant.playbackUrl);
+    playStream(variantStream, variant.playbackUrl, variant.providerId);
+  };
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -546,6 +620,8 @@ export function LiveBrowser() {
             const selected = displayStream ? getContentId(displayStream) === contentId : false;
             const favourite = favorites.includes(contentId);
             const previewing = selectedStream ? getContentId(selectedStream) === contentId : false;
+            const variants = getLiveVariants(stream);
+            const topVariant = variants[0] ?? null;
             return (
               <article
                 key={contentId}
@@ -573,6 +649,19 @@ export function LiveBrowser() {
                   <span>{previewing ? 'Preview armed' : 'Hover to preview'}</span>
                   <span>{contentId}</span>
                 </div>
+                {topVariant ? (
+                  <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-100">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200">Alternate provider ready</p>
+                        <p className="mt-1 text-sm text-white">{topVariant.providerName} ranks as the healthiest saved live copy.</p>
+                      </div>
+                      <span className="rounded-full border border-emerald-300/20 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-emerald-100">
+                        {variants.length} backup{variants.length === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="mt-4 space-y-2 text-sm">
                   <p className="text-slate-400">NOW</p>
                   <p className="font-medium text-white">{guide?.now?.title ?? (guideMessage ? 'Guide unavailable right now' : 'Loading EPG...')}</p>
@@ -593,6 +682,57 @@ export function LiveBrowser() {
                   </button>
                   <button onClick={() => { setSelectedStream(stream); setPreviewUrl(buildLiveStreamUrl(activeConnection, stream)); }} className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-200 hover:bg-white/5">Preview</button>
                 </div>
+                {topVariant ? (
+                  <div className="mt-3 grid gap-2">
+                    <button
+                      onClick={() => launchVariant(topVariant)}
+                      className="rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-medium text-black hover:bg-emerald-400"
+                    >
+                      Play on healthiest provider
+                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setActiveConnection(topVariant.providerId);
+                          setSelectedStream({
+                            stream_id: topVariant.streamId,
+                            name: topVariant.title,
+                            stream_type: 'live',
+                            category_id: topVariant.categoryId || 'alternate',
+                            stream_icon: topVariant.artwork,
+                            preview_art: topVariant.artwork,
+                          });
+                          setPreviewUrl(topVariant.playbackUrl);
+                        }}
+                        className="flex-1 rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-200 hover:bg-white/5"
+                      >
+                        Switch provider only
+                      </button>
+                      <span className="flex items-center rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400">
+                        {topVariant.providerName}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+                {variants.length > 1 ? (
+                  <div className="mt-3 space-y-2 rounded-2xl border border-white/10 bg-black/20 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">More saved provider copies</p>
+                    {variants.slice(1, 3).map((variant) => (
+                      <div key={`${variant.providerId}-${variant.streamId}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2">
+                        <div>
+                          <p className="text-sm text-white">{variant.providerName}</p>
+                          <p className="text-xs text-slate-400">Fallback live launch is ready.</p>
+                        </div>
+                        <button
+                          onClick={() => launchVariant(variant)}
+                          className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/10"
+                        >
+                          Play here
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 {collections.length > 0 ? (
                   <select
                     defaultValue=""
@@ -714,7 +854,7 @@ export function LiveBrowser() {
             <li>• Hover or focus arms the preview player without navigating away from the grid.</li>
             <li>• Category cards turn the top of Live into a TV-style surf surface, not a dead filter bar.</li>
             <li>• Favorites stay one click from the main channel surface.</li>
-            <li>• When a provider degrades, Live now says so clearly and keeps the retry path in the same surface.</li>
+            <li>• When a provider degrades, Live now says so clearly and can jump straight into the healthiest saved provider copy from the same card.</li>
           </ul>
         </div>
       </aside>

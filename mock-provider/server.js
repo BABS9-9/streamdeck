@@ -346,7 +346,7 @@ const buildRecoveryActions = (scenario = 'healthy') => {
   if (scenario === 'lineSaturated') {
     return [
       'Warn before playback that provider line capacity is already maxed.',
-      'Suggest switching to another saved provider for the same title or channel.',
+      'Suggest switching to another saved provider for the same title or channel, and keep that fallback launch reachable directly from Home and Live cards.',
       'Let the user retry validation later instead of pretending the account is fully healthy.',
       'Preserve season and episode resume context when a healthier provider copy is available.',
     ];
@@ -625,11 +625,11 @@ const server = http.createServer((req, res) => {
           : degradedEpg
             ? 'Verify channel browsing and preview remain intact while NOW and NEXT labels explain the guide outage without forcing a full reload.'
             : lineSaturated
-              ? 'Verify Live keeps browsing available while account-capacity warnings stay visible in the provider trust cockpit before the user blames the stream itself.'
+              ? 'Verify Live keeps browsing available while account-capacity warnings stay visible in the provider trust cockpit before the user blames the stream itself, with the healthiest saved provider copy launchable from the same live card.'
               : expiredAccount
-                ? 'Verify Live stops blaming the stream, surfaces the expired-account recovery path clearly, and keeps any saved context more useful than a blank error wall.'
+                ? 'Verify Live stops blaming the stream, surfaces the expired-account recovery path clearly, and keeps any saved context more useful than a blank error wall while alternate saved-provider copies stay directly launchable from the same live card.'
                 : authUnstable
-                  ? 'Verify Live keeps the current browse context visible while auth checks fail, and that retry or provider-switch guidance is clearer than a generic playback error.'
+                  ? 'Verify Live keeps the current browse context visible while auth checks fail, and that retry or provider-switch guidance is clearer than a generic playback error, with direct alternate-provider launch still available from live cards.'
                   : 'Verify inline NOW/NEXT guide data, hover preview fallback, surf-rail browsing, and in-place rehearsal refresh against realistic fake categories.',
         search: degradedSearch
           ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, offers direct retry actions, keeps alternate provider copies launchable from the same result card, and refreshes immediately when the rehearsal mode changes.'
