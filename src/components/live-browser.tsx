@@ -28,7 +28,18 @@ type ProviderVariant = {
   streamId: number;
   title: string;
   categoryId?: string;
+  categoryName?: string;
   artwork?: string;
+  playbackUrl: string;
+  trustScore: number;
+};
+
+type CategoryFallback = {
+  providerId: string;
+  providerName: string;
+  categoryId?: string;
+  categoryName: string;
+  stream: XtreamStream;
   playbackUrl: string;
   trustScore: number;
 };
@@ -112,6 +123,7 @@ export function LiveBrowser() {
             streamId,
             title: item.name,
             categoryId: item.category_id,
+            categoryName: item.channel_group,
             artwork: item.preview_art || item.stream_icon,
             playbackUrl: buildLiveStreamUrl(connection, item),
             trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
@@ -284,6 +296,38 @@ export function LiveBrowser() {
       .sort((a, b) => b.trustScore - a.trustScore);
   };
 
+  const getCategoryFallback = (stream: XtreamStream, variants: ProviderVariant[]) => {
+    if (!activeConnection || variants.length > 0) return null as CategoryFallback | null;
+    const categoryName = categories.find((item) => item.category_id === stream.category_id)?.category_name || stream.channel_group || 'Live';
+    const categoryCandidates = connections
+      .filter((connection) => connection.id !== activeConnection.id)
+      .map((connection) => {
+        const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+        if (!connectionCatalog) return null;
+
+        const match = connectionCatalog.live.find((item) => {
+          const sameCategoryId = item.category_id && stream.category_id && String(item.category_id) === String(stream.category_id);
+          const sameCategoryName = normalizeVariantKey(item.channel_group || '') === normalizeVariantKey(categoryName);
+          return sameCategoryId || sameCategoryName;
+        });
+
+        if (!match) return null;
+
+        return {
+          providerId: connection.id,
+          providerName: connection.name,
+          categoryId: match.category_id,
+          categoryName: match.channel_group || categoryName,
+          stream: match,
+          playbackUrl: buildLiveStreamUrl(connection, match),
+          trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
+        } satisfies CategoryFallback;
+      })
+      .filter(Boolean) as CategoryFallback[];
+
+    return categoryCandidates.sort((a, b) => b.trustScore - a.trustScore)[0] ?? null;
+  };
+
   const launchVariant = (variant: ProviderVariant) => {
     const provider = connections.find((connection) => connection.id === variant.providerId);
     if (!provider) return;
@@ -300,6 +344,14 @@ export function LiveBrowser() {
     setSelectedStream(variantStream);
     setPreviewUrl(variant.playbackUrl);
     playStream(variantStream, variant.playbackUrl, variant.providerId);
+  };
+
+  const launchCategoryFallback = (fallback: CategoryFallback) => {
+    setActiveConnection(fallback.providerId);
+    setSelectedCategory(fallback.categoryId || 'all');
+    setSelectedStream(fallback.stream);
+    setPreviewUrl(fallback.playbackUrl);
+    playStream(fallback.stream, fallback.playbackUrl, fallback.providerId);
   };
 
   return (
@@ -427,7 +479,10 @@ export function LiveBrowser() {
                   <div className="mt-3 flex flex-wrap items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => setActiveConnection(healthiestConnection.id)}
+                      onClick={() => {
+                        setActiveConnection(healthiestConnection.id);
+                        setSelectedCategory((current) => current || 'all');
+                      }}
                       className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
                     >
                       Switch to healthiest saved provider
@@ -456,7 +511,10 @@ export function LiveBrowser() {
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={() => setActiveConnection(healthiestConnection.id)}
+                onClick={() => {
+                  setActiveConnection(healthiestConnection.id);
+                  setSelectedCategory((current) => current || 'all');
+                }}
                 className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
               >
                 {getRecoveryActionLabel('live', healthiestConnection.name)}
@@ -625,6 +683,7 @@ export function LiveBrowser() {
             const previewing = selectedStream ? getContentId(selectedStream) === contentId : false;
             const variants = getLiveVariants(stream);
             const topVariant = variants[0] ?? null;
+            const categoryFallback = getCategoryFallback(stream, variants);
             return (
               <article
                 key={contentId}
@@ -661,6 +720,18 @@ export function LiveBrowser() {
                       </div>
                       <span className="rounded-full border border-emerald-300/20 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-emerald-100">
                         {variants.length} backup{variants.length === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  </div>
+                ) : categoryFallback ? (
+                  <div className="mt-3 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-3 text-sm text-sky-100">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Category fallback ready</p>
+                        <p className="mt-1 text-sm text-white">{categoryFallback.providerName} can keep {categoryFallback.categoryName} surfing alive even without this exact channel copy.</p>
+                      </div>
+                      <span className="rounded-full border border-sky-300/20 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-sky-100">
+                        Same category rescue
                       </span>
                     </div>
                   </div>
@@ -714,6 +785,48 @@ export function LiveBrowser() {
                       <span className="flex items-center rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400">
                         {topVariant.providerName}
                       </span>
+                    </div>
+                  </div>
+                ) : categoryFallback ? (
+                  <div className="mt-3 grid gap-2">
+                    <button
+                      onClick={() => launchCategoryFallback(categoryFallback)}
+                      className="rounded-2xl bg-sky-500 px-4 py-3 text-sm font-medium text-slate-950 hover:bg-sky-400"
+                    >
+                      Open same category on healthiest provider
+                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setActiveConnection(categoryFallback.providerId);
+                          setSelectedCategory(categoryFallback.categoryId || 'all');
+                          setSelectedStream(categoryFallback.stream);
+                          setPreviewUrl(categoryFallback.playbackUrl);
+                        }}
+                        className="flex-1 rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-200 hover:bg-white/5"
+                      >
+                        Switch category only
+                      </button>
+                      <span className="flex items-center rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400">
+                        {categoryFallback.providerName}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+                {categoryFallback ? (
+                  <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Fallback route</p>
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2">
+                      <div>
+                        <p className="text-sm text-white">{categoryFallback.providerName}</p>
+                        <p className="text-xs text-slate-400">Jump into {categoryFallback.categoryName} without losing surf momentum.</p>
+                      </div>
+                      <button
+                        onClick={() => launchCategoryFallback(categoryFallback)}
+                        className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-200 hover:bg-white/10"
+                      >
+                        Open category
+                      </button>
                     </div>
                   </div>
                 ) : null}
@@ -857,7 +970,7 @@ export function LiveBrowser() {
             <li>• Hover or focus arms the preview player without navigating away from the grid.</li>
             <li>• Category cards turn the top of Live into a TV-style surf surface, not a dead filter bar.</li>
             <li>• Favorites stay one click from the main channel surface.</li>
-            <li>• When a provider degrades, Live now says so clearly and can jump straight into the healthiest saved provider copy from the same card.</li>
+            <li>• When a provider degrades, Live now says so clearly and can jump straight into the healthiest saved provider copy, or preserve the same category when an exact duplicate channel is missing.</li>
           </ul>
         </div>
       </aside>

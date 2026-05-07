@@ -26,5 +26,5 @@ export const getRecoveryActionLabel = (surface: RecoverySurface, providerName: s
 export const getRecoverySupportLabel = (surface: RecoverySurface) => {
   if (surface === 'login') return 'Keep the connect flow moving with the healthiest saved provider instead of retrying a bad source blindly.';
   if (surface === 'home') return 'Keep the same browse session alive by moving Home onto the healthiest saved provider before rails go stale.';
-  return 'Keep channel surfing alive by moving Live onto the healthiest saved provider before playback blame lands on the wrong channel.';
+  return 'Keep channel surfing alive by moving Live onto the healthiest saved provider, and preserve category context when an exact duplicate channel is missing.';
 };

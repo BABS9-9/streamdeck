@@ -318,13 +318,13 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
   live: {
     title: scenario === 'healthy' ? 'Live recovery route' : 'Keep Live surfing alive',
     detail: scenario === 'expiredAccount'
-      ? 'If the active account is expired, jump straight into Live on the healthiest saved provider instead of forcing the user to back out and reconnect.'
+      ? 'If the active account is expired, jump straight into the same Live category on the healthiest saved provider instead of forcing the user to back out and reconnect.'
       : scenario === 'lineSaturated'
-        ? 'If the active provider is out of lines, move Live onto the healthiest saved provider before the user blames the channel card.'
+        ? 'If the active provider is out of lines, move Live onto the healthiest saved provider and preserve the current category before the user blames the channel card.'
         : scenario === 'authUnstable'
-          ? 'Keep the current browse context visible, but make the fastest escape hatch a one-tap jump into Live on the healthiest saved provider.'
-          : 'When provider trust degrades, Live should pivot straight into the healthiest saved provider without losing channel-surf momentum.',
-    cta: 'Open Live on healthiest provider',
+          ? 'Keep the current browse context visible, but make the fastest escape hatch a one-tap jump into the same Live category on the healthiest saved provider.'
+          : 'When provider trust degrades, Live should pivot into the healthiest saved provider while preserving channel-surf momentum and category context even if an exact duplicate channel is missing.',
+    cta: 'Open same Live category on healthiest provider',
   },
   search: {
     title: scenario === 'healthy' ? 'Search recovery route' : 'Keep Search useful',
@@ -459,7 +459,7 @@ const buildRecoveryActions = (scenario = 'healthy') => {
   if (scenario === 'lineSaturated') {
     return [
       'Warn before playback that provider line capacity is already maxed.',
-      'Suggest switching to another saved provider for the same title or channel, and keep that fallback launch reachable directly from Home and Live cards.',
+      'Suggest switching to another saved provider for the same title or channel, and if the exact channel is missing keep a same-category fallback launch reachable directly from Home and Live cards.',
       'Let the user retry validation later instead of pretending the account is fully healthy.',
       'Preserve season and episode resume context when a healthier provider copy is available.',
     ];
@@ -656,7 +656,7 @@ const server = http.createServer((req, res) => {
           appImpact: 'Use this to rehearse trust warnings and degraded account-state messaging before playback fails in front of a user.',
           healthUrl: `${host}/health?scenario=lineSaturated`,
           affectedEndpoints: ['auth'],
-          expectedUx: ['Login shows provider-risk copy instead of a false green state', 'Home trust cockpit warns that capacity is maxed', 'Live surfaces the same account pressure before the user blames playback'],
+          expectedUx: ['Login shows provider-risk copy instead of a false green state', 'Home trust cockpit warns that capacity is maxed', 'Live surfaces the same account pressure before the user blames playback and can still recover into the same category on a healthier provider'],
           verificationSteps: ['Tap Lines maxed in-product', 'Reconnect or revalidate mock provider and confirm status downgrades from healthy to degraded', 'Open Home and Live and verify account-capacity warnings appear inline without hiding browse actions'],
         },
         expiredAccount: {
@@ -665,7 +665,7 @@ const server = http.createServer((req, res) => {
           appImpact: 'Use this to verify Login, Home, and Live show explicit recovery guidance while cached browse state stays as useful as possible.',
           healthUrl: `${host}/health?scenario=expiredAccount`,
           affectedEndpoints: ['auth', 'get_live_categories', 'get_live_streams', 'get_vod_streams', 'get_series', 'get_short_epg'],
-          expectedUx: ['Login downgrades trust immediately', 'Home falls back to cached content with renewal guidance', 'Live stops pretending playback issues are stream-only when the account is expired'],
+          expectedUx: ['Login downgrades trust immediately', 'Home falls back to cached content with renewal guidance', 'Live stops pretending playback issues are stream-only when the account is expired and preserves same-category recovery actions'],
           verificationSteps: ['Tap Expired account in-product', 'Reconnect or revalidate mock provider and confirm the account status flips to expired', 'Open Home and Live and verify recovery guidance stays visible even if fresh provider data is blocked'],
         },
         authUnstable: {
@@ -674,7 +674,7 @@ const server = http.createServer((req, res) => {
           appImpact: 'Use this to verify Login, Home, and Live degrade trust clearly without dumping the user out of the active provider context.',
           healthUrl: `${host}/health?scenario=authUnstable`,
           affectedEndpoints: ['auth'],
-          expectedUx: ['Login flags trust as unstable instead of silently failing', 'Home keeps cached rails and quick actions visible while auth is retried', 'Live keeps browsing context and shows a direct retry or switch-provider path'],
+          expectedUx: ['Login flags trust as unstable instead of silently failing', 'Home keeps cached rails and quick actions visible while auth is retried', 'Live keeps browsing context and shows a direct retry or same-category switch-provider path'],
           verificationSteps: ['Tap Auth unstable in-product', 'Revalidate the mock provider and confirm trust drops to unstable', 'Open Home and Live and verify cached context stays visible while retry guidance is explicit'],
         },
       },
