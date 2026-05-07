@@ -31,8 +31,22 @@ type ProviderVariant = {
   kind: 'live' | 'movie' | 'series';
   artwork?: string;
   categoryId?: string;
+  categoryName?: string;
   playbackUrl?: string | null;
   seriesId?: number;
+  weight: number;
+  warning?: string | null;
+};
+
+type CategoryFallback = {
+  providerId: string;
+  providerName: string;
+  title: string;
+  streamId: number;
+  categoryId?: string;
+  categoryName: string;
+  artwork?: string;
+  playbackUrl: string;
   weight: number;
   warning?: string | null;
 };
@@ -142,6 +156,7 @@ export function CollectionsManager() {
             kind,
             artwork: getArtwork(item),
             categoryId: item.category_id,
+            categoryName: item.channel_group || item.genre,
             playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
             seriesId: item.series_id,
             weight: trust.weight,
@@ -184,6 +199,37 @@ export function CollectionsManager() {
     if (variant.kind === 'series') return;
     if (!variant.playbackUrl) return;
     playStream(stream, variant.playbackUrl, variant.providerId);
+  };
+
+  const getLiveCategoryFallback = (categorySeed?: string, variants: ProviderVariant[] = []) => {
+    if (!activeConnection || variants.length > 0 || !categorySeed) return null as CategoryFallback | null;
+
+    const categoryCandidates = connections
+      .filter((connection) => connection.id !== activeConnection.id)
+      .map((connection) => {
+        const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+        if (!connectionCatalog) return null;
+        const trust = getConnectionTrust(connection, connectionStatus[connection.id]?.state);
+
+        const match = connectionCatalog.live.find((entry) => normalizeLibraryKey(entry.channel_group || '') === normalizeLibraryKey(categorySeed));
+        if (!match) return null;
+
+        return {
+          providerId: connection.id,
+          providerName: connection.name,
+          title: match.name,
+          streamId: getContentId(match),
+          categoryId: match.category_id,
+          categoryName: match.channel_group || categorySeed,
+          artwork: getArtwork(match),
+          playbackUrl: buildLiveStreamUrl(connection, match),
+          weight: trust.weight,
+          warning: trust.warning,
+        } satisfies CategoryFallback;
+      })
+      .filter(Boolean) as CategoryFallback[];
+
+    return categoryCandidates.sort((left, right) => right.weight - left.weight || left.providerName.localeCompare(right.providerName))[0] ?? null;
   };
 
   const launchSeriesVariant = async (variant: ProviderVariant, seriesTitle: string, seasonNumber?: number, episodeNumber?: number) => {
@@ -378,6 +424,8 @@ export function CollectionsManager() {
                         : buildVodStreamUrl(activeConnection, catalogItem);
                   const variantKey = buildVariantKey(item.title, item.streamType, catalogItem?.year);
                   const alternateVariants = (providerVariants[variantKey] || []).filter((variant) => !(variant.providerId === activeConnection.id && variant.streamId === item.streamId));
+                  const categorySeed = catalogItem?.channel_group || alternateVariants.find((variant) => variant.kind === 'live')?.categoryName;
+                  const categoryFallback = item.streamType === 'live' ? getLiveCategoryFallback(categorySeed, alternateVariants) : null;
                   const recommendedVariant = alternateVariants[0];
                   const canUseCurrentProvider = item.providerId === activeConnection.id && ((item.streamType === 'series') || (!!catalogItem && !!playbackUrl));
                   const seriesResume = item.streamType === 'series' ? seriesResumeLookup[normalizeLibraryKey(item.title)] : null;
@@ -390,17 +438,17 @@ export function CollectionsManager() {
                           <p className="font-medium text-white">{item.title}</p>
                           <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{item.streamType}</p>
                         </div>
-                        {recommendedVariant ? (
+                        {recommendedVariant || categoryFallback ? (
                           <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-emerald-100">
-                            Alt ready
+                            {recommendedVariant ? 'Alt ready' : 'Category rescue'}
                           </span>
                         ) : null}
                       </div>
                       {item.providerId !== activeConnection.id ? (
                         <p className="mt-3 text-xs leading-5 text-slate-400">Saved from another provider. Switch or launch the healthier copy below.</p>
                       ) : null}
-                      {activeTrust?.needsRecovery && recommendedVariant ? (
-                        <p className="mt-3 text-xs leading-5 text-amber-200">Active provider is under pressure. Recommended recovery path: {recommendedVariant.providerName}{recommendedVariant.warning ? ` • ${recommendedVariant.warning}` : ''}.</p>
+                      {activeTrust?.needsRecovery && (recommendedVariant || categoryFallback) ? (
+                        <p className="mt-3 text-xs leading-5 text-amber-200">Active provider is under pressure. Recommended recovery path: {recommendedVariant ? `${recommendedVariant.providerName}${recommendedVariant.warning ? ` • ${recommendedVariant.warning}` : ''}` : `${categoryFallback?.providerName} same-category fallback${categoryFallback?.warning ? ` • ${categoryFallback.warning}` : ''}` }.</p>
                       ) : null}
                       <div className="mt-4 flex gap-2">
                         {item.streamType === 'series' ? (
@@ -438,16 +486,17 @@ export function CollectionsManager() {
                         )}
                         <button onClick={() => removeItemFromCollection(collection.id, item.providerId, item.streamId)} className="rounded-xl border border-white/10 px-3 py-2 text-sm text-slate-200 hover:bg-white/5">Remove</button>
                       </div>
-                      {recommendedVariant ? (
+                      {recommendedVariant || categoryFallback ? (
                         <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
-                              <p className="uppercase tracking-[0.18em] text-emerald-200">Recommended alternate</p>
-                              <p className="mt-1 text-sm text-white">{recommendedVariant.providerName}</p>
-                              {recommendedVariant.warning ? <p className="mt-1 text-[11px] text-emerald-100/80">{recommendedVariant.warning}</p> : null}
+                              <p className="uppercase tracking-[0.18em] text-emerald-200">{recommendedVariant ? 'Recommended alternate' : 'Same-category fallback'}</p>
+                              <p className="mt-1 text-sm text-white">{recommendedVariant ? recommendedVariant.providerName : categoryFallback?.providerName}</p>
+                              {recommendedVariant?.warning ? <p className="mt-1 text-[11px] text-emerald-100/80">{recommendedVariant.warning}</p> : null}
+                              {!recommendedVariant && categoryFallback ? <p className="mt-1 text-[11px] text-emerald-100/80">Open {categoryFallback.categoryName} on a healthier saved provider when this exact live item is unavailable.</p> : null}
                             </div>
                             <div className="flex flex-wrap gap-2">
-                              {recommendedVariant.kind === 'series' ? (
+                              {recommendedVariant ? (recommendedVariant.kind === 'series' ? (
                                 <>
                                   <button
                                     onClick={() => void launchSeriesVariant(recommendedVariant, item.title, seriesResume?.seasonNumber, seriesResume?.episodeNumber)}
@@ -471,9 +520,26 @@ export function CollectionsManager() {
                                 >
                                   Play alternate
                                 </button>
-                              )}
+                              )) : categoryFallback ? (
+                                <button
+                                  onClick={() => {
+                                    setActiveConnection(categoryFallback.providerId);
+                                    playStream({
+                                      name: categoryFallback.title,
+                                      stream_type: 'live',
+                                      stream_id: categoryFallback.streamId,
+                                      category_id: categoryFallback.categoryId || catalogItem?.category_id || 'alternate',
+                                      stream_icon: categoryFallback.artwork || item.artwork,
+                                      preview_art: categoryFallback.artwork || item.artwork,
+                                    } as XtreamStream, categoryFallback.playbackUrl, categoryFallback.providerId);
+                                  }}
+                                  className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                                >
+                                  Open same category
+                                </button>
+                              ) : null}
                               <button
-                                onClick={() => setActiveConnection(recommendedVariant.providerId)}
+                                onClick={() => setActiveConnection(recommendedVariant ? recommendedVariant.providerId : categoryFallback!.providerId)}
                                 className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
                               >
                                 Switch only

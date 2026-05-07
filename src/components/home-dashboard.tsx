@@ -31,8 +31,21 @@ type ProviderVariant = {
   title: string;
   artwork?: string;
   categoryId?: string;
+  categoryName?: string;
   seriesId?: number;
   playbackUrl?: string | null;
+  trustScore: number;
+};
+
+type CategoryFallback = {
+  providerId: string;
+  providerName: string;
+  categoryId?: string;
+  categoryName: string;
+  streamId: number;
+  title: string;
+  artwork?: string;
+  playbackUrl: string;
   trustScore: number;
 };
 
@@ -257,6 +270,7 @@ export function HomeDashboard() {
               title: item.name,
               artwork: getArtwork(item),
               categoryId: item.category_id,
+              categoryName: item.channel_group || item.genre,
               seriesId: item.series_id,
               playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
               trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
@@ -322,6 +336,40 @@ export function HomeDashboard() {
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const providerAccountPressure = getAccountPressure(activeConnection?.lastAuthSummary);
   const mockAccountPressure = getAccountPressure(mockHealth?.accountProfile);
+  const getLiveCategoryFallback = (stream: XtreamStream, variants: ProviderVariant[]) => {
+    if (!activeConnection || variants.length > 0) return null as CategoryFallback | null;
+    const categoryName = stream.channel_group || stream.genre || 'Live';
+    const categoryCandidates = connections
+      .filter((connection) => connection.id !== activeConnection.id)
+      .map((connection) => {
+        const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+        if (!connectionCatalog) return null;
+
+        const match = connectionCatalog.live.find((item) => {
+          const sameCategoryId = item.category_id && stream.category_id && String(item.category_id) === String(stream.category_id);
+          const sameCategoryName = normalizeVariantKey(item.channel_group || item.genre || '') === normalizeVariantKey(categoryName);
+          return sameCategoryId || sameCategoryName;
+        });
+
+        if (!match) return null;
+
+        return {
+          providerId: connection.id,
+          providerName: connection.name,
+          categoryId: match.category_id,
+          categoryName: match.channel_group || categoryName,
+          streamId: getContentId(match),
+          title: match.name,
+          artwork: getArtwork(match),
+          playbackUrl: buildLiveStreamUrl(connection, match),
+          trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
+        } satisfies CategoryFallback;
+      })
+      .filter(Boolean) as CategoryFallback[];
+
+    return categoryCandidates.sort((a, b) => b.trustScore - a.trustScore)[0] ?? null;
+  };
+
   const featuredVariants = useMemo(() => {
     if (!home.featured || !activeConnection) return [] as ProviderVariant[];
     const key = buildVariantKey(home.featured.name, 'live', home.featured.year);
@@ -329,6 +377,10 @@ export function HomeDashboard() {
       .filter((variant) => variant.providerId !== activeConnection.id)
       .sort((a, b) => b.trustScore - a.trustScore);
   }, [activeConnection, home.featured, providerVariants]);
+  const featuredCategoryFallback = useMemo(
+    () => (home.featured ? getLiveCategoryFallback(home.featured, featuredVariants) : null),
+    [featuredVariants, home.featured]
+  );
 
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Go back to login and connect first.</div>;
@@ -560,13 +612,13 @@ export function HomeDashboard() {
                 Open live browser
               </Link>
             </div>
-            {featuredVariants.length > 0 ? (
+            {featuredVariants.length > 0 || featuredCategoryFallback ? (
               <div className="mt-5 rounded-[1.3rem] border border-emerald-400/20 bg-emerald-500/10 p-4 text-emerald-100">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200">Featured provider variants</p>
-                    <p className="mt-2 text-sm text-white">The featured channel also exists on healthier saved providers.</p>
-                    <p className="mt-2 text-xs leading-5 text-emerald-100/80">Home discovery now uses the same trust-ranked fallback language as Search and detail rails.</p>
+                    <p className="mt-2 text-sm text-white">The featured channel can recover onto healthier saved providers without dumping the user out of Home.</p>
+                    <p className="mt-2 text-xs leading-5 text-emerald-100/80">When an exact duplicate is missing, Home now preserves the live category on the healthiest saved provider instead of dead-ending the featured rail.</p>
                   </div>
                   {providerAccountPressure ? (
                     <span className="rounded-full border border-amber-300/30 bg-amber-500/15 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-100">
@@ -601,6 +653,24 @@ export function HomeDashboard() {
                       </div>
                     </div>
                   ))}
+                  {!featuredVariants.length && featuredCategoryFallback ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-emerald-300/30 bg-black/20 px-3 py-3">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{featuredCategoryFallback.providerName}</p>
+                        <p className="mt-1 text-sm text-white">Same-category live fallback</p>
+                        <p className="mt-1 text-[11px] text-emerald-100/80">Open {featuredCategoryFallback.categoryName} on a healthier provider when the featured channel itself is missing.</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setActiveConnection(featuredCategoryFallback.providerId);
+                          playStream({ ...home.featured, name: featuredCategoryFallback.title, stream_type: 'live', stream_id: featuredCategoryFallback.streamId, category_id: featuredCategoryFallback.categoryId || home.featured?.category_id || 'alternate', stream_icon: featuredCategoryFallback.artwork || home.featured?.stream_icon || '' }, featuredCategoryFallback.playbackUrl, featuredCategoryFallback.providerId);
+                        }}
+                        className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                      >
+                        Open same category
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -750,15 +820,16 @@ export function HomeDashboard() {
             const variants = (providerVariants[buildVariantKey(item.name, kind, item.year)] || [])
               .filter((variant) => variant.providerId !== activeConnection.id)
               .sort((a, b) => b.trustScore - a.trustScore);
+            const categoryFallback = kind === 'live' ? getLiveCategoryFallback(item, variants) : null;
             return (
               <article key={`${item.stream_type}-${item.stream_id}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                 <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${item.stream_icon})` }} />
                 <p className="mt-4 text-lg font-semibold text-white">{item.name}</p>
                 <p className="mt-2 text-sm text-slate-400">{item.stream_type === 'live' ? 'Live channel' : item.genre || 'On-demand title'}</p>
-                {variants[0] ? (
+                {variants[0] || categoryFallback ? (
                   <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
                     <p className="uppercase tracking-[0.2em] text-emerald-200">Also available elsewhere</p>
-                    <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">{variants.length} healthier provider option{variants.length === 1 ? '' : 's'} ready from Home discovery.</p>
+                    <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">{variants.length > 0 ? `${variants.length} healthier provider option${variants.length === 1 ? '' : 's'} ready from Home discovery.` : `Exact duplicate missing, but ${categoryFallback?.categoryName || 'the same category'} can still open on the healthiest saved provider.`}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {variants.slice(0, 2).map((variant) => (
                         <button
@@ -777,6 +848,17 @@ export function HomeDashboard() {
                           {variant.kind === 'series' ? `Switch to ${variant.providerName}` : `Play on ${variant.providerName}`}
                         </button>
                       ))}
+                      {!variants.length && categoryFallback ? (
+                        <button
+                          onClick={() => {
+                            setActiveConnection(categoryFallback.providerId);
+                            playStream({ ...item, name: categoryFallback.title, stream_type: 'live', stream_id: categoryFallback.streamId, category_id: categoryFallback.categoryId || item.category_id || 'alternate', stream_icon: categoryFallback.artwork || item.stream_icon || '' }, categoryFallback.playbackUrl, categoryFallback.providerId);
+                          }}
+                          className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                        >
+                          Open same category on {categoryFallback.providerName}
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}

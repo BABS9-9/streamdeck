@@ -307,13 +307,13 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
   home: {
     title: scenario === 'healthy' ? 'Home recovery route' : 'Keep Home alive',
     detail: scenario === 'expiredAccount'
-      ? 'Preserve the same browse session by moving Home onto the healthiest saved provider while the expired source falls back to cache.'
+      ? 'Preserve the same browse session by moving Home onto the healthiest saved provider while the expired source falls back to cache, and keep same-category live rescue available when the exact featured copy is missing.'
       : scenario === 'lineSaturated'
-        ? 'Preserve the same featured rails and quick actions by moving Home onto the healthiest saved provider before launch attempts fail.'
+        ? 'Preserve the same featured rails and quick actions by moving Home onto the healthiest saved provider before launch attempts fail, even if recovery has to open the same live category instead of the exact channel.'
         : scenario === 'authUnstable'
-          ? 'Keep the cached Home rails alive, but point the primary recovery action toward the healthiest saved provider instead of a blind retry.'
-          : 'Move Home onto the healthiest saved provider before stale trust on the current source infects the rest of the browse session.',
-    cta: 'Switch Home to healthiest provider',
+          ? 'Keep the cached Home rails alive, but point the primary recovery action toward the healthiest saved provider instead of a blind retry, with same-category live rescue still reachable from featured and spotlight cards.'
+          : 'Move Home onto the healthiest saved provider before stale trust on the current source infects the rest of the browse session, and preserve live category context when an exact duplicate is missing.',
+    cta: 'Switch Home to healthiest provider or same live category',
   },
   live: {
     title: scenario === 'healthy' ? 'Live recovery route' : 'Keep Live surfing alive',
@@ -395,13 +395,13 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
   collections: {
     title: scenario === 'healthy' ? 'Collections recovery route' : 'Keep curated folders useful',
     detail: scenario === 'expiredAccount'
-      ? 'If a collection item points at an expired provider, keep the folder intact and promote the healthiest saved provider copy instead of making curated lineups brittle.'
+      ? 'If a collection item points at an expired provider, keep the folder intact and promote the healthiest saved provider copy instead of making curated lineups brittle, with same-category live rescue available when the exact channel copy is gone.'
       : scenario === 'lineSaturated'
-        ? 'If the active provider is out of lines, Collections should turn the healthiest saved provider copy into the obvious one-tap recovery move for curated items.'
+        ? 'If the active provider is out of lines, Collections should turn the healthiest saved provider copy into the obvious one-tap recovery move for curated items, or open the same live category when no exact duplicate survives.'
         : scenario === 'authUnstable'
-          ? 'If trust is unstable, keep curated folders visible and route launch actions toward the healthiest saved provider copy without dumping the user out of the collection.'
-          : 'Collections should preserve curation intent while the healthiest saved provider copy takes over the launch path for any risky item.',
-    cta: 'Launch collection item on healthiest provider',
+          ? 'If trust is unstable, keep curated folders visible and route launch actions toward the healthiest saved provider copy without dumping the user out of the collection, while preserving same-category live rescue for brittle lineups.'
+          : 'Collections should preserve curation intent while the healthiest saved provider copy takes over the launch path for any risky item, and keep same-category live rescue available when exact duplicates are missing.',
+    cta: 'Launch collection item on healthiest provider or same live category',
   },
 });
 
@@ -459,7 +459,7 @@ const buildRecoveryActions = (scenario = 'healthy') => {
   if (scenario === 'lineSaturated') {
     return [
       'Warn before playback that provider line capacity is already maxed.',
-      'Suggest switching to another saved provider for the same title or channel, and if the exact channel is missing keep a same-category fallback launch reachable directly from Home and Live cards.',
+      'Suggest switching to another saved provider for the same title or channel, and if the exact channel is missing keep a same-category fallback launch reachable directly from Home cards, Live cards, and collection-launched live items.',
       'Let the user retry validation later instead of pretending the account is fully healthy.',
       'Preserve season and episode resume context when a healthier provider copy is available.',
     ];
