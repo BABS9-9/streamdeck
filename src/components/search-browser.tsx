@@ -515,6 +515,19 @@ export function SearchBrowser() {
               ) : null}
             </div>
           ) : null}
+          {healthiestConnection && mockHealth.surfaceRecoveryPlans?.search ? (
+            <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{mockHealth.surfaceRecoveryPlans.search.title}</p>
+              <p className="mt-2 text-sm text-slate-100">{mockHealth.surfaceRecoveryPlans.search.detail}</p>
+              <button
+                onClick={() => setActiveConnection(healthiestConnection.id)}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-400/20 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-sky-50 hover:bg-sky-400/30"
+              >
+                <span>{mockHealth.surfaceRecoveryPlans.search.cta}</span>
+                <span className="text-xs text-sky-50/80">{healthiestConnection.name}</span>
+              </button>
+            </div>
+          ) : null}
           {mockHealth.trustSignals?.length ? (
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
               <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Trust signals</p>

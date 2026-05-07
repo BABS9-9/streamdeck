@@ -311,6 +311,7 @@ export function MediaLibrary({
       : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100';
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const libraryFlowCopy = kind === 'movies' ? mockHealth?.demoFlows?.movies : mockHealth?.demoFlows?.series;
+  const surfaceRecoveryPlan = kind === 'movies' ? mockHealth?.surfaceRecoveryPlans?.movies : mockHealth?.surfaceRecoveryPlans?.series;
   const activeConnectionStatus = activeConnection ? connectionStatus[activeConnection.id] : null;
   const activeSummary = activeConnection?.lastAuthSummary;
   const activeProviderNeedsRecovery = activeSummary?.status !== 'Active'
@@ -324,6 +325,7 @@ export function MediaLibrary({
       : !!activeSummary?.maxConnections && (activeSummary.activeConnections ?? 0) >= activeSummary.maxConnections
         ? `All ${activeSummary.maxConnections} lines are in use on ${activeConnection?.name}. Use a healthier provider copy if one exists.`
         : null;
+  const healthiestSelectedVariant = (kind === 'movies' ? movieVariants[0] : selectedSeriesVariants[0]) || null;
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
@@ -489,6 +491,19 @@ export function MediaLibrary({
                 </button>
               ))}
             </div>
+            {surfaceRecoveryPlan && healthiestSelectedVariant ? (
+              <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{surfaceRecoveryPlan.title}</p>
+                <p className="mt-2 text-sm text-slate-100">{surfaceRecoveryPlan.detail}</p>
+                <button
+                  onClick={() => launchMovieVariant(healthiestSelectedVariant)}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-400/20 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-sky-50 hover:bg-sky-400/30"
+                >
+                  <span>{surfaceRecoveryPlan.cta}</span>
+                  <span className="text-xs text-sky-50/80">{healthiestSelectedVariant.providerName}</span>
+                </button>
+              </div>
+            ) : null}
             {mockHealth.scenarioUrls ? (
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
                 {(Object.entries(mockHealth.scenarioUrls) as Array<[MockProviderScenario, string]>).map(([key, url]) => (
@@ -644,6 +659,19 @@ export function MediaLibrary({
               </button>
             ))}
           </div>
+          {surfaceRecoveryPlan && healthiestSelectedVariant ? (
+            <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{surfaceRecoveryPlan.title}</p>
+              <p className="mt-2 text-sm text-slate-100">{surfaceRecoveryPlan.detail}</p>
+              <button
+                onClick={() => launchSeriesVariant(healthiestSelectedVariant)}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-400/20 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-sky-50 hover:bg-sky-400/30"
+              >
+                <span>{surfaceRecoveryPlan.cta}</span>
+                <span className="text-xs text-sky-50/80">{healthiestSelectedVariant.providerName}</span>
+              </button>
+            </div>
+          ) : null}
           {mockHealth.scenarioUrls ? (
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
               {(Object.entries(mockHealth.scenarioUrls) as Array<[MockProviderScenario, string]>).map(([key, url]) => (

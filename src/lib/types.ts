@@ -270,6 +270,26 @@ export type MockProviderHealth = {
       detail: string;
       cta: string;
     };
+    search?: {
+      title: string;
+      detail: string;
+      cta: string;
+    };
+    settings?: {
+      title: string;
+      detail: string;
+      cta: string;
+    };
+    movies?: {
+      title: string;
+      detail: string;
+      cta: string;
+    };
+    series?: {
+      title: string;
+      detail: string;
+      cta: string;
+    };
   };
   sampleCredentials?: {
     server: string;

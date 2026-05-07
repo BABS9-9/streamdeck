@@ -310,6 +310,20 @@ export function SettingsPanel() {
                 </div>
               ) : null}
 
+              {healthiestConnection && mockHealth.surfaceRecoveryPlans?.settings ? (
+                <div className="mt-4 rounded-[1.6rem] border border-sky-400/20 bg-sky-500/10 p-5">
+                  <p className="text-xs uppercase tracking-[0.25em] text-sky-200">{mockHealth.surfaceRecoveryPlans.settings.title}</p>
+                  <p className="mt-3 text-sm leading-7 text-slate-100">{mockHealth.surfaceRecoveryPlans.settings.detail}</p>
+                  <button
+                    onClick={() => setActiveConnection(healthiestConnection.id)}
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-400/20 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-sky-50 hover:bg-sky-400/30"
+                  >
+                    <span>{mockHealth.surfaceRecoveryPlans.settings.cta}</span>
+                    <span className="text-xs text-sky-50/80">{healthiestConnection.name}</span>
+                  </button>
+                </div>
+              ) : null}
+
               {mockHealth.trustSignals?.length ? (
                 <div className="mt-4 rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
                   <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Trust signals</p>

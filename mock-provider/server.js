@@ -326,6 +326,50 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
           : 'When provider trust degrades, Live should pivot straight into the healthiest saved provider without losing channel-surf momentum.',
     cta: 'Open Live on healthiest provider',
   },
+  search: {
+    title: scenario === 'healthy' ? 'Search recovery route' : 'Keep Search useful',
+    detail: scenario === 'expiredAccount'
+      ? 'If the active provider expires, preserve the user intent by reranking the same query on the healthiest saved provider instead of dumping them back to setup.'
+      : scenario === 'lineSaturated'
+        ? 'If playback is risky because every line is in use, keep the same query visible and push the healthiest provider copy to the top of the result group.'
+        : scenario === 'authUnstable'
+          ? 'If trust refresh is unstable, keep cached hits on screen and make the one-tap escape hatch a rerun on the healthiest saved provider.'
+          : 'Let Search keep the same query and result intent while the healthiest saved provider takes over before the user loses confidence.',
+    cta: 'Rerun query on healthiest provider',
+  },
+  settings: {
+    title: scenario === 'healthy' ? 'Settings recovery route' : 'Keep trust decisions obvious',
+    detail: scenario === 'expiredAccount'
+      ? 'If a saved provider is expired, Settings should make the healthiest provider the obvious next action before the user wanders into a broken browse surface.'
+      : scenario === 'lineSaturated'
+        ? 'If a provider is out of lines, Settings should surface the healthiest saved provider as the fastest safe switch, not just another status chip.'
+        : scenario === 'authUnstable'
+          ? 'If auth status is unstable, keep the provider facts visible but turn the primary recovery action into a trust-led switch toward the healthiest saved source.'
+          : 'Use Settings as a trust cockpit that recommends the healthiest saved provider before risky auth or capacity state spreads deeper into the shell.',
+    cta: 'Promote healthiest saved provider',
+  },
+  movies: {
+    title: scenario === 'healthy' ? 'Movies recovery route' : 'Keep Movies cinematic',
+    detail: scenario === 'expiredAccount'
+      ? 'If the active movie provider expires, keep the selected title visible and launch the healthiest saved provider copy instead of collapsing the detail rail.'
+      : scenario === 'lineSaturated'
+        ? 'If lines are maxed, preserve the detail surface and move the primary play action to the healthiest saved provider copy before playback fails.'
+        : scenario === 'authUnstable'
+          ? 'If trust refresh fails, keep the selected movie and cached art on screen, then steer the main recovery action toward the healthiest saved provider.'
+          : 'Movies should preserve title intent while the healthiest saved provider takes over the play path behind the same detail rail.',
+    cta: 'Play title on healthiest provider',
+  },
+  series: {
+    title: scenario === 'healthy' ? 'Series recovery route' : 'Keep episode momentum alive',
+    detail: scenario === 'expiredAccount'
+      ? 'If the active series provider expires, preserve the selected show and episode context while moving playback to the healthiest saved provider copy.'
+      : scenario === 'lineSaturated'
+        ? 'If playback is at risk because lines are maxed, keep the selected season and episode context intact while the healthiest saved provider becomes the launch path.'
+        : scenario === 'authUnstable'
+          ? 'If auth trust is unstable, keep the drill-down context alive and let the healthiest saved provider resume the intended episode without a cold restart.'
+          : 'Series should preserve show, season, and episode intent while a healthier provider copy takes over the playback route.',
+    cta: 'Resume episode on healthiest provider',
+  },
 });
 
 const buildOperatorHeadline = (scenario = 'healthy') => {
