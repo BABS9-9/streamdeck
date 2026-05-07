@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { getProviderTrustScore } from '@/lib/provider-trust';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
-import { XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderScenario, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -47,6 +48,10 @@ export function LibraryCollections({ mode }: CollectionsProps) {
   const [cacheState, setCacheState] = useState<'idle' | 'cached' | 'fresh'>('idle');
   const [providerVariants, setProviderVariants] = useState<Record<string, ProviderVariant[]>>({});
   const [seriesRecoveryKey, setSeriesRecoveryKey] = useState<string | null>(null);
+  const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [scenario, setScenario] = useState<MockProviderScenario>(() => getSelectedMockProviderScenario());
+
+  useEffect(() => subscribeToMockProviderScenario(setScenario), []);
 
   useEffect(() => {
     const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
@@ -75,6 +80,22 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     }, {});
     setProviderVariants(cachedVariants);
   }, [connections]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMockProviderHealth(activeConnection, scenario)
+      .then((health) => {
+        if (!cancelled) setMockHealth(health);
+      })
+      .catch(() => {
+        if (!cancelled) setMockHealth(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConnection, scenario]);
 
   useEffect(() => {
     let cancelled = false;
@@ -185,6 +206,14 @@ export function LibraryCollections({ mode }: CollectionsProps) {
       : !!activeSummary?.maxConnections && (activeSummary.activeConnections ?? 0) >= activeSummary.maxConnections
         ? `All ${activeSummary.maxConnections} lines are in use on ${activeConnection?.name}. Use an alternate provider copy if one exists.`
         : null;
+
+  const surfaceRecoveryPlan = mode === 'favorites' ? mockHealth?.surfaceRecoveryPlans?.favorites : mockHealth?.surfaceRecoveryPlans?.continue;
+  const healthiestSavedVariant = Object.values(variantSummary).flat()[0] ?? null;
+
+  const applyScenario = (nextScenario: MockProviderScenario) => {
+    if (nextScenario === scenario) return;
+    setSelectedMockProviderScenario(nextScenario);
+  };
 
   const launchVariant = (variant: ProviderVariant) => {
     setActiveConnection(variant.providerId);
@@ -348,6 +377,26 @@ export function LibraryCollections({ mode }: CollectionsProps) {
               >
                 Recheck provider
               </button>
+            </div>
+          </div>
+        ) : null}
+        {mockHealth && surfaceRecoveryPlan && healthiestSavedVariant ? (
+          <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-50">
+            <p className="text-xs uppercase tracking-[0.2em] text-sky-200">{surfaceRecoveryPlan.title}</p>
+            <p className="mt-2 leading-6 text-slate-100">{surfaceRecoveryPlan.detail}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(Object.keys(mockHealth.healthScenarios) as MockProviderScenario[]).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => applyScenario(key)}
+                  className={`rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] ${scenario === key ? 'bg-sky-400/30 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
+                >
+                  {mockHealth.healthScenarios[key].label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-xs text-slate-200">
+              {surfaceRecoveryPlan.cta} · {healthiestSavedVariant.providerName}
             </div>
           </div>
         ) : null}

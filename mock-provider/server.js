@@ -370,6 +370,39 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
           : 'Series should preserve show, season, and episode intent while a healthier provider copy takes over the playback route.',
     cta: 'Resume episode on healthiest provider',
   },
+  favorites: {
+    title: scenario === 'healthy' ? 'Favorites recovery route' : 'Keep saved picks actionable',
+    detail: scenario === 'expiredAccount'
+      ? 'If a saved favorite belongs to an expired provider, keep the title visible and let the healthiest saved provider copy take over instead of turning Favorites into a dead archive.'
+      : scenario === 'lineSaturated'
+        ? 'If provider lines are maxed, Favorites should rank the healthiest saved copy first so the user can recover the title without hunting through Settings.'
+        : scenario === 'authUnstable'
+          ? 'If trust refresh fails, Favorites should preserve saved titles and steer the main recovery action toward the healthiest saved provider copy.'
+          : 'Favorites should preserve saved-title intent while the healthiest provider copy becomes the primary launch action when trust goes bad.',
+    cta: 'Play favorite on healthiest provider',
+  },
+  continue: {
+    title: scenario === 'healthy' ? 'Continue Watching recovery route' : 'Keep resume momentum alive',
+    detail: scenario === 'expiredAccount'
+      ? 'If the original provider expires, Continue Watching should preserve position and episode context while the healthiest saved provider copy becomes the resume path.'
+      : scenario === 'lineSaturated'
+        ? 'If playback risk comes from maxed lines, Continue Watching should protect the resume position and push the healthiest saved provider copy to the top.'
+        : scenario === 'authUnstable'
+          ? 'If auth trust is unstable, keep the resume rail alive and let the healthiest saved provider copy carry the next play action without losing the spot.'
+          : 'Continue Watching should preserve position and episode intent while the healthiest saved provider copy takes over the launch path.',
+    cta: 'Resume on healthiest provider',
+  },
+  collections: {
+    title: scenario === 'healthy' ? 'Collections recovery route' : 'Keep curated folders useful',
+    detail: scenario === 'expiredAccount'
+      ? 'If a collection item points at an expired provider, keep the folder intact and promote the healthiest saved provider copy instead of making curated lineups brittle.'
+      : scenario === 'lineSaturated'
+        ? 'If the active provider is out of lines, Collections should turn the healthiest saved provider copy into the obvious one-tap recovery move for curated items.'
+        : scenario === 'authUnstable'
+          ? 'If trust is unstable, keep curated folders visible and route launch actions toward the healthiest saved provider copy without dumping the user out of the collection.'
+          : 'Collections should preserve curation intent while the healthiest saved provider copy takes over the launch path for any risky item.',
+    cta: 'Launch collection item on healthiest provider',
+  },
 });
 
 const buildOperatorHeadline = (scenario = 'healthy') => {

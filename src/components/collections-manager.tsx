@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
-import { SavedConnection, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderScenario, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -85,6 +86,10 @@ export function CollectionsManager() {
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>('');
   const [search, setSearch] = useState('');
   const [seriesRecoveryKey, setSeriesRecoveryKey] = useState<string | null>(null);
+  const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [scenario, setScenario] = useState<MockProviderScenario>(() => getSelectedMockProviderScenario());
+
+  useEffect(() => subscribeToMockProviderScenario(setScenario), []);
 
   const catalog = useMemo(() => {
     if (!activeConnection) return [] as XtreamStream[];
@@ -93,9 +98,31 @@ export function CollectionsManager() {
     return [...cached.live, ...cached.vod, ...cached.series];
   }, [activeConnection]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMockProviderHealth(activeConnection, scenario)
+      .then((health) => {
+        if (!cancelled) setMockHealth(health);
+      })
+      .catch(() => {
+        if (!cancelled) setMockHealth(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConnection, scenario]);
+
   const activeTrust = activeConnection ? getConnectionTrust(activeConnection, connectionStatus[activeConnection.id]?.state) : null;
 
   const providerCollections = useMemo(() => collections.filter((collection) => collection.items.some((item) => item.providerId === activeConnection?.id) || collection.items.length === 0), [activeConnection?.id, collections]);
+  const collectionRecoveryPlan = mockHealth?.surfaceRecoveryPlans?.collections;
+
+  const applyScenario = (nextScenario: MockProviderScenario) => {
+    if (nextScenario === scenario) return;
+    setSelectedMockProviderScenario(nextScenario);
+  };
 
   const providerVariants = useMemo(() => {
     return connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
@@ -217,6 +244,26 @@ export function CollectionsManager() {
               >
                 Recheck provider
               </button>
+            </div>
+          </div>
+        ) : null}
+        {mockHealth && collectionRecoveryPlan ? (
+          <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-50">
+            <p className="text-xs uppercase tracking-[0.2em] text-sky-200">{collectionRecoveryPlan.title}</p>
+            <p className="mt-2 leading-6 text-slate-100">{collectionRecoveryPlan.detail}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(Object.keys(mockHealth.healthScenarios) as MockProviderScenario[]).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => applyScenario(key)}
+                  className={`rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] ${scenario === key ? 'bg-sky-400/30 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
+                >
+                  {mockHealth.healthScenarios[key].label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-xs text-slate-200">
+              {collectionRecoveryPlan.cta}
             </div>
           </div>
         ) : null}
