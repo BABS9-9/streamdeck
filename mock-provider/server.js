@@ -459,7 +459,7 @@ const buildRecoveryActions = (scenario = 'healthy') => {
   if (scenario === 'lineSaturated') {
     return [
       'Warn before playback that provider line capacity is already maxed.',
-      'Suggest switching to another saved provider for the same title or channel, and if the exact channel is missing keep a same-category fallback launch reachable directly from Home cards, Live cards, collection-launched live items, favorite live cards, and continue-watching live resume items.',
+      'Suggest switching to another saved provider for the same title or channel, and if the exact channel is missing keep a same-category fallback launch reachable directly from Home cards, Live cards, collection-launched live items, favorite live cards, continue-watching live resume items, and the active player dock.',
       'Let the user retry validation later instead of pretending the account is fully healthy.',
       'Preserve season and episode resume context when a healthier provider copy is available.',
     ];
@@ -762,7 +762,7 @@ const server = http.createServer((req, res) => {
               ? 'Verify Favorites preserves saved titles and directs the main recovery action toward the healthiest provider copy while keeping same-category live rescue visible for brittle live rows.'
               : 'Verify Favorites can launch healthier provider copies of saved live, movie, and series items, and preserve same-category live rescue when the exact channel is missing.',
         continue: lineSaturated
-          ? 'Verify Continue Watching protects live resume momentum by surfacing healthier exact copies first, then same-category rescue when the exact live item is unavailable.'
+          ? 'Verify Continue Watching and the player dock protect live resume momentum by surfacing healthier exact copies first, then same-category rescue when the exact live item is unavailable.'
           : expiredAccount
             ? 'Verify Continue Watching preserves live resume momentum and episode context even when the original provider expires, including same-category live fallback when needed.'
             : authUnstable

@@ -1,5 +1,10 @@
 'use client';
 
+import { useMemo } from 'react';
+import { buildLiveStreamUrl, getCachedSearchCatalog, getContentId } from '@/lib/xtream-api';
+import { getProviderTrustScore } from '@/lib/provider-trust';
+import { XtreamStream } from '@/lib/types';
+import { useAuthStore } from '@/stores/auth-store';
 import { VideoPlayer } from './video-player';
 import { usePlayerStore } from '@/stores/player-store';
 
@@ -21,6 +26,10 @@ export function PlayerDock() {
   const dockMode = usePlayerStore((state) => state.dockMode);
   const setDockMode = usePlayerStore((state) => state.setDockMode);
   const closePlayback = usePlayerStore((state) => state.closePlayback);
+  const playStream = usePlayerStore((state) => state.playStream);
+  const connections = useAuthStore((state) => state.connections);
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
 
   if (!currentStream || !playbackUrl || !currentProviderId) return null;
 
@@ -34,6 +43,53 @@ export function PlayerDock() {
       : streamHealth.status === 'error'
         ? 'bg-rose-400/15 text-rose-200'
         : 'bg-white/10 text-slate-300';
+
+  const liveRecovery = useMemo(() => {
+    if (currentStream.stream_type !== 'live' || !currentProviderId) return { topVariant: null, categoryFallback: null as null | { providerId: string; providerName: string; playbackUrl: string; stream: XtreamStream; categoryName: string } };
+
+    const normalize = (value?: string) => (value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const variantKey = `live:${normalize(currentStream.name)}`;
+    const variants = connections
+      .filter((connection) => connection.id !== currentProviderId)
+      .map((connection) => {
+        const catalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+        const match = catalog?.live.find((entry) => `live:${normalize(entry.name)}` === variantKey);
+        if (!match) return null;
+        return {
+          providerId: connection.id,
+          providerName: connection.name,
+          playbackUrl: buildLiveStreamUrl(connection, match),
+          stream: match,
+          trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
+        };
+      })
+      .filter(Boolean)
+      .sort((left, right) => (right?.trustScore || 0) - (left?.trustScore || 0));
+
+    const topVariant = variants[0] || null;
+    if (topVariant) return { topVariant, categoryFallback: null };
+
+    const categoryName = historyItem?.categoryName || currentStream.channel_group || 'Live';
+    const categoryFallbacks = connections
+      .filter((connection) => connection.id !== currentProviderId)
+      .map((connection) => {
+        const catalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+        const match = catalog?.live.find((entry) => normalize(entry.channel_group) === normalize(categoryName));
+        if (!match) return null;
+        return {
+          providerId: connection.id,
+          providerName: connection.name,
+          playbackUrl: buildLiveStreamUrl(connection, match),
+          stream: match,
+          categoryName: match.channel_group || categoryName,
+          trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
+        };
+      })
+      .filter(Boolean)
+      .sort((left, right) => (right?.trustScore || 0) - (left?.trustScore || 0));
+
+    return { topVariant: null, categoryFallback: categoryFallbacks[0] || null };
+  }, [connectionStatus, connections, currentProviderId, currentStream, historyItem?.categoryName]);
 
   return (
     <div className="fixed inset-x-3 bottom-3 z-50 sm:inset-x-4 lg:left-auto lg:right-4 lg:w-[420px] lg:max-w-[calc(100vw-2rem)]">
@@ -118,6 +174,64 @@ export function PlayerDock() {
                   <p className="mt-1 text-sm font-medium text-white">{streamHealth.resolution ?? streamHealth.codec ?? 'Detecting'}</p>
                 </div>
               </div>
+
+              {currentStream.stream_type === 'live' && (liveRecovery.topVariant || liveRecovery.categoryFallback) ? (
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-xs text-emerald-100">
+                  <p className="uppercase tracking-[0.22em] text-emerald-200">Player recovery rail</p>
+                  <p className="mt-2 text-sm text-slate-100">
+                    Keep playback momentum from the dock when this provider goes bad, instead of forcing the user back through Live.
+                  </p>
+                  {liveRecovery.topVariant ? (
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+                      <div>
+                        <p className="text-sm text-white">{liveRecovery.topVariant.providerName} has a healthier saved copy of this channel.</p>
+                        <p className="mt-1 text-[11px] text-emerald-100/75">Exact live duplicate ready from the player dock.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => {
+                            setActiveConnection(liveRecovery.topVariant!.providerId);
+                            playStream(liveRecovery.topVariant!.stream, liveRecovery.topVariant!.playbackUrl, liveRecovery.topVariant!.providerId);
+                          }}
+                          className="rounded-full border border-white/10 bg-emerald-400 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-black hover:bg-emerald-300"
+                        >
+                          Play on healthiest provider
+                        </button>
+                        <button
+                          onClick={() => setActiveConnection(liveRecovery.topVariant!.providerId)}
+                          className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                        >
+                          Switch only
+                        </button>
+                      </div>
+                    </div>
+                  ) : liveRecovery.categoryFallback ? (
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-sky-300/20 bg-sky-500/10 px-3 py-3 text-sky-50">
+                      <div>
+                        <p className="text-sm text-white">{liveRecovery.categoryFallback.providerName} can keep {liveRecovery.categoryFallback.categoryName} surfing alive.</p>
+                        <p className="mt-1 text-[11px] text-sky-100/80">No exact duplicate survived, so the dock can reopen the same category on a healthier provider.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => {
+                            setActiveConnection(liveRecovery.categoryFallback!.providerId);
+                            playStream(liveRecovery.categoryFallback!.stream, liveRecovery.categoryFallback!.playbackUrl, liveRecovery.categoryFallback!.providerId);
+                          }}
+                          className="rounded-full border border-white/10 bg-sky-400 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-slate-950 hover:bg-sky-300"
+                        >
+                          Open same category
+                        </button>
+                        <button
+                          onClick={() => setActiveConnection(liveRecovery.categoryFallback!.providerId)}
+                          className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                        >
+                          Switch only
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
         ) : (

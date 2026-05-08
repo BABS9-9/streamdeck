@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { getArtwork, getContentId } from '@/lib/xtream-api';
+import { getArtwork, getCachedSearchCatalog, getContentId } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
 import { StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
 
@@ -48,7 +48,23 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   watchHistory: [],
   streamHealth: defaultStreamHealth,
   dockMode: 'compact',
-  hydrate: () => set({ watchHistory: storage.getHistory(), dockMode: storage.getPlayerDockMode() }),
+  hydrate: () => {
+    const history = storage.getHistory().map((item) => {
+      if (item.kind !== 'live' || item.categoryName || !item.providerId) return item;
+      const catalog = getCachedSearchCatalog(item.providerId, Number.MAX_SAFE_INTEGER);
+      const liveMatch = catalog?.live.find((entry) => getContentId(entry) === item.streamId);
+      if (!liveMatch) return item;
+      return {
+        ...item,
+        categoryName: liveMatch.channel_group,
+        categoryId: liveMatch.category_id || item.categoryId,
+        artwork: item.artwork || getArtwork(liveMatch),
+      };
+    });
+
+    storage.saveHistory(history);
+    set({ watchHistory: history, dockMode: storage.getPlayerDockMode() });
+  },
   playStream: (stream, playbackUrl, providerId, meta) => {
     const contentId = getContentId(stream);
     const existing = get().watchHistory.find((item) => item.id === `${providerId}-${contentId}`);
@@ -60,6 +76,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       providerId,
       artwork: getArtwork(stream),
       categoryId: stream.category_id,
+      categoryName: stream.channel_group,
       playbackUrl,
       seriesId: meta?.seriesId ?? existing?.seriesId,
       seriesTitle: meta?.seriesTitle ?? existing?.seriesTitle,
@@ -112,6 +129,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       providerId: currentProviderId,
       artwork: getArtwork(currentStream),
       categoryId: currentStream.category_id,
+      categoryName: existing?.categoryName ?? currentStream.channel_group,
       playbackUrl: playbackUrl ?? existing?.playbackUrl,
       seriesId: existing?.seriesId,
       seriesTitle: existing?.seriesTitle,
