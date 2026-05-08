@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { getLiveCategoryRecovery, normalizeRecoveryKey } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -17,7 +18,7 @@ const tone: Record<string, string> = {
   rose: 'from-rose-500/25 to-pink-500/10 border-rose-400/30',
 };
 
-const normalizeLibraryKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const normalizeLibraryKey = normalizeRecoveryKey;
 
 const buildVariantKey = (title: string, kind: 'live' | 'movie' | 'series', year?: string) => {
   return `${kind}:${normalizeLibraryKey(title)}:${year || ''}`;
@@ -202,34 +203,15 @@ export function CollectionsManager() {
   };
 
   const getLiveCategoryFallback = (categorySeed?: string, variants: ProviderVariant[] = []) => {
-    if (!activeConnection || variants.length > 0 || !categorySeed) return null as CategoryFallback | null;
-
-    const categoryCandidates = connections
-      .filter((connection) => connection.id !== activeConnection.id)
-      .map((connection) => {
-        const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
-        if (!connectionCatalog) return null;
-        const trust = getConnectionTrust(connection, connectionStatus[connection.id]?.state);
-
-        const match = connectionCatalog.live.find((entry) => normalizeLibraryKey(entry.channel_group || '') === normalizeLibraryKey(categorySeed));
-        if (!match) return null;
-
-        return {
-          providerId: connection.id,
-          providerName: connection.name,
-          title: match.name,
-          streamId: getContentId(match),
-          categoryId: match.category_id,
-          categoryName: match.channel_group || categorySeed,
-          artwork: getArtwork(match),
-          playbackUrl: buildLiveStreamUrl(connection, match),
-          weight: trust.weight,
-          warning: trust.warning,
-        } satisfies CategoryFallback;
-      })
-      .filter(Boolean) as CategoryFallback[];
-
-    return categoryCandidates.sort((left, right) => right.weight - left.weight || left.providerName.localeCompare(right.providerName))[0] ?? null;
+    if (!activeConnection || !categorySeed) return null as CategoryFallback | null;
+    const fallback = getLiveCategoryRecovery({
+      activeConnectionId: activeConnection.id,
+      connections,
+      connectionStatus,
+      exactVariants: variants,
+      categoryName: categorySeed,
+    });
+    return fallback ? { ...fallback, weight: fallback.trustScore } : null;
   };
 
   const launchSeriesVariant = async (variant: ProviderVariant, seriesTitle: string, seasonNumber?: number, episodeNumber?: number) => {

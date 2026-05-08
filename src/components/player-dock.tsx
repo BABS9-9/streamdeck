@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { buildLiveStreamUrl, getCachedSearchCatalog, getContentId } from '@/lib/xtream-api';
+import { getLiveCategoryRecovery, normalizeRecoveryKey } from '@/lib/provider-recovery';
 import { getProviderTrustScore } from '@/lib/provider-trust';
 import { XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -47,13 +48,12 @@ export function PlayerDock() {
   const liveRecovery = useMemo(() => {
     if (currentStream.stream_type !== 'live' || !currentProviderId) return { topVariant: null, categoryFallback: null as null | { providerId: string; providerName: string; playbackUrl: string; stream: XtreamStream; categoryName: string } };
 
-    const normalize = (value?: string) => (value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-    const variantKey = `live:${normalize(currentStream.name)}`;
+    const variantKey = `live:${normalizeRecoveryKey(currentStream.name)}`;
     const variants = connections
       .filter((connection) => connection.id !== currentProviderId)
       .map((connection) => {
         const catalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
-        const match = catalog?.live.find((entry) => `live:${normalize(entry.name)}` === variantKey);
+        const match = catalog?.live.find((entry) => `live:${normalizeRecoveryKey(entry.name)}` === variantKey);
         if (!match) return null;
         return {
           providerId: connection.id,
@@ -70,25 +70,17 @@ export function PlayerDock() {
     if (topVariant) return { topVariant, categoryFallback: null };
 
     const categoryName = historyItem?.categoryName || currentStream.channel_group || 'Live';
-    const categoryFallbacks = connections
-      .filter((connection) => connection.id !== currentProviderId)
-      .map((connection) => {
-        const catalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
-        const match = catalog?.live.find((entry) => normalize(entry.channel_group) === normalize(categoryName));
-        if (!match) return null;
-        return {
-          providerId: connection.id,
-          providerName: connection.name,
-          playbackUrl: buildLiveStreamUrl(connection, match),
-          stream: match,
-          categoryName: match.channel_group || categoryName,
-          trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
-        };
-      })
-      .filter(Boolean)
-      .sort((left, right) => (right?.trustScore || 0) - (left?.trustScore || 0));
 
-    return { topVariant: null, categoryFallback: categoryFallbacks[0] || null };
+    return {
+      topVariant: null,
+      categoryFallback: getLiveCategoryRecovery({
+        activeConnectionId: currentProviderId,
+        connections,
+        connectionStatus,
+        categoryId: currentStream.category_id,
+        categoryName,
+      }),
+    };
   }, [connectionStatus, connections, currentProviderId, currentStream, historyItem?.categoryName]);
 
   return (

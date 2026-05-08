@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { getHealthiestSavedProvider, getRecoveryActionLabel, getRecoverySupportLabel } from '@/lib/provider-recovery';
+import { getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, normalizeRecoveryKey } from '@/lib/provider-recovery';
 import { getProviderTrustScore } from '@/lib/provider-trust';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedHomeSnapshot, getCachedSearchCatalog, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
@@ -88,8 +88,7 @@ const getAccountPressure = (summary?: { status?: string | null; activeConnection
     : null;
 };
 
-const normalizeVariantKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-const buildVariantKey = (title: string, kind: 'live' | 'movie' | 'series', year?: string) => `${kind}:${normalizeVariantKey(title)}:${year || ''}`;
+const buildVariantKey = (title: string, kind: 'live' | 'movie' | 'series', year?: string) => `${kind}:${normalizeRecoveryKey(title)}:${year || ''}`;
 
 export function HomeDashboard() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
@@ -337,37 +336,15 @@ export function HomeDashboard() {
   const providerAccountPressure = getAccountPressure(activeConnection?.lastAuthSummary);
   const mockAccountPressure = getAccountPressure(mockHealth?.accountProfile);
   const getLiveCategoryFallback = (stream: XtreamStream, variants: ProviderVariant[]) => {
-    if (!activeConnection || variants.length > 0) return null as CategoryFallback | null;
-    const categoryName = stream.channel_group || stream.genre || 'Live';
-    const categoryCandidates = connections
-      .filter((connection) => connection.id !== activeConnection.id)
-      .map((connection) => {
-        const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
-        if (!connectionCatalog) return null;
-
-        const match = connectionCatalog.live.find((item) => {
-          const sameCategoryId = item.category_id && stream.category_id && String(item.category_id) === String(stream.category_id);
-          const sameCategoryName = normalizeVariantKey(item.channel_group || item.genre || '') === normalizeVariantKey(categoryName);
-          return sameCategoryId || sameCategoryName;
-        });
-
-        if (!match) return null;
-
-        return {
-          providerId: connection.id,
-          providerName: connection.name,
-          categoryId: match.category_id,
-          categoryName: match.channel_group || categoryName,
-          streamId: getContentId(match),
-          title: match.name,
-          artwork: getArtwork(match),
-          playbackUrl: buildLiveStreamUrl(connection, match),
-          trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
-        } satisfies CategoryFallback;
-      })
-      .filter(Boolean) as CategoryFallback[];
-
-    return categoryCandidates.sort((a, b) => b.trustScore - a.trustScore)[0] ?? null;
+    if (!activeConnection) return null as CategoryFallback | null;
+    return getLiveCategoryRecovery({
+      activeConnectionId: activeConnection.id,
+      connections,
+      connectionStatus,
+      exactVariants: variants,
+      categoryId: stream.category_id,
+      categoryName: stream.channel_group || stream.genre || 'Live',
+    });
   };
 
   const featuredVariants = useMemo(() => {

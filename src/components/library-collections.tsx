@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { getLiveCategoryRecovery, getProviderRecoveryWarning, normalizeRecoveryKey } from '@/lib/provider-recovery';
 import { getProviderTrustScore } from '@/lib/provider-trust';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, XtreamStream } from '@/lib/types';
@@ -10,7 +11,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 
-const normalizeLibraryKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const normalizeLibraryKey = normalizeRecoveryKey;
 
 const buildVariantKey = (title: string, kind: 'live' | 'movie' | 'series', year?: string, seriesTitle?: string) => {
   const name = normalizeLibraryKey(seriesTitle || title);
@@ -78,17 +79,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         const variants = acc[key] || [];
         if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === getContentId(item))) {
           const status = connectionStatus[connection.id];
-          const summary = connection.lastAuthSummary;
-          const isExpired = summary?.status && summary.status !== 'Active';
-          const isMaxed = !!summary?.maxConnections && (summary.activeConnections ?? 0) >= summary.maxConnections;
-          const isError = status?.state === 'error';
-          const isDegraded = status?.state === 'degraded';
-
-          let warning: string | null = null;
-          if (isExpired) warning = `Status ${summary?.status}`;
-          else if (isMaxed) warning = 'All lines in use';
-          else if (isError) warning = status?.message || 'Validation failing';
-          else if (isDegraded) warning = status?.message || 'Provider degraded';
+          const warning = getProviderRecoveryWarning(connection, status);
 
           variants.push({
             providerId: connection.id,
@@ -265,49 +256,14 @@ export function LibraryCollections({ mode }: CollectionsProps) {
   };
 
   const getLiveCategoryFallback = (categorySeed?: string, variants: ProviderVariant[] = []) => {
-    if (!activeConnection || variants.length > 0 || !categorySeed) return null as CategoryFallback | null;
-
-    const categoryCandidates = connections
-      .filter((connection) => connection.id !== activeConnection.id)
-      .map((connection) => {
-        const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
-        if (!connectionCatalog) return null;
-
-        const match = connectionCatalog.live.find((entry) => normalizeLibraryKey(entry.channel_group || '') === normalizeLibraryKey(categorySeed));
-        if (!match) return null;
-
-        const status = connectionStatus[connection.id];
-        const summary = connection.lastAuthSummary;
-        const isExpired = summary?.status && summary.status !== 'Active';
-        const isMaxed = !!summary?.maxConnections && (summary.activeConnections ?? 0) >= summary.maxConnections;
-        const isError = status?.state === 'error';
-        const isDegraded = status?.state === 'degraded';
-        let warning: string | null = null;
-        if (isExpired) warning = `Status ${summary?.status}`;
-        else if (isMaxed) warning = 'All lines in use';
-        else if (isError) warning = status?.message || 'Validation failing';
-        else if (isDegraded) warning = status?.message || 'Provider degraded';
-
-        return {
-          providerId: connection.id,
-          providerName: connection.name,
-          title: match.name,
-          streamId: getContentId(match),
-          categoryId: match.category_id,
-          categoryName: match.channel_group || categorySeed,
-          artwork: getArtwork(match),
-          playbackUrl: buildLiveStreamUrl(connection, match),
-          warning,
-        } satisfies CategoryFallback;
-      })
-      .filter(Boolean) as CategoryFallback[];
-
-    return categoryCandidates.sort((left, right) => {
-      const leftConnection = connections.find((connection) => connection.id === left.providerId);
-      const rightConnection = connections.find((connection) => connection.id === right.providerId);
-      return getProviderTrustScore(rightConnection || { lastAuthSummary: undefined }, connectionStatus[right.providerId])
-        - getProviderTrustScore(leftConnection || { lastAuthSummary: undefined }, connectionStatus[left.providerId]);
-    })[0] ?? null;
+    if (!activeConnection || !categorySeed) return null as CategoryFallback | null;
+    return getLiveCategoryRecovery({
+      activeConnectionId: activeConnection.id,
+      connections,
+      connectionStatus,
+      exactVariants: variants,
+      categoryName: categorySeed,
+    });
   };
 
   const launchSeriesVariant = async (variant: ProviderVariant, item: { title: string; seasonNumber?: number; episodeNumber?: number }) => {
