@@ -129,6 +129,7 @@ export type WatchHistoryItem = {
   providerId: string;
   artwork?: string;
   categoryId?: string;
+  categoryName?: string;
   playbackUrl?: string;
   seriesId?: number;
   seriesTitle?: string;

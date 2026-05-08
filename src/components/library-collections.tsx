@@ -25,8 +25,23 @@ type ProviderVariant = {
   kind: 'live' | 'movie' | 'series';
   artwork?: string;
   categoryId?: string;
+  categoryName?: string;
   playbackUrl?: string | null;
   seriesId?: number;
+  weight?: number;
+  warning?: string | null;
+};
+
+type CategoryFallback = {
+  providerId: string;
+  providerName: string;
+  title: string;
+  streamId: number;
+  categoryId?: string;
+  categoryName: string;
+  artwork?: string;
+  playbackUrl: string;
+  warning?: string | null;
 };
 
 type CollectionsProps = {
@@ -62,6 +77,19 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         const key = buildVariantKey(item.name, kind, item.year);
         const variants = acc[key] || [];
         if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === getContentId(item))) {
+          const status = connectionStatus[connection.id];
+          const summary = connection.lastAuthSummary;
+          const isExpired = summary?.status && summary.status !== 'Active';
+          const isMaxed = !!summary?.maxConnections && (summary.activeConnections ?? 0) >= summary.maxConnections;
+          const isError = status?.state === 'error';
+          const isDegraded = status?.state === 'degraded';
+
+          let warning: string | null = null;
+          if (isExpired) warning = `Status ${summary?.status}`;
+          else if (isMaxed) warning = 'All lines in use';
+          else if (isError) warning = status?.message || 'Validation failing';
+          else if (isDegraded) warning = status?.message || 'Provider degraded';
+
           variants.push({
             providerId: connection.id,
             providerName: connection.name,
@@ -70,8 +98,11 @@ export function LibraryCollections({ mode }: CollectionsProps) {
             kind,
             artwork: getArtwork(item),
             categoryId: item.category_id,
+            categoryName: item.channel_group || item.genre,
             playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
             seriesId: item.series_id,
+            weight: getProviderTrustScore(connection, status),
+            warning,
           });
         }
         acc[key] = variants;
@@ -233,6 +264,52 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     playStream(stream, variant.playbackUrl, variant.providerId);
   };
 
+  const getLiveCategoryFallback = (categorySeed?: string, variants: ProviderVariant[] = []) => {
+    if (!activeConnection || variants.length > 0 || !categorySeed) return null as CategoryFallback | null;
+
+    const categoryCandidates = connections
+      .filter((connection) => connection.id !== activeConnection.id)
+      .map((connection) => {
+        const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+        if (!connectionCatalog) return null;
+
+        const match = connectionCatalog.live.find((entry) => normalizeLibraryKey(entry.channel_group || '') === normalizeLibraryKey(categorySeed));
+        if (!match) return null;
+
+        const status = connectionStatus[connection.id];
+        const summary = connection.lastAuthSummary;
+        const isExpired = summary?.status && summary.status !== 'Active';
+        const isMaxed = !!summary?.maxConnections && (summary.activeConnections ?? 0) >= summary.maxConnections;
+        const isError = status?.state === 'error';
+        const isDegraded = status?.state === 'degraded';
+        let warning: string | null = null;
+        if (isExpired) warning = `Status ${summary?.status}`;
+        else if (isMaxed) warning = 'All lines in use';
+        else if (isError) warning = status?.message || 'Validation failing';
+        else if (isDegraded) warning = status?.message || 'Provider degraded';
+
+        return {
+          providerId: connection.id,
+          providerName: connection.name,
+          title: match.name,
+          streamId: getContentId(match),
+          categoryId: match.category_id,
+          categoryName: match.channel_group || categorySeed,
+          artwork: getArtwork(match),
+          playbackUrl: buildLiveStreamUrl(connection, match),
+          warning,
+        } satisfies CategoryFallback;
+      })
+      .filter(Boolean) as CategoryFallback[];
+
+    return categoryCandidates.sort((left, right) => {
+      const leftConnection = connections.find((connection) => connection.id === left.providerId);
+      const rightConnection = connections.find((connection) => connection.id === right.providerId);
+      return getProviderTrustScore(rightConnection || { lastAuthSummary: undefined }, connectionStatus[right.providerId])
+        - getProviderTrustScore(leftConnection || { lastAuthSummary: undefined }, connectionStatus[left.providerId]);
+    })[0] ?? null;
+  };
+
   const launchSeriesVariant = async (variant: ProviderVariant, item: { title: string; seasonNumber?: number; episodeNumber?: number }) => {
     const provider = connections.find((connection) => connection.id === variant.providerId);
     if (!provider) return;
@@ -266,14 +343,18 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     }
   };
 
-  const renderProviderVariants = (variants: ProviderVariant[], options?: { seriesTitle?: string; seasonNumber?: number; episodeNumber?: number }) => {
-    if (variants.length === 0) return null;
+  const renderProviderVariants = (
+    variants: ProviderVariant[],
+    options?: { seriesTitle?: string; seasonNumber?: number; episodeNumber?: number; categoryName?: string; fallbackArtwork?: string; fallbackCategoryId?: string }
+  ) => {
+    const categoryFallback = getLiveCategoryFallback(options?.categoryName, variants);
+    if (variants.length === 0 && !categoryFallback) return null;
     return (
       <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="uppercase tracking-[0.2em] text-emerald-200">Also available elsewhere</p>
-            <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">Use a healthier provider copy instead of dead-ending on an expired or maxed account.</p>
+            <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">Use a healthier provider copy instead of dead-ending on an expired or maxed account, and fall back to the same live category when an exact duplicate is missing.</p>
           </div>
           {activeProviderNeedsRecovery ? (
             <span className="rounded-full border border-amber-300/30 bg-amber-500/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-amber-100">
@@ -288,6 +369,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
                 <p className="mt-1 text-sm text-white">{variant.kind === 'live' ? 'Live copy ready' : variant.kind === 'movie' ? 'Movie copy ready' : 'Series copy ready'}</p>
                 <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">Trust-ranked fallback</p>
+                {variant.warning ? <p className="mt-1 text-[11px] text-emerald-100/70">{variant.warning}</p> : null}
               </div>
               <div className="flex flex-wrap gap-2">
                 {variant.kind === 'series' ? (() => {
@@ -344,6 +426,40 @@ export function LibraryCollections({ mode }: CollectionsProps) {
               </div>
             </div>
           ))}
+          {categoryFallback ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-sky-300/20 bg-sky-500/10 px-3 py-3 text-sky-50">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-sky-200">Same-category live rescue</p>
+                <p className="mt-1 text-sm text-white">{categoryFallback.providerName} · {categoryFallback.categoryName}</p>
+                <p className="mt-1 text-[11px] text-sky-100/80">Open the same surf lane when the exact saved live item does not exist on the healthier provider.</p>
+                {categoryFallback.warning ? <p className="mt-1 text-[11px] text-sky-100/70">{categoryFallback.warning}</p> : null}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    setActiveConnection(categoryFallback.providerId);
+                    playStream({
+                      name: categoryFallback.title,
+                      stream_type: 'live',
+                      stream_id: categoryFallback.streamId,
+                      category_id: categoryFallback.categoryId || options?.fallbackCategoryId || 'alternate',
+                      stream_icon: categoryFallback.artwork || options?.fallbackArtwork,
+                      preview_art: categoryFallback.artwork || options?.fallbackArtwork,
+                    } as XtreamStream, categoryFallback.playbackUrl, categoryFallback.providerId);
+                  }}
+                  className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                >
+                  Open same category
+                </button>
+                <button
+                  onClick={() => setActiveConnection(categoryFallback.providerId)}
+                  className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                >
+                  Switch only
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -436,7 +552,13 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                         seasonNumber: seriesResume.seasonNumber,
                         episodeNumber: seriesResume.episodeNumber,
                       }
-                    : undefined)}
+                    : item.stream_type === 'live'
+                      ? {
+                          categoryName: item.channel_group,
+                          fallbackArtwork: getArtwork(item),
+                          fallbackCategoryId: item.category_id,
+                        }
+                      : undefined)}
                   {playbackUrl ? (
                     <button
                       onClick={() => {
@@ -507,13 +629,14 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
                 {(() => {
                   const variants = variantSummary[`continue:${item.id}`] || [];
-                  if (variants.length === 0) return null;
+                  const categoryFallback = item.kind === 'live' ? getLiveCategoryFallback(item.categoryName, variants) : null;
+                  if (variants.length === 0 && !categoryFallback) return null;
                   return (
                     <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="uppercase tracking-[0.2em] text-emerald-200">Also available elsewhere</p>
-                          <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">Recover this resume item on a healthier provider copy without losing your spot.</p>
+                          <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">Recover this resume item on a healthier provider copy without losing your spot, and keep the same live category available if no exact duplicate survives.</p>
                         </div>
                         {activeProviderNeedsRecovery ? (
                           <span className="rounded-full border border-amber-300/30 bg-amber-500/15 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-amber-100">
@@ -586,6 +709,40 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                             </div>
                           );
                         })}
+                        {categoryFallback ? (
+                          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-sky-300/20 bg-sky-500/10 px-3 py-3 text-sky-50">
+                            <div>
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-sky-200">Same-category live rescue</p>
+                              <p className="mt-1 text-sm text-white">{categoryFallback.providerName} · {categoryFallback.categoryName}</p>
+                              <p className="mt-1 text-[11px] text-sky-100/80">Keep the same surf lane alive when the exact live resume item is unavailable on the healthier provider.</p>
+                              {categoryFallback.warning ? <p className="mt-1 text-[11px] text-sky-100/70">{categoryFallback.warning}</p> : null}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => {
+                                  setActiveConnection(categoryFallback.providerId);
+                                  playStream({
+                                    name: categoryFallback.title,
+                                    stream_type: 'live',
+                                    stream_id: categoryFallback.streamId,
+                                    category_id: categoryFallback.categoryId || item.categoryId || 'alternate',
+                                    stream_icon: categoryFallback.artwork || item.artwork,
+                                    preview_art: categoryFallback.artwork || item.artwork,
+                                  } as XtreamStream, categoryFallback.playbackUrl, categoryFallback.providerId);
+                                }}
+                                className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
+                              >
+                                Open same category
+                              </button>
+                              <button
+                                onClick={() => setActiveConnection(categoryFallback.providerId)}
+                                className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                              >
+                                Switch only
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   );

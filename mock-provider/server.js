@@ -375,7 +375,7 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
     detail: scenario === 'expiredAccount'
       ? 'If a saved favorite belongs to an expired provider, keep the title visible and let the healthiest saved provider copy take over instead of turning Favorites into a dead archive.'
       : scenario === 'lineSaturated'
-        ? 'If provider lines are maxed, Favorites should rank the healthiest saved copy first so the user can recover the title without hunting through Settings.'
+        ? 'If provider lines are maxed, Favorites should rank the healthiest saved copy first so the user can recover the title without hunting through Settings, and keep same-category live rescue visible when the exact saved channel is missing.'
         : scenario === 'authUnstable'
           ? 'If trust refresh fails, Favorites should preserve saved titles and steer the main recovery action toward the healthiest saved provider copy.'
           : 'Favorites should preserve saved-title intent while the healthiest provider copy becomes the primary launch action when trust goes bad.',
@@ -386,7 +386,7 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
     detail: scenario === 'expiredAccount'
       ? 'If the original provider expires, Continue Watching should preserve position and episode context while the healthiest saved provider copy becomes the resume path.'
       : scenario === 'lineSaturated'
-        ? 'If playback risk comes from maxed lines, Continue Watching should protect the resume position and push the healthiest saved provider copy to the top.'
+        ? 'If playback risk comes from maxed lines, Continue Watching should protect the resume position and push the healthiest saved provider copy to the top, with same-category live rescue available when the exact live resume item is gone.'
         : scenario === 'authUnstable'
           ? 'If auth trust is unstable, keep the resume rail alive and let the healthiest saved provider copy carry the next play action without losing the spot.'
           : 'Continue Watching should preserve position and episode intent while the healthiest saved provider copy takes over the launch path.',
@@ -459,7 +459,7 @@ const buildRecoveryActions = (scenario = 'healthy') => {
   if (scenario === 'lineSaturated') {
     return [
       'Warn before playback that provider line capacity is already maxed.',
-      'Suggest switching to another saved provider for the same title or channel, and if the exact channel is missing keep a same-category fallback launch reachable directly from Home cards, Live cards, and collection-launched live items.',
+      'Suggest switching to another saved provider for the same title or channel, and if the exact channel is missing keep a same-category fallback launch reachable directly from Home cards, Live cards, collection-launched live items, favorite live cards, and continue-watching live resume items.',
       'Let the user retry validation later instead of pretending the account is fully healthy.',
       'Preserve season and episode resume context when a healthier provider copy is available.',
     ];
@@ -754,6 +754,20 @@ const server = http.createServer((req, res) => {
         series: degradedSearch
           ? 'Verify Series keeps the drill-down shell usable from saved catalog data even when search-oriented provider endpoints are degraded, with the new scenario switch refreshing immediately.'
           : 'Verify series list, season switches, episode launch, and alternate-provider resume all stay connected to the real mock Xtream payloads, then flip rehearsal modes and watch the drill-down refresh live.',
+        favorites: lineSaturated
+          ? 'Verify Favorites keeps saved live items launchable through healthier exact copies first, then same-category rescue when no exact duplicate survives on the healthier provider.'
+          : expiredAccount
+            ? 'Verify Favorites does not turn into a dead archive when the active provider expires, and that saved live items can still recover through healthier exact or same-category fallback paths.'
+            : authUnstable
+              ? 'Verify Favorites preserves saved titles and directs the main recovery action toward the healthiest provider copy while keeping same-category live rescue visible for brittle live rows.'
+              : 'Verify Favorites can launch healthier provider copies of saved live, movie, and series items, and preserve same-category live rescue when the exact channel is missing.',
+        continue: lineSaturated
+          ? 'Verify Continue Watching protects live resume momentum by surfacing healthier exact copies first, then same-category rescue when the exact live item is unavailable.'
+          : expiredAccount
+            ? 'Verify Continue Watching preserves live resume momentum and episode context even when the original provider expires, including same-category live fallback when needed.'
+            : authUnstable
+              ? 'Verify Continue Watching keeps saved resume context visible during auth instability and still exposes healthier exact or same-category live recovery paths.'
+              : 'Verify Continue Watching can resume on healthier provider copies and keep the same live category available when an exact resume channel is missing.',
       },
       scenarioUrls: {
         healthy: `${host}/health`,
