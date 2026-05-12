@@ -10,6 +10,7 @@ import { MockProviderHealth, MockProviderScenario, XtreamStream } from '@/lib/ty
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 const normalizeLibraryKey = normalizeRecoveryKey;
 
@@ -437,26 +438,40 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         <h2 className="mt-3 text-3xl font-semibold text-white">{title}</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">{subtitle}</p>
         {activeRecoveryMessage ? (
-          <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-amber-200">Saved-library recovery</p>
-                <p className="mt-2 leading-6">{activeRecoveryMessage}</p>
-              </div>
-              <button
-                onClick={() => void validateConnection(activeConnection.id)}
-                className="rounded-full border border-amber-300/30 bg-black/20 px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-amber-50 hover:bg-black/30"
-              >
-                Recheck provider
-              </button>
-            </div>
+          <div className="mt-4">
+            <ProviderRecoveryRail
+              eyebrow="Saved-library recovery"
+              title={activeRecoveryMessage}
+              detail={mode === 'favorites' ? 'Favorites should stay actionable even when the active provider expires, saturates, or fails validation.' : 'Continue Watching should preserve resume momentum before the user gets dumped out of the flow they were already in.'}
+              tone="amber"
+              actions={[
+                {
+                  label: 'Recheck provider',
+                  onClick: () => void validateConnection(activeConnection.id),
+                  tone: 'secondary',
+                },
+              ]}
+            />
           </div>
         ) : null}
         {mockHealth && surfaceRecoveryPlan && healthiestSavedVariant ? (
-          <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-50">
-            <p className="text-xs uppercase tracking-[0.2em] text-sky-200">{surfaceRecoveryPlan.title}</p>
-            <p className="mt-2 leading-6 text-slate-100">{surfaceRecoveryPlan.detail}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 space-y-3">
+            <ProviderRecoveryRail
+              eyebrow={surfaceRecoveryPlan.title}
+              title={surfaceRecoveryPlan.detail}
+              detail={mode === 'favorites' ? 'Saved-provider variants should stay one tap away from Favorites, not hide behind provider switching.' : 'Resume-safe fallback should stay explicit while rehearsal modes flip across the shell.'}
+              tone="sky"
+              actions={[
+                {
+                  label: surfaceRecoveryPlan.cta,
+                  meta: healthiestSavedVariant.providerName,
+                  onClick: () => {
+                    setActiveConnection(healthiestSavedVariant.providerId);
+                  },
+                },
+              ]}
+            />
+            <div className="flex flex-wrap gap-2">
               {(Object.keys(mockHealth.healthScenarios) as MockProviderScenario[]).map((key) => (
                 <button
                   key={key}
@@ -466,9 +481,6 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   {mockHealth.healthScenarios[key].label}
                 </button>
               ))}
-            </div>
-            <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-xs text-slate-200">
-              {surfaceRecoveryPlan.cta} · {healthiestSavedVariant.providerName}
             </div>
           </div>
         ) : null}

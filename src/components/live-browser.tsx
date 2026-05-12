@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { VideoPlayer } from './video-player';
 
 const scenarioLabels: Record<MockProviderScenario, string> = {
@@ -450,29 +451,22 @@ export function LiveBrowser() {
         </div>
 
         {providerAccountPressure ? (
-          <div className="rounded-[1.5rem] border border-amber-400/20 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p>{providerAccountPressure}</p>
-                {healthiestConnection ? (
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveConnection(healthiestConnection.id);
-                        setSelectedCategory((current) => current || 'all');
-                      }}
-                      className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
-                    >
-                      Switch to healthiest saved provider
-                    </button>
-                    <span className="text-xs text-amber-50/80">{healthiestConnection.name}</span>
-                  </div>
-                ) : null}
-              </div>
-              <span className="text-xs uppercase tracking-[0.22em] text-amber-50/80">Provider capacity risk</span>
-            </div>
-          </div>
+          <ProviderRecoveryRail
+            eyebrow="Provider capacity risk"
+            title={providerAccountPressure}
+            detail={healthiestConnection ? 'Live can jump straight to the healthiest saved provider before the user burns time retrying a bad source.' : 'Keep the line-pressure warning visible before the user mistakes provider saturation for playback failure.'}
+            tone="amber"
+            actions={healthiestConnection ? [
+              {
+                label: 'Switch to healthiest saved provider',
+                meta: healthiestConnection.name,
+                onClick: () => {
+                  setActiveConnection(healthiestConnection.id);
+                  setSelectedCategory((current) => current || 'all');
+                },
+              },
+            ] : []}
+          />
         ) : null}
 
         {mockHealth?.operatorHeadline ? (
@@ -483,24 +477,22 @@ export function LiveBrowser() {
         ) : null}
 
         {healthiestConnection && mockHealth?.surfaceRecoveryPlans?.live ? (
-          <div className="rounded-[1.5rem] border border-sky-400/20 bg-sky-500/10 px-5 py-4 text-sky-100">
-            <p className="text-xs uppercase tracking-[0.22em] text-sky-200">{mockHealth.surfaceRecoveryPlans.live.title}</p>
-            <p className="mt-2 text-sm text-slate-100">{mockHealth.surfaceRecoveryPlans.live.detail}</p>
-            <p className="mt-2 text-xs text-sky-100/80">{getRecoverySupportLabel('live')}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
+          <ProviderRecoveryRail
+            eyebrow={mockHealth.surfaceRecoveryPlans.live.title}
+            title={mockHealth.surfaceRecoveryPlans.live.detail}
+            detail={getRecoverySupportLabel('live')}
+            tone="sky"
+            actions={[
+              {
+                label: getRecoveryActionLabel('live', healthiestConnection.name),
+                meta: `${healthiestConnection.name} · ${mockHealth.surfaceRecoveryPlans.live.cta}`,
+                onClick: () => {
                   setActiveConnection(healthiestConnection.id);
                   setSelectedCategory((current) => current || 'all');
-                }}
-                className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
-              >
-                {getRecoveryActionLabel('live', healthiestConnection.name)}
-              </button>
-              <span className="text-xs text-sky-50/80">{healthiestConnection.name} · {mockHealth.surfaceRecoveryPlans.live.cta}</span>
-            </div>
-          </div>
+                },
+              },
+            ]}
+          />
         ) : null}
 
         {guideMessage ? (

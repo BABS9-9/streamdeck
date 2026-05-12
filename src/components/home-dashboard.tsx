@@ -9,6 +9,7 @@ import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedHomeSnapsho
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 type HomeState = {
   featured: XtreamStream | null;
@@ -454,20 +455,20 @@ export function HomeDashboard() {
                 </div>
               ) : null}
               {healthiestConnection && mockHealth.surfaceRecoveryPlans?.home ? (
-                <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sky-100">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{mockHealth.surfaceRecoveryPlans.home.title}</p>
-                  <p className="mt-2 text-sm text-slate-100">{mockHealth.surfaceRecoveryPlans.home.detail}</p>
-                  <p className="mt-2 text-xs text-sky-100/80">{getRecoverySupportLabel('home')}</p>
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setActiveConnection(healthiestConnection.id)}
-                      className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
-                    >
-                      {getRecoveryActionLabel('home', healthiestConnection.name)}
-                    </button>
-                    <span className="text-xs text-sky-50/80">{healthiestConnection.name} · {mockHealth.surfaceRecoveryPlans.home.cta}</span>
-                  </div>
+                <div className="mt-4">
+                  <ProviderRecoveryRail
+                    eyebrow={mockHealth.surfaceRecoveryPlans.home.title}
+                    title={mockHealth.surfaceRecoveryPlans.home.detail}
+                    detail={getRecoverySupportLabel('home')}
+                    tone="sky"
+                    actions={[
+                      {
+                        label: getRecoveryActionLabel('home', healthiestConnection.name),
+                        meta: `${healthiestConnection.name} · ${mockHealth.surfaceRecoveryPlans.home.cta}`,
+                        onClick: () => setActiveConnection(healthiestConnection.id),
+                      },
+                    ]}
+                  />
                 </div>
               ) : null}
             </>
