@@ -761,6 +761,13 @@ const server = http.createServer((req, res) => {
             : authUnstable
               ? 'Verify Favorites preserves saved titles and directs the main recovery action toward the healthiest provider copy while keeping same-category live rescue visible for brittle live rows.'
               : 'Verify Favorites can launch healthier provider copies of saved live, movie, and series items, and preserve same-category live rescue when the exact channel is missing.',
+        collections: lineSaturated
+          ? 'Verify Collections now presents the same premium recovery rail language as the rest of the shell while curated live items still prefer healthier exact copies first, then same-category rescue when no exact duplicate survives.'
+          : expiredAccount
+            ? 'Verify Collections keeps curated folders actionable when the active provider expires, with the shared recovery rail steering launches toward healthier exact or same-category fallback paths.'
+            : authUnstable
+              ? 'Verify Collections preserves curated launch intent during auth instability and uses the same shared premium recovery rail to direct the main recovery move toward the healthiest provider copy.'
+              : 'Verify Collections uses the same shared premium recovery rail language as Search, Home, Live, Favorites, Continue Watching, and the player shell while keeping healthier exact and same-category rescue launches actionable.',
         continue: lineSaturated
           ? 'Verify Continue Watching and the player dock protect live resume momentum by surfacing healthier exact copies first, then same-category rescue when the exact live item is unavailable.'
           : expiredAccount

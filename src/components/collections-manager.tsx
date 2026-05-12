@@ -9,6 +9,7 @@ import { MockProviderHealth, MockProviderScenario, SavedConnection, XtreamStream
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 const tone: Record<string, string> = {
   violet: 'from-violet-500/25 to-fuchsia-500/10 border-violet-400/30',
@@ -258,28 +259,39 @@ export function CollectionsManager() {
         <h2 className="mt-3 text-3xl font-semibold text-white">Build your own channel and title collections.</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">This turns favorites into real curation. Make folders like Game Day, News Morning, Kids Bedtime, or Weekend Movies, then launch directly from one place.</p>
         {activeTrust?.needsRecovery ? (
-          <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-amber-200">Collection recovery mode</p>
-                <p className="mt-2 leading-6">
-                  {activeTrust.warning || 'The active provider needs attention.'} Launching a healthier provider copy from a collection is now the fastest recovery path.
-                </p>
-              </div>
-              <button
-                onClick={() => void validateConnection(activeConnection.id)}
-                className="rounded-full border border-amber-300/30 bg-black/20 px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-amber-50 hover:bg-black/30"
-              >
-                Recheck provider
-              </button>
-            </div>
+          <div className="mt-4">
+            <ProviderRecoveryRail
+              eyebrow="Collection recovery mode"
+              title={activeTrust.warning || 'The active provider needs attention.'}
+              detail="Launching a healthier provider copy from a collection is now the fastest recovery path."
+              tone="amber"
+              actions={[
+                {
+                  label: 'Recheck provider',
+                  onClick: () => void validateConnection(activeConnection.id),
+                  tone: 'secondary',
+                },
+              ]}
+            />
           </div>
         ) : null}
         {mockHealth && collectionRecoveryPlan ? (
-          <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-50">
-            <p className="text-xs uppercase tracking-[0.2em] text-sky-200">{collectionRecoveryPlan.title}</p>
-            <p className="mt-2 leading-6 text-slate-100">{collectionRecoveryPlan.detail}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 space-y-3">
+            <ProviderRecoveryRail
+              eyebrow={collectionRecoveryPlan.title}
+              title={collectionRecoveryPlan.detail}
+              detail="Collections should keep curated launch intent alive through healthier provider copies and same-category live rescue, not drift into a separate fallback language."
+              tone="sky"
+              actions={[
+                {
+                  label: collectionRecoveryPlan.cta,
+                  onClick: () => {},
+                  tone: 'secondary' as const,
+                  meta: 'Use scenario toggles below',
+                },
+              ]}
+            />
+            <div className="flex flex-wrap gap-2">
               {(Object.keys(mockHealth.healthScenarios) as MockProviderScenario[]).map((key) => (
                 <button
                   key={key}
@@ -289,9 +301,6 @@ export function CollectionsManager() {
                   {mockHealth.healthScenarios[key].label}
                 </button>
               ))}
-            </div>
-            <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-xs text-slate-200">
-              {collectionRecoveryPlan.cta}
             </div>
           </div>
         ) : null}
@@ -469,65 +478,68 @@ export function CollectionsManager() {
                         <button onClick={() => removeItemFromCollection(collection.id, item.providerId, item.streamId)} className="rounded-xl border border-white/10 px-3 py-2 text-sm text-slate-200 hover:bg-white/5">Remove</button>
                       </div>
                       {recommendedVariant || categoryFallback ? (
-                        <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                              <p className="uppercase tracking-[0.18em] text-emerald-200">{recommendedVariant ? 'Recommended alternate' : 'Same-category fallback'}</p>
-                              <p className="mt-1 text-sm text-white">{recommendedVariant ? recommendedVariant.providerName : categoryFallback?.providerName}</p>
-                              {recommendedVariant?.warning ? <p className="mt-1 text-[11px] text-emerald-100/80">{recommendedVariant.warning}</p> : null}
-                              {!recommendedVariant && categoryFallback ? <p className="mt-1 text-[11px] text-emerald-100/80">Open {categoryFallback.categoryName} on a healthier saved provider when this exact live item is unavailable.</p> : null}
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {recommendedVariant ? (recommendedVariant.kind === 'series' ? (
-                                <>
-                                  <button
-                                    onClick={() => void launchSeriesVariant(recommendedVariant, item.title, seriesResume?.seasonNumber, seriesResume?.episodeNumber)}
-                                    disabled={seriesRecoveryKey === `${recommendedVariant.providerId}-${recommendedVariant.seriesId ?? recommendedVariant.streamId}-${seriesResume?.seasonNumber || 0}-${seriesResume?.episodeNumber || 0}`}
-                                    className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    {seriesRecoveryKey === `${recommendedVariant.providerId}-${recommendedVariant.seriesId ?? recommendedVariant.streamId}-${seriesResume?.seasonNumber || 0}-${seriesResume?.episodeNumber || 0}` ? 'Starting…' : 'Resume alternate'}
-                                  </button>
-                                  <Link
-                                    href={`/series?seriesId=${recommendedVariant.seriesId ?? recommendedVariant.streamId}${seriesResume?.seasonNumber ? `&season=${seriesResume.seasonNumber}` : ''}${seriesResume?.episodeNumber ? `&episode=${seriesResume.episodeNumber}` : ''}`}
-                                    onClick={() => setActiveConnection(recommendedVariant.providerId)}
-                                    className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
-                                  >
-                                    Open series
-                                  </Link>
-                                </>
-                              ) : (
-                                <button
-                                  onClick={() => launchVariant(recommendedVariant)}
-                                  className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
-                                >
-                                  Play alternate
-                                </button>
-                              )) : categoryFallback ? (
-                                <button
-                                  onClick={() => {
-                                    setActiveConnection(categoryFallback.providerId);
-                                    playStream({
-                                      name: categoryFallback.title,
-                                      stream_type: 'live',
-                                      stream_id: categoryFallback.streamId,
-                                      category_id: categoryFallback.categoryId || catalogItem?.category_id || 'alternate',
-                                      stream_icon: categoryFallback.artwork || item.artwork,
-                                      preview_art: categoryFallback.artwork || item.artwork,
-                                    } as XtreamStream, categoryFallback.playbackUrl, categoryFallback.providerId);
-                                  }}
-                                  className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
-                                >
-                                  Open same category
-                                </button>
-                              ) : null}
-                              <button
-                                onClick={() => setActiveConnection(recommendedVariant ? recommendedVariant.providerId : categoryFallback!.providerId)}
-                                className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
-                              >
-                                Switch only
-                              </button>
-                            </div>
-                          </div>
+                        <div className="mt-3">
+                          <ProviderRecoveryRail
+                            eyebrow={recommendedVariant ? 'Recommended alternate' : 'Same-category fallback'}
+                            title={recommendedVariant ? recommendedVariant.providerName : categoryFallback?.providerName || 'Healthier saved provider'}
+                            detail={recommendedVariant?.warning || (!recommendedVariant && categoryFallback ? `Open ${categoryFallback.categoryName} on a healthier saved provider when this exact live item is unavailable.` : 'Use the healthiest saved provider copy before this collection item dead-ends.')}
+                            tone="emerald"
+                            actions={recommendedVariant ? [
+                              ...(recommendedVariant.kind === 'series'
+                                ? [
+                                    {
+                                      label: seriesRecoveryKey === `${recommendedVariant.providerId}-${recommendedVariant.seriesId ?? recommendedVariant.streamId}-${seriesResume?.seasonNumber || 0}-${seriesResume?.episodeNumber || 0}` ? 'Starting…' : 'Resume alternate',
+                                      onClick: () => void launchSeriesVariant(recommendedVariant, item.title, seriesResume?.seasonNumber, seriesResume?.episodeNumber),
+                                    },
+                                    {
+                                      label: 'Open series',
+                                      onClick: () => setActiveConnection(recommendedVariant.providerId),
+                                      meta: `S${seriesResume?.seasonNumber || '?'}E${seriesResume?.episodeNumber || '?'}`,
+                                      tone: 'secondary' as const,
+                                    },
+                                  ]
+                                : [
+                                    {
+                                      label: 'Play alternate',
+                                      onClick: () => launchVariant(recommendedVariant),
+                                    },
+                                  ]),
+                              {
+                                label: 'Switch only',
+                                onClick: () => setActiveConnection(recommendedVariant.providerId),
+                                tone: 'secondary' as const,
+                              },
+                            ] : categoryFallback ? [
+                              {
+                                label: 'Open same category',
+                                onClick: () => {
+                                  setActiveConnection(categoryFallback.providerId);
+                                  playStream({
+                                    name: categoryFallback.title,
+                                    stream_type: 'live',
+                                    stream_id: categoryFallback.streamId,
+                                    category_id: categoryFallback.categoryId || catalogItem?.category_id || 'alternate',
+                                    stream_icon: categoryFallback.artwork || item.artwork,
+                                    preview_art: categoryFallback.artwork || item.artwork,
+                                  } as XtreamStream, categoryFallback.playbackUrl, categoryFallback.providerId);
+                                },
+                              },
+                              {
+                                label: 'Switch only',
+                                onClick: () => setActiveConnection(categoryFallback.providerId),
+                                tone: 'secondary' as const,
+                              },
+                            ] : []}
+                          />
+                          {recommendedVariant?.kind === 'series' ? (
+                            <Link
+                              href={`/series?seriesId=${recommendedVariant.seriesId ?? recommendedVariant.streamId}${seriesResume?.seasonNumber ? `&season=${seriesResume.seasonNumber}` : ''}${seriesResume?.episodeNumber ? `&episode=${seriesResume.episodeNumber}` : ''}`}
+                              onClick={() => setActiveConnection(recommendedVariant.providerId)}
+                              className="mt-2 inline-flex rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
+                            >
+                              Deep link series route
+                            </Link>
+                          ) : null}
                         </div>
                       ) : null}
                       {alternateVariants.length > 1 ? (
