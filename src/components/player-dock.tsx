@@ -8,6 +8,7 @@ import { XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { VideoPlayer } from './video-player';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 const formatSeconds = (value?: number) => {
   if (!value || value <= 0) return '0:00';
@@ -168,61 +169,49 @@ export function PlayerDock() {
               </div>
 
               {currentStream.stream_type === 'live' && (liveRecovery.topVariant || liveRecovery.categoryFallback) ? (
-                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-xs text-emerald-100">
-                  <p className="uppercase tracking-[0.22em] text-emerald-200">Player recovery rail</p>
-                  <p className="mt-2 text-sm text-slate-100">
-                    Keep playback momentum from the dock when this provider goes bad, instead of forcing the user back through Live.
-                  </p>
-                  {liveRecovery.topVariant ? (
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
-                      <div>
-                        <p className="text-sm text-white">{liveRecovery.topVariant.providerName} has a healthier saved copy of this channel.</p>
-                        <p className="mt-1 text-[11px] text-emerald-100/75">Exact live duplicate ready from the player dock.</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => {
-                            setActiveConnection(liveRecovery.topVariant!.providerId);
-                            playStream(liveRecovery.topVariant!.stream, liveRecovery.topVariant!.playbackUrl, liveRecovery.topVariant!.providerId);
-                          }}
-                          className="rounded-full border border-white/10 bg-emerald-400 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-black hover:bg-emerald-300"
-                        >
-                          Play on healthiest provider
-                        </button>
-                        <button
-                          onClick={() => setActiveConnection(liveRecovery.topVariant!.providerId)}
-                          className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
-                        >
-                          Switch only
-                        </button>
-                      </div>
-                    </div>
-                  ) : liveRecovery.categoryFallback ? (
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-sky-300/20 bg-sky-500/10 px-3 py-3 text-sky-50">
-                      <div>
-                        <p className="text-sm text-white">{liveRecovery.categoryFallback.providerName} can keep {liveRecovery.categoryFallback.categoryName} surfing alive.</p>
-                        <p className="mt-1 text-[11px] text-sky-100/80">No exact duplicate survived, so the dock can reopen the same category on a healthier provider.</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => {
-                            setActiveConnection(liveRecovery.categoryFallback!.providerId);
-                            playStream(liveRecovery.categoryFallback!.stream, liveRecovery.categoryFallback!.playbackUrl, liveRecovery.categoryFallback!.providerId);
-                          }}
-                          className="rounded-full border border-white/10 bg-sky-400 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-slate-950 hover:bg-sky-300"
-                        >
-                          Open same category
-                        </button>
-                        <button
-                          onClick={() => setActiveConnection(liveRecovery.categoryFallback!.providerId)}
-                          className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
-                        >
-                          Switch only
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
+                liveRecovery.topVariant ? (
+                  <ProviderRecoveryRail
+                    eyebrow="Player recovery rail"
+                    title={`${liveRecovery.topVariant.providerName} has a healthier saved copy of this channel.`}
+                    detail="Keep playback momentum from the dock instead of forcing the user back through Live."
+                    tone="emerald"
+                    actions={[
+                      {
+                        label: 'Play on healthiest provider',
+                        onClick: () => {
+                          setActiveConnection(liveRecovery.topVariant!.providerId);
+                          playStream(liveRecovery.topVariant!.stream, liveRecovery.topVariant!.playbackUrl, liveRecovery.topVariant!.providerId);
+                        },
+                      },
+                      {
+                        label: 'Switch only',
+                        tone: 'secondary',
+                        onClick: () => setActiveConnection(liveRecovery.topVariant!.providerId),
+                      },
+                    ]}
+                  />
+                ) : liveRecovery.categoryFallback ? (
+                  <ProviderRecoveryRail
+                    eyebrow="Player recovery rail"
+                    title={`${liveRecovery.categoryFallback.providerName} can keep ${liveRecovery.categoryFallback.categoryName} surfing alive.`}
+                    detail="No exact duplicate survived, so the dock can reopen the same category on a healthier provider."
+                    tone="sky"
+                    actions={[
+                      {
+                        label: 'Open same category',
+                        onClick: () => {
+                          setActiveConnection(liveRecovery.categoryFallback!.providerId);
+                          playStream(liveRecovery.categoryFallback!.stream, liveRecovery.categoryFallback!.playbackUrl, liveRecovery.categoryFallback!.providerId);
+                        },
+                      },
+                      {
+                        label: 'Switch only',
+                        tone: 'secondary',
+                        onClick: () => setActiveConnection(liveRecovery.categoryFallback!.providerId),
+                      },
+                    ]}
+                  />
+                ) : null
               ) : null}
             </div>
           </div>

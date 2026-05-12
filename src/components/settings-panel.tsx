@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { getHealthiestSavedProvider } from '@/lib/provider-recovery';
 import { MockProviderHealth, MockProviderScenario, ProviderAuthSummary } from '@/lib/types';
+import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -129,11 +131,11 @@ export function SettingsPanel() {
 
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const mockRecoveryWarning = getProviderRecoveryWarning(mockHealth?.accountProfile);
-  const healthiestConnection = activeConnection
-    ? [...connections]
-        .filter((connection) => connection.id !== activeConnection.id)
-        .sort((a, b) => getProviderTrustScore(b.lastAuthSummary, connectionStatus[b.id]) - getProviderTrustScore(a.lastAuthSummary, connectionStatus[a.id]))[0] ?? null
-    : null;
+  const healthiestConnection = getHealthiestSavedProvider({
+    connections,
+    connectionStatus,
+    activeConnectionId: activeConnection?.id,
+  });
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
@@ -205,19 +207,18 @@ export function SettingsPanel() {
 
                   {renderProviderFacts(connection.lastAuthSummary)}
                   {getProviderRecoveryWarning(connection.lastAuthSummary) ? (
-                    <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs leading-5 text-amber-100">
-                      {getProviderRecoveryWarning(connection.lastAuthSummary)}
-                      {isActive && healthiestConnection ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            onClick={() => setActiveConnection(healthiestConnection.id)}
-                            className="rounded-xl bg-white/10 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
-                          >
-                            Switch to healthiest saved provider
-                          </button>
-                          <span className="self-center text-[11px] text-amber-50/80">{healthiestConnection.name}</span>
-                        </div>
-                      ) : null}
+                    <div className="mt-3">
+                      <ProviderRecoveryRail
+                        eyebrow="Saved-provider recovery"
+                        title={connection.name}
+                        detail={getProviderRecoveryWarning(connection.lastAuthSummary) || ''}
+                        tone="amber"
+                        actions={isActive && healthiestConnection ? [{
+                          label: 'Switch to healthiest saved provider',
+                          meta: healthiestConnection.name,
+                          onClick: () => setActiveConnection(healthiestConnection.id),
+                        }] : []}
+                      />
                     </div>
                   ) : null}
 
@@ -294,33 +295,34 @@ export function SettingsPanel() {
               ) : null}
 
               {mockRecoveryWarning ? (
-                <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
-                  {mockRecoveryWarning}
-                  {healthiestConnection ? (
-                    <div className="mt-3 flex flex-wrap gap-3">
-                      <button
-                        onClick={() => setActiveConnection(healthiestConnection.id)}
-                        className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
-                      >
-                        Switch to healthiest saved provider
-                      </button>
-                      <span className="self-center text-xs text-amber-50/80">{healthiestConnection.name}</span>
-                    </div>
-                  ) : null}
+                <div className="mt-4">
+                  <ProviderRecoveryRail
+                    eyebrow="Trust warning"
+                    title="Settings should steer recovery early."
+                    detail={mockRecoveryWarning}
+                    tone="amber"
+                    actions={healthiestConnection ? [{
+                      label: 'Switch to healthiest saved provider',
+                      meta: healthiestConnection.name,
+                      onClick: () => setActiveConnection(healthiestConnection.id),
+                    }] : []}
+                  />
                 </div>
               ) : null}
 
               {healthiestConnection && mockHealth.surfaceRecoveryPlans?.settings ? (
-                <div className="mt-4 rounded-[1.6rem] border border-sky-400/20 bg-sky-500/10 p-5">
-                  <p className="text-xs uppercase tracking-[0.25em] text-sky-200">{mockHealth.surfaceRecoveryPlans.settings.title}</p>
-                  <p className="mt-3 text-sm leading-7 text-slate-100">{mockHealth.surfaceRecoveryPlans.settings.detail}</p>
-                  <button
-                    onClick={() => setActiveConnection(healthiestConnection.id)}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-400/20 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-sky-50 hover:bg-sky-400/30"
-                  >
-                    <span>{mockHealth.surfaceRecoveryPlans.settings.cta}</span>
-                    <span className="text-xs text-sky-50/80">{healthiestConnection.name}</span>
-                  </button>
+                <div className="mt-4">
+                  <ProviderRecoveryRail
+                    eyebrow={mockHealth.surfaceRecoveryPlans.settings.title}
+                    title="Surface recovery plan."
+                    detail={mockHealth.surfaceRecoveryPlans.settings.detail}
+                    tone="sky"
+                    actions={[{
+                      label: mockHealth.surfaceRecoveryPlans.settings.cta,
+                      meta: healthiestConnection.name,
+                      onClick: () => setActiveConnection(healthiestConnection.id),
+                    }]}
+                  />
                 </div>
               ) : null}
 

@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { getHealthiestSavedProvider } from '@/lib/provider-recovery';
 import { getProviderTrustScore } from '@/lib/provider-trust';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 type SearchResult = {
   provider: SavedConnection;
@@ -221,13 +223,6 @@ const getProviderRecoveryWarning = (summary?: { status?: string | null; activeCo
   return getLinePressure(summary);
 };
 
-const getHealthiestAlternateConnection = (connections: SavedConnection[], activeConnection: SavedConnection | null, connectionStatus: Record<string, { state?: string | null }>) => {
-  if (!activeConnection || connections.length < 2) return null;
-  return [...connections]
-    .filter((connection) => connection.id !== activeConnection.id)
-    .sort((a, b) => getProviderTrustScore(b, connectionStatus[b.id]) - getProviderTrustScore(a, connectionStatus[a.id]))[0] ?? null;
-};
-
 const getVariantActionLabel = (kind: SearchResult['kind']) => {
   if (kind === 'live') return 'Play live';
   if (kind === 'movie') return 'Play movie';
@@ -375,7 +370,11 @@ export function SearchBrowser() {
   const activeScenarioDetails = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const mockLinePressure = getLinePressure(mockHealth?.accountProfile);
   const mockRecoveryWarning = getProviderRecoveryWarning(mockHealth?.accountProfile);
-  const healthiestConnection = getHealthiestAlternateConnection(connections, activeConnection, connectionStatus);
+  const healthiestConnection = getHealthiestSavedProvider({
+    connections,
+    connectionStatus,
+    activeConnectionId: activeConnection?.id,
+  });
 
   const providerStateTone = (providerId: string) => {
     const state = connectionStatus[providerId]?.state;
@@ -500,19 +499,18 @@ export function SearchBrowser() {
             </div>
           ) : null}
           {mockRecoveryWarning ? (
-            <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
-              {mockRecoveryWarning}
-              {healthiestConnection ? (
-                <div className="mt-3 flex flex-wrap gap-3">
-                  <button
-                    onClick={() => setActiveConnection(healthiestConnection.id)}
-                    className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
-                  >
-                    Switch to healthiest saved provider
-                  </button>
-                  <span className="self-center text-xs text-amber-50/80">{healthiestConnection.name}</span>
-                </div>
-              ) : null}
+            <div className="mt-4">
+              <ProviderRecoveryRail
+                eyebrow="Search trust warning"
+                title="Keep cached search useful, but move playback to a healthier source."
+                detail={mockRecoveryWarning}
+                tone="amber"
+                actions={healthiestConnection ? [{
+                  label: 'Switch to healthiest saved provider',
+                  meta: healthiestConnection.name,
+                  onClick: () => setActiveConnection(healthiestConnection.id),
+                }] : []}
+              />
             </div>
           ) : null}
           {healthiestConnection && mockHealth.surfaceRecoveryPlans?.search ? (
@@ -608,7 +606,11 @@ export function SearchBrowser() {
             const authSummary = result.provider.lastAuthSummary;
             const providerLinePressure = getLinePressure(authSummary);
             const providerRecoveryWarning = getProviderRecoveryWarning(authSummary);
-            const healthiestAlternateConnection = getHealthiestAlternateConnection(connections, result.provider, connectionStatus);
+            const healthiestAlternateConnection = getHealthiestSavedProvider({
+              connections,
+              connectionStatus,
+              activeConnectionId: result.provider.id,
+            });
             const alternateVariants = result.variants.filter((variant) => !variant.isPrimary);
             return (
               <article key={`${result.provider.id}-${result.kind}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
@@ -640,19 +642,18 @@ export function SearchBrowser() {
                   ) : null}
                 </div>
                 {providerRecoveryWarning ? (
-                  <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs leading-5 text-amber-100">
-                    {providerRecoveryWarning}
-                    {healthiestAlternateConnection ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          onClick={() => setActiveConnection(healthiestAlternateConnection.id)}
-                          className="rounded-xl bg-white/10 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.22em] text-white hover:bg-white/20"
-                        >
-                          Switch to healthiest saved provider
-                        </button>
-                        <span className="self-center text-[11px] text-amber-50/80">{healthiestAlternateConnection.name}</span>
-                      </div>
-                    ) : null}
+                  <div className="mt-3">
+                    <ProviderRecoveryRail
+                      eyebrow="Result trust warning"
+                      title={`${result.provider.name} is risky for launch right now.`}
+                      detail={providerRecoveryWarning}
+                      tone="amber"
+                      actions={healthiestAlternateConnection ? [{
+                        label: 'Switch to healthiest saved provider',
+                        meta: healthiestAlternateConnection.name,
+                        onClick: () => setActiveConnection(healthiestAlternateConnection.id),
+                      }] : []}
+                    />
                   </div>
                 ) : null}
                 {alternateVariants.length > 0 ? (
