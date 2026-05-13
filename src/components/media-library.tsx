@@ -7,6 +7,7 @@ import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getCachedSearchCa
 import { MockProviderHealth, MockProviderScenario, XtreamEpisode, XtreamSeriesInfo, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 type CacheMode = 'live' | 'cached' | 'offline';
 
@@ -391,64 +392,66 @@ export function MediaLibrary({
     }
   };
 
+  const buildProviderVariantActions = (variant: ProviderVariant, options?: { type: 'movie' | 'series'; resumeLabel?: string | null }) => {
+    const isSeries = options?.type === 'series';
+    const recoveryKey = `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${selectedSeriesResume?.seasonNumber ?? initialSeasonNumber ?? selectedSeason ?? 0}-${selectedSeriesResume?.episodeNumber ?? initialEpisodeNumber ?? 0}`;
+    const provider = connections.find((connection) => connection.id === variant.providerId);
+    const trustScore = getProviderTrustScore(provider || { lastAuthSummary: undefined }, connectionStatus[variant.providerId]);
+    const trustLabel = trustScore >= 150 ? 'Highest trust' : trustScore >= 90 ? 'Healthy backup' : 'Fallback copy';
+
+    return [
+      {
+        label: isSeries
+          ? variantRecoveryKey === recoveryKey ? 'Switching…' : options?.resumeLabel || 'Resume on provider'
+          : 'Play on provider',
+        meta: variant.providerName,
+        onClick: () => {
+          if (isSeries) {
+            void launchSeriesVariant(variant);
+            return;
+          }
+          launchMovieVariant(variant);
+        },
+      },
+      {
+        label: 'Switch provider only',
+        meta: trustLabel,
+        tone: 'secondary' as const,
+        onClick: () => setActiveConnection(variant.providerId),
+      },
+    ];
+  };
+
   const renderProviderVariants = (variants: ProviderVariant[], options?: { type: 'movie' | 'series'; resumeLabel?: string | null }) => {
     if (variants.length === 0) return null;
 
     return (
-      <div className="mt-6 rounded-[1.4rem] border border-emerald-400/20 bg-emerald-500/10 p-4 text-emerald-100">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.24em] text-emerald-200">Provider variants</p>
-            <h4 className="mt-2 text-lg font-semibold text-white">This title also exists on healthier saved providers.</h4>
-            <p className="mt-2 text-sm leading-6 text-emerald-100/80">Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first.</p>
-          </div>
-          {activeProviderNeedsRecovery ? (
-            <span className="rounded-full border border-amber-300/30 bg-amber-500/15 px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-amber-100">
-              Recovery mode
-            </span>
-          ) : null}
-        </div>
-        <div className="mt-4 space-y-3">
-          {variants.map((variant) => {
-            const provider = connections.find((connection) => connection.id === variant.providerId);
-            const trustScore = getProviderTrustScore(provider || { lastAuthSummary: undefined }, connectionStatus[variant.providerId]);
-            const trustLabel = trustScore >= 150 ? 'Highest trust' : trustScore >= 90 ? 'Healthy backup' : 'Fallback copy';
-            const isSeries = options?.type === 'series';
-            const recoveryKey = `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${selectedSeriesResume?.seasonNumber ?? initialSeasonNumber ?? selectedSeason ?? 0}-${selectedSeriesResume?.episodeNumber ?? initialEpisodeNumber ?? 0}`;
+      <div className="mt-6 space-y-3">
+        <ProviderRecoveryRail
+          tone={activeProviderNeedsRecovery ? 'amber' : 'emerald'}
+          eyebrow="Provider variants"
+          title="This title also exists on healthier saved providers."
+          detail="Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first."
+        />
+        {variants.map((variant) => {
+          const provider = connections.find((connection) => connection.id === variant.providerId);
+          const trustScore = getProviderTrustScore(provider || { lastAuthSummary: undefined }, connectionStatus[variant.providerId]);
+          const trustLabel = trustScore >= 150 ? 'Highest trust' : trustScore >= 90 ? 'Healthy backup' : 'Fallback copy';
+          const isSeries = options?.type === 'series';
 
-            return (
-              <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="rounded-[1.2rem] border border-white/10 bg-black/20 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">{variant.providerName}</p>
-                    <p className="mt-1 text-sm text-white">{trustLabel}</p>
-                    <p className="mt-1 text-xs text-slate-300">
-                      {isSeries
-                        ? options?.resumeLabel || 'Episode-aware recovery is ready on this provider copy.'
-                        : 'Direct movie playback is ready on this provider copy.'}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => isSeries ? launchSeriesVariant(variant) : launchMovieVariant(variant)}
-                      className="rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-medium text-black hover:bg-emerald-400"
-                    >
-                      {isSeries
-                        ? variantRecoveryKey === recoveryKey ? 'Switching…' : options?.resumeLabel || 'Resume on provider'
-                        : 'Play on provider'}
-                    </button>
-                    <button
-                      onClick={() => setActiveConnection(variant.providerId)}
-                      className="rounded-2xl border border-white/10 px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5"
-                    >
-                      Switch provider only
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          return (
+            <ProviderRecoveryRail
+              key={`${variant.providerId}-${variant.streamId}-${variant.kind}`}
+              tone={trustScore >= 150 ? 'emerald' : trustScore >= 90 ? 'sky' : 'amber'}
+              eyebrow={variant.providerName}
+              title={trustLabel}
+              detail={isSeries
+                ? options?.resumeLabel || 'Episode-aware recovery is ready on this provider copy.'
+                : 'Direct movie playback is ready on this provider copy.'}
+              actions={buildProviderVariantActions(variant, options)}
+            />
+          );
+        })}
       </div>
     );
   };
