@@ -767,7 +767,7 @@ const server = http.createServer((req, res) => {
             ? 'Verify Collections keeps curated folders actionable when the active provider expires, with the shared recovery rail steering launches toward healthier exact or same-category fallback paths.'
             : authUnstable
               ? 'Verify Collections preserves curated launch intent during auth instability and uses the same shared premium recovery rail to direct the main recovery move toward the healthiest provider copy.'
-              : 'Verify Collections uses the same shared premium recovery rail language as Search, Home, Live, Favorites, Continue Watching, and the player shell while keeping healthier exact and same-category rescue launches actionable.',
+              : 'Verify Collections uses the same shared premium recovery rail language as Search, Home, Live, Favorites, Continue Watching, and the player shell while keeping healthier exact and same-category rescue launches actionable, including an in-rail deep link for series fallback.',
         continue: lineSaturated
           ? 'Verify Continue Watching and the player dock protect live resume momentum by surfacing healthier exact copies first, then same-category rescue when the exact live item is unavailable.'
           : expiredAccount

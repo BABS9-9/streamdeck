@@ -1,8 +1,11 @@
 'use client';
 
+import Link from 'next/link';
+
 type RecoveryAction = {
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string;
   meta?: string;
   tone?: 'primary' | 'secondary';
 };
@@ -55,16 +58,34 @@ export function ProviderRecoveryRail({ eyebrow, title, detail, tone = 'amber', a
       </p>
       {actions.length ? (
         <div className="mt-3 flex flex-wrap gap-2">
-          {actions.map((action) => (
-            <button
-              key={`${action.label}-${action.meta || ''}`}
-              onClick={action.onClick}
-              className={`rounded-xl border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.22em] transition ${action.tone === 'secondary' ? palette.secondary : palette.primary}`}
-            >
-              {action.label}
-              {action.meta ? <span className={`ml-2 ${palette.meta}`}>{action.meta}</span> : null}
-            </button>
-          ))}
+          {actions.map((action) => {
+            const className = `rounded-xl border px-3 py-2 text-[11px] font-medium uppercase tracking-[0.22em] transition ${action.tone === 'secondary' ? palette.secondary : palette.primary}`;
+
+            if (action.href) {
+              return (
+                <Link
+                  key={`${action.label}-${action.meta || ''}`}
+                  href={action.href}
+                  onClick={action.onClick}
+                  className={className}
+                >
+                  {action.label}
+                  {action.meta ? <span className={`ml-2 ${palette.meta}`}>{action.meta}</span> : null}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={`${action.label}-${action.meta || ''}`}
+                onClick={action.onClick}
+                className={className}
+              >
+                {action.label}
+                {action.meta ? <span className={`ml-2 ${palette.meta}`}>{action.meta}</span> : null}
+              </button>
+            );
+          })}
         </div>
       ) : null}
     </div>

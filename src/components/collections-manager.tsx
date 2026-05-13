@@ -493,6 +493,7 @@ export function CollectionsManager() {
                                     },
                                     {
                                       label: 'Open series',
+                                      href: `/series?seriesId=${recommendedVariant.seriesId ?? recommendedVariant.streamId}${seriesResume?.seasonNumber ? `&season=${seriesResume.seasonNumber}` : ''}${seriesResume?.episodeNumber ? `&episode=${seriesResume.episodeNumber}` : ''}`,
                                       onClick: () => setActiveConnection(recommendedVariant.providerId),
                                       meta: `S${seriesResume?.seasonNumber || '?'}E${seriesResume?.episodeNumber || '?'}`,
                                       tone: 'secondary' as const,
@@ -531,15 +532,6 @@ export function CollectionsManager() {
                               },
                             ] : []}
                           />
-                          {recommendedVariant?.kind === 'series' ? (
-                            <Link
-                              href={`/series?seriesId=${recommendedVariant.seriesId ?? recommendedVariant.streamId}${seriesResume?.seasonNumber ? `&season=${seriesResume.seasonNumber}` : ''}${seriesResume?.episodeNumber ? `&episode=${seriesResume.episodeNumber}` : ''}`}
-                              onClick={() => setActiveConnection(recommendedVariant.providerId)}
-                              className="mt-2 inline-flex rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
-                            >
-                              Deep link series route
-                            </Link>
-                          ) : null}
                         </div>
                       ) : null}
                       {alternateVariants.length > 1 ? (
