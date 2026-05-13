@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { getLiveCategoryRecovery, getProviderRecoveryWarning, normalizeRecoveryKey } from '@/lib/provider-recovery';
-import { getProviderTrustScore } from '@/lib/provider-trust';
+import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustLabel, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -13,26 +12,6 @@ import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 const normalizeLibraryKey = normalizeRecoveryKey;
-
-const buildVariantKey = (title: string, kind: 'live' | 'movie' | 'series', year?: string, seriesTitle?: string) => {
-  const name = normalizeLibraryKey(seriesTitle || title);
-  return `${kind}:${name}:${year || ''}`;
-};
-
-type ProviderVariant = {
-  providerId: string;
-  providerName: string;
-  title: string;
-  streamId: number;
-  kind: 'live' | 'movie' | 'series';
-  artwork?: string;
-  categoryId?: string;
-  categoryName?: string;
-  playbackUrl?: string | null;
-  seriesId?: number;
-  weight?: number;
-  warning?: string | null;
-};
 
 type CategoryFallback = {
   providerId: string;
@@ -71,38 +50,11 @@ export function LibraryCollections({ mode }: CollectionsProps) {
   useEffect(() => subscribeToMockProviderScenario(setScenario), []);
 
   useEffect(() => {
-    const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
-      const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
-      if (!connectionCatalog) return acc;
-      [...connectionCatalog.live, ...connectionCatalog.vod, ...connectionCatalog.series].forEach((item) => {
-        const kind = item.stream_type as 'live' | 'movie' | 'series';
-        const key = buildVariantKey(item.name, kind, item.year);
-        const variants = acc[key] || [];
-        if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === getContentId(item))) {
-          const status = connectionStatus[connection.id];
-          const warning = getProviderRecoveryWarning(connection, status);
-
-          variants.push({
-            providerId: connection.id,
-            providerName: connection.name,
-            title: item.name,
-            streamId: getContentId(item),
-            kind,
-            artwork: getArtwork(item),
-            categoryId: item.category_id,
-            categoryName: item.channel_group || item.genre,
-            playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
-            seriesId: item.series_id,
-            weight: getProviderTrustScore(connection, status),
-            warning,
-          });
-        }
-        acc[key] = variants;
-      });
-      return acc;
-    }, {});
-    setProviderVariants(cachedVariants);
-  }, [connections]);
+    setProviderVariants(buildProviderVariantsIndex({
+      connections,
+      connectionStatus,
+    }));
+  }, [connectionStatus, connections]);
 
   useEffect(() => {
     let cancelled = false;
@@ -178,27 +130,28 @@ export function LibraryCollections({ mode }: CollectionsProps) {
 
   const variantSummary = useMemo(() => {
     const summary: Record<string, ProviderVariant[]> = {};
-    const sortVariants = (variants: ProviderVariant[]) => {
-      return [...variants].sort((a, b) => {
-        const providerA = connections.find((connection) => connection.id === a.providerId);
-        const providerB = connections.find((connection) => connection.id === b.providerId);
-        return getProviderTrustScore(providerB || { lastAuthSummary: undefined }, connectionStatus[b.providerId])
-          - getProviderTrustScore(providerA || { lastAuthSummary: undefined }, connectionStatus[a.providerId]);
-      });
-    };
-
     favoriteItems.forEach((item) => {
-      const key = buildVariantKey(item.name, item.stream_type as 'live' | 'movie' | 'series', item.year);
-      summary[`favorite:${getContentId(item)}`] = sortVariants((providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection?.id));
+      summary[`favorite:${getContentId(item)}`] = getAlternateProviderVariants({
+        providerVariants,
+        activeConnectionId: activeConnection?.id,
+        title: item.name,
+        kind: item.stream_type as 'live' | 'movie' | 'series',
+        year: item.year,
+      });
     });
 
     continueItems.forEach((item) => {
-      const key = buildVariantKey(item.title, item.kind, undefined, item.seriesTitle);
-      summary[`continue:${item.id}`] = sortVariants((providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection?.id));
+      summary[`continue:${item.id}`] = getAlternateProviderVariants({
+        providerVariants,
+        activeConnectionId: activeConnection?.id,
+        title: item.title,
+        kind: item.kind,
+        seriesTitle: item.seriesTitle,
+      });
     });
 
     return summary;
-  }, [activeConnection?.id, connectionStatus, connections, continueItems, favoriteItems, providerVariants]);
+  }, [activeConnection?.id, continueItems, favoriteItems, providerVariants]);
 
   const formatEpisodeLabel = (item: { kind: 'live' | 'movie' | 'series'; seasonNumber?: number; episodeNumber?: number; seriesTitle?: string }) => {
     if (item.kind !== 'series') return item.kind;
@@ -271,7 +224,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     const provider = connections.find((connection) => connection.id === variant.providerId);
     if (!provider) return;
 
-    const recoveryKey = `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${item.seasonNumber || 0}-${item.episodeNumber || 0}`;
+    const recoveryKey = buildSeriesRecoveryKey(variant, item.seasonNumber, item.episodeNumber);
     setSeriesRecoveryKey(recoveryKey);
 
     try {
@@ -325,7 +278,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
               <div>
                 <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
                 <p className="mt-1 text-sm text-white">{variant.kind === 'live' ? 'Live copy ready' : variant.kind === 'movie' ? 'Movie copy ready' : 'Series copy ready'}</p>
-                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">Trust-ranked fallback</p>
+                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">{getProviderTrustLabel(variant.trustScore)}</p>
                 {variant.warning ? <p className="mt-1 text-[11px] text-emerald-100/70">{variant.warning}</p> : null}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -342,10 +295,10 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                             seasonNumber,
                             episodeNumber,
                           })}
-                          disabled={seriesRecoveryKey === `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${seasonNumber || 0}-${episodeNumber || 0}`}
+                          disabled={seriesRecoveryKey === buildSeriesRecoveryKey(variant, seasonNumber, episodeNumber)}
                           className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {seriesRecoveryKey === `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${seasonNumber || 0}-${episodeNumber || 0}` ? 'Starting…' : `Resume on ${variant.providerName}`}
+                          {seriesRecoveryKey === buildSeriesRecoveryKey(variant, seasonNumber, episodeNumber) ? 'Starting…' : `Resume on ${variant.providerName}`}
                         </button>
                         <Link
                           href={`/series?seriesId=${variant.seriesId ?? variant.streamId}&season=${seasonNumber}&episode=${episodeNumber}`}
@@ -547,6 +500,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                         artwork: getArtwork(item),
                         categoryId: item.category_id,
                         seriesId: item.series_id ?? contentId,
+                        trustScore: 0,
                       }, {
                         title: item.name,
                         seasonNumber: seriesResume.seasonNumber,
@@ -631,7 +585,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                                         ? 'Movie copy ready'
                                         : 'Series copy ready'}
                                 </p>
-                                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">Trust-ranked fallback</p>
+                                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">{getProviderTrustLabel(variant.trustScore)}</p>
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {variant.kind === 'series' && seriesHref ? (

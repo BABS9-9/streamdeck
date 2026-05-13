@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { getProviderTrustScore } from '@/lib/provider-trust';
+import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getProviderTrustLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, getSeries, getSeriesInfo, getVodStreams, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, XtreamEpisode, XtreamSeriesInfo, XtreamStream } from '@/lib/types';
@@ -11,23 +11,7 @@ import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 type CacheMode = 'live' | 'cached' | 'offline';
 
-type ProviderVariant = {
-  providerId: string;
-  providerName: string;
-  title: string;
-  streamId: number;
-  kind: 'movie' | 'series';
-  artwork?: string;
-  categoryId?: string;
-  seriesId?: number;
-  year?: string;
-  plot?: string;
-};
-
 const formatPercent = (value: number) => `${Math.round(value * 100)}% watched`;
-const normalizeVariantKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-const buildVariantKey = (title: string, kind: 'movie' | 'series', year?: string) => `${kind}:${normalizeVariantKey(title)}:${year || ''}`;
-
 const scenarioLabels: Record<MockProviderScenario, string> = {
   healthy: 'Healthy',
   degradedSearch: 'Degraded search',
@@ -77,45 +61,12 @@ export function MediaLibrary({
   }, []);
 
   useEffect(() => {
-    const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
-      const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
-      if (!connectionCatalog) return acc;
-
-      const buckets: Array<['movie' | 'series', XtreamStream[]]> = [
-        ['movie', connectionCatalog.vod],
-        ['series', connectionCatalog.series],
-      ];
-
-      buckets.forEach(([variantKind, bucketItems]) => {
-        bucketItems.forEach((item) => {
-          const key = buildVariantKey(item.name, variantKind, item.year);
-          const variants = acc[key] || [];
-          const contentId = getContentId(item);
-
-          if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === contentId)) {
-            variants.push({
-              providerId: connection.id,
-              providerName: connection.name,
-              title: item.name,
-              streamId: contentId,
-              kind: variantKind,
-              artwork: getArtwork(item),
-              categoryId: item.category_id,
-              seriesId: item.series_id,
-              year: item.year,
-              plot: item.plot,
-            });
-          }
-
-          acc[key] = variants;
-        });
-      });
-
-      return acc;
-    }, {});
-
-    setProviderVariants(cachedVariants);
-  }, [connections]);
+    setProviderVariants(buildProviderVariantsIndex({
+      connections,
+      connectionStatus,
+      includeKinds: ['movie', 'series'],
+    }));
+  }, [connectionStatus, connections]);
 
   useEffect(() => {
     let cancelled = false;
@@ -281,29 +232,30 @@ export function MediaLibrary({
 
   const recentItems = useMemo(() => providerHistory.slice(0, 4), [providerHistory]);
 
-  const sortVariants = (variants: ProviderVariant[]) => {
-    return [...variants].sort((a, b) => {
-      const providerA = connections.find((connection) => connection.id === a.providerId);
-      const providerB = connections.find((connection) => connection.id === b.providerId);
-      return getProviderTrustScore(providerB || { lastAuthSummary: undefined }, connectionStatus[b.providerId])
-        - getProviderTrustScore(providerA || { lastAuthSummary: undefined }, connectionStatus[a.providerId]);
-    });
-  };
-
   const movieVariants = useMemo(() => {
     if (!featuredMovie || !activeConnection) return [] as ProviderVariant[];
-    const key = buildVariantKey(featuredMovie.name, 'movie', featuredMovie.year);
-    return sortVariants((providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection.id));
-  }, [activeConnection, connections, connectionStatus, featuredMovie, providerVariants]);
+    return getAlternateProviderVariants({
+      providerVariants,
+      activeConnectionId: activeConnection.id,
+      title: featuredMovie.name,
+      kind: 'movie',
+      year: featuredMovie.year,
+    });
+  }, [activeConnection, featuredMovie, providerVariants]);
 
   const selectedSeries = seriesInfo?.info ?? filteredItems.find((item) => getContentId(item) === selectedSeriesId) ?? null;
   const selectedSeriesResume = selectedSeries ? resumeLookup[getContentId(selectedSeries)] : null;
 
   const selectedSeriesVariants = useMemo(() => {
     if (!selectedSeries || !activeConnection) return [] as ProviderVariant[];
-    const key = buildVariantKey(selectedSeries.name, 'series', selectedSeries.year);
-    return sortVariants((providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnection.id));
-  }, [activeConnection, connections, connectionStatus, providerVariants, selectedSeries]);
+    return getAlternateProviderVariants({
+      providerVariants,
+      activeConnectionId: activeConnection.id,
+      title: selectedSeries.name,
+      kind: 'series',
+      year: selectedSeries.year,
+    });
+  }, [activeConnection, providerVariants, selectedSeries]);
 
   const bannerTone = cacheMode === 'offline'
     ? 'border-amber-400/30 bg-amber-500/10 text-amber-100'
@@ -363,7 +315,7 @@ export function MediaLibrary({
 
     const preferredSeason = selectedSeriesResume?.seasonNumber ?? initialSeasonNumber ?? selectedSeason;
     const preferredEpisode = selectedSeriesResume?.episodeNumber ?? initialEpisodeNumber ?? undefined;
-    const recoveryKey = `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${preferredSeason || 0}-${preferredEpisode || 0}`;
+    const recoveryKey = buildSeriesRecoveryKey(variant, preferredSeason, preferredEpisode);
     setVariantRecoveryKey(recoveryKey);
 
     try {
@@ -394,10 +346,8 @@ export function MediaLibrary({
 
   const buildProviderVariantActions = (variant: ProviderVariant, options?: { type: 'movie' | 'series'; resumeLabel?: string | null }) => {
     const isSeries = options?.type === 'series';
-    const recoveryKey = `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${selectedSeriesResume?.seasonNumber ?? initialSeasonNumber ?? selectedSeason ?? 0}-${selectedSeriesResume?.episodeNumber ?? initialEpisodeNumber ?? 0}`;
-    const provider = connections.find((connection) => connection.id === variant.providerId);
-    const trustScore = getProviderTrustScore(provider || { lastAuthSummary: undefined }, connectionStatus[variant.providerId]);
-    const trustLabel = trustScore >= 150 ? 'Highest trust' : trustScore >= 90 ? 'Healthy backup' : 'Fallback copy';
+    const recoveryKey = buildSeriesRecoveryKey(variant, selectedSeriesResume?.seasonNumber ?? initialSeasonNumber ?? selectedSeason, selectedSeriesResume?.episodeNumber ?? initialEpisodeNumber);
+    const trustLabel = getProviderTrustLabel(variant.trustScore);
 
     return [
       {
@@ -434,9 +384,8 @@ export function MediaLibrary({
           detail="Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first."
         />
         {variants.map((variant) => {
-          const provider = connections.find((connection) => connection.id === variant.providerId);
-          const trustScore = getProviderTrustScore(provider || { lastAuthSummary: undefined }, connectionStatus[variant.providerId]);
-          const trustLabel = trustScore >= 150 ? 'Highest trust' : trustScore >= 90 ? 'Healthy backup' : 'Fallback copy';
+          const trustScore = variant.trustScore;
+          const trustLabel = getProviderTrustLabel(trustScore);
           const isSeries = options?.type === 'series';
 
           return (

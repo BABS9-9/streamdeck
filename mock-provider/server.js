@@ -393,7 +393,8 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
     cta: 'Resume on healthiest provider',
   },
   collections: {
-    title: scenario === 'healthy' ? 'Collections recovery route' : 'Keep curated folders useful',
+    title: scenario === 'healthy' ? 'Canonical variant-resolution rehearsal now covers detail rails, saved rails, and collections so trust-ranked backups, series resume recovery keys, and same-category live rescue stay aligned across surfaces.
+Collections recovery route' : 'Keep curated folders useful',
     detail: scenario === 'expiredAccount'
       ? 'If a collection item points at an expired provider, keep the folder intact and promote the healthiest saved provider copy instead of making curated lineups brittle, with same-category live rescue available when the exact channel copy is gone.'
       : scenario === 'lineSaturated'
