@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { getHealthiestSavedProvider } from '@/lib/provider-recovery';
+import { getHealthiestSavedProvider, getProviderSummaryWarning } from '@/lib/provider-recovery';
 import { MockProviderHealth, MockProviderScenario, ProviderAuthSummary } from '@/lib/types';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { useAuthStore } from '@/stores/auth-store';
@@ -42,30 +42,14 @@ const getLinePressure = (summary?: { activeConnections: number | null; maxConnec
 };
 
 const getProviderRecoveryWarning = (summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null) => {
-  if (!summary) return null;
-  if (summary.status && summary.status !== 'Active') return `Provider account is ${String(summary.status).toLowerCase()}. Settings should steer the user toward renewal, fresh credentials, or a healthier saved provider.`;
-  return getLinePressure(summary);
-};
-
-const getProviderTrustScore = (
-  summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null,
-  state?: { state?: string | null } | null
-) => {
-  let score = 0;
-
-  if (state?.state === 'healthy') score += 120;
-  else if (state?.state === 'degraded') score += 35;
-  else if (state?.state === 'checking') score += 10;
-  else if (state?.state === 'error') score -= 35;
-
-  if (summary?.status === 'Active') score += 45;
-  else if (summary?.status) score -= 55;
-
-  if (typeof summary?.maxConnections === 'number' && typeof summary?.activeConnections === 'number') {
-    score += Math.max(-40, 30 - Math.max(0, summary.activeConnections - summary.maxConnections + 1) * 22);
+  const summaryWarning = getProviderSummaryWarning(summary as ProviderAuthSummary | null | undefined);
+  if (summaryWarning === 'All lines in use') {
+    return `All ${summary?.maxConnections ?? '?'} provider lines are currently in use. Keep this visible before users blame playback.`;
   }
-
-  return score;
+  if (summaryWarning) {
+    return `Provider account is ${String(summary?.status).toLowerCase()}. Settings should steer the user toward renewal, fresh credentials, or a healthier saved provider.`;
+  }
+  return getLinePressure(summary);
 };
 
 const renderProviderFacts = (summary?: ProviderAuthSummary) => {

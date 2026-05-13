@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { getHealthiestSavedProvider } from '@/lib/provider-recovery';
+import { getHealthiestSavedProvider, getProviderSummaryWarning } from '@/lib/provider-recovery';
 import { getProviderTrustScore } from '@/lib/provider-trust';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
@@ -218,8 +218,11 @@ const getLinePressure = (summary?: { activeConnections: number | null; maxConnec
 };
 
 const getProviderRecoveryWarning = (summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null) => {
-  if (!summary) return null;
-  if (summary.status && summary.status !== 'Active') return `Provider account is ${String(summary.status).toLowerCase()}. Keep cached search useful, but steer playback toward a healthier saved provider.`;
+  const summaryWarning = getProviderSummaryWarning(summary as SavedConnection['lastAuthSummary']);
+  if (summaryWarning === 'All lines in use') {
+    return `All ${summary?.maxConnections ?? '?'} provider lines are currently in use. Search can still work while playback becomes risky.`;
+  }
+  if (summaryWarning) return `Provider account is ${String(summary?.status).toLowerCase()}. Keep cached search useful, but steer playback toward a healthier saved provider.`;
   return getLinePressure(summary);
 };
 

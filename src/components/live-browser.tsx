@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, normalizeRecoveryKey } from '@/lib/provider-recovery';
-import { getProviderTrustScore } from '@/lib/provider-trust';
-import { buildLiveStreamUrl, getCachedSearchCatalog, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
+import { buildLiveVariantKey, buildProviderVariantsIndex, getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, ProviderVariant } from '@/lib/provider-recovery';
+import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
@@ -23,29 +22,7 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   authUnstable: 'Auth unstable',
 };
 
-type ProviderVariant = {
-  providerId: string;
-  providerName: string;
-  streamId: number;
-  title: string;
-  categoryId?: string;
-  categoryName?: string;
-  artwork?: string;
-  playbackUrl: string;
-  trustScore: number;
-};
-
-type CategoryFallback = {
-  providerId: string;
-  providerName: string;
-  categoryId?: string;
-  categoryName: string;
-  stream: XtreamStream;
-  playbackUrl: string;
-  trustScore: number;
-};
-
-const buildVariantKey = (title: string) => `live:${normalizeRecoveryKey(title)}`;
+type CategoryFallback = ReturnType<typeof getLiveCategoryRecovery>;
 
 const formatExpiry = (value?: string | null) => {
   if (!value) return 'Unknown expiry';
@@ -107,36 +84,7 @@ export function LiveBrowser() {
   }, [revalidateMockConnections]);
 
   useEffect(() => {
-    const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
-      const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
-      if (!connectionCatalog) return acc;
-
-      connectionCatalog.live.forEach((item) => {
-        const key = buildVariantKey(item.name);
-        const variants = acc[key] || [];
-        const streamId = getContentId(item);
-
-        if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === streamId)) {
-          variants.push({
-            providerId: connection.id,
-            providerName: connection.name,
-            streamId,
-            title: item.name,
-            categoryId: item.category_id,
-            categoryName: item.channel_group,
-            artwork: item.preview_art || item.stream_icon,
-            playbackUrl: buildLiveStreamUrl(connection, item),
-            trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
-          });
-        }
-
-        acc[key] = variants;
-      });
-
-      return acc;
-    }, {});
-
-    setProviderVariants(cachedVariants);
+    setProviderVariants(buildProviderVariantsIndex({ connections, connectionStatus, includeKinds: ['live'] }));
   }, [connectionStatus, connections]);
 
   useEffect(() => {
@@ -290,7 +238,7 @@ export function LiveBrowser() {
 
   const getLiveVariants = (stream: XtreamStream) => {
     if (!activeConnection) return [] as ProviderVariant[];
-    const key = buildVariantKey(stream.name);
+    const key = buildLiveVariantKey(stream.name);
     return (providerVariants[key] || [])
       .filter((variant) => variant.providerId !== activeConnection.id)
       .sort((a, b) => b.trustScore - a.trustScore);
@@ -321,12 +269,14 @@ export function LiveBrowser() {
       stream_icon: variant.artwork,
       preview_art: variant.artwork,
     };
+    if (!variant.playbackUrl) return;
     setSelectedStream(variantStream);
     setPreviewUrl(variant.playbackUrl);
     playStream(variantStream, variant.playbackUrl, variant.providerId);
   };
 
   const launchCategoryFallback = (fallback: CategoryFallback) => {
+    if (!fallback) return;
     setActiveConnection(fallback.providerId);
     setSelectedCategory(fallback.categoryId || 'all');
     setSelectedStream(fallback.stream);
@@ -738,6 +688,7 @@ export function LiveBrowser() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
+                          if (!topVariant.playbackUrl) return;
                           setActiveConnection(topVariant.providerId);
                           setSelectedStream({
                             stream_id: topVariant.streamId,

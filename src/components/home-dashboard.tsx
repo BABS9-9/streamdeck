@@ -3,9 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, normalizeRecoveryKey } from '@/lib/provider-recovery';
-import { getProviderTrustScore } from '@/lib/provider-trust';
-import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedHomeSnapshot, getCachedSearchCatalog, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
+import { buildProviderVariantsIndex, getAlternateProviderVariants, getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
+import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -24,31 +23,7 @@ type CacheState = {
   updatedAt: number | null;
 };
 
-type ProviderVariant = {
-  providerId: string;
-  providerName: string;
-  kind: 'live' | 'movie' | 'series';
-  streamId: number;
-  title: string;
-  artwork?: string;
-  categoryId?: string;
-  categoryName?: string;
-  seriesId?: number;
-  playbackUrl?: string | null;
-  trustScore: number;
-};
-
-type CategoryFallback = {
-  providerId: string;
-  providerName: string;
-  categoryId?: string;
-  categoryName: string;
-  streamId: number;
-  title: string;
-  artwork?: string;
-  playbackUrl: string;
-  trustScore: number;
-};
+type CategoryFallback = ReturnType<typeof getLiveCategoryRecovery>;
 
 const emptyState: HomeState = {
   featured: null,
@@ -89,7 +64,6 @@ const getAccountPressure = (summary?: { status?: string | null; activeConnection
     : null;
 };
 
-const buildVariantKey = (title: string, kind: 'live' | 'movie' | 'series', year?: string) => `${kind}:${normalizeRecoveryKey(title)}:${year || ''}`;
 
 export function HomeDashboard() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
@@ -245,46 +219,7 @@ export function HomeDashboard() {
   );
 
   useEffect(() => {
-    const cachedVariants = connections.reduce<Record<string, ProviderVariant[]>>((acc, connection) => {
-      const connectionCatalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
-      if (!connectionCatalog) return acc;
-
-      const buckets: Array<['live' | 'movie' | 'series', XtreamStream[]]> = [
-        ['live', connectionCatalog.live],
-        ['movie', connectionCatalog.vod],
-        ['series', connectionCatalog.series],
-      ];
-
-      buckets.forEach(([kind, items]) => {
-        items.forEach((item) => {
-          const key = buildVariantKey(item.name, kind, item.year);
-          const variants = acc[key] || [];
-          const streamId = getContentId(item);
-
-          if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === streamId)) {
-            variants.push({
-              providerId: connection.id,
-              providerName: connection.name,
-              kind,
-              streamId,
-              title: item.name,
-              artwork: getArtwork(item),
-              categoryId: item.category_id,
-              categoryName: item.channel_group || item.genre,
-              seriesId: item.series_id,
-              playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
-              trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
-            });
-          }
-
-          acc[key] = variants;
-        });
-      });
-
-      return acc;
-    }, {});
-
-    setProviderVariants(cachedVariants);
+    setProviderVariants(buildProviderVariantsIndex({ connections, connectionStatus }));
   }, [connectionStatus, connections]);
 
   const quickActions = useMemo(
@@ -350,10 +285,13 @@ export function HomeDashboard() {
 
   const featuredVariants = useMemo(() => {
     if (!home.featured || !activeConnection) return [] as ProviderVariant[];
-    const key = buildVariantKey(home.featured.name, 'live', home.featured.year);
-    return (providerVariants[key] || [])
-      .filter((variant) => variant.providerId !== activeConnection.id)
-      .sort((a, b) => b.trustScore - a.trustScore);
+    return getAlternateProviderVariants({
+      providerVariants,
+      activeConnectionId: activeConnection.id,
+      title: home.featured.name,
+      kind: 'live',
+      year: home.featured.year,
+    });
   }, [activeConnection, home.featured, providerVariants]);
   const featuredCategoryFallback = useMemo(
     () => (home.featured ? getLiveCategoryFallback(home.featured, featuredVariants) : null),
@@ -795,9 +733,13 @@ export function HomeDashboard() {
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {home.spotlight.map((item) => {
             const kind = item.stream_type === 'live' ? 'live' : item.stream_type === 'series' ? 'series' : 'movie';
-            const variants = (providerVariants[buildVariantKey(item.name, kind, item.year)] || [])
-              .filter((variant) => variant.providerId !== activeConnection.id)
-              .sort((a, b) => b.trustScore - a.trustScore);
+            const variants = getAlternateProviderVariants({
+              providerVariants,
+              activeConnectionId: activeConnection.id,
+              title: item.name,
+              kind,
+              year: item.year,
+            });
             const categoryFallback = kind === 'live' ? getLiveCategoryFallback(item, variants) : null;
             return (
               <article key={`${item.stream_type}-${item.stream_id}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">

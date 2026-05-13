@@ -1,6 +1,6 @@
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId } from './xtream-api';
 import { getProviderTrustScore } from './provider-trust';
-import { ConnectionStatus, SavedConnection, XtreamStream } from './types';
+import { ConnectionStatus, ProviderAuthSummary, SavedConnection, XtreamStream } from './types';
 
 export type RecoverySurface = 'login' | 'home' | 'live';
 
@@ -44,17 +44,18 @@ export const buildProviderVariantKey = (title: string, kind: ProviderVariantKind
   return `${kind}:${name}:${year || ''}`;
 };
 
-export const getProviderRecoveryWarning = (connection: SavedConnection, status?: ConnectionStatus) => {
-  const summary = connection.lastAuthSummary;
-  const isExpired = summary?.status && summary.status !== 'Active';
-  const isMaxed = !!summary?.maxConnections && (summary.activeConnections ?? 0) >= summary.maxConnections;
-  const isError = status?.state === 'error';
-  const isDegraded = status?.state === 'degraded';
+export const getProviderSummaryWarning = (summary?: ProviderAuthSummary | null) => {
+  if (!summary) return null;
+  if (summary.status && summary.status !== 'Active') return `Status ${summary.status}`;
+  if (typeof summary.maxConnections === 'number' && (summary.activeConnections ?? 0) >= summary.maxConnections) return 'All lines in use';
+  return null;
+};
 
-  if (isExpired) return `Status ${summary?.status}`;
-  if (isMaxed) return 'All lines in use';
-  if (isError) return status?.message || 'Validation failing';
-  if (isDegraded) return status?.message || 'Provider degraded';
+export const getProviderRecoveryWarning = (connection: SavedConnection, status?: ConnectionStatus) => {
+  const summaryWarning = getProviderSummaryWarning(connection.lastAuthSummary);
+  if (summaryWarning) return summaryWarning;
+  if (status?.state === 'error') return status?.message || 'Validation failing';
+  if (status?.state === 'degraded') return status?.message || 'Provider degraded';
   return null;
 };
 
@@ -81,6 +82,8 @@ export const getProviderTrustLabel = (trustScore: number) => {
 export const buildSeriesRecoveryKey = (variant: Pick<ProviderVariant, 'providerId' | 'seriesId' | 'streamId'>, seasonNumber?: number | null, episodeNumber?: number | null) => {
   return `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${seasonNumber || 0}-${episodeNumber || 0}`;
 };
+
+export const buildLiveVariantKey = (title: string) => buildProviderVariantKey(title, 'live');
 
 export const buildProviderVariantsIndex = ({
   connections,
