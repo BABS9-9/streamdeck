@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
 import { buildProviderVariant, getHealthiestSavedProvider, getProviderSummaryWarning, rankProviderVariants } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
@@ -207,27 +208,13 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   authUnstable: 'Auth unstable',
 };
 
-const formatExpiry = (value: string | null | undefined) => {
-  if (!value) return 'Unknown expiry';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Unknown expiry';
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const getLinePressure = (summary?: { activeConnections: number | null; maxConnections: number | null } | null) => {
-  if (!summary?.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
-  return summary.activeConnections >= summary.maxConnections
-    ? `All ${summary.maxConnections} provider lines are currently in use. Search can still work while playback becomes risky.`
-    : null;
-};
-
 const getProviderRecoveryWarning = (summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null) => {
   const summaryWarning = getProviderSummaryWarning(summary as SavedConnection['lastAuthSummary']);
   if (summaryWarning === 'All lines in use') {
     return `All ${summary?.maxConnections ?? '?'} provider lines are currently in use. Search can still work while playback becomes risky.`;
   }
   if (summaryWarning) return `Provider account is ${String(summary?.status).toLowerCase()}. Keep cached search useful, but steer playback toward a healthier saved provider.`;
-  return getLinePressure(summary);
+  return getProviderLinePressure(summary, 'Search can still work while playback becomes risky.');
 };
 
 const getVariantActionLabel = (kind: SearchResult['kind']) => {
@@ -375,7 +362,7 @@ export function SearchBrowser() {
 
   const duplicateGroups = useMemo(() => results.filter((result) => result.duplicateCount > 0).length, [results]);
   const activeScenarioDetails = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
-  const mockLinePressure = getLinePressure(mockHealth?.accountProfile);
+  const mockLinePressure = getProviderLinePressure(mockHealth?.accountProfile, 'Search can still work while playback becomes risky.');
   const mockRecoveryWarning = getProviderRecoveryWarning(mockHealth?.accountProfile);
   const healthiestConnection = getHealthiestSavedProvider({
     connections,
@@ -611,7 +598,7 @@ export function SearchBrowser() {
             const artwork = getArtwork(result.item);
             const isPlayable = result.kind !== 'series';
             const authSummary = result.provider.lastAuthSummary;
-            const providerLinePressure = getLinePressure(authSummary);
+            const providerLinePressure = getProviderLinePressure(authSummary, 'Search can still work while playback becomes risky.');
             const providerRecoveryWarning = getProviderRecoveryWarning(authSummary);
             const healthiestAlternateConnection = getHealthiestSavedProvider({
               connections,
@@ -639,7 +626,7 @@ export function SearchBrowser() {
                   <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">{result.matchReason}</span>
                   {authSummary ? (
                     <span className={`rounded-full border px-3 py-2 ${providerLinePressure ? 'border-amber-400/20 bg-amber-500/10 text-amber-100' : 'border-sky-400/20 bg-sky-500/10 text-sky-100'}`}>
-                      {authSummary.activeConnections ?? 0}/{authSummary.maxConnections ?? '?'} lines · expires {formatExpiry(authSummary.expiresAt)}
+                      {authSummary.activeConnections ?? 0}/{authSummary.maxConnections ?? '?'} lines · expires {formatProviderExpiry(authSummary.expiresAt)}
                     </span>
                   ) : null}
                   {result.providerCount > 1 ? (

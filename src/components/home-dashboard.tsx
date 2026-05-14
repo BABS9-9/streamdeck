@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { formatProviderExpiry, getProviderAccountPressure } from '@/lib/provider-signals';
 import { buildProviderVariantsIndex, getAlternateProviderVariants, getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
@@ -47,23 +48,6 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   expiredAccount: 'Expired account',
   authUnstable: 'Auth unstable',
 };
-
-const formatExpiry = (value: string | null | undefined) => {
-  if (!value) return 'Unknown expiry';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Unknown expiry';
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const getAccountPressure = (summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null) => {
-  if (!summary) return null;
-  if (summary.status && summary.status !== 'Active') return `Provider account is ${String(summary.status).toLowerCase()}. Keep renewal or provider-switch guidance visible before the user blames playback.`;
-  if (!summary.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
-  return summary.activeConnections >= summary.maxConnections
-    ? `All ${summary.maxConnections} provider lines are currently in use. Keep this warning visible before the user blames playback.`
-    : null;
-};
-
 
 export function HomeDashboard() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
@@ -269,8 +253,14 @@ export function HomeDashboard() {
       ? 'border-sky-400/30 bg-sky-500/10 text-sky-100'
       : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100';
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
-  const providerAccountPressure = getAccountPressure(activeConnection?.lastAuthSummary);
-  const mockAccountPressure = getAccountPressure(mockHealth?.accountProfile);
+  const providerAccountPressure = getProviderAccountPressure(activeConnection?.lastAuthSummary, {
+    statusContext: 'Keep renewal or provider-switch guidance visible before the user blames playback.',
+    lineContext: 'Keep this warning visible before the user blames playback.',
+  });
+  const mockAccountPressure = getProviderAccountPressure(mockHealth?.accountProfile, {
+    statusContext: 'Keep renewal or provider-switch guidance visible before the user blames playback.',
+    lineContext: 'Keep this warning visible before the user blames playback.',
+  });
   const getLiveCategoryFallback = (stream: XtreamStream, variants: ProviderVariant[]) => {
     if (!activeConnection) return null as CategoryFallback | null;
     return getLiveCategoryRecovery({
@@ -629,7 +619,7 @@ export function HomeDashboard() {
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
                     <p className="text-xs text-slate-500">Account</p>
-                    <p className="mt-1 text-sm text-slate-200">{activeConnection.lastAuthSummary.status} · expires {formatExpiry(activeConnection.lastAuthSummary.expiresAt)}</p>
+                    <p className="mt-1 text-sm text-slate-200">{activeConnection.lastAuthSummary.status} · expires {formatProviderExpiry(activeConnection.lastAuthSummary.expiresAt)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-500">Capacity</p>

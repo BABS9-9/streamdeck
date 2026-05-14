@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { formatProviderExpiry, getProviderAccountPressure } from '@/lib/provider-signals';
 import { buildLiveVariantKey, buildProviderVariantsIndex, getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
@@ -23,22 +24,6 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
 };
 
 type CategoryFallback = ReturnType<typeof getLiveCategoryRecovery>;
-
-const formatExpiry = (value?: string | null) => {
-  if (!value) return 'Unknown expiry';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Unknown expiry';
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const getAccountPressure = (summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null) => {
-  if (!summary) return null;
-  if (summary.status && summary.status !== 'Active') return `Provider account is ${String(summary.status).toLowerCase()}. Surface the recovery path before the user mistakes account expiry for stream failure.`;
-  if (!summary.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
-  return summary.activeConnections >= summary.maxConnections
-    ? `All ${summary.maxConnections} provider lines are currently in use. Surface this before the user mistakes account pressure for stream failure.`
-    : null;
-};
 
 export function LiveBrowser() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
@@ -226,7 +211,10 @@ export function LiveBrowser() {
     return selectedCategory === 'all' || stream.category_id === selectedCategory;
   }).length;
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
-  const providerAccountPressure = getAccountPressure(activeConnection?.lastAuthSummary);
+  const providerAccountPressure = getProviderAccountPressure(activeConnection?.lastAuthSummary, {
+    statusContext: 'Surface the recovery path before the user mistakes account expiry for stream failure.',
+    lineContext: 'Surface this before the user mistakes account pressure for stream failure.',
+  });
   const healthiestConnection = useMemo(() => {
     if (!activeConnection || connections.length < 2) return null;
     return getHealthiestSavedProvider({
@@ -516,7 +504,7 @@ export function LiveBrowser() {
                   </div>
                   <div>
                     <p className="text-xs text-slate-500">Expiry + timezone</p>
-                    <p className="mt-1 text-white">{formatExpiry(activeConnection.lastAuthSummary.expiresAt)} · {activeConnection.lastAuthSummary.timezone}</p>
+                    <p className="mt-1 text-white">{formatProviderExpiry(activeConnection.lastAuthSummary.expiresAt)} · {activeConnection.lastAuthSummary.timezone}</p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-500">Line capacity</p>

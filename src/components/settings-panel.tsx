@@ -2,20 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { buildProviderFactRows, connectionStatusTone, getProviderAccountPressure } from '@/lib/provider-signals';
 import { getHealthiestSavedProvider, getProviderSummaryWarning } from '@/lib/provider-recovery';
 import { MockProviderHealth, MockProviderScenario, ProviderAuthSummary } from '@/lib/types';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
-
-const statusTone: Record<string, string> = {
-  idle: 'border-slate-400/30 bg-slate-400/10 text-slate-200',
-  checking: 'border-amber-400/30 bg-amber-500/10 text-amber-200',
-  healthy: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200',
-  degraded: 'border-amber-400/30 bg-amber-500/10 text-amber-200',
-  error: 'border-rose-400/30 bg-rose-500/10 text-rose-200',
-};
 
 const scenarioLabels: Record<MockProviderScenario, string> = {
   healthy: 'Healthy',
@@ -27,29 +20,13 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   authUnstable: 'Auth unstable',
 };
 
-const formatExpiry = (value: string | null | undefined) => {
-  if (!value) return 'Unknown expiry';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Unknown expiry';
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const getLinePressure = (summary?: { activeConnections: number | null; maxConnections: number | null } | null) => {
-  if (!summary?.maxConnections || summary.activeConnections === null || summary.activeConnections === undefined) return null;
-  return summary.activeConnections >= summary.maxConnections
-    ? `All ${summary.maxConnections} provider lines are currently in use. Keep this visible before users blame playback.`
-    : null;
-};
-
 const getProviderRecoveryWarning = (summary?: { status?: string | null; activeConnections: number | null; maxConnections: number | null } | null) => {
   const summaryWarning = getProviderSummaryWarning(summary as ProviderAuthSummary | null | undefined);
-  if (summaryWarning === 'All lines in use') {
-    return `All ${summary?.maxConnections ?? '?'} provider lines are currently in use. Keep this visible before users blame playback.`;
-  }
-  if (summaryWarning) {
-    return `Provider account is ${String(summary?.status).toLowerCase()}. Settings should steer the user toward renewal, fresh credentials, or a healthier saved provider.`;
-  }
-  return getLinePressure(summary);
+  if (!summaryWarning) return null;
+  return getProviderAccountPressure(summary as ProviderAuthSummary, {
+    statusContext: 'Settings should steer the user toward renewal, fresh credentials, or a healthier saved provider.',
+    lineContext: 'Keep this visible before users blame playback.',
+  });
 };
 
 const renderProviderFacts = (summary?: ProviderAuthSummary) => {
@@ -59,12 +36,7 @@ const renderProviderFacts = (summary?: ProviderAuthSummary) => {
 
   return (
     <div className="mt-4 grid gap-3 md:grid-cols-4">
-      {[
-        ['Status', summary.status],
-        ['Expiry', formatExpiry(summary.expiresAt)],
-        ['Capacity', `${summary.activeConnections ?? 0}/${summary.maxConnections ?? '?'} in use`],
-        ['Timezone', summary.timezone || 'Unknown timezone'],
-      ].map(([label, value]) => (
+      {buildProviderFactRows(summary).map(([label, value]) => (
         <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-3">
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
           <p className="mt-2 text-sm text-slate-200">{value}</p>
@@ -173,7 +145,7 @@ export function SettingsPanel() {
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-lg font-semibold text-white">{connection.name}</p>
                         {status ? (
-                          <span className={`rounded-full border px-2.5 py-1 text-[11px] uppercase tracking-[0.22em] ${statusTone[status.state]}`}>
+                          <span className={`rounded-full border px-2.5 py-1 text-[11px] uppercase tracking-[0.22em] ${connectionStatusTone[status.state]}`}>
                             {status.state}
                           </span>
                         ) : null}
