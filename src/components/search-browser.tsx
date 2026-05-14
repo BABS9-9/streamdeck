@@ -3,13 +3,17 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { getHealthiestSavedProvider, getProviderSummaryWarning } from '@/lib/provider-recovery';
-import { getProviderTrustScore } from '@/lib/provider-trust';
+import { buildProviderVariant, getHealthiestSavedProvider, getProviderSummaryWarning, rankProviderVariants } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
+
+type SearchResultVariant = ReturnType<typeof rankProviderVariants>[number] & {
+  provider: SavedConnection;
+  item: XtreamStream;
+};
 
 type SearchResult = {
   provider: SavedConnection;
@@ -19,13 +23,7 @@ type SearchResult = {
   matchReason: string;
   duplicateCount: number;
   providerCount: number;
-  variants: Array<{
-    provider: SavedConnection;
-    item: XtreamStream;
-    compositeScore: number;
-    trustScore: number;
-    isPrimary: boolean;
-  }>;
+  variants: SearchResultVariant[];
 };
 
 const SEARCH_ALIASES: Record<string, string[]> = {
@@ -120,69 +118,75 @@ const rankResults = (
 
         const key = buildSearchKey(item, kind);
         const existing = deduped.get(key);
+        const candidateVariant = {
+          ...buildProviderVariant({
+            connection: provider,
+            status: connectionStatus[provider.id],
+            item,
+            kind,
+          }),
+          provider,
+          item,
+        } satisfies Omit<SearchResultVariant, 'compositeScore' | 'isPrimary'>;
+        const candidateCompositeScore = scored.score + candidateVariant.trustScore;
 
         if (!existing) {
-          const trustScore = getProviderTrustScore(provider, connectionStatus[provider.id]);
           deduped.set(key, {
             provider,
             item,
             kind,
-            score: scored.score + trustScore,
+            score: candidateCompositeScore,
             matchReason: scored.matchReason,
             duplicateCount: 0,
             providerCount: 1,
             variants: [{
-              provider,
-              item,
-              compositeScore: scored.score + trustScore,
-              trustScore,
+              ...candidateVariant,
+              compositeScore: candidateCompositeScore,
               isPrimary: true,
             }],
           });
           return;
         }
 
-        const candidateTrust = getProviderTrustScore(provider, connectionStatus[provider.id]);
-        const existingTrust = getProviderTrustScore(existing.provider, connectionStatus[existing.provider.id]);
-        const candidateCompositeScore = scored.score + candidateTrust;
-        const existingCompositeScore = existing.score;
-        const variants = [
-          ...existing.variants.map((variant) => ({
+        const variantLookup = new Map<string, SearchResultVariant>();
+        [...existing.variants, {
+          ...candidateVariant,
+          compositeScore: candidateCompositeScore,
+          isPrimary: false,
+        }].forEach((variant) => {
+          variantLookup.set(`${variant.providerId}-${variant.streamId}`, variant);
+        });
+
+        const rankedVariants = rankProviderVariants(
+          [...variantLookup.values()].map((variant) => variant),
+          Object.fromEntries(
+            [...variantLookup.values()].map((variant) => [
+              variant.providerId,
+              variant.providerId === candidateVariant.providerId ? scored.score : Math.max(0, Math.round(variant.compositeScore - variant.trustScore)),
+            ])
+          )
+        ).map((variant) => {
+          const matched = variantLookup.get(`${variant.providerId}-${variant.streamId}`)!;
+          return {
             ...variant,
-            isPrimary: false,
-          })),
-          {
-            provider,
-            item,
-            compositeScore: candidateCompositeScore,
-            trustScore: candidateTrust,
-            isPrimary: false,
-          },
-        ].sort((a, b) => b.compositeScore - a.compositeScore);
+            provider: matched.provider,
+            item: matched.item,
+          } satisfies SearchResultVariant;
+        });
 
-        variants[0] = { ...variants[0], isPrimary: true };
-
-        if (candidateCompositeScore > existingCompositeScore) {
-          deduped.set(key, {
-            provider,
-            item,
-            kind,
-            score: candidateCompositeScore,
-            matchReason: `${scored.matchReason} • healthiest ranked provider copy`,
-            duplicateCount: existing.duplicateCount + 1,
-            providerCount: existing.providerCount + 1,
-            variants,
-          });
-          return;
-        }
+        const primaryVariant = rankedVariants[0];
 
         deduped.set(key, {
-          ...existing,
-          score: Math.max(existing.score, scored.score + existingTrust) + 2,
-          matchReason: `${existing.matchReason} • also found on ${existing.providerCount + 1} providers`,
+          provider: primaryVariant.provider,
+          item: primaryVariant.item,
+          kind,
+          score: primaryVariant.compositeScore,
+          matchReason: primaryVariant.providerId === candidateVariant.providerId
+            ? `${scored.matchReason} • healthiest ranked provider copy`
+            : `${existing.matchReason} • also found on ${existing.providerCount + 1} providers`,
           duplicateCount: existing.duplicateCount + 1,
           providerCount: existing.providerCount + 1,
-          variants,
+          variants: rankedVariants,
         });
       });
     });

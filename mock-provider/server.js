@@ -393,8 +393,7 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
     cta: 'Resume on healthiest provider',
   },
   collections: {
-    title: scenario === 'healthy' ? 'Canonical variant-resolution rehearsal now covers detail rails, saved rails, and collections so trust-ranked backups, series resume recovery keys, and same-category live rescue stay aligned across surfaces.
-Collections recovery route' : 'Keep curated folders useful',
+    title: scenario === 'healthy' ? 'Collections recovery route' : 'Keep curated folders useful',
     detail: scenario === 'expiredAccount'
       ? 'If a collection item points at an expired provider, keep the folder intact and promote the healthiest saved provider copy instead of making curated lineups brittle, with same-category live rescue available when the exact channel copy is gone.'
       : scenario === 'lineSaturated'
@@ -776,6 +775,13 @@ const server = http.createServer((req, res) => {
             : authUnstable
               ? 'Verify Continue Watching keeps saved resume context visible during auth instability and still exposes healthier exact or same-category live recovery paths.'
               : 'Verify Continue Watching can resume on healthier provider copies and keep the same live category available when an exact resume channel is missing.',
+        player: lineSaturated
+          ? 'Verify the active player dock can jump directly to the healthiest saved live copy, and fall back to same-category rescue when the exact channel is gone.'
+          : expiredAccount
+            ? 'Verify the active player dock stops blaming playback alone, preserves current live context, and offers healthier exact or same-category recovery when the original provider expires.'
+            : authUnstable
+              ? 'Verify the active player dock keeps live context visible during auth instability and still offers a trust-led jump to healthier exact or same-category recovery.'
+              : 'Verify the active player dock uses the same canonical live recovery helper as the main Live browser, with healthier exact copies ranked ahead of same-category rescue.',
       },
       scenarioUrls: {
         healthy: `${host}/health`,

@@ -35,6 +35,12 @@ export type ProviderVariant = {
   plot?: string;
   trustScore: number;
   warning?: string | null;
+  stream?: XtreamStream;
+};
+
+export type RankedProviderVariant = ProviderVariant & {
+  compositeScore: number;
+  isPrimary: boolean;
 };
 
 export const normalizeRecoveryKey = (value?: string | null) => (value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -85,6 +91,55 @@ export const buildSeriesRecoveryKey = (variant: Pick<ProviderVariant, 'providerI
 
 export const buildLiveVariantKey = (title: string) => buildProviderVariantKey(title, 'live');
 
+export const buildProviderVariant = ({
+  connection,
+  status,
+  item,
+  kind,
+}: {
+  connection: SavedConnection;
+  status?: ConnectionStatus;
+  item: XtreamStream;
+  kind: ProviderVariantKind;
+}) => {
+  const streamId = getContentId(item);
+
+  return {
+    providerId: connection.id,
+    providerName: connection.name,
+    title: item.name,
+    streamId,
+    kind,
+    artwork: getArtwork(item),
+    categoryId: item.category_id,
+    categoryName: item.channel_group || item.genre,
+    playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
+    seriesId: item.series_id,
+    year: item.year,
+    plot: item.plot,
+    trustScore: getProviderTrustScore(connection, status),
+    warning: getProviderRecoveryWarning(connection, status),
+    stream: item,
+  } satisfies ProviderVariant;
+};
+
+export const rankProviderVariants = (
+  variants: ProviderVariant[],
+  baseScoreByProviderId: Record<string, number> = {}
+) => {
+  return variants
+    .map((variant) => ({
+      ...variant,
+      compositeScore: variant.trustScore + (baseScoreByProviderId[variant.providerId] || 0),
+      isPrimary: false,
+    }))
+    .sort((left, right) => right.compositeScore - left.compositeScore || right.trustScore - left.trustScore || left.providerName.localeCompare(right.providerName))
+    .map((variant, index) => ({
+      ...variant,
+      isPrimary: index === 0,
+    })) satisfies RankedProviderVariant[];
+};
+
 export const buildProviderVariantsIndex = ({
   connections,
   connectionStatus,
@@ -115,22 +170,12 @@ export const buildProviderVariantsIndex = ({
         const streamId = getContentId(item);
 
         if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === streamId)) {
-          variants.push({
-            providerId: connection.id,
-            providerName: connection.name,
-            title: item.name,
-            streamId,
+          variants.push(buildProviderVariant({
+            connection,
+            status: connectionStatus[connection.id],
+            item,
             kind,
-            artwork: getArtwork(item),
-            categoryId: item.category_id,
-            categoryName: item.channel_group || item.genre,
-            playbackUrl: kind === 'series' ? null : kind === 'live' ? buildLiveStreamUrl(connection, item) : buildVodStreamUrl(connection, item),
-            seriesId: item.series_id,
-            year: item.year,
-            plot: item.plot,
-            trustScore: getProviderTrustScore(connection, connectionStatus[connection.id]),
-            warning: getProviderRecoveryWarning(connection, connectionStatus[connection.id]),
-          });
+          }));
         }
 
         acc[key] = variants.sort((left, right) => right.trustScore - left.trustScore || left.providerName.localeCompare(right.providerName));
@@ -158,6 +203,37 @@ export const getAlternateProviderVariants = ({
 }) => {
   const key = buildProviderVariantKey(title, kind, year, seriesTitle);
   return (providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnectionId);
+};
+
+export const getLiveProviderVariants = ({
+  title,
+  activeConnectionId,
+  connections,
+  connectionStatus,
+}: {
+  title: string;
+  activeConnectionId?: string | null;
+  connections: SavedConnection[];
+  connectionStatus: Record<string, ConnectionStatus>;
+}) => {
+  const variantKey = buildLiveVariantKey(title);
+
+  return rankProviderVariants(
+    connections
+      .filter((connection) => connection.id !== activeConnectionId)
+      .map((connection) => {
+        const catalog = getCachedSearchCatalog(connection.id, Number.MAX_SAFE_INTEGER);
+        const match = catalog?.live.find((entry) => buildLiveVariantKey(entry.name) === variantKey);
+        if (!match) return null;
+        return buildProviderVariant({
+          connection,
+          status: connectionStatus[connection.id],
+          item: match,
+          kind: 'live',
+        });
+      })
+      .filter(Boolean) as ProviderVariant[]
+  );
 };
 
 export const getRecoveryActionLabel = (surface: RecoverySurface, providerName: string) => {
