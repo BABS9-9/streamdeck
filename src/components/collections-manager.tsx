@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustLabel, getProviderRecoveryWarning, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
+import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustDisplay, getProviderRecoveryWarning, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -411,9 +411,11 @@ export function CollectionsManager() {
                         <div className="mt-3">
                           <ProviderRecoveryRail
                             eyebrow={recommendedVariant ? 'Recommended alternate' : 'Same-category fallback'}
-                            title={recommendedVariant ? recommendedVariant.providerName : categoryFallback?.providerName || 'Healthier saved provider'}
-                            detail={recommendedVariant?.warning || (!recommendedVariant && categoryFallback ? `Open ${categoryFallback.categoryName} on a healthier saved provider when this exact live item is unavailable.` : 'Use the healthiest saved provider copy before this collection item dead-ends.')}
-                            tone="emerald"
+                            title={recommendedVariant ? `${recommendedVariant.providerName} · ${getProviderTrustDisplay(recommendedVariant.trustScore, recommendedVariant.warning).label}` : categoryFallback?.providerName || 'Healthier saved provider'}
+                            detail={recommendedVariant
+                              ? getProviderTrustDisplay(recommendedVariant.trustScore, recommendedVariant.warning).detail
+                              : (!recommendedVariant && categoryFallback ? `Open ${categoryFallback.categoryName} on a healthier saved provider when this exact live item is unavailable.` : 'Use the healthiest saved provider copy before this collection item dead-ends.')}
+                            tone={recommendedVariant ? getProviderTrustDisplay(recommendedVariant.trustScore, recommendedVariant.warning).tone : "emerald"}
                             actions={recommendedVariant ? [
                               ...(recommendedVariant.kind === 'series'
                                 ? [

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustLabel, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
+import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustDisplay, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -273,13 +273,15 @@ export function LibraryCollections({ mode }: CollectionsProps) {
           ) : null}
         </div>
         <div className="mt-3 space-y-2">
-          {variants.map((variant) => (
+          {variants.map((variant) => {
+            const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
+            return (
             <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
                 <p className="mt-1 text-sm text-white">{variant.kind === 'live' ? 'Live copy ready' : variant.kind === 'movie' ? 'Movie copy ready' : 'Series copy ready'}</p>
-                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">{getProviderTrustLabel(variant.trustScore)}</p>
-                {variant.warning ? <p className="mt-1 text-[11px] text-emerald-100/70">{variant.warning}</p> : null}
+                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">{trust.label}</p>
+                <p className="mt-1 text-[11px] text-emerald-100/70">{trust.detail}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {variant.kind === 'series' ? (() => {
@@ -335,7 +337,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 </button>
               </div>
             </div>
-          ))}
+          );})}
           {categoryFallback ? (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-sky-300/20 bg-sky-500/10 px-3 py-3 text-sky-50">
               <div>
@@ -571,6 +573,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                           const seriesHref = item.kind === 'series'
                             ? `/series?seriesId=${variant.seriesId ?? variant.streamId}${item.seasonNumber ? `&season=${item.seasonNumber}` : ''}${item.episodeNumber ? `&episode=${item.episodeNumber}` : ''}`
                             : null;
+                          const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
 
                           return (
                             <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
@@ -585,7 +588,8 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                                         ? 'Movie copy ready'
                                         : 'Series copy ready'}
                                 </p>
-                                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">{getProviderTrustLabel(variant.trustScore)}</p>
+                                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">{trust.label}</p>
+                                <p className="mt-1 text-[11px] text-emerald-100/70">{trust.detail}</p>
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {variant.kind === 'series' && seriesHref ? (

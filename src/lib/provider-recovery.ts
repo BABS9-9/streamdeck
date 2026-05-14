@@ -85,6 +85,25 @@ export const getProviderTrustLabel = (trustScore: number) => {
   return 'Fallback copy';
 };
 
+export const getProviderTrustTone = (trustScore: number) => {
+  if (trustScore >= 150) return 'emerald' as const;
+  if (trustScore >= 90) return 'sky' as const;
+  return 'amber' as const;
+};
+
+export const getProviderTrustDetail = (trustScore: number, warning?: string | null) => {
+  if (warning) return warning;
+  if (trustScore >= 150) return 'Healthiest saved provider copy is ready to keep playback or browsing moving.';
+  if (trustScore >= 90) return 'This saved provider looks healthy enough to recover the flow cleanly.';
+  return 'Fallback is available here, but provider trust is weaker than the healthiest saved option.';
+};
+
+export const getProviderTrustDisplay = (trustScore: number, warning?: string | null) => ({
+  label: getProviderTrustLabel(trustScore),
+  tone: getProviderTrustTone(trustScore),
+  detail: getProviderTrustDetail(trustScore, warning),
+});
+
 export const buildSeriesRecoveryKey = (variant: Pick<ProviderVariant, 'providerId' | 'seriesId' | 'streamId'>, seasonNumber?: number | null, episodeNumber?: number | null) => {
   return `${variant.providerId}-${variant.seriesId ?? variant.streamId}-${seasonNumber || 0}-${episodeNumber || 0}`;
 };

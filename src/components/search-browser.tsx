@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
-import { buildProviderVariant, getHealthiestSavedProvider, getProviderSummaryWarning, rankProviderVariants } from '@/lib/provider-recovery';
+import { buildProviderVariant, getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay, rankProviderVariants } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -665,11 +665,13 @@ export function SearchBrowser() {
                       {alternateVariants.slice(0, 3).map((variant) => {
                         const variantContentId = getContentId(variant.item);
                         const variantLabel = getVariantActionLabel(result.kind);
+                        const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
                         return (
                           <div key={`${variant.provider.id}-${variantContentId}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
                             <div>
                               <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.provider.name}</p>
-                              <p className="mt-1 text-sm text-white">Trust {Math.round(variant.trustScore)} · score {Math.round(variant.compositeScore)}</p>
+                              <p className="mt-1 text-sm text-white">{trust.label} · score {Math.round(variant.compositeScore)}</p>
+                              <p className="mt-1 text-[11px] text-emerald-100/70">{trust.detail}</p>
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {result.kind === 'series' ? (

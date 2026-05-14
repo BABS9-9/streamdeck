@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getProviderTrustLabel, ProviderVariant } from '@/lib/provider-recovery';
+import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getProviderTrustDisplay, getProviderTrustLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, getSeries, getSeriesInfo, getVodStreams, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, XtreamEpisode, XtreamSeriesInfo, XtreamStream } from '@/lib/types';
@@ -384,19 +384,18 @@ export function MediaLibrary({
           detail="Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first."
         />
         {variants.map((variant) => {
-          const trustScore = variant.trustScore;
-          const trustLabel = getProviderTrustLabel(trustScore);
+          const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
           const isSeries = options?.type === 'series';
 
           return (
             <ProviderRecoveryRail
               key={`${variant.providerId}-${variant.streamId}-${variant.kind}`}
-              tone={trustScore >= 150 ? 'emerald' : trustScore >= 90 ? 'sky' : 'amber'}
+              tone={trust.tone}
               eyebrow={variant.providerName}
-              title={trustLabel}
-              detail={isSeries
-                ? options?.resumeLabel || 'Episode-aware recovery is ready on this provider copy.'
-                : 'Direct movie playback is ready on this provider copy.'}
+              title={trust.label}
+              detail={variant.warning || (isSeries
+                ? options?.resumeLabel || trust.detail
+                : trust.detail)}
               actions={buildProviderVariantActions(variant, options)}
             />
           );
