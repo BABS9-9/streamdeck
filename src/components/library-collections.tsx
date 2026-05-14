@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
+import { ProviderTrustBadge } from './provider-trust-badge';
 
 const normalizeLibraryKey = normalizeRecoveryKey;
 
@@ -277,11 +278,14 @@ export function LibraryCollections({ mode }: CollectionsProps) {
             const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
             return (
             <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
-                <p className="mt-1 text-sm text-white">{variant.kind === 'live' ? 'Live copy ready' : variant.kind === 'movie' ? 'Movie copy ready' : 'Series copy ready'}</p>
-                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">{trust.label}</p>
-                <p className="mt-1 text-[11px] text-emerald-100/70">{trust.detail}</p>
+              <div className="min-w-[15rem] flex-1">
+                <ProviderTrustBadge
+                  eyebrow={variant.providerName}
+                  label={variant.kind === 'live' ? 'Live copy ready' : variant.kind === 'movie' ? 'Movie copy ready' : 'Series copy ready'}
+                  detail={`${trust.label} · ${trust.detail}`}
+                  tone={trust.tone}
+                  compact
+                />
               </div>
               <div className="flex flex-wrap gap-2">
                 {variant.kind === 'series' ? (() => {
@@ -577,19 +581,20 @@ export function LibraryCollections({ mode }: CollectionsProps) {
 
                           return (
                             <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
-                              <div>
-                                <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
-                                <p className="mt-1 text-sm text-white">
-                                  {variant.kind === 'series' && item.seasonNumber && item.episodeNumber
+                              <div className="min-w-[15rem] flex-1">
+                                <ProviderTrustBadge
+                                  eyebrow={variant.providerName}
+                                  label={variant.kind === 'series' && item.seasonNumber && item.episodeNumber
                                     ? `Resume from S${item.seasonNumber}E${item.episodeNumber}`
                                     : variant.kind === 'live'
                                       ? 'Live copy ready'
                                       : variant.kind === 'movie'
                                         ? 'Movie copy ready'
                                         : 'Series copy ready'}
-                                </p>
-                                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-200/80">{trust.label}</p>
-                                <p className="mt-1 text-[11px] text-emerald-100/70">{trust.detail}</p>
+                                  detail={`${trust.label} · ${trust.detail}`}
+                                  tone={trust.tone}
+                                  compact
+                                />
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {variant.kind === 'series' && seriesHref ? (

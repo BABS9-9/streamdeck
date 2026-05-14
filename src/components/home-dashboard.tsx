@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderAccountPressure } from '@/lib/provider-signals';
-import { buildProviderVariantsIndex, getAlternateProviderVariants, getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
+import { buildProviderVariantsIndex, getAlternateProviderVariants, getHealthiestSavedProvider, getLiveCategoryRecovery, getProviderTrustDisplay, getRecoveryActionLabel, getRecoverySupportLabel, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
+import { ProviderTrustBadge } from './provider-trust-badge';
 
 type HomeState = {
   featured: XtreamStream | null;
@@ -533,11 +534,18 @@ export function HomeDashboard() {
                   ) : null}
                 </div>
                 <div className="mt-3 space-y-2">
-                  {featuredVariants.slice(0, 2).map((variant) => (
+                  {featuredVariants.slice(0, 2).map((variant) => {
+                    const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
+                    return (
                     <div key={`${variant.providerId}-${variant.streamId}-${variant.kind}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.providerName}</p>
-                        <p className="mt-1 text-sm text-white">Trust-ranked live fallback</p>
+                      <div className="min-w-[15rem] flex-1">
+                        <ProviderTrustBadge
+                          eyebrow={variant.providerName}
+                          label="Trust-ranked live fallback"
+                          detail={trust.detail}
+                          tone={trust.tone}
+                          compact
+                        />
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -558,13 +566,17 @@ export function HomeDashboard() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  )})}
                   {!featuredVariants.length && featuredCategoryFallback ? (
                     <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-emerald-300/30 bg-black/20 px-3 py-3">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{featuredCategoryFallback.providerName}</p>
-                        <p className="mt-1 text-sm text-white">Same-category live fallback</p>
-                        <p className="mt-1 text-[11px] text-emerald-100/80">Open {featuredCategoryFallback.categoryName} on a healthier provider when the featured channel itself is missing.</p>
+                      <div className="min-w-[15rem] flex-1">
+                        <ProviderTrustBadge
+                          eyebrow={featuredCategoryFallback.providerName}
+                          label="Same-category live fallback"
+                          detail={`Open ${featuredCategoryFallback.categoryName} on a healthier provider when the featured channel itself is missing.`}
+                          tone="sky"
+                          compact
+                        />
                       </div>
                       <button
                         onClick={() => {

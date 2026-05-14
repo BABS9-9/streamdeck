@@ -11,6 +11,7 @@ import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
+import { ProviderTrustBadge } from './provider-trust-badge';
 import { VideoPlayer } from './video-player';
 
 const scenarioLabels: Record<MockProviderScenario, string> = {
@@ -623,9 +624,14 @@ export function LiveBrowser() {
                 {topVariant ? (
                   <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-100">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200">Alternate provider ready</p>
-                        <p className="mt-1 text-sm text-white">{topVariant.providerName} ranks as the healthiest saved live copy.</p>
+                      <div className="min-w-[15rem] flex-1">
+                        <ProviderTrustBadge
+                          eyebrow="Alternate provider ready"
+                          label={`${topVariant.providerName} ranks as the healthiest saved live copy.`}
+                          detail={topVariant.warning || 'Exact live fallback is ready without leaving the surf flow.'}
+                          tone="emerald"
+                          compact
+                        />
                       </div>
                       <span className="rounded-full border border-emerald-300/20 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-emerald-100">
                         {variants.length} backup{variants.length === 1 ? '' : 's'}
@@ -635,9 +641,14 @@ export function LiveBrowser() {
                 ) : categoryFallback ? (
                   <div className="mt-3 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-3 text-sm text-sky-100">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Category fallback ready</p>
-                        <p className="mt-1 text-sm text-white">{categoryFallback.providerName} can keep {categoryFallback.categoryName} surfing alive even without this exact channel copy.</p>
+                      <div className="min-w-[15rem] flex-1">
+                        <ProviderTrustBadge
+                          eyebrow="Category fallback ready"
+                          label={`${categoryFallback.providerName} can keep ${categoryFallback.categoryName} surfing alive even without this exact channel copy.`}
+                          detail={categoryFallback.warning || 'Same-category rescue is ready when an exact duplicate channel is missing.'}
+                          tone="sky"
+                          compact
+                        />
                       </div>
                       <span className="rounded-full border border-sky-300/20 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-sky-100">
                         Same category rescue

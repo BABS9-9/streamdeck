@@ -10,6 +10,7 @@ import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCat
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
+import { ProviderTrustBadge } from './provider-trust-badge';
 
 type SearchResultVariant = ReturnType<typeof rankProviderVariants>[number] & {
   provider: SavedConnection;
@@ -668,10 +669,14 @@ export function SearchBrowser() {
                         const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
                         return (
                           <div key={`${variant.provider.id}-${variantContentId}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
-                            <div>
-                              <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">{variant.provider.name}</p>
-                              <p className="mt-1 text-sm text-white">{trust.label} · score {Math.round(variant.compositeScore)}</p>
-                              <p className="mt-1 text-[11px] text-emerald-100/70">{trust.detail}</p>
+                            <div className="min-w-[15rem] flex-1">
+                              <ProviderTrustBadge
+                                eyebrow={variant.provider.name}
+                                label={`${trust.label} · score ${Math.round(variant.compositeScore)}`}
+                                detail={trust.detail}
+                                tone={trust.tone}
+                                compact
+                              />
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {result.kind === 'series' ? (
