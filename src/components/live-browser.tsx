@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { formatProviderExpiry, getProviderAccountPressure } from '@/lib/provider-signals';
+import { getProviderAccountPressure } from '@/lib/provider-signals';
 import { buildLiveVariantKey, buildProviderVariantsIndex, getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
 import { ProviderTrustStack } from './provider-trust-stack';
@@ -489,20 +490,7 @@ export function LiveBrowser() {
             <>
               <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-black/20 p-4">
                 <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Provider trust cockpit</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm text-slate-300">
-                  <div>
-                    <p className="text-xs text-slate-500">Account</p>
-                    <p className="mt-1 text-white">{activeConnection.lastAuthSummary.status}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Expiry + timezone</p>
-                    <p className="mt-1 text-white">{formatProviderExpiry(activeConnection.lastAuthSummary.expiresAt)} · {activeConnection.lastAuthSummary.timezone}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Line capacity</p>
-                    <p className="mt-1 text-white">{activeConnection.lastAuthSummary.activeConnections}/{activeConnection.lastAuthSummary.maxConnections} active lines</p>
-                  </div>
-                </div>
+                <ProviderFactGrid summary={activeConnection.lastAuthSummary} className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" />
               </div>
               {providerAccountPressure ? (
                 <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-sm text-amber-100">

@@ -213,6 +213,7 @@ export type MockProviderHealth = {
     detailMetadata: boolean;
     cachedCatalogFriendly: boolean;
     previewFallbackFriendly: boolean;
+    trustFactGridFriendly?: boolean;
     streamFormats: string[];
   };
   endpointHealth: {
@@ -319,6 +320,10 @@ export type MockProviderHealth = {
     search?: string;
     movies?: string;
     series?: string;
+    favorites?: string;
+    collections?: string;
+    continue?: string;
+    player?: string;
   };
   scenarioUrls?: Record<MockProviderScenario, string>;
   xmltv: string;

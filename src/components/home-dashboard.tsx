@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { formatProviderExpiry, getProviderAccountPressure } from '@/lib/provider-signals';
-import { buildProviderVariantsIndex, getAlternateProviderVariants, getHealthiestSavedProvider, getLiveCategoryRecovery, getProviderTrustDisplay, getRecoveryActionLabel, getRecoverySupportLabel, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
+import { getProviderAccountPressure } from '@/lib/provider-signals';
+import { buildProviderVariantsIndex, getAlternateProviderVariants, getHealthiestSavedProvider, getLiveCategoryRecovery, getProviderTrustDisplay, getRecoveryActionLabel, getRecoverySupportLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
 import { ProviderTrustStack } from './provider-trust-stack';
@@ -341,6 +342,7 @@ export function HomeDashboard() {
                   mockHealth.playerCapabilities.livePreview ? 'Live preview' : null,
                   mockHealth.playerCapabilities.previewFallbackFriendly ? 'Fallback art' : null,
                   mockHealth.playerCapabilities.cachedCatalogFriendly ? 'Cached catalogs' : null,
+                  mockHealth.playerCapabilities.trustFactGridFriendly ? 'Trust fact grids' : null,
                 ].filter((item): item is string => Boolean(item)).map((item) => (
                   <span key={item} className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">{item}</span>
                 ))}
@@ -360,19 +362,16 @@ export function HomeDashboard() {
           </div>
           {mockHealth.accountProfile ? (
             <>
-              <div className="mt-4 grid gap-3 md:grid-cols-4">
-              {[
-                ['Account', mockHealth.accountProfile.status],
-                ['Expiry', mockHealth.accountProfile.expiryLabel],
-                ['Capacity', `${mockHealth.accountProfile.activeConnections}/${mockHealth.accountProfile.maxConnections} in use`],
-                ['Timezone', mockHealth.accountProfile.timezone],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
-                  <p className="mt-2 text-sm text-slate-200">{value}</p>
-                </div>
-              ))}
-              </div>
+              <ProviderFactGrid
+                summary={{
+                  status: mockHealth.accountProfile.status,
+                  expiresAt: mockHealth.accountProfile.expiryLabel,
+                  activeConnections: mockHealth.accountProfile.activeConnections,
+                  maxConnections: mockHealth.accountProfile.maxConnections,
+                  timezone: mockHealth.accountProfile.timezone,
+                  serverTime: null,
+                }}
+              />
               {mockAccountPressure ? (
                 <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
                   {mockAccountPressure}
@@ -622,16 +621,7 @@ export function HomeDashboard() {
             {activeConnection.lastAuthSummary ? (
               <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
                 <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Provider trust cockpit</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs text-slate-500">Account</p>
-                    <p className="mt-1 text-sm text-slate-200">{activeConnection.lastAuthSummary.status} · expires {formatProviderExpiry(activeConnection.lastAuthSummary.expiresAt)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Capacity</p>
-                    <p className="mt-1 text-sm text-slate-200">{activeConnection.lastAuthSummary.activeConnections}/{activeConnection.lastAuthSummary.maxConnections} active lines · {activeConnection.lastAuthSummary.timezone}</p>
-                  </div>
-                </div>
+                <ProviderFactGrid summary={activeConnection.lastAuthSummary} className="mt-3 grid gap-3 sm:grid-cols-2" />
                 {providerAccountPressure ? (
                   <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-sm text-amber-100">
                     <p>{providerAccountPressure}</p>

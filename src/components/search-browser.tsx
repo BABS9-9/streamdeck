@@ -9,6 +9,7 @@ import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatal
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
 import { ProviderTrustStack } from './provider-trust-stack';
@@ -480,19 +481,16 @@ export function SearchBrowser() {
             ))}
           </div>
           {mockHealth.accountProfile ? (
-            <div className="mt-4 grid gap-3 md:grid-cols-4">
-              {[
-                ['Account', mockHealth.accountProfile.status],
-                ['Expiry', mockHealth.accountProfile.expiryLabel],
-                ['Capacity', `${mockHealth.accountProfile.activeConnections}/${mockHealth.accountProfile.maxConnections} in use`],
-                ['Timezone', mockHealth.accountProfile.timezone],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
-                  <p className="mt-2 text-sm text-slate-200">{value}</p>
-                </div>
-              ))}
-            </div>
+            <ProviderFactGrid
+              summary={{
+                status: mockHealth.accountProfile.status,
+                expiresAt: mockHealth.accountProfile.expiryLabel,
+                activeConnections: mockHealth.accountProfile.activeConnections,
+                maxConnections: mockHealth.accountProfile.maxConnections,
+                timezone: mockHealth.accountProfile.timezone,
+                serverTime: null,
+              }}
+            />
           ) : null}
           {mockRecoveryWarning ? (
             <div className="mt-4">

@@ -603,6 +603,7 @@ const server = http.createServer((req, res) => {
         detailMetadata: true,
         cachedCatalogFriendly: true,
         previewFallbackFriendly: true,
+        trustFactGridFriendly: true,
         streamFormats: ['m3u8'],
       },
       endpointHealth: {
