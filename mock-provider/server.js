@@ -287,7 +287,7 @@ const buildTrustSignals = (scenario = 'healthy') => {
       id: 'search-catalog',
       label: degradedSearch ? 'Search catalogs partial' : 'Search catalogs ready',
       tone: degradedSearch ? 'warning' : 'healthy',
-      detail: degradedSearch ? 'Movies and Series should lean on cache and partial-result messaging.' : 'Cross-provider search and detail surfaces should fill normally.',
+      detail: degradedSearch ? 'Movies and Series should lean on cache, partial-result messaging, and shared trust badges.' : 'Cross-provider search and detail surfaces should fill normally with the same trust language.',
     },
   ];
 };
@@ -666,7 +666,7 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health?scenario=expiredAccount`,
           affectedEndpoints: ['auth', 'get_live_categories', 'get_live_streams', 'get_vod_streams', 'get_series', 'get_short_epg'],
           expectedUx: ['Login downgrades trust immediately', 'Home falls back to cached content with renewal guidance', 'Live stops pretending playback issues are stream-only when the account is expired and preserves same-category recovery actions'],
-          verificationSteps: ['Tap Expired account in-product', 'Reconnect or revalidate mock provider and confirm the account status flips to expired', 'Open Home and Live and verify recovery guidance stays visible even if fresh provider data is blocked'],
+          verificationSteps: ['Tap Expired account in-product', 'Reconnect or revalidate mock provider and confirm the account status flips to expired', 'Open Home, Live, and Settings and verify trust badges plus recovery guidance stay visible even if fresh provider data is blocked'],
         },
         authUnstable: {
           label: scenarioLabels.authUnstable,
@@ -675,7 +675,7 @@ const server = http.createServer((req, res) => {
           healthUrl: `${host}/health?scenario=authUnstable`,
           affectedEndpoints: ['auth'],
           expectedUx: ['Login flags trust as unstable instead of silently failing', 'Home keeps cached rails and quick actions visible while auth is retried', 'Live keeps browsing context and shows a direct retry or same-category switch-provider path'],
-          verificationSteps: ['Tap Auth unstable in-product', 'Revalidate the mock provider and confirm trust drops to unstable', 'Open Home and Live and verify cached context stays visible while retry guidance is explicit'],
+          verificationSteps: ['Tap Auth unstable in-product', 'Revalidate the mock provider and confirm trust drops to unstable', 'Open Login, Home, Live, Movies, and Series and verify cached context plus trust badges stay visible while retry guidance is explicit'],
         },
       },
       topCategories: liveCategories.map((category) => ({

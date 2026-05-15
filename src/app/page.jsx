@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { getHealthiestSavedProvider, getRecoveryActionLabel, getRecoverySupportLabel } from '@/lib/provider-recovery';
 import { useAuthStore } from '@/stores/auth-store';
+import { ProviderTrustStack } from '@/components/provider-trust-stack';
 
 const MOCK_SERVER = 'http://localhost:3579';
 
@@ -223,25 +224,11 @@ export default function LoginPage() {
                   ) : null}
                 </>
               ) : null}
-              {mockHealth.trustSignals?.length ? (
-                <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Trust signals</p>
-                  <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    {mockHealth.trustSignals.map((signal) => (
-                      <div key={signal.id} className={`rounded-2xl border p-4 ${signal.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
-                        <p className={`text-sm font-semibold ${signal.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{signal.label}</p>
-                        <p className="mt-2 text-sm text-slate-300">{signal.detail}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {mockHealth.operatorHeadline ? (
-                <div className={`mt-4 rounded-2xl border p-4 ${mockHealth.operatorHeadline.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
-                  <p className={`text-sm font-semibold ${mockHealth.operatorHeadline.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{mockHealth.operatorHeadline.title}</p>
-                  <p className="mt-2 text-sm text-slate-300">{mockHealth.operatorHeadline.detail}</p>
-                </div>
-              ) : null}
+              <ProviderTrustStack
+                headline={mockHealth.operatorHeadline}
+                signals={mockHealth.trustSignals}
+                className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4"
+              />
               {healthiestConnection && mockHealth?.surfaceRecoveryPlans?.login ? (
                 <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{mockHealth.surfaceRecoveryPlans.login.title}</p>

@@ -12,6 +12,7 @@ import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
+import { ProviderTrustStack } from './provider-trust-stack';
 import { VideoPlayer } from './video-player';
 
 const scenarioLabels: Record<MockProviderScenario, string> = {
@@ -338,16 +339,11 @@ export function LiveBrowser() {
                   ))}
                 </div>
               ) : null}
-              {mockHealth.trustSignals?.length ? (
-                <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                  {mockHealth.trustSignals.map((signal) => (
-                    <div key={signal.id} className={`rounded-2xl border p-4 ${signal.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
-                      <p className={`text-sm font-semibold ${signal.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{signal.label}</p>
-                      <p className="mt-2 text-sm text-slate-300">{signal.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+              <ProviderTrustStack
+                signals={mockHealth.trustSignals}
+                className="mt-4"
+                columnsClassName="grid gap-3 lg:grid-cols-2"
+              />
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
                   <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>
@@ -408,12 +404,7 @@ export function LiveBrowser() {
           />
         ) : null}
 
-        {mockHealth?.operatorHeadline ? (
-          <div className={`rounded-[1.5rem] border px-5 py-4 ${mockHealth.operatorHeadline.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>
-            <p className="font-medium text-white">{mockHealth.operatorHeadline.title}</p>
-            <p className="mt-2 text-sm text-current/90">{mockHealth.operatorHeadline.detail}</p>
-          </div>
-        ) : null}
+        <ProviderTrustStack headline={mockHealth?.operatorHeadline} />
 
         {healthiestConnection && mockHealth?.surfaceRecoveryPlans?.live ? (
           <ProviderRecoveryRail

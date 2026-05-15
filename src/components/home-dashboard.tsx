@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
+import { ProviderTrustStack } from './provider-trust-stack';
 
 type HomeState = {
   featured: XtreamStream | null;
@@ -377,12 +378,10 @@ export function HomeDashboard() {
                   {mockAccountPressure}
                 </div>
               ) : null}
-              {mockHealth.operatorHeadline ? (
-                <div className={`mt-4 rounded-2xl border p-4 ${mockHealth.operatorHeadline.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
-                  <p className={`text-sm font-semibold ${mockHealth.operatorHeadline.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{mockHealth.operatorHeadline.title}</p>
-                  <p className="mt-2 text-sm text-slate-200">{mockHealth.operatorHeadline.detail}</p>
-                </div>
-              ) : null}
+              <ProviderTrustStack
+                headline={mockHealth.operatorHeadline}
+                className="mt-4"
+              />
               {healthiestConnection && mockHealth.surfaceRecoveryPlans?.home ? (
                 <div className="mt-4">
                   <ProviderRecoveryRail
@@ -402,16 +401,11 @@ export function HomeDashboard() {
               ) : null}
             </>
           ) : null}
-          {mockHealth.trustSignals?.length ? (
-            <div className="mt-4 grid gap-3 xl:grid-cols-2">
-              {mockHealth.trustSignals.map((signal) => (
-                <div key={signal.id} className={`rounded-2xl border p-4 ${signal.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
-                  <p className={`text-sm font-semibold ${signal.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{signal.label}</p>
-                  <p className="mt-2 text-sm text-slate-300">{signal.detail}</p>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <ProviderTrustStack
+            signals={mockHealth.trustSignals}
+            className="mt-4"
+            columnsClassName="grid gap-3 xl:grid-cols-2"
+          />
           <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>

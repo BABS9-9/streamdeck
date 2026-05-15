@@ -8,6 +8,7 @@ import { MockProviderHealth, MockProviderScenario, XtreamEpisode, XtreamSeriesIn
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
+import { ProviderTrustStack } from './provider-trust-stack';
 
 type CacheMode = 'live' | 'cached' | 'offline';
 
@@ -464,6 +465,12 @@ export function MediaLibrary({
                 ))}
               </div>
             ) : null}
+            <ProviderTrustStack
+              headline={mockHealth.operatorHeadline}
+              signals={mockHealth.trustSignals}
+              className="mt-4"
+              columnsClassName="grid gap-3 lg:grid-cols-2"
+            />
             {activeScenario?.verificationSteps?.length ? (
               <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Active verification steps</p>
@@ -731,6 +738,13 @@ export function MediaLibrary({
                     ? 'Resume highlighted episode'
                     : 'Open healthiest provider copy',
               })}
+
+              <ProviderTrustStack
+                headline={mockHealth?.operatorHeadline}
+                signals={mockHealth?.trustSignals}
+                className="mt-4"
+                columnsClassName="grid gap-3 lg:grid-cols-2"
+              />
 
               <div className="mt-6 space-y-3">
                 {selectedEpisodes.length > 0 ? selectedEpisodes.map((episode) => {

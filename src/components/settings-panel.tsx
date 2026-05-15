@@ -6,6 +6,7 @@ import { buildProviderFactRows, connectionStatusTone, getProviderAccountPressure
 import { getHealthiestSavedProvider, getProviderSummaryWarning } from '@/lib/provider-recovery';
 import { MockProviderHealth, MockProviderScenario, ProviderAuthSummary } from '@/lib/types';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
+import { ProviderTrustStack } from './provider-trust-stack';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -282,19 +283,13 @@ export function SettingsPanel() {
                 </div>
               ) : null}
 
-              {mockHealth.trustSignals?.length ? (
-                <div className="mt-4 rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
-                  <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Trust signals</p>
-                  <div className="mt-4 space-y-3">
-                    {mockHealth.trustSignals.map((signal) => (
-                      <div key={signal.id} className={`rounded-2xl border p-4 ${signal.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
-                        <p className={`text-sm font-semibold ${signal.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{signal.label}</p>
-                        <p className="mt-2 text-sm text-slate-300">{signal.detail}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+              <ProviderTrustStack
+                headline={mockHealth.operatorHeadline}
+                signals={mockHealth.trustSignals}
+                title="Trust signals"
+                className="mt-4 rounded-[1.6rem] border border-white/10 bg-black/20 p-5"
+                columnsClassName="space-y-3"
+              />
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {(Object.keys(scenarioLabels) as MockProviderScenario[]).map((key) => (

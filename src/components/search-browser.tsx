@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
+import { ProviderTrustStack } from './provider-trust-stack';
 
 type SearchResultVariant = ReturnType<typeof rankProviderVariants>[number] & {
   provider: SavedConnection;
@@ -521,19 +522,11 @@ export function SearchBrowser() {
               </button>
             </div>
           ) : null}
-          {mockHealth.trustSignals?.length ? (
-            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Trust signals</p>
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                {mockHealth.trustSignals.map((signal) => (
-                  <div key={signal.id} className={`rounded-2xl border p-4 ${signal.tone === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
-                    <p className={`text-sm font-semibold ${signal.tone === 'healthy' ? 'text-emerald-100' : 'text-amber-100'}`}>{signal.label}</p>
-                    <p className="mt-2 text-sm text-slate-300">{signal.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          <ProviderTrustStack
+            signals={mockHealth.trustSignals}
+            title="Trust signals"
+            className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4"
+          />
           {activeScenarioDetails?.expectedUx?.length ? (
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
               <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">Expected search behavior</p>
