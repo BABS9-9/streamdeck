@@ -750,18 +750,18 @@ const server = http.createServer((req, res) => {
           ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, offers direct retry actions, keeps alternate provider copies launchable from the same result card, and refreshes immediately when the rehearsal mode changes.'
           : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell, with the healthiest copy first and alternate provider copies still launchable from the same result card.',
         movies: degradedSearch
-          ? 'Verify Movies falls back to saved catalog state with intentional degraded copy instead of blanking the browse surface, and that the shared premium recovery rail still presents healthiest-provider actions without a manual reload.'
-          : 'Verify the movie library loads from cache first, then refreshes into the cinematic detail rail cleanly as soon as the rehearsal mode changes, with alternate-provider actions rendered through the shared premium recovery rail.',
+          ? 'Verify Movies falls back to saved catalog state with intentional degraded copy instead of blanking the browse surface, and that the shared premium recovery rail plus provider fact grid still present healthiest-provider actions without a manual reload.'
+          : 'Verify the movie library loads from cache first, then refreshes into the cinematic detail rail cleanly as soon as the rehearsal mode changes, with alternate-provider actions and provider posture rendered through the shared premium recovery rail plus provider fact grid.',
         series: degradedSearch
-          ? 'Verify Series keeps the drill-down shell usable from saved catalog data even when search-oriented provider endpoints are degraded, with the shared premium recovery rail preserving episode-aware fallback actions.'
-          : 'Verify series list, season switches, episode launch, and alternate-provider resume all stay connected to the real mock Xtream payloads, then flip rehearsal modes and watch the drill-down refresh live through the shared premium recovery rail.',
+          ? 'Verify Series keeps the drill-down shell usable from saved catalog data even when search-oriented provider endpoints are degraded, with the shared premium recovery rail plus provider fact grid preserving episode-aware fallback actions.'
+          : 'Verify series list, season switches, episode launch, and alternate-provider resume all stay connected to the real mock Xtream payloads, then flip rehearsal modes and watch the drill-down refresh live through the shared premium recovery rail plus provider fact grid.',
         favorites: lineSaturated
-          ? 'Verify Favorites keeps saved live items launchable through healthier exact copies first, then same-category rescue when no exact duplicate survives on the healthier provider.'
+          ? 'Verify Favorites keeps saved live items launchable through healthier exact copies first, then same-category rescue when no exact duplicate survives on the healthier provider, while the shared provider fact grid keeps account posture visible.'
           : expiredAccount
             ? 'Verify Favorites does not turn into a dead archive when the active provider expires, and that saved live items can still recover through healthier exact or same-category fallback paths.'
             : authUnstable
               ? 'Verify Favorites preserves saved titles and directs the main recovery action toward the healthiest provider copy while keeping same-category live rescue visible for brittle live rows.'
-              : 'Verify Favorites can launch healthier provider copies of saved live, movie, and series items, and preserve same-category live rescue when the exact channel is missing.',
+              : 'Verify Favorites can launch healthier provider copies of saved live, movie, and series items, preserve same-category live rescue when the exact channel is missing, and keep provider posture visible through the shared fact grid.',
         collections: lineSaturated
           ? 'Verify Collections now presents the same premium recovery rail language as the rest of the shell while curated live items still prefer healthier exact copies first, then same-category rescue when no exact duplicate survives.'
           : expiredAccount
@@ -770,19 +770,19 @@ const server = http.createServer((req, res) => {
               ? 'Verify Collections preserves curated launch intent during auth instability and uses the same shared premium recovery rail to direct the main recovery move toward the healthiest provider copy.'
               : 'Verify Collections uses the same shared premium recovery rail language as Search, Home, Live, Favorites, Continue Watching, and the player shell while keeping healthier exact and same-category rescue launches actionable, including an in-rail deep link for series fallback.',
         continue: lineSaturated
-          ? 'Verify Continue Watching and the player dock protect live resume momentum by surfacing healthier exact copies first, then same-category rescue when the exact live item is unavailable.'
+          ? 'Verify Continue Watching and the player dock protect live resume momentum by surfacing healthier exact copies first, then same-category rescue when the exact live item is unavailable, while the shared provider fact grid keeps account posture visible.'
           : expiredAccount
             ? 'Verify Continue Watching preserves live resume momentum and episode context even when the original provider expires, including same-category live fallback when needed.'
             : authUnstable
               ? 'Verify Continue Watching keeps saved resume context visible during auth instability and still exposes healthier exact or same-category live recovery paths.'
-              : 'Verify Continue Watching can resume on healthier provider copies and keep the same live category available when an exact resume channel is missing.',
+              : 'Verify Continue Watching can resume on healthier provider copies, keep the same live category available when an exact resume channel is missing, and preserve provider posture through the shared fact grid.',
         player: lineSaturated
           ? 'Verify the active player dock can jump directly to the healthiest saved live copy, and fall back to same-category rescue when the exact channel is gone.'
           : expiredAccount
             ? 'Verify the active player dock stops blaming playback alone, preserves current live context, and offers healthier exact or same-category recovery when the original provider expires.'
             : authUnstable
               ? 'Verify the active player dock keeps live context visible during auth instability and still offers a trust-led jump to healthier exact or same-category recovery.'
-              : 'Verify the active player dock uses the same canonical live recovery helper as the main Live browser, with healthier exact copies ranked ahead of same-category rescue.',
+              : 'Verify the active player dock uses the same canonical live recovery helper as the main Live browser, with healthier exact copies ranked ahead of same-category rescue and the same shared provider fact grid keeping account posture visible.',
       },
       scenarioUrls: {
         healthy: `${host}/health`,

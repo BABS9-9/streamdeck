@@ -9,6 +9,7 @@ import { MockProviderHealth, MockProviderScenario, XtreamStream } from '@/lib/ty
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
 
@@ -397,7 +398,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         <h2 className="mt-3 text-3xl font-semibold text-white">{title}</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">{subtitle}</p>
         {activeRecoveryMessage ? (
-          <div className="mt-4">
+          <div className="mt-4 rounded-[1.4rem] border border-amber-400/20 bg-amber-500/10 p-4">
             <ProviderRecoveryRail
               eyebrow="Saved-library recovery"
               title={activeRecoveryMessage}
@@ -411,6 +412,12 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 },
               ]}
             />
+            <ProviderFactGrid summary={activeSummary} className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" />
+          </div>
+        ) : activeSummary ? (
+          <div className="mt-4 rounded-[1.4rem] border border-white/10 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Saved-library provider posture</p>
+            <ProviderFactGrid summary={activeSummary} className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" />
           </div>
         ) : null}
         {mockHealth && surfaceRecoveryPlan && healthiestSavedVariant ? (

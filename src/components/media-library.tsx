@@ -7,6 +7,7 @@ import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getCachedSearchCa
 import { MockProviderHealth, MockProviderScenario, XtreamEpisode, XtreamSeriesInfo, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustStack } from './provider-trust-stack';
 
@@ -549,6 +550,12 @@ export function MediaLibrary({
                   <div className="mt-5 rounded-[1.2rem] border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
                     <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Active provider warning</p>
                     <p className="mt-2 leading-6">{activeRecoveryMessage}</p>
+                    <ProviderFactGrid summary={activeSummary} className="mt-4 grid gap-3 sm:grid-cols-2" />
+                  </div>
+                ) : activeSummary ? (
+                  <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Active provider posture</p>
+                    <ProviderFactGrid summary={activeSummary} className="mt-4 grid gap-3 sm:grid-cols-2" />
                   </div>
                 ) : null}
                 <div className="mt-5 flex flex-wrap gap-3">
@@ -716,6 +723,12 @@ export function MediaLibrary({
                 <div className="mt-5 rounded-[1.2rem] border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Active provider warning</p>
                   <p className="mt-2 leading-6">{activeRecoveryMessage}</p>
+                  <ProviderFactGrid summary={activeSummary} className="mt-4 grid gap-3 sm:grid-cols-2" />
+                </div>
+              ) : activeSummary ? (
+                <div className="mt-5 rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Active provider posture</p>
+                  <ProviderFactGrid summary={activeSummary} className="mt-4 grid gap-3 sm:grid-cols-2" />
                 </div>
               ) : null}
               <div className="mt-5 flex flex-wrap gap-2">

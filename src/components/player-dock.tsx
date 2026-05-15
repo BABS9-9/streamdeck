@@ -6,6 +6,7 @@ import { getLiveCategoryRecovery, getLiveProviderVariants } from '@/lib/provider
 import { useAuthStore } from '@/stores/auth-store';
 import { VideoPlayer } from './video-player';
 import { usePlayerStore } from '@/stores/player-store';
+import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 const formatSeconds = (value?: number) => {
@@ -35,6 +36,7 @@ export function PlayerDock() {
 
   const contentId = currentStream.stream_id ?? currentStream.series_id ?? 0;
   const historyItem = watchHistory.find((item) => item.id === `${currentProviderId}-${contentId}`);
+  const currentProvider = connections.find((connection) => connection.id === currentProviderId) ?? null;
   const isExpanded = dockMode === 'expanded';
   const statusTone = streamHealth.status === 'healthy'
     ? 'bg-emerald-400/15 text-emerald-200'
@@ -154,6 +156,13 @@ export function PlayerDock() {
                   <p className="mt-1 text-sm font-medium text-white">{streamHealth.resolution ?? streamHealth.codec ?? 'Detecting'}</p>
                 </div>
               </div>
+
+              {currentProvider?.lastAuthSummary ? (
+                <div className="rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Active playback provider posture</p>
+                  <ProviderFactGrid summary={currentProvider.lastAuthSummary} className="mt-4 grid gap-3 sm:grid-cols-2" />
+                </div>
+              ) : null}
 
               {currentStream.stream_type === 'live' && (liveRecovery.topVariant || liveRecovery.categoryFallback) ? (
                 liveRecovery.topVariant ? (
