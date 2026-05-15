@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { getHealthiestSavedProvider, getRecoveryActionLabel, getRecoverySupportLabel } from '@/lib/provider-recovery';
 import { useAuthStore } from '@/stores/auth-store';
+import { ProviderFactGrid } from '@/components/provider-fact-grid';
 import { ProviderTrustStack } from '@/components/provider-trust-stack';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -189,19 +190,16 @@ export default function LoginPage() {
               </div>
               {mockHealth.accountProfile ? (
                 <>
-                  <div className="mt-4 grid gap-3 md:grid-cols-4">
-                  {[
-                    ['Account', mockHealth.accountProfile.status],
-                    ['Expiry', mockHealth.accountProfile.expiryLabel],
-                    ['Capacity', `${mockHealth.accountProfile.activeConnections}/${mockHealth.accountProfile.maxConnections} in use`],
-                    ['Timezone', mockHealth.accountProfile.timezone],
-                  ].map(([label, value]) => (
-                    <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
-                      <p className="mt-2 text-sm text-slate-200">{value}</p>
-                    </div>
-                  ))}
-                  </div>
+                  <ProviderFactGrid
+                    summary={{
+                      status: mockHealth.accountProfile.status,
+                      expiresAt: mockHealth.accountProfile.expiryLabel,
+                      activeConnections: mockHealth.accountProfile.activeConnections,
+                      maxConnections: mockHealth.accountProfile.maxConnections,
+                      timezone: mockHealth.accountProfile.timezone,
+                      serverTime: null,
+                    }}
+                  />
                   {mockAccountPressure ? (
                     <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
                       {mockAccountPressure}

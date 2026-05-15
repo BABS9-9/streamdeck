@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { buildProviderFactRows, connectionStatusTone, getProviderAccountPressure } from '@/lib/provider-signals';
+import { connectionStatusTone, getProviderAccountPressure } from '@/lib/provider-signals';
 import { getHealthiestSavedProvider, getProviderSummaryWarning } from '@/lib/provider-recovery';
 import { MockProviderHealth, MockProviderScenario, ProviderAuthSummary } from '@/lib/types';
+import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustStack } from './provider-trust-stack';
 import { useAuthStore } from '@/stores/auth-store';
@@ -30,22 +31,6 @@ const getProviderRecoveryWarning = (summary?: { status?: string | null; activeCo
   });
 };
 
-const renderProviderFacts = (summary?: ProviderAuthSummary) => {
-  if (!summary) {
-    return <p className="mt-3 text-xs text-slate-500">No auth summary yet. Run a validation pass to hydrate provider trust details.</p>;
-  }
-
-  return (
-    <div className="mt-4 grid gap-3 md:grid-cols-4">
-      {buildProviderFactRows(summary).map(([label, value]) => (
-        <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-3">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
-          <p className="mt-2 text-sm text-slate-200">{value}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
 
 export function SettingsPanel() {
   const { connections, activeConnection, setActiveConnection, renameConnection, removeConnection, validateConnection, validateAllConnections, connectionStatus } = useAuthStore();
@@ -162,7 +147,11 @@ export function SettingsPanel() {
                     </button>
                   </div>
 
-                  {renderProviderFacts(connection.lastAuthSummary)}
+                  {connection.lastAuthSummary ? (
+                    <ProviderFactGrid summary={connection.lastAuthSummary} className="mt-4 grid gap-3 md:grid-cols-4" />
+                  ) : (
+                    <p className="mt-3 text-xs text-slate-500">No auth summary yet. Run a validation pass to hydrate provider trust details.</p>
+                  )}
                   {getProviderRecoveryWarning(connection.lastAuthSummary) ? (
                     <div className="mt-3">
                       <ProviderRecoveryRail
@@ -236,19 +225,16 @@ export function SettingsPanel() {
               </div>
 
               {mockHealth.accountProfile ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-4">
-                  {[
-                    ['Account', mockHealth.accountProfile.status],
-                    ['Expiry', mockHealth.accountProfile.expiryLabel],
-                    ['Capacity', `${mockHealth.accountProfile.activeConnections}/${mockHealth.accountProfile.maxConnections} in use`],
-                    ['Timezone', mockHealth.accountProfile.timezone],
-                  ].map(([label, value]) => (
-                    <div key={label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
-                      <p className="mt-2 text-sm text-slate-200">{value}</p>
-                    </div>
-                  ))}
-                </div>
+                <ProviderFactGrid
+                  summary={{
+                    status: mockHealth.accountProfile.status,
+                    expiresAt: mockHealth.accountProfile.expiryLabel,
+                    activeConnections: mockHealth.accountProfile.activeConnections,
+                    maxConnections: mockHealth.accountProfile.maxConnections,
+                    timezone: mockHealth.accountProfile.timezone,
+                    serverTime: null,
+                  }}
+                />
               ) : null}
 
               {mockRecoveryWarning ? (
