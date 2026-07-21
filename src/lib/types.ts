@@ -219,6 +219,15 @@ export type MockProviderManifest = {
     detail: string;
     proof: string[];
   }>;
+  launchMatrix: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    primaryActionLabel: string;
+    primaryActionHref: string;
+    recoveryActionLabel: string;
+    recoveryActionHref: string;
+    operatorPrompt: string;
+  }>;
   demoChecklist: string[];
   capabilityMatrix: Array<{
     label: string;

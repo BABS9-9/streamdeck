@@ -11,6 +11,7 @@ import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderFactGrid } from './provider-fact-grid';
+import { MockProofPanel } from './mock-proof-panel';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
 import { ProviderTrustStack } from './provider-trust-stack';
@@ -391,20 +392,7 @@ export function LiveBrowser() {
                   </ol>
                 </div>
               ) : null}
-              {mockManifest ? (
-                <div className="mt-4 rounded-2xl border border-sky-400/20 bg-black/20 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Live proof surface</p>
-                  <p className="mt-2 text-sm text-white">{mockManifest.projectStatus}</p>
-                  <div className="mt-3 grid gap-3 lg:grid-cols-3">
-                    {mockManifest.supportedScreens.map((screen) => (
-                      <div key={screen.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
-                        <p className="text-sm font-medium text-white">{screen.title}</p>
-                        <p className="mt-1 text-xs text-slate-500">{screen.detail}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+              {mockManifest ? <MockProofPanel manifest={mockManifest} screenId="live" heading="Live proof surface" className="mt-4" /> : null}
             </>
           ) : null}
         </div>

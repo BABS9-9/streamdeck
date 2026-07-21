@@ -10,6 +10,7 @@ import { MockProviderHealth, MockProviderManifest, MockProviderScenario, Normali
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderFactGrid } from './provider-fact-grid';
+import { MockProofPanel } from './mock-proof-panel';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
 import { ProviderTrustStack } from './provider-trust-stack';
@@ -414,28 +415,7 @@ export function HomeDashboard() {
             className="mt-4"
             columnsClassName="grid gap-3 xl:grid-cols-2"
           />
-          {mockManifest ? (
-            <div className="mt-4 rounded-2xl border border-sky-400/20 bg-black/20 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Home proof surface</p>
-                  <p className="mt-2 text-sm text-white">{mockManifest.projectStatus}</p>
-                </div>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-slate-300">
-                  {mockManifest.providerType}
-                </span>
-              </div>
-              <div className="mt-4 grid gap-3 xl:grid-cols-3">
-                {mockManifest.supportedScreens.map((screen) => (
-                  <div key={screen.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-sm font-semibold text-white">{screen.title}</p>
-                    <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-500">{screen.status.replace('-', ' ')}</p>
-                    <p className="mt-2 text-sm text-slate-300">{screen.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          {mockManifest ? <MockProofPanel manifest={mockManifest} screenId="home" heading="Home proof surface" className="mt-4" /> : null}
           <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>

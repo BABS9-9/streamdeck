@@ -7,6 +7,7 @@ import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProv
 import { getHealthiestSavedProvider, getRecoveryActionLabel, getRecoverySupportLabel } from '@/lib/provider-recovery';
 import { useAuthStore } from '@/stores/auth-store';
 import { ProviderFactGrid } from '@/components/provider-fact-grid';
+import { MockProofPanel } from '@/components/mock-proof-panel';
 import { ProviderTrustStack } from '@/components/provider-trust-stack';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -197,17 +198,7 @@ export default function LoginPage() {
                   <p className="mt-2 text-sm text-slate-300">{mockHealth.demoFlows?.live}</p>
                 </div>
               </div>
-              {mockManifest ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  {mockManifest.supportedScreens.map((screen) => (
-                    <div key={screen.id} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{screen.title}</p>
-                      <p className="mt-2 text-sm font-medium text-white">{screen.status.replace('-', ' ')}</p>
-                      <p className="mt-2 text-sm text-slate-300">{screen.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+              {mockManifest ? <MockProofPanel manifest={mockManifest} screenId="login" heading="Login proof surface" className="mt-4" /> : null}
               {mockHealth.accountProfile ? (
                 <>
                   <ProviderFactGrid
@@ -372,7 +363,7 @@ export default function LoginPage() {
             </span>
           </div>
 
-          <form onSubmit={handleConnect} className="mt-8 space-y-5">
+          <form id="connect-form" onSubmit={handleConnect} className="mt-8 space-y-5">
             <label className="block">
               <span className="mb-2 block text-sm text-slate-300">Server URL</span>
               <input value={server} onChange={(event) => setServer(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-white outline-none placeholder:text-slate-500 focus:border-violet-400" placeholder="http://provider.example.com" />

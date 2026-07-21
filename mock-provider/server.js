@@ -559,6 +559,41 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       ],
     },
   ],
+  launchMatrix: [
+    {
+      screenId: 'login',
+      title: 'Login launch contract',
+      primaryActionLabel: 'Use mock credentials',
+      primaryActionHref: '#connect-form',
+      recoveryActionLabel: 'Recover into Home',
+      recoveryActionHref: '/home',
+      operatorPrompt: scenario === 'healthy'
+        ? 'Start by loading the sample credentials, validate once, and move into Home without leaving the shell.'
+        : 'Use the same saved-login shell, but make the recovery move obvious before the user mistakes trust failure for a bad stream.',
+    },
+    {
+      screenId: 'home',
+      title: 'Home launch contract',
+      primaryActionLabel: 'Open Home rails',
+      primaryActionHref: '/home',
+      recoveryActionLabel: 'Open Live browser',
+      recoveryActionHref: '/live',
+      operatorPrompt: scenario === 'healthy'
+        ? 'Home should prove featured browse, provider trust, and fast launch paths from one premium surface.'
+        : 'Keep counts, rails, and trust visible while recovery stays one tap away instead of burying the rescue move in Settings.',
+    },
+    {
+      screenId: 'live',
+      title: 'Live launch contract',
+      primaryActionLabel: 'Open Live browser',
+      primaryActionHref: '/live',
+      recoveryActionLabel: 'Return to Home',
+      recoveryActionHref: '/home',
+      operatorPrompt: scenario === 'healthy'
+        ? 'Live should prove category surf speed, preview confidence, and inline NOW/NEXT without a guide-first detour.'
+        : 'Keep the same browse context alive while the recovery path stays attached to the card-level launch flow.',
+    },
+  ],
   demoChecklist: [
     'Connect with test/test on localhost:3579',
     'Open Home and verify hero counts plus provider fact grid',
