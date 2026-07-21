@@ -535,6 +535,8 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Switch scenarios without leaving the screen',
         'Jump to the healthiest saved provider when trust degrades',
       ],
+      verificationTarget: 'Saved-provider login has to feel safe, deliberate, and one move away from Home.',
+      successSignal: 'The user can connect or switch providers without asking what to do next.',
     },
     {
       id: 'home',
@@ -546,6 +548,8 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
       ],
+      verificationTarget: 'Home needs to prove this is a product surface, not a provider admin screen.',
+      successSignal: 'Hero context, quick rails, and trust cues stay visible together on the first paint.',
     },
     {
       id: 'live',
@@ -557,6 +561,8 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
       ],
+      verificationTarget: 'Live browsing should feel fast enough that users stop thinking about the provider.',
+      successSignal: 'The user can filter, preview, and recover from one channel card without losing browse context.',
     },
   ],
   launchMatrix: [
@@ -570,6 +576,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       operatorPrompt: scenario === 'healthy'
         ? 'Start by loading the sample credentials, validate once, and move into Home without leaving the shell.'
         : 'Use the same saved-login shell, but make the recovery move obvious before the user mistakes trust failure for a bad stream.',
+      verificationSteps: [
+        'Load the sample credentials or a saved connection',
+        'Validate once and confirm trust context stays visible',
+        'Move into Home without dropping the active provider story',
+      ],
     },
     {
       screenId: 'home',
@@ -581,6 +592,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       operatorPrompt: scenario === 'healthy'
         ? 'Home should prove featured browse, provider trust, and fast launch paths from one premium surface.'
         : 'Keep counts, rails, and trust visible while recovery stays one tap away instead of burying the rescue move in Settings.',
+      verificationSteps: [
+        'Confirm hero counts and provider facts render together',
+        'Use a quick rail without leaving the product narrative',
+        'Verify scenario refresh keeps the same Home context alive',
+      ],
     },
     {
       screenId: 'live',
@@ -592,8 +608,92 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       operatorPrompt: scenario === 'healthy'
         ? 'Live should prove category surf speed, preview confidence, and inline NOW/NEXT without a guide-first detour.'
         : 'Keep the same browse context alive while the recovery path stays attached to the card-level launch flow.',
+      verificationSteps: [
+        'Open a category and confirm the grid stays fast',
+        'Preview a channel without a full navigation jump',
+        'Use the recovery move without losing the selected browse context',
+      ],
     },
   ],
+  proofJourney: [
+    {
+      label: 'Login first',
+      detail: 'Start with credentials, trust, and saved-provider switching.',
+      href: '#connect-form',
+    },
+    {
+      label: 'Home second',
+      detail: 'Prove hero context, quick rails, and provider posture together.',
+      href: '/home',
+    },
+    {
+      label: 'Live third',
+      detail: 'Finish on category surf speed, preview, and fallback launch.',
+      href: '/live',
+    },
+  ],
+  scenarioSpotlight: {
+    title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
+    summary: scenario === 'healthy'
+      ? 'The happy path should walk cleanly from saved-provider login into Home and then into Live without any dead-end utility screens.'
+      : scenario === 'degradedLive'
+        ? 'This rehearsal is about keeping Home and Login confident while Live explains degraded browse conditions without pretending the whole provider disappeared.'
+        : scenario === 'degradedSearch'
+          ? 'This rehearsal is about preserving the product shell while catalog-heavy surfaces lose depth and recovery messaging has to stay specific.'
+          : scenario === 'degradedEpg'
+            ? 'This rehearsal is about letting guide data fail quietly while the launch path, preview flow, and trust shell stay intact.'
+            : scenario === 'lineSaturated'
+              ? 'This rehearsal is about showing account pressure before playback gets blamed, while keeping healthier-provider recovery obvious.'
+              : scenario === 'expiredAccount'
+                ? 'This rehearsal is about keeping the saved-provider story understandable even when fresh Xtream requests are blocked.'
+                : 'This rehearsal is about holding cached context in place while auth confidence drops and the next move stays explicit.',
+    surfaces: scenario === 'degradedSearch'
+      ? ['login', 'home']
+      : scenario === 'degradedLive'
+        ? ['home', 'live']
+        : ['login', 'home', 'live'],
+    checks: scenario === 'healthy'
+      ? [
+        'Login should hand the user into Home without any admin-panel detour.',
+        'Home should make the Live launch path obvious from the first screenful.',
+        'Live should keep preview plus NOW/NEXT attached to the browsing flow.',
+      ]
+      : scenario === 'degradedLive'
+        ? [
+          'Login still looks trustworthy because auth is not the problem.',
+          'Home still carries provider context and the rescue move forward.',
+          'Live explains the degraded catalog state and keeps a recovery action nearby.',
+        ]
+        : scenario === 'degradedSearch'
+          ? [
+            'Login and Home should still feel launch-ready.',
+            'The shell should explain which deeper catalogs are degraded instead of going vague.',
+            'Recovery copy should stay product-facing, not debug-facing.',
+          ]
+          : scenario === 'degradedEpg'
+            ? [
+              'Guide chips can degrade, but launch actions should not disappear.',
+              'Home should preserve counts and hero context while guide copy downgrades.',
+              'Live should keep preview-first browsing active even when NOW/NEXT goes missing.',
+            ]
+            : scenario === 'lineSaturated'
+              ? [
+                'Trust warnings should appear before playback gets blamed.',
+                'Home and Live should keep the browse flow intact while capacity risk is visible.',
+                'The healthiest saved-provider switch should feel like part of the product, not support advice.',
+              ]
+              : scenario === 'expiredAccount'
+                ? [
+                  'Login has to say the account is expired plainly.',
+                  'Home should keep cached product context alive alongside renewal guidance.',
+                  'Live should stop treating the failure as a stream-only issue.',
+                ]
+                : [
+                  'Saved-provider context should stay visible while auth revalidation fails.',
+                  'Home and Live should keep usable cached context on screen.',
+                  'Retry and switch-provider actions should stay explicit on the same surface.',
+                ],
+  },
   demoChecklist: [
     'Connect with test/test on localhost:3579',
     'Open Home and verify hero counts plus provider fact grid',

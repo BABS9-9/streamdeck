@@ -218,6 +218,8 @@ export type MockProviderManifest = {
     status: 'ready' | 'rehearsal-friendly';
     detail: string;
     proof: string[];
+    verificationTarget: string;
+    successSignal: string;
   }>;
   launchMatrix: Array<{
     screenId: 'login' | 'home' | 'live';
@@ -227,7 +229,19 @@ export type MockProviderManifest = {
     recoveryActionLabel: string;
     recoveryActionHref: string;
     operatorPrompt: string;
+    verificationSteps: string[];
   }>;
+  proofJourney: Array<{
+    label: string;
+    detail: string;
+    href: string;
+  }>;
+  scenarioSpotlight: {
+    title: string;
+    summary: string;
+    surfaces: Array<'login' | 'home' | 'live'>;
+    checks: string[];
+  };
   demoChecklist: string[];
   capabilityMatrix: Array<{
     label: string;
