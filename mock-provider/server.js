@@ -502,6 +502,14 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   providerType: 'Xtream Codes rehearsal adapter',
   projectStatus: 'Login + Home + Live proof scaffolded and demo-ready in the shell',
   activeScenario: scenario,
+  commandCenter: {
+    title: 'Shared launch ops console',
+    summary: scenario === 'healthy'
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so the launch path, trust path, and recovery path stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same next move and recovery story instead of drifting into surface-specific copy.',
+    nextMoveLabel: scenario === 'healthy' ? 'Connect -> Home -> Live' : 'Keep context, then recover fast',
+    failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
+  },
   sampleCredentials: {
     server: host,
     username: 'test',
@@ -630,6 +638,38 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       label: 'Live third',
       detail: 'Finish on category surf speed, preview, and fallback launch.',
       href: '/live',
+    },
+  ],
+  surfacePlaybooks: [
+    {
+      screenId: 'login',
+      readinessLabel: scenario === 'healthy' ? 'Launch ready' : scenario === 'expiredAccount' || scenario === 'authUnstable' ? 'Trust recovery in play' : 'Watch trust before launch',
+      readinessTone: scenario === 'healthy' ? 'ready' : scenario === 'expiredAccount' || scenario === 'authUnstable' ? 'recover' : 'watch',
+      operatorGoal: 'Make the first move feel safe, obvious, and one step away from Home.',
+      userPromise: scenario === 'healthy'
+        ? 'The user can load sample credentials or a saved provider and move forward without feeling like they entered a setup utility.'
+        : 'The user should understand the provider risk immediately and still see the fastest safe move without leaving the login shell.',
+      commandChips: ['Saved providers', 'Trust facts', 'Recover to Home'],
+    },
+    {
+      screenId: 'home',
+      readinessLabel: scenario === 'healthy' ? 'Browse ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'Fallback browse active' : 'Recovery browse active',
+      readinessTone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      operatorGoal: 'Keep the product story intact while trust, counts, and launch rails stay visible together.',
+      userPromise: scenario === 'healthy'
+        ? 'The user lands on a product surface with featured context, quick rails, and provider posture on the first paint.'
+        : 'The user keeps the same Home context while the shell explains what degraded and how to recover without bouncing into Settings.',
+      commandChips: ['Hero counts', 'Quick rails', 'Same-category rescue'],
+    },
+    {
+      screenId: 'live',
+      readinessLabel: scenario === 'healthy' ? 'Surf ready' : scenario === 'degradedLive' ? 'Catalog fallback active' : 'Recovery surf active',
+      readinessTone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' ? 'watch' : 'recover',
+      operatorGoal: 'Keep channel-surf momentum alive while preview, NOW/NEXT, and fallback launches stay attached to the card.',
+      userPromise: scenario === 'healthy'
+        ? 'The user can filter, preview, and play fast enough to stop thinking about the provider.'
+        : 'The user should keep their browsing context while the shell makes the healthiest exact copy or same-category rescue obvious.',
+      commandChips: ['Preview first', 'NOW / NEXT', 'On-card recovery'],
     },
   ],
   scenarioSpotlight: {

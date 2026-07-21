@@ -202,6 +202,12 @@ export type MockProviderManifest = {
   providerType: string;
   projectStatus: string;
   activeScenario: MockProviderScenario;
+  commandCenter: {
+    title: string;
+    summary: string;
+    nextMoveLabel: string;
+    failureModeLabel: string;
+  };
   sampleCredentials: {
     server: string;
     username: string;
@@ -235,6 +241,14 @@ export type MockProviderManifest = {
     label: string;
     detail: string;
     href: string;
+  }>;
+  surfacePlaybooks: Array<{
+    screenId: 'login' | 'home' | 'live';
+    readinessLabel: string;
+    readinessTone: 'ready' | 'watch' | 'recover';
+    operatorGoal: string;
+    userPromise: string;
+    commandChips: string[];
   }>;
   scenarioSpotlight: {
     title: string;

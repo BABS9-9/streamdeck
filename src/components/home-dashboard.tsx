@@ -9,8 +9,8 @@ import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, g
 import { MockProviderHealth, MockProviderManifest, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { MockOperationsConsole } from './mock-operations-console';
 import { ProviderFactGrid } from './provider-fact-grid';
-import { MockProofPanel } from './mock-proof-panel';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
 import { ProviderTrustStack } from './provider-trust-stack';
@@ -41,16 +41,6 @@ const emptyCacheState: CacheState = {
   mode: 'live',
   message: null,
   updatedAt: null,
-};
-
-const scenarioLabels: Record<MockProviderScenario, string> = {
-  healthy: 'Healthy',
-  degradedSearch: 'Degraded search',
-  degradedLive: 'Degraded live',
-  degradedEpg: 'Degraded guide',
-  lineSaturated: 'Lines maxed',
-  expiredAccount: 'Expired account',
-  authUnstable: 'Auth unstable',
 };
 
 export function HomeDashboard() {
@@ -415,98 +405,17 @@ export function HomeDashboard() {
             className="mt-4"
             columnsClassName="grid gap-3 xl:grid-cols-2"
           />
-          {mockManifest ? <MockProofPanel manifest={mockManifest} screenId="home" heading="Home proof surface" className="mt-4" /> : null}
-          <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Mock rehearsal modes</p>
-                <p className="mt-2 text-sm text-slate-300">The adapter can now simulate healthy, degraded-search, degraded-live, degraded-guide, and auth-unstable behavior so Home can rehearse fallback messaging before real providers misbehave, and this surface now refreshes in place plus revalidates saved mock-provider account truth as soon as the rehearsal mode changes.</p>
-              </div>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-violet-200">
-                Active: {mockHealth.healthScenarios?.[mockHealth.activeScenario]?.label ?? mockHealth.activeScenario}
-              </span>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {Object.entries(mockHealth.endpointHealth || {}).map(([key, value]) => (
-                <span key={key} className={`rounded-full border px-3 py-2 text-[11px] uppercase tracking-[0.22em] ${value === 'healthy' ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>
-                  {key} · {value}
-                </span>
-              ))}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(Object.keys(scenarioLabels) as MockProviderScenario[]).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => applyScenario(key)}
-                  className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${scenario === key ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/20 text-slate-300 hover:bg-white/5'}`}
-                >
-                  {scenarioRefreshing && scenario === key ? `Applying ${scenarioLabels[key]}` : scenarioLabels[key]}
-                </button>
-              ))}
-            </div>
-            {mockHealth.scenarioUrls ? (
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
-                {(Object.entries(mockHealth.scenarioUrls) as Array<[MockProviderScenario, string]>).map(([key, url]) => (
-                  <a key={key} href={url} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-black/20 px-3 py-2 hover:bg-white/5">
-                    {scenarioLabels[key]} health
-                  </a>
-                ))}
-              </div>
-            ) : null}
-            {scenarioRefreshing ? (
-              <div className="mt-4 rounded-2xl border border-violet-400/20 bg-black/20 p-4 text-sm text-violet-100">
-                Applying {scenario.replace(/([A-Z])/g, ' $1').toLowerCase()} rehearsal and refreshing Home in place.
-              </div>
-            ) : null}
-            <div className="mt-4 grid gap-3 xl:grid-cols-2">
-              {Object.entries(mockHealth.healthScenarios || {}).map(([key, scenario]) => (
-                <div key={key} className={`rounded-2xl border p-4 ${mockHealth.activeScenario === key ? 'border-violet-400/40 bg-violet-500/10' : 'border-white/10 bg-white/5'}`}>
-                  <p className="text-sm font-semibold text-white">{scenario.label}</p>
-                  <p className="mt-2 text-sm text-slate-400">{scenario.summary}</p>
-                  <p className="mt-3 text-xs text-slate-500">{scenario.appImpact}</p>
-                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                    <div className="space-y-2">
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Expected UX</p>
-                      <ul className="space-y-1 text-xs text-slate-400">
-                        {scenario.expectedUx.map((item) => <li key={item}>• {item}</li>)}
-                      </ul>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Verify now</p>
-                      <ul className="space-y-1 text-xs text-slate-400">
-                        {scenario.verificationSteps.map((item) => <li key={item}>• {item}</li>)}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {mockHealth.recoveryActions?.length ? (
-              <div className="mt-4 rounded-2xl border border-amber-400/20 bg-black/20 p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Recovery actions</p>
-                <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                  {mockHealth.recoveryActions.map((item) => <li key={item}>• {item}</li>)}
-                </ul>
-              </div>
-            ) : null}
-            {mockHealth.recommendedDemoSequence?.length ? (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Recommended rehearsal path</p>
-                <ol className="mt-3 space-y-2 text-sm text-slate-300">
-                  {mockHealth.recommendedDemoSequence.map((item, index) => <li key={item}>{index + 1}. {item}</li>)}
-                </ol>
-              </div>
-            ) : null}
-            {mockManifest?.demoChecklist?.length ? (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Home demo checklist</p>
-                <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                  {mockManifest.demoChecklist.slice(0, 3).map((item) => <li key={item}>• {item}</li>)}
-                </ul>
-              </div>
-            ) : null}
-          </div>
+          <MockOperationsConsole
+            health={mockHealth}
+            manifest={mockManifest}
+            screenId="home"
+            title="Mock rehearsal modes"
+            intro="Home now shares one adapter-driven operations shell with Login and Live, so rehearsals refresh in place and keep the same launch and recovery language."
+            scenario={scenario}
+            scenarioRefreshing={scenarioRefreshing}
+            onApplyScenario={applyScenario}
+            className="mt-4"
+          />
         </section>
       ) : null}
 
