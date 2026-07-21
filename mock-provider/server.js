@@ -496,6 +496,85 @@ const buildRecoveryActions = (scenario = 'healthy') => {
   ];
 };
 
+const buildAdapterManifest = (scenario = 'healthy') => ({
+  adapterId: 'mock-xtream-codes',
+  providerName: 'StreamDeck Mock Xtream Provider',
+  providerType: 'Xtream Codes rehearsal adapter',
+  projectStatus: 'Login + Home + Live proof scaffolded and demo-ready in the shell',
+  activeScenario: scenario,
+  sampleCredentials: {
+    server: host,
+    username: 'test',
+    password: 'test',
+  },
+  differentiators: [
+    {
+      title: 'Trust-first login',
+      detail: 'Login can connect, validate, save, and rehearse failure without dropping the provider context.',
+      surface: 'login',
+    },
+    {
+      title: 'Home with provider truth',
+      detail: 'Home combines hero browse rails, inline guide context, and saved-provider recovery instead of hiding account risk in Settings.',
+      surface: 'home',
+    },
+    {
+      title: 'Live TV surf flow',
+      detail: 'Live keeps filtering, preview, NOW/NEXT, and fallback launch paths in one browser instead of forcing guide-first detours.',
+      surface: 'live',
+    },
+  ],
+  supportedScreens: [
+    {
+      id: 'login',
+      title: 'Login shell',
+      status: 'ready',
+      detail: 'Supports sample credentials, saved-connection switching, scenario rehearsal, and trust-led recovery into Home.',
+      proof: [
+        'Connect with the local mock credentials',
+        'Switch scenarios without leaving the screen',
+        'Jump to the healthiest saved provider when trust degrades',
+      ],
+    },
+    {
+      id: 'home',
+      title: 'Home dashboard',
+      status: 'ready',
+      detail: 'Shows featured live browse, provider trust cockpit, quick-launch rails, and mock-provider recovery guidance.',
+      proof: [
+        'Featured live card launches playback directly',
+        'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
+        'Scenario toggles refresh Home in place',
+      ],
+    },
+    {
+      id: 'live',
+      title: 'Live browser',
+      status: 'rehearsal-friendly',
+      detail: 'Delivers category browse, inline guide, preview fallback, favorites, and healthier-provider recovery from each channel card.',
+      proof: [
+        'Filter by category and search without leaving the page',
+        'Hover/focus updates the preview player',
+        'Exact-provider fallback or same-category rescue stays on-card',
+      ],
+    },
+  ],
+  demoChecklist: [
+    'Connect with test/test on localhost:3579',
+    'Open Home and verify hero counts plus provider fact grid',
+    'Open Live and confirm preview + NOW/NEXT + provider fallback actions',
+    'Flip to a degraded scenario and confirm the shell keeps context instead of blanking out',
+  ],
+  capabilityMatrix: [
+    { label: 'Live groups', value: String(liveCategories.length) },
+    { label: 'Live channels', value: String(liveStreams.length) },
+    { label: 'Movies', value: String(vodStreams.length) },
+    { label: 'Series', value: String(series.length) },
+    { label: 'Scenarios', value: Object.keys(scenarioLabels).length.toString() },
+    { label: 'Primary surfaces', value: 'Login, Home, Live' },
+  ],
+});
+
 const sendJson = (res, data) => {
   res.writeHead(200, {
     'Content-Type': 'application/json',
@@ -800,6 +879,10 @@ const server = http.createServer((req, res) => {
       sampleVodInfo: `${host}/player_api.php?username=test&password=test&action=get_vod_info&vod_id=5000`,
       sampleSeriesInfo: `${host}/player_api.php?username=test&password=test&action=get_series_info&series_id=7001`,
     });
+  }
+
+  if (path === '/adapter/manifest') {
+    return sendJson(res, buildAdapterManifest(scenario));
   }
 
   res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

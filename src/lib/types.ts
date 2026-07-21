@@ -196,6 +196,36 @@ export type MockProviderCategorySummary = {
 
 export type MockProviderScenario = 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' | 'expiredAccount' | 'authUnstable';
 
+export type MockProviderManifest = {
+  adapterId: string;
+  providerName: string;
+  providerType: string;
+  projectStatus: string;
+  activeScenario: MockProviderScenario;
+  sampleCredentials: {
+    server: string;
+    username: string;
+    password: string;
+  };
+  differentiators: Array<{
+    title: string;
+    detail: string;
+    surface: 'login' | 'home' | 'live';
+  }>;
+  supportedScreens: Array<{
+    id: 'login' | 'home' | 'live';
+    title: string;
+    status: 'ready' | 'rehearsal-friendly';
+    detail: string;
+    proof: string[];
+  }>;
+  demoChecklist: string[];
+  capabilityMatrix: Array<{
+    label: string;
+    value: string;
+  }>;
+};
+
 export type MockProviderHealth = {
   ok: boolean;
   service: string;

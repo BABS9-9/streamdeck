@@ -1,5 +1,5 @@
 import { storage } from './storage';
-import { MockProviderHealth, MockProviderScenario, XtreamCredentials } from './types';
+import { MockProviderHealth, MockProviderManifest, MockProviderScenario, XtreamCredentials } from './types';
 
 const MOCK_HOST = 'http://localhost:3579';
 const EVENT_NAME = 'streamdeck:mock-scenario-change';
@@ -57,4 +57,30 @@ export async function fetchMockProviderHealth(
   }
 
   return response.json() as Promise<MockProviderHealth>;
+}
+
+export async function fetchMockProviderManifest(
+  serverOrCredentials?: string | XtreamCredentials | null,
+  scenario?: MockProviderScenario
+) {
+  const server = typeof serverOrCredentials === 'string'
+    ? serverOrCredentials
+    : serverOrCredentials?.server;
+
+  if (!isMockProviderServer(server)) return null;
+
+  const activeScenario = scenario || getSelectedMockProviderScenario();
+  const manifestUrl = new URL('/adapter/manifest', MOCK_HOST);
+  if (activeScenario !== 'healthy') manifestUrl.searchParams.set('scenario', activeScenario);
+
+  const response = await fetch(manifestUrl.toString(), {
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Mock provider manifest failed: ${response.status}`);
+  }
+
+  return response.json() as Promise<MockProviderManifest>;
 }

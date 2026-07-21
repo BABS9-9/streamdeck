@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { getHealthiestSavedProvider, getRecoveryActionLabel, getRecoverySupportLabel } from '@/lib/provider-recovery';
 import { useAuthStore } from '@/stores/auth-store';
 import { ProviderFactGrid } from '@/components/provider-fact-grid';
@@ -62,6 +62,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState('test');
   const [password, setPassword] = useState('test');
   const [mockHealth, setMockHealth] = useState(null);
+  const [mockManifest, setMockManifest] = useState(null);
   const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
 
@@ -100,6 +101,14 @@ export default function LoginPage() {
           setMockHealth(null);
           setScenarioRefreshing(false);
         }
+      });
+
+    fetchMockProviderManifest(MOCK_SERVER, scenario)
+      .then((manifest) => {
+        if (!cancelled) setMockManifest(manifest);
+      })
+      .catch(() => {
+        if (!cancelled) setMockManifest(null);
       });
 
     return () => {
@@ -144,14 +153,14 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {[
-              ['Multi-provider ready', 'Saved connections live locally and can be switched instantly.'],
-              ['Inline smart guide', 'Channel cards show NOW and NEXT without a separate guide screen.'],
-              ['Playback health HUD', 'Bitrate, buffer, and video telemetry surface in the live browser.'],
-            ].map(([title, body]) => (
+            {(mockManifest?.differentiators || [
+              { title: 'Multi-provider ready', detail: 'Saved connections live locally and can be switched instantly.' },
+              { title: 'Inline smart guide', detail: 'Channel cards show NOW and NEXT without a separate guide screen.' },
+              { title: 'Playback health HUD', detail: 'Bitrate, buffer, and video telemetry surface in the live browser.' },
+            ]).map(({ title, detail }) => (
               <div key={title} className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
                 <p className="text-sm font-semibold text-white">{title}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">{body}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
               </div>
             ))}
           </div>
@@ -188,6 +197,17 @@ export default function LoginPage() {
                   <p className="mt-2 text-sm text-slate-300">{mockHealth.demoFlows?.live}</p>
                 </div>
               </div>
+              {mockManifest ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {mockManifest.supportedScreens.map((screen) => (
+                    <div key={screen.id} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{screen.title}</p>
+                      <p className="mt-2 text-sm font-medium text-white">{screen.status.replace('-', ' ')}</p>
+                      <p className="mt-2 text-sm text-slate-300">{screen.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               {mockHealth.accountProfile ? (
                 <>
                   <ProviderFactGrid
@@ -328,6 +348,14 @@ export default function LoginPage() {
                     </ol>
                   </div>
                 ) : null}
+                {mockManifest?.demoChecklist?.length ? (
+                  <div className="mt-4 rounded-2xl border border-sky-400/20 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Phase 1 proof</p>
+                    <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                      {mockManifest.demoChecklist.map((step) => <li key={step}>• {step}</li>)}
+                    </ul>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -388,6 +416,16 @@ export default function LoginPage() {
               <p className="mt-3 text-xs text-violet-200">
                 Active rehearsal mode: {activeScenario.label}. {activeScenario.appImpact}
               </p>
+            ) : null}
+            {mockManifest?.capabilityMatrix?.length ? (
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                {mockManifest.capabilityMatrix.map((item) => (
+                  <div key={item.label} className="rounded-xl border border-white/10 bg-black/20 px-3 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                    <p className="mt-2 text-sm text-white">{item.value}</p>
+                  </div>
+                ))}
+              </div>
             ) : null}
           </div>
 

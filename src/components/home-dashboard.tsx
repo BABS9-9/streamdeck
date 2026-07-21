@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { getProviderAccountPressure } from '@/lib/provider-signals';
 import { buildProviderVariantsIndex, getAlternateProviderVariants, getHealthiestSavedProvider, getLiveCategoryRecovery, getProviderTrustDisplay, getRecoveryActionLabel, getRecoverySupportLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
-import { MockProviderHealth, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderManifest, MockProviderScenario, NormalizedEpg, ProviderHomeSnapshot, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderFactGrid } from './provider-fact-grid';
@@ -66,6 +66,7 @@ export function HomeDashboard() {
   const [liveNow, setLiveNow] = useState<Record<number, NormalizedEpg>>({});
   const [cacheState, setCacheState] = useState<CacheState>(emptyCacheState);
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [mockManifest, setMockManifest] = useState<MockProviderManifest | null>(null);
   const [guideMessage, setGuideMessage] = useState<string | null>(null);
   const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
@@ -92,6 +93,14 @@ export function HomeDashboard() {
       })
       .catch(() => {
         if (!cancelled) setMockHealth(null);
+      });
+
+    fetchMockProviderManifest(activeConnection, scenario)
+      .then((manifest) => {
+        if (!cancelled) setMockManifest(manifest);
+      })
+      .catch(() => {
+        if (!cancelled) setMockManifest(null);
       });
 
     const applySnapshot = (snapshot: ProviderHomeSnapshot, mode: CacheState['mode'], message: string | null) => {
@@ -405,6 +414,28 @@ export function HomeDashboard() {
             className="mt-4"
             columnsClassName="grid gap-3 xl:grid-cols-2"
           />
+          {mockManifest ? (
+            <div className="mt-4 rounded-2xl border border-sky-400/20 bg-black/20 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Home proof surface</p>
+                  <p className="mt-2 text-sm text-white">{mockManifest.projectStatus}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-slate-300">
+                  {mockManifest.providerType}
+                </span>
+              </div>
+              <div className="mt-4 grid gap-3 xl:grid-cols-3">
+                {mockManifest.supportedScreens.map((screen) => (
+                  <div key={screen.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-sm font-semibold text-white">{screen.title}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-500">{screen.status.replace('-', ' ')}</p>
+                    <p className="mt-2 text-sm text-slate-300">{screen.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -485,6 +516,14 @@ export function HomeDashboard() {
                 <ol className="mt-3 space-y-2 text-sm text-slate-300">
                   {mockHealth.recommendedDemoSequence.map((item, index) => <li key={item}>{index + 1}. {item}</li>)}
                 </ol>
+              </div>
+            ) : null}
+            {mockManifest?.demoChecklist?.length ? (
+              <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Home demo checklist</p>
+                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                  {mockManifest.demoChecklist.slice(0, 3).map((item) => <li key={item}>• {item}</li>)}
+                </ul>
               </div>
             ) : null}
           </div>

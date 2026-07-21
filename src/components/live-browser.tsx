@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { getProviderAccountPressure } from '@/lib/provider-signals';
 import { buildLiveVariantKey, buildProviderVariantsIndex, getHealthiestSavedProvider, getLiveCategoryRecovery, getRecoveryActionLabel, getRecoverySupportLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
-import { MockProviderHealth, MockProviderScenario, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderManifest, MockProviderScenario, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
@@ -57,6 +57,7 @@ export function LiveBrowser() {
   const [previewState, setPreviewState] = useState<'idle' | 'loading' | 'playing' | 'buffering' | 'error'>('idle');
   const [showPreviewFallback, setShowPreviewFallback] = useState(false);
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [mockManifest, setMockManifest] = useState<MockProviderManifest | null>(null);
   const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
   const [providerVariants, setProviderVariants] = useState<Record<string, ProviderVariant[]>>({});
@@ -87,6 +88,14 @@ export function LiveBrowser() {
       })
       .catch(() => {
         if (!cancelled) setMockHealth(null);
+      });
+
+    fetchMockProviderManifest(activeConnection, scenario)
+      .then((manifest) => {
+        if (!cancelled) setMockManifest(manifest);
+      })
+      .catch(() => {
+        if (!cancelled) setMockManifest(null);
       });
 
     setLoading(true);
@@ -382,6 +391,20 @@ export function LiveBrowser() {
                   </ol>
                 </div>
               ) : null}
+              {mockManifest ? (
+                <div className="mt-4 rounded-2xl border border-sky-400/20 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Live proof surface</p>
+                  <p className="mt-2 text-sm text-white">{mockManifest.projectStatus}</p>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                    {mockManifest.supportedScreens.map((screen) => (
+                      <div key={screen.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                        <p className="text-sm font-medium text-white">{screen.title}</p>
+                        <p className="mt-1 text-xs text-slate-500">{screen.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </>
           ) : null}
         </div>
@@ -498,6 +521,18 @@ export function LiveBrowser() {
                 </div>
               ) : null}
             </>
+          ) : null}
+          {mockManifest?.demoChecklist?.length ? (
+            <div className="mt-4 rounded-[1.2rem] border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Live proof checklist</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {mockManifest.demoChecklist.slice(1, 4).map((item) => (
+                  <span key={item} className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
           ) : null}
         </div>
 
