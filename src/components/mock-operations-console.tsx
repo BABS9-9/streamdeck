@@ -46,6 +46,7 @@ export function MockOperationsConsole({
   const playbook = manifest?.surfacePlaybooks.find((item) => item.screenId === screenId);
   const scorecard = manifest?.surfaceScorecards.find((item) => item.screenId === screenId);
   const exitCriteria = manifest?.surfaceExitCriteria.find((item) => item.screenId === screenId);
+  const handoff = manifest?.surfaceHandoffs.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -151,6 +152,32 @@ export function MockOperationsConsole({
             <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sky-100">
               <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Recovery move</p>
               <p className="mt-2 text-sm text-white">{exitCriteria.recoveryMove}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {handoff ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{handoff.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{handoff.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              {handoff.confidenceLabel}
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-emerald-100">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200">Carry forward</p>
+              <ul className="mt-3 space-y-2 text-sm text-white">
+                {handoff.carriesForward.map((item) => <li key={item}>• {item}</li>)}
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sky-100">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{handoff.fallbackLabel}</p>
+              <p className="mt-2 text-sm text-white">{handoff.fallbackDetail}</p>
             </div>
           </div>
         </div>

@@ -676,6 +676,60 @@ const buildSurfaceExitCriteria = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceHandoffs = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login handoff map',
+    summary: scenario === 'healthy'
+      ? 'Login should hand saved trust context, sample credentials, and the active provider story into Home without feeling like a reset.'
+      : 'Even in degraded trust states, Login should preserve what the user already chose and explain the safest next handoff instead of wiping context.',
+    carriesForward: [
+      'Saved provider identity and credential intent stay visible before and after validation.',
+      'Trust posture, expiry pressure, and line-capacity warnings travel with the connection into Home.',
+      'Scenario rehearsal state survives the jump so Home tells the same recovery story.',
+    ],
+    confidenceLabel: scenario === 'healthy' ? 'Safe handoff to Home' : 'Trust-led handoff in play',
+    fallbackLabel: scenario === 'healthy' ? 'Fallback handoff' : 'Recovery handoff',
+    fallbackDetail: scenario === 'healthy'
+      ? 'If the active mock provider stops feeling trustworthy, Home should open on the healthiest saved provider without forcing a fresh login ritual.'
+      : 'If validation degrades, keep Login anchored, preserve the selected provider context, and route the user into Home on the healthiest safe provider with the risk already named.',
+  },
+  {
+    screenId: 'home',
+    title: 'Home handoff map',
+    summary: scenario === 'healthy'
+      ? 'Home should carry hero context, provider truth, and quick-launch intent directly into Live so the next step feels like a premium browse continuation.'
+      : 'When Home is rehearsing degraded conditions, the user should keep their browse intent, trust context, and rescue path before moving deeper.',
+    carriesForward: [
+      'Featured counts, quick rails, and selected provider posture stay attached to the next launch.',
+      'Saved-provider recovery options remain visible before the user commits to Live playback.',
+      'Guide softness or provider pressure should downgrade the copy, not delete the browse story.',
+    ],
+    confidenceLabel: scenario === 'healthy' ? 'Safe handoff to Live' : 'Browse context preserved',
+    fallbackLabel: scenario === 'healthy' ? 'Fallback handoff' : 'Recovery handoff',
+    fallbackDetail: scenario === 'healthy'
+      ? 'If the active provider weakens, Home should launch the same intent through the healthiest provider or same-category rescue without collapsing into a settings detour.'
+      : 'If counts, guide data, or account trust degrade, keep the rails on screen and move the user into Live only through a clearly named healthiest-provider or same-category rescue path.',
+  },
+  {
+    screenId: 'live',
+    title: 'Live handoff map',
+    summary: scenario === 'healthy'
+      ? 'Live should preserve category focus, preview confidence, and NOW/NEXT context while handing the user into playback from the same card.'
+      : 'Under degraded browse or trust pressure, Live should keep category momentum intact and explain the safest recovery handoff before the user loses the surf flow.',
+    carriesForward: [
+      'Selected category, search filter, and highlighted channel stay in place during preview and launch.',
+      'Provider trust posture and recovery choices stay attached to the same card or category rescue path.',
+      'Preview fallback and guide downgrade should preserve surf momentum instead of forcing a restart from Home.',
+    ],
+    confidenceLabel: scenario === 'healthy' ? 'Safe handoff to playback' : 'Surf momentum preserved',
+    fallbackLabel: scenario === 'healthy' ? 'Fallback handoff' : 'Recovery handoff',
+    fallbackDetail: scenario === 'healthy'
+      ? 'If the first provider copy fails, keep the user on the same card and hand off to the healthiest exact match or same-category fallback without breaking category context.'
+      : 'If Live degrades, preserve the current category and selected channel context while the shell routes playback through the healthiest exact copy or same-category rescue path.',
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -854,6 +908,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   ],
   surfaceScorecards: buildSurfaceScorecards(scenario),
   surfaceExitCriteria: buildSurfaceExitCriteria(scenario),
+  surfaceHandoffs: buildSurfaceHandoffs(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

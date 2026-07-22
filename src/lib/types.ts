@@ -272,6 +272,15 @@ export type MockProviderManifest = {
     recoveryOwner: string;
     recoveryMove: string;
   }>;
+  surfaceHandoffs: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    carriesForward: string[];
+    confidenceLabel: string;
+    fallbackLabel: string;
+    fallbackDetail: string;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;
