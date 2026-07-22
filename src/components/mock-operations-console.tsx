@@ -47,6 +47,7 @@ export function MockOperationsConsole({
   const scorecard = manifest?.surfaceScorecards.find((item) => item.screenId === screenId);
   const exitCriteria = manifest?.surfaceExitCriteria.find((item) => item.screenId === screenId);
   const handoff = manifest?.surfaceHandoffs.find((item) => item.screenId === screenId);
+  const escalationLadder = manifest?.surfaceEscalationLadders.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -178,6 +179,38 @@ export function MockOperationsConsole({
             <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sky-100">
               <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{handoff.fallbackLabel}</p>
               <p className="mt-2 text-sm text-white">{handoff.fallbackDetail}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {escalationLadder ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{escalationLadder.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{escalationLadder.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              {escalationLadder.owner}
+            </span>
+          </div>
+          <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-amber-100">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Trigger state</p>
+            <p className="mt-2 text-sm text-white">{escalationLadder.triggerLabel}</p>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-3">
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-emerald-100">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200">First move</p>
+              <p className="mt-2 text-sm text-white">{escalationLadder.firstMove}</p>
+            </div>
+            <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sky-100">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Second move</p>
+              <p className="mt-2 text-sm text-white">{escalationLadder.secondMove}</p>
+            </div>
+            <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/10 p-4 text-fuchsia-100">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-fuchsia-200">Last safe fallback</p>
+              <p className="mt-2 text-sm text-white">{escalationLadder.finalFallback}</p>
             </div>
           </div>
         </div>

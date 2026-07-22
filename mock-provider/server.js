@@ -730,6 +730,79 @@ const buildSurfaceHandoffs = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceEscalationLadders = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login escalation ladder',
+    summary: scenario === 'healthy'
+      ? 'Login should still publish the recovery order before the user needs it, so the fastest safe move never turns into guesswork.'
+      : 'When trust degrades on Login, the shell should make the recovery order explicit before the user burns time retrying the wrong thing.',
+    triggerLabel: scenario === 'healthy'
+      ? 'Trigger when validation stalls, account trust downgrades, or the saved provider story starts to wobble.'
+      : scenario === 'expiredAccount'
+        ? 'Trigger as soon as the account reads expired or catalog access is clearly blocked.'
+        : scenario === 'lineSaturated'
+          ? 'Trigger as soon as line pressure appears before the user blames playback.'
+          : 'Trigger as soon as Login stops feeling like a confident bridge into Home.',
+    firstMove: scenario === 'healthy'
+      ? 'Retry validation once with the saved provider still visible and keep the trust facts on screen.'
+      : 'Keep the selected provider visible, name the trust risk plainly, and stop pretending a blind retry is the main path.',
+    secondMove: scenario === 'healthy'
+      ? 'Offer the healthiest saved provider as the next safe Home launch without forcing a new setup ritual.'
+      : 'Promote the healthiest saved provider as the primary Home handoff while preserving the original provider story for context.',
+    finalFallback: scenario === 'healthy'
+      ? 'Route into Home on the healthiest saved provider and leave the original source ready for later review.'
+      : 'Exit Login only through the healthiest safe provider path and leave the degraded source anchored as named context, not a hidden failure.',
+    owner: 'Trust-first operator',
+  },
+  {
+    screenId: 'home',
+    title: 'Home escalation ladder',
+    summary: scenario === 'healthy'
+      ? 'Home should keep one visible rescue order behind the premium browse shell so hero, rails, and trust never split apart under pressure.'
+      : 'When Home reheats from cache or trust weakens, the shell should publish the browse-rescue order before the surface feels like a broken dashboard.',
+    triggerLabel: scenario === 'healthy'
+      ? 'Trigger when hero context weakens, guide confidence drops, or provider posture no longer supports a clean launch into Live.'
+      : scenario === 'degradedEpg' || scenario === 'degradedLive'
+        ? 'Trigger as soon as Home falls back to cached or partial browse context.'
+        : 'Trigger as soon as Home needs recovery language to stay product-facing.',
+    firstMove: scenario === 'healthy'
+      ? 'Keep the current hero, quick rails, and provider facts visible while refreshing in place.'
+      : 'Preserve the current Home rails, facts, and spotlight context before asking the user to change providers or routes.',
+    secondMove: scenario === 'healthy'
+      ? 'Attach the healthiest-provider or same-category launch path directly to the affected featured or spotlight surface.'
+      : 'Move the launch action to the healthiest saved provider or same-category rescue without forcing a settings detour.',
+    finalFallback: scenario === 'healthy'
+      ? 'Advance into Live only when the same browse story still survives the handoff.'
+      : 'Hold the user on Home with clear rescue actions until the next launch path feels safer than a blind jump into Live.',
+    owner: 'Browse-context operator',
+  },
+  {
+    screenId: 'live',
+    title: 'Live escalation ladder',
+    summary: scenario === 'healthy'
+      ? 'Live should make the surf recovery order obvious before preview, guide, or provider trust ever breaks the browsing rhythm.'
+      : 'When Live degrades, the shell should escalate through one surf-preserving order instead of dumping the user into generic stream failure.',
+    triggerLabel: scenario === 'healthy'
+      ? 'Trigger when preview confidence dips, NOW/NEXT softens, or the current provider can no longer support a clean launch from the active card.'
+      : scenario === 'degradedLive'
+        ? 'Trigger as soon as the live catalog weakens and the current card cannot launch cleanly.'
+        : scenario === 'degradedEpg'
+          ? 'Trigger as soon as guide context drops but channel-surf momentum still matters.'
+          : 'Trigger as soon as Live needs rescue language to preserve the same category flow.',
+    firstMove: scenario === 'healthy'
+      ? 'Keep the user on the same category and card while preview or launch retries happen in place.'
+      : 'Hold category context, preserve the selected card, and explain the degraded state without sending the user backward.',
+    secondMove: scenario === 'healthy'
+      ? 'Offer the healthiest exact provider copy first, then keep same-category rescue one move away.'
+      : 'Promote the healthiest exact copy or same-category rescue directly from the current card instead of hiding it behind search or settings.',
+    finalFallback: scenario === 'healthy'
+      ? 'Route back to Home only after on-card recovery stops feeling trustworthy.'
+      : 'Return to Home only when the current category rescue path is exhausted and the shell can carry the same intent back with it.',
+    owner: 'Surf-flow operator',
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -763,6 +836,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
     {
       title: 'Live TV surf flow',
       detail: 'Live keeps filtering, preview, NOW/NEXT, and fallback launch paths in one browser instead of forcing guide-first detours.',
+      surface: 'live',
+    },
+    {
+      title: 'Shared escalation ladder',
+      detail: 'Login, Home, and Live now publish the same first move, second move, and last safe fallback straight from the adapter manifest.',
       surface: 'live',
     },
   ],
@@ -909,6 +987,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceScorecards: buildSurfaceScorecards(scenario),
   surfaceExitCriteria: buildSurfaceExitCriteria(scenario),
   surfaceHandoffs: buildSurfaceHandoffs(scenario),
+  surfaceEscalationLadders: buildSurfaceEscalationLadders(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

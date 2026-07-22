@@ -281,6 +281,16 @@ export type MockProviderManifest = {
     fallbackLabel: string;
     fallbackDetail: string;
   }>;
+  surfaceEscalationLadders: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    triggerLabel: string;
+    firstMove: string;
+    secondMove: string;
+    finalFallback: string;
+    owner: string;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;
