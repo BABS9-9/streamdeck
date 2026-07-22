@@ -496,6 +496,106 @@ const buildRecoveryActions = (scenario = 'healthy') => {
   ];
 };
 
+const buildSurfaceScorecards = (scenario = 'healthy') => {
+  const loginTone = scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover';
+  const homeTone = scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover';
+  const liveTone = scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover';
+
+  return [
+    {
+      screenId: 'login',
+      title: 'Login proof scorecard',
+      summary: scenario === 'healthy'
+        ? 'Login should feel safe enough to move forward on the first read.'
+        : 'Login should explain trust risk and the fastest safe move without losing the saved-provider story.',
+      metrics: [
+        {
+          label: 'Connection path',
+          value: scenario === 'healthy' ? 'Launch ready' : scenario === 'lineSaturated' ? 'Watch capacity' : 'Recovery led',
+          detail: scenario === 'healthy'
+            ? 'Sample credentials and saved providers should move straight into Home.'
+            : scenario === 'lineSaturated'
+              ? 'Auth still works, but the line-capacity warning should appear before playback gets blamed.'
+              : 'Fresh trust is degraded, so the recovery move should be clearer than the connect button.',
+          tone: loginTone,
+        },
+        {
+          label: 'Saved switch',
+          value: scenario === 'healthy' ? 'Hot-swap ready' : 'Backup path ready',
+          detail: 'A healthier saved provider should always be one move away from Login.',
+          tone: scenario === 'healthy' ? 'ready' : 'recover',
+        },
+        {
+          label: 'Trust signal',
+          value: scenario === 'healthy' ? 'Green posture' : scenario === 'authUnstable' ? 'Auth unstable' : scenario === 'expiredAccount' ? 'Expired account' : 'Risk visible',
+          detail: 'Status, expiry, and line pressure should read as product truth instead of setup noise.',
+          tone: loginTone,
+        },
+      ],
+    },
+    {
+      screenId: 'home',
+      title: 'Home proof scorecard',
+      summary: scenario === 'healthy'
+        ? 'Home should prove this is a premium streaming product on first paint.'
+        : 'Home should keep the same browse context alive while the trust and recovery story stays obvious.',
+      metrics: [
+        {
+          label: 'Featured browse',
+          value: scenario === 'healthy' ? 'Hero ready' : scenario === 'expiredAccount' ? 'Cached hero' : 'Fallback hero',
+          detail: scenario === 'healthy'
+            ? 'Featured context, counts, and launch actions should land together.'
+            : 'The hero surface should stay useful even when fresh provider truth degrades.',
+          tone: homeTone,
+        },
+        {
+          label: 'Quick rails',
+          value: scenario === 'healthy' ? 'Launch rails live' : 'Context preserved',
+          detail: 'Live, Favorites, Collections, Continue, Search, and Settings should remain one tap away.',
+          tone: homeTone,
+        },
+        {
+          label: 'Trust cockpit',
+          value: scenario === 'healthy' ? 'Operator green' : scenario === 'lineSaturated' ? 'Capacity warning' : 'Recovery active',
+          detail: 'Provider facts and the recovery move should stay visible together on Home.',
+          tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+        },
+      ],
+    },
+    {
+      screenId: 'live',
+      title: 'Live proof scorecard',
+      summary: scenario === 'healthy'
+        ? 'Live should feel fast enough that the provider disappears behind the browse flow.'
+        : 'Live should preserve surf momentum while preview, guide, or provider trust degrades.',
+      metrics: [
+        {
+          label: 'Preview confidence',
+          value: scenario === 'healthy' ? 'Preview armed' : scenario === 'degradedLive' ? 'Fallback art' : 'Recovery surf',
+          detail: scenario === 'healthy'
+            ? 'Hover or focus should update the preview without leaving the grid.'
+            : 'The preview zone should keep the surface alive even when live browse conditions get worse.',
+          tone: liveTone,
+        },
+        {
+          label: 'Guide posture',
+          value: scenario === 'degradedEpg' ? 'Guide fallback' : 'NOW / NEXT ready',
+          detail: scenario === 'degradedEpg'
+            ? 'Guide copy should degrade cleanly while browse and preview stay intact.'
+            : 'Inline NOW and NEXT should stay attached to channel-surf momentum.',
+          tone: scenario === 'degradedEpg' ? 'watch' : liveTone,
+        },
+        {
+          label: 'Recovery launch',
+          value: scenario === 'healthy' ? 'On-card rescue' : 'Same-context rescue',
+          detail: 'Exact-provider fallback or same-category recovery should remain attached to the channel card.',
+          tone: scenario === 'healthy' ? 'ready' : 'recover',
+        },
+      ],
+    },
+  ];
+};
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -672,6 +772,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       commandChips: ['Preview first', 'NOW / NEXT', 'On-card recovery'],
     },
   ],
+  surfaceScorecards: buildSurfaceScorecards(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

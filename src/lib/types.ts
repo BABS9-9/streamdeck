@@ -250,6 +250,17 @@ export type MockProviderManifest = {
     userPromise: string;
     commandChips: string[];
   }>;
+  surfaceScorecards: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    metrics: Array<{
+      label: string;
+      value: string;
+      detail: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

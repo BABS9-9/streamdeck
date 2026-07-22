@@ -43,6 +43,7 @@ export function MockOperationsConsole({
   className,
 }: MockOperationsConsoleProps) {
   const playbook = manifest?.surfacePlaybooks.find((item) => item.screenId === screenId);
+  const scorecard = manifest?.surfaceScorecards.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -90,6 +91,29 @@ export function MockOperationsConsole({
               </div>
             </div>
           ) : null}
+        </div>
+      ) : null}
+
+      {scorecard ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{scorecard.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{scorecard.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Adapter-driven
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-3">
+            {scorecard.metrics.map((metric) => (
+              <div key={metric.label} className={`rounded-2xl border p-4 ${readinessToneClasses[metric.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{metric.label}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{metric.value}</p>
+                <p className="mt-2 text-sm text-white/80">{metric.detail}</p>
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 
