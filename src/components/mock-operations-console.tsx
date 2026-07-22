@@ -2,6 +2,7 @@
 
 import { MockProviderHealth, MockProviderManifest, MockProviderScenario } from '@/lib/types';
 import { MockProofPanel } from './mock-proof-panel';
+import Link from 'next/link';
 
 const scenarioLabels: Record<MockProviderScenario, string> = {
   healthy: 'Healthy',
@@ -44,6 +45,7 @@ export function MockOperationsConsole({
 }: MockOperationsConsoleProps) {
   const playbook = manifest?.surfacePlaybooks.find((item) => item.screenId === screenId);
   const scorecard = manifest?.surfaceScorecards.find((item) => item.screenId === screenId);
+  const exitCriteria = manifest?.surfaceExitCriteria.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -113,6 +115,43 @@ export function MockOperationsConsole({
                 <p className="mt-2 text-sm text-white/80">{metric.detail}</p>
               </div>
             ))}
+          </div>
+        </div>
+      ) : null}
+
+      {exitCriteria ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{exitCriteria.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{exitCriteria.summary}</p>
+            </div>
+            <Link
+              href={exitCriteria.nextHopHref}
+              className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-slate-200 hover:bg-white/5"
+            >
+              {exitCriteria.nextHopLabel}
+            </Link>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-emerald-100">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200">Advance when</p>
+              <p className="mt-2 text-sm text-white">{exitCriteria.goSignal}</p>
+            </div>
+            <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-amber-100">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Hold when</p>
+              <p className="mt-2 text-sm text-white">{exitCriteria.holdSignal}</p>
+            </div>
+          </div>
+          <div className="mt-3 grid gap-3 xl:grid-cols-[0.8fr_1.2fr]">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Recovery owner</p>
+              <p className="mt-2 text-sm font-semibold text-white">{exitCriteria.recoveryOwner}</p>
+            </div>
+            <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sky-100">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Recovery move</p>
+              <p className="mt-2 text-sm text-white">{exitCriteria.recoveryMove}</p>
+            </div>
           </div>
         </div>
       ) : null}

@@ -261,6 +261,17 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceExitCriteria: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    goSignal: string;
+    holdSignal: string;
+    nextHopLabel: string;
+    nextHopHref: string;
+    recoveryOwner: string;
+    recoveryMove: string;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

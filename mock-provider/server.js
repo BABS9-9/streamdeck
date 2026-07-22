@@ -596,6 +596,86 @@ const buildSurfaceScorecards = (scenario = 'healthy') => {
   ];
 };
 
+const buildSurfaceExitCriteria = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login exit criteria',
+    summary: scenario === 'healthy'
+      ? 'Advance only when credentials, trust posture, and the next hop to Home all read as one confident move.'
+      : 'Hold Login in place until the provider risk is named clearly and the fastest safe path is more obvious than blind retrying.',
+    goSignal: scenario === 'healthy'
+      ? 'Saved or sample credentials validate once and the user can move directly into Home.'
+      : scenario === 'lineSaturated'
+        ? 'The line-capacity warning is visible and the healthiest-provider jump is obvious before playback gets blamed.'
+        : 'The trust issue is explicit and the safest move is visible on the same surface.',
+    holdSignal: scenario === 'healthy'
+      ? 'Do not advance if the provider story disappears behind generic loading or auth copy.'
+      : scenario === 'expiredAccount'
+        ? 'Hold if Login still implies the expired provider is launch-ready.'
+        : scenario === 'authUnstable'
+          ? 'Hold if retries erase the saved-provider context or hide the switch-provider escape hatch.'
+          : 'Hold if the warning is present but the next safe move is still ambiguous.',
+    nextHopLabel: 'Advance to Home',
+    nextHopHref: '/home',
+    recoveryOwner: 'Trust-first operator',
+    recoveryMove: scenario === 'healthy'
+      ? 'Promote the healthiest saved provider only when the active source stops feeling trustworthy.'
+      : 'Keep Login anchored, name the risk, and route the user into Home on the healthiest saved provider when the active source is risky.',
+  },
+  {
+    screenId: 'home',
+    title: 'Home exit criteria',
+    summary: scenario === 'healthy'
+      ? 'Advance only when Home feels like a premium browse surface with trust cues and a clean path into Live.'
+      : 'Hold Home in place until browse context stays visible and the rescue path remains product-facing instead of support-facing.',
+    goSignal: scenario === 'healthy'
+      ? 'Hero counts, quick rails, and provider facts render together without making Home feel like Settings.'
+      : scenario === 'degradedEpg' || scenario === 'degradedLive'
+        ? 'Cached or fallback browse context stays visible and the recovery path is attached to the same featured surface.'
+        : 'The degraded state is specific, the rails stay useful, and the next hop is still obvious.',
+    holdSignal: scenario === 'healthy'
+      ? 'Do not advance if Home loses the product story and collapses into raw provider stats.'
+      : scenario === 'expiredAccount'
+        ? 'Hold if cached Home context disappears before renewal or provider-switch guidance appears.'
+        : scenario === 'lineSaturated'
+          ? 'Hold if Home invites playback without surfacing capacity pressure first.'
+          : 'Hold if the recovery move requires leaving Home to understand what failed.',
+    nextHopLabel: 'Advance to Live',
+    nextHopHref: '/live',
+    recoveryOwner: 'Browse-context operator',
+    recoveryMove: scenario === 'healthy'
+      ? 'Keep featured rails live and let healthier-provider launches stay attached to the same browse context.'
+      : 'Preserve featured and quick-rail context while routing the next launch through the healthiest saved provider or same-category fallback.',
+  },
+  {
+    screenId: 'live',
+    title: 'Live exit criteria',
+    summary: scenario === 'healthy'
+      ? 'Advance only when channel surf, preview confidence, and NOW/NEXT all stay attached to the same fast browse flow.'
+      : 'Hold Live in place until channel-surf momentum survives the degraded state and the recovery move stays on-card.',
+    goSignal: scenario === 'healthy'
+      ? 'The user can filter, preview, and launch from one card without losing category context.'
+      : scenario === 'degradedLive'
+        ? 'The grid stays understandable, the degraded state is named, and category-level recovery is one move away.'
+        : scenario === 'degradedEpg'
+          ? 'Preview and category surf stay alive even while guide data falls back.'
+          : 'The user can keep browsing while the recovery action stays attached to the current card or category.',
+    holdSignal: scenario === 'healthy'
+      ? 'Do not advance if Live still requires a guide-first detour or hides the fallback launch path.'
+      : scenario === 'lineSaturated'
+        ? 'Hold if Live suggests the stream itself is broken before surfacing provider capacity pressure.'
+        : scenario === 'authUnstable'
+          ? 'Hold if auth wobble clears the current browse context or hides the healthiest-provider jump.'
+          : 'Hold if the degraded state forces the user to back out before they understand the recovery path.',
+    nextHopLabel: 'Return to Home',
+    nextHopHref: '/home',
+    recoveryOwner: 'Surf-flow operator',
+    recoveryMove: scenario === 'healthy'
+      ? 'Keep exact-provider fallback or same-category rescue attached to the active channel card.'
+      : 'Keep the user on the same category flow and make the healthiest saved provider or same-category rescue the default recovery move.',
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -773,6 +853,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
     },
   ],
   surfaceScorecards: buildSurfaceScorecards(scenario),
+  surfaceExitCriteria: buildSurfaceExitCriteria(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
