@@ -1027,6 +1027,137 @@ const buildSurfacePromiseStacks = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceEvidenceLedgers = (scenario = 'healthy') => {
+  const loginLiveStatement = scenario === 'healthy'
+    ? 'Credentials, trust facts, and the next hop into Home are all confirmed by fresh provider checks.'
+    : scenario === 'lineSaturated'
+      ? 'Credentials still validate live, but capacity pressure is also live and must stay attached to the provider before playback starts.'
+      : scenario === 'expiredAccount'
+        ? 'Fresh auth truth says this account is expired, so Login cannot pretend the active provider is ready.'
+        : scenario === 'authUnstable'
+          ? 'Fresh auth checks are wobbling, so Login can only claim that trust is currently unstable.'
+          : 'Fresh provider truth is not clean enough to carry Login forward without visible recovery guidance.';
+
+  const homeLiveStatement = scenario === 'healthy'
+    ? 'Featured counts, live rails, and trust posture are coming from fresh provider reads.'
+    : scenario === 'degradedLive'
+      ? 'Home can still trust fresh account posture even while live catalog density is degraded.'
+      : scenario === 'degradedEpg'
+        ? 'Home can still trust fresh catalog counts even though guide freshness is degraded.'
+        : scenario === 'expiredAccount'
+          ? 'Fresh provider truth says Home cannot promise a fully live catalog on this source.'
+          : 'Fresh provider truth is partial, so Home must separate what is live from what is protected by cache.';
+
+  const liveLiveStatement = scenario === 'healthy'
+    ? 'Category rails, preview launch paths, and inline guide context are all backed by fresh provider calls.'
+    : scenario === 'degradedLive'
+      ? 'Live can only claim that the current provider is degraded, not that the grid is fully trustworthy.'
+      : scenario === 'degradedEpg'
+        ? 'Live can still trust fresh channel browse results even though guide detail is degraded.'
+        : scenario === 'lineSaturated'
+          ? 'Live can still trust the current channel list, but must surface that playback capacity is already maxed.'
+          : 'Fresh Live truth is constrained, so the shell must stay explicit about what is currently proven.';
+
+  return [
+    {
+      screenId: 'login',
+      title: 'Login evidence ledger',
+      summary: scenario === 'healthy'
+        ? 'Login should separate live provider truth from saved context so the connect step feels trustworthy instead of theatrical.'
+        : 'Login should name exactly what the app knows live, what saved context still protects, and where recovery is an intentional inference rather than a fake certainty.',
+      entries: [
+        {
+          label: 'Provider truth',
+          source: 'live',
+          statement: loginLiveStatement,
+          detail: 'Auth status, expiry pressure, and line usage should always come from the freshest provider read available.',
+          tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+        },
+        {
+          label: 'Saved context',
+          source: 'cache',
+          statement: 'Saved provider identity, connection labels, and hot-swap options stay visible even while validation changes underneath them.',
+          detail: 'The shell should protect multi-provider context so the user never feels like one degraded auth check erased their setup history.',
+          tone: scenario === 'healthy' ? 'ready' : 'watch',
+        },
+        {
+          label: 'Recovery boundary',
+          source: 'inference',
+          statement: scenario === 'healthy'
+            ? 'If trust falls later, the healthiest saved provider is the safest inferred next move from Login.'
+            : 'The healthiest saved provider is a safe inferred next move, but Login should not overclaim that the degraded source is fixed.',
+          detail: 'Recovery language should be explicit that the app is choosing the safest next action, not asserting fresh success on the broken provider.',
+          tone: scenario === 'healthy' ? 'ready' : 'recover',
+        },
+      ],
+    },
+    {
+      screenId: 'home',
+      title: 'Home evidence ledger',
+      summary: scenario === 'healthy'
+        ? 'Home should prove which browse cues are live and which continuity cues are protected by local cache so the surface still feels premium under stress.'
+        : 'Home should keep the browse story intact while making the provenance of every reassurance obvious instead of hand-wavy.',
+      entries: [
+        {
+          label: 'Browse truth',
+          source: 'live',
+          statement: homeLiveStatement,
+          detail: 'Featured rails, catalog counts, and provider trust should be treated as live only when the current scenario supports that claim.',
+          tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+        },
+        {
+          label: 'Continuity shield',
+          source: 'cache',
+          statement: 'Saved Home snapshots protect hero art, quick rails, and recent browse context while the provider refreshes or degrades.',
+          detail: 'Cache should keep the product story alive without lying that every element is freshly loaded right now.',
+          tone: scenario === 'healthy' ? 'ready' : 'watch',
+        },
+        {
+          label: 'Launch inference',
+          source: 'inference',
+          statement: scenario === 'healthy'
+            ? 'If the featured launch goes bad later, the shell can infer the healthiest provider or same-category rescue path without dropping browse intent.'
+            : 'The shell can still infer the safest next launch path, but it must say that rescue is based on preserved intent, not fresh proof from the degraded provider.',
+          detail: 'The recovery move should preserve the same browse intent while acknowledging when it is switching from live proof to trust-ranked inference.',
+          tone: scenario === 'healthy' ? 'ready' : 'recover',
+        },
+      ],
+    },
+    {
+      screenId: 'live',
+      title: 'Live evidence ledger',
+      summary: scenario === 'healthy'
+        ? 'Live should make it obvious what is freshly proven on-card, what fallback keeps surf momentum alive, and where provider recovery becomes an intentional inference.'
+        : 'Live should stay brutally honest about preview, guide, and playback provenance so degraded surf never feels like random failure.',
+      entries: [
+        {
+          label: 'Channel proof',
+          source: 'live',
+          statement: liveLiveStatement,
+          detail: 'Category results, inline NOW/NEXT, preview launch paths, and trust pressure should only be labeled live when the provider still supports that claim.',
+          tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+        },
+        {
+          label: 'Surf fallback',
+          source: 'cache',
+          statement: 'Preview art, selected channel context, and category focus should remain visible even if live guide or playback conditions degrade.',
+          detail: 'Fallback visuals and preserved selection state keep the Live browser usable without pretending the active stream is healthy.',
+          tone: scenario === 'healthy' ? 'ready' : 'watch',
+        },
+        {
+          label: 'Rescue inference',
+          source: 'inference',
+          statement: scenario === 'healthy'
+            ? 'If the first playback path fails, the shell can infer the healthiest exact match or same-category fallback without breaking surf flow.'
+            : 'The rescue path is an intentional trust-ranked inference, and Live should state that clearly instead of claiming a fresh provider guarantee it does not have.',
+          detail: 'Recovery should preserve category and channel intent while clearly labeling the handoff as the safest inferred continuation.',
+          tone: scenario === 'healthy' ? 'ready' : 'recover',
+        },
+      ],
+    },
+  ];
+};
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1224,6 +1355,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceEscalationLadders: buildSurfaceEscalationLadders(scenario),
   surfaceScenarioMatrix: buildSurfaceScenarioMatrix(scenario),
   surfacePromiseStacks: buildSurfacePromiseStacks(scenario),
+  surfaceEvidenceLedgers: buildSurfaceEvidenceLedgers(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

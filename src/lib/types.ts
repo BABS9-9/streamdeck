@@ -314,6 +314,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceEvidenceLedgers: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    entries: Array<{
+      label: string;
+      source: 'live' | 'cache' | 'inference';
+      statement: string;
+      detail: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

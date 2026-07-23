@@ -20,6 +20,12 @@ const readinessToneClasses = {
   recover: 'border-sky-400/20 bg-sky-500/10 text-sky-100',
 } as const;
 
+const evidenceSourceLabels = {
+  live: 'Live proof',
+  cache: 'Cache protection',
+  inference: 'Safe inference',
+} as const;
+
 type MockOperationsConsoleProps = {
   health: MockProviderHealth;
   manifest: MockProviderManifest | null;
@@ -50,6 +56,7 @@ export function MockOperationsConsole({
   const escalationLadder = manifest?.surfaceEscalationLadders.find((item) => item.screenId === screenId);
   const scenarioMatrix = manifest?.surfaceScenarioMatrix.find((item) => item.screenId === screenId);
   const promiseStack = manifest?.surfacePromiseStacks.find((item) => item.screenId === screenId);
+  const evidenceLedger = manifest?.surfaceEvidenceLedgers.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -266,6 +273,34 @@ export function MockOperationsConsole({
                 <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
                 <p className="mt-2 text-sm font-semibold text-white">{item.statement}</p>
                 <p className="mt-2 text-sm text-white/80">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {evidenceLedger ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{evidenceLedger.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{evidenceLedger.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Provenance visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-3">
+            {evidenceLedger.entries.map((entry) => (
+              <div key={entry.label} className={`rounded-2xl border p-4 ${readinessToneClasses[entry.tone]}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-[11px] uppercase tracking-[0.22em]">{entry.label}</p>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                    {evidenceSourceLabels[entry.source]}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm font-semibold text-white">{entry.statement}</p>
+                <p className="mt-2 text-sm text-white/80">{entry.detail}</p>
               </div>
             ))}
           </div>

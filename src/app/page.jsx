@@ -59,6 +59,10 @@ export default function LoginPage() {
 
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const mockAccountPressure = getAccountPressure(mockHealth?.accountProfile);
+  const evidenceLedger = useMemo(
+    () => mockManifest?.surfaceEvidenceLedgers?.find((item) => item.screenId === 'login') ?? null,
+    [mockManifest]
+  );
   const healthiestConnection = useMemo(() => getHealthiestSavedProvider({
     connections,
     connectionStatus,
@@ -155,6 +159,29 @@ export default function LoginPage() {
               </div>
             ))}
           </div>
+
+          {evidenceLedger ? (
+            <div className="mt-6 rounded-[1.6rem] border border-white/10 bg-white/5 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{evidenceLedger.title}</p>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{evidenceLedger.summary}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300">
+                  Provenance on-screen
+                </span>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {evidenceLedger.entries.map((entry) => (
+                  <div key={entry.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{entry.label}</p>
+                    <p className="mt-2 text-sm font-semibold text-white">{entry.statement}</p>
+                    <p className="mt-2 text-sm text-slate-400">{entry.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {mockHealth ? (
             <div className="mt-8 rounded-[1.6rem] border border-violet-400/15 bg-violet-500/5 p-5">
