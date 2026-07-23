@@ -326,6 +326,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceFreshnessBoards: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    budgets: Array<{
+      label: string;
+      liveWindow: string;
+      safeFallbackWindow: string;
+      recoveryTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

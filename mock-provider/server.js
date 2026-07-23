@@ -1158,6 +1158,84 @@ const buildSurfaceEvidenceLedgers = (scenario = 'healthy') => {
   ];
 };
 
+const buildSurfaceFreshnessBoards = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login freshness budget',
+    summary: scenario === 'healthy'
+      ? 'Login should publish how fresh auth and trust facts must be before the user moves into Home.'
+      : 'Login should tell the truth about how long saved trust can stay useful before recovery needs to lead the surface.',
+    budgets: [
+      {
+        label: 'Auth truth',
+        liveWindow: scenario === 'healthy' ? 'Fresh on connect' : 'Fresh retry required',
+        safeFallbackWindow: scenario === 'healthy' ? 'Saved provider visible until next validation' : 'Saved identity can stay visible while live auth is degraded',
+        recoveryTrigger: scenario === 'healthy'
+          ? 'If the next validation fails or line pressure spikes, switch Login from launch-led to recovery-led.'
+          : 'If auth stays unstable, expired, or saturated after retry, recovery must outrank blind reconnect.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Provider switch path',
+        liveWindow: 'Immediate on every saved-provider tap',
+        safeFallbackWindow: 'Safe while saved connection metadata remains intact',
+        recoveryTrigger: 'If the active provider cannot validate cleanly, promote the healthiest saved provider as the next move.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home freshness budget',
+    summary: scenario === 'healthy'
+      ? 'Home should state how long hero, counts, and trust cues stay premium before cached continuity takes over.'
+      : 'Home should be explicit about when the featured story is still safe from cache and when trust recovery must take the lead.',
+    budgets: [
+      {
+        label: 'Hero + counts',
+        liveWindow: scenario === 'healthy' ? 'Current provider refresh cycle' : scenario === 'degradedEpg' ? 'Catalog live, guide soft' : 'Partial live truth only',
+        safeFallbackWindow: 'Saved Home snapshot remains safe for the next in-place refresh',
+        recoveryTrigger: scenario === 'healthy'
+          ? 'If refresh misses or provider trust drops, keep the cached Home shell visible and attach recovery to the same launch rail.'
+          : 'If repeated refreshes miss or trust worsens, recovery must replace any claim that Home is fully live.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Featured launch path',
+        liveWindow: scenario === 'healthy' ? 'Fresh while provider trust stays green' : 'Fresh only while the current scenario still supports launch confidence',
+        safeFallbackWindow: 'Safe while the healthiest exact copy or same-category rescue remains available',
+        recoveryTrigger: 'If the active provider cannot back the featured launch, switch to healthiest-provider or same-category rescue without dropping Home context.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live freshness budget',
+    summary: scenario === 'healthy'
+      ? 'Live should tell the user how fresh preview, guide, and recovery claims are before they press play.'
+      : 'Live should separate usable surf continuity from stale playback certainty so degraded browse never feels misleading.',
+    budgets: [
+      {
+        label: 'Guide + preview',
+        liveWindow: scenario === 'healthy' ? 'Fresh on current surf load' : scenario === 'degradedEpg' ? 'Guide degraded, preview still current' : scenario === 'degradedLive' ? 'Preview context only' : 'Partial live surf truth',
+        safeFallbackWindow: 'Selected channel, category focus, and preview art stay safe while the grid recovers',
+        recoveryTrigger: scenario === 'healthy'
+          ? 'If preview or guide freshness drops, keep surf context visible and attach fallback copy directly to the card.'
+          : 'If fresh surf proof weakens further, Live must stop implying the active card is launch-safe and lead with recovery.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Playback rescue',
+        liveWindow: scenario === 'healthy' ? 'Fresh while the current provider can still back playback' : 'Fresh only while trust and capacity still support launch',
+        safeFallbackWindow: 'Safe while healthiest exact copy or same-category rescue is still available',
+        recoveryTrigger: 'If trust, auth, or line capacity breaks launch safety, switch the card to rescue-first behavior before the user loses surf momentum.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1207,6 +1285,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface promise stack',
       detail: 'Login, Home, and Live now publish what the screen proves now, what it protects next, and why the next move is still safe straight from the adapter manifest.',
       surface: 'login',
+    },
+    {
+      title: 'Surface freshness budget',
+      detail: 'Login, Home, and Live now publish how fresh each trust and browse claim must be, what fallback stays safe, and when recovery takes over straight from the adapter manifest.',
+      surface: 'home',
     },
   ],
   supportedScreens: [
@@ -1356,6 +1439,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceScenarioMatrix: buildSurfaceScenarioMatrix(scenario),
   surfacePromiseStacks: buildSurfacePromiseStacks(scenario),
   surfaceEvidenceLedgers: buildSurfaceEvidenceLedgers(scenario),
+  surfaceFreshnessBoards: buildSurfaceFreshnessBoards(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
