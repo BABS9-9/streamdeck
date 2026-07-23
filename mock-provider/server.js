@@ -917,6 +917,116 @@ const buildSurfaceScenarioMatrix = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfacePromiseStacks = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login promise stack',
+    summary: scenario === 'healthy'
+      ? 'Login should tell the user exactly what they can trust before they ever leave setup.'
+      : 'Login should still make plain-English promises about trust, protection, and the safest next move even while the provider weakens.',
+    promises: [
+      {
+        label: 'Proves now',
+        statement: scenario === 'healthy' ? 'This provider can validate and move into Home without a second-guess loop.' : scenario === 'lineSaturated' ? 'These credentials are real, but the account is warning about capacity pressure before playback starts.' : 'This shell can still explain the real trust state instead of hiding it behind a generic login error.',
+        detail: scenario === 'healthy'
+          ? 'Saved credentials, sample credentials, and the active provider story all stay aligned on the same first move.'
+          : scenario === 'lineSaturated'
+            ? 'Login proves the difference between auth success and playback readiness before the user blames the wrong layer.'
+            : 'Login should name expiry or auth instability plainly while keeping the saved-provider context intact.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Protects next',
+        statement: scenario === 'healthy' ? 'The saved-provider path stays visible if the active source weakens later.' : 'The selected provider identity survives the warning state so recovery never feels like a cold restart.',
+        detail: scenario === 'healthy'
+          ? 'Home can inherit trust facts, sample-credential intent, and the current rehearsal mode without a reset.'
+          : 'Even under expiry or unstable auth, Login should preserve the original provider story while promoting the safest backup path.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+      {
+        label: 'Safe next move',
+        statement: scenario === 'healthy' ? 'Advance into Home immediately.' : 'Advance only through the healthiest saved-provider handoff.',
+        detail: scenario === 'healthy'
+          ? 'The user should not need a Settings detour or extra explanation before Home.'
+          : 'The next action should be more obvious than blind retrying or reconnecting into a dead provider.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home promise stack',
+    summary: scenario === 'healthy'
+      ? 'Home should publish what the premium browse shell already proves before the user launches deeper.'
+      : 'Home should still make crisp promises about preserved browse context and safe recovery when live data or provider trust degrades.',
+    promises: [
+      {
+        label: 'Proves now',
+        statement: scenario === 'healthy' ? 'This is a real streaming product surface, not a provider control panel.' : scenario === 'degradedEpg' ? 'The browse shell stays premium even while guide detail softens.' : 'The featured browse story stays on screen while the provider situation is explained honestly.',
+        detail: scenario === 'healthy'
+          ? 'Hero context, quick rails, and trust posture all land together on first paint.'
+          : scenario === 'degradedEpg'
+            ? 'Home still proves counts, featured context, and action rails without depending on perfect NOW and NEXT data.'
+            : 'Home should keep the product story visible instead of collapsing into a failure dashboard.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Protects next',
+        statement: scenario === 'healthy' ? 'The same browse intent can carry into Live, Favorites, Search, or Collections.' : 'The same rails, featured intent, and trust facts stay visible while the shell swaps to safer launch paths.',
+        detail: scenario === 'healthy'
+          ? 'The user keeps a coherent product story before committing to playback.'
+          : 'Cached hero context, saved-provider recovery, and same-category rescue should stay attached to the surface.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+      {
+        label: 'Safe next move',
+        statement: scenario === 'healthy' ? 'Launch into Live from the same premium shell.' : 'Use the attached healthiest-provider or same-category rescue before a risky launch.',
+        detail: scenario === 'healthy'
+          ? 'Home should make the next browse step obvious without feeling technical.'
+          : 'The recovery CTA belongs beside the same featured or quick-launch surface the user already trusts.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live promise stack',
+    summary: scenario === 'healthy'
+      ? 'Live should declare what channel-surfing can trust before a single stream launch happens.'
+      : 'Live should keep promise language attached to the grid so degraded browse conditions still feel controlled, not chaotic.',
+    promises: [
+      {
+        label: 'Proves now',
+        statement: scenario === 'healthy' ? 'The user can filter, preview, and play from one fast card flow.' : scenario === 'degradedLive' ? 'The grid can stay readable and truthful even when the live catalog weakens.' : scenario === 'degradedEpg' ? 'Channel-surfing still works even when guide data goes soft.' : 'This surface can keep channel intent visible while it explains why the active provider is risky.',
+        detail: scenario === 'healthy'
+          ? 'Preview confidence, category browse, and NOW/NEXT should all reinforce the same premium surf rhythm.'
+          : scenario === 'degradedLive'
+            ? 'Live should name catalog weakness without dead cards or a back-out-first recovery pattern.'
+            : scenario === 'degradedEpg'
+              ? 'Guide fallback copy should preserve motion and trust instead of opening gaps in the grid.'
+              : 'Line saturation or trust instability should not erase the current category or selected channel story.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Protects next',
+        statement: scenario === 'healthy' ? 'The current category and selected card stay intact through preview and launch.' : 'The same category momentum and selected-card context survive the recovery path.',
+        detail: scenario === 'healthy'
+          ? 'Users should not lose the surf rhythm just because they hovered, filtered, or pressed play.'
+          : 'Exact-provider fallback or same-category rescue should happen without dumping the user out of the grid.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+      {
+        label: 'Safe next move',
+        statement: scenario === 'healthy' ? 'Play directly from the active card.' : 'Use the on-card rescue path before leaving the current category flow.',
+        detail: scenario === 'healthy'
+          ? 'A clean launch should feel like the natural continuation of browsing.'
+          : 'The user should see retry, healthiest exact copy, or same-category rescue without hunting through another surface.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -961,6 +1071,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Scenario impact matrix',
       detail: 'Login, Home, and Live now publish how healthy, degraded, and trust-risk rehearsals change each surface before the user hits a dead end.',
       surface: 'home',
+    },
+    {
+      title: 'Surface promise stack',
+      detail: 'Login, Home, and Live now publish what the screen proves now, what it protects next, and why the next move is still safe straight from the adapter manifest.',
+      surface: 'login',
     },
   ],
   supportedScreens: [
@@ -1108,6 +1223,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceHandoffs: buildSurfaceHandoffs(scenario),
   surfaceEscalationLadders: buildSurfaceEscalationLadders(scenario),
   surfaceScenarioMatrix: buildSurfaceScenarioMatrix(scenario),
+  surfacePromiseStacks: buildSurfacePromiseStacks(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

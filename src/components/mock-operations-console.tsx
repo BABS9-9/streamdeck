@@ -49,6 +49,7 @@ export function MockOperationsConsole({
   const handoff = manifest?.surfaceHandoffs.find((item) => item.screenId === screenId);
   const escalationLadder = manifest?.surfaceEscalationLadders.find((item) => item.screenId === screenId);
   const scenarioMatrix = manifest?.surfaceScenarioMatrix.find((item) => item.screenId === screenId);
+  const promiseStack = manifest?.surfacePromiseStacks.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -244,6 +245,29 @@ export function MockOperationsConsole({
                 </div>
               );
             })}
+          </div>
+        </div>
+      ) : null}
+
+      {promiseStack ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{promiseStack.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{promiseStack.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Product truth
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-3">
+            {promiseStack.promises.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{item.statement}</p>
+                <p className="mt-2 text-sm text-white/80">{item.detail}</p>
+              </div>
+            ))}
           </div>
         </div>
       ) : null}

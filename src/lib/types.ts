@@ -303,6 +303,17 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfacePromiseStacks: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    promises: Array<{
+      label: string;
+      statement: string;
+      detail: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;
