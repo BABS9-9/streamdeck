@@ -291,6 +291,18 @@ export type MockProviderManifest = {
     finalFallback: string;
     owner: string;
   }>;
+  surfaceScenarioMatrix: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    scenarios: Array<{
+      scenario: MockProviderScenario;
+      label: string;
+      impact: string;
+      recommendedMove: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

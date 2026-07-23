@@ -803,6 +803,120 @@ const buildSurfaceEscalationLadders = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceScenarioMatrix = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login scenario matrix',
+    summary: scenario === 'healthy'
+      ? 'Login should publish how every rehearsal mode changes trust before the user hits Connect.'
+      : 'Login should keep the active rehearsal mode visible, but it also needs to explain what the other failure modes would change before the user blames the wrong layer.',
+    scenarios: [
+      {
+        scenario: 'healthy',
+        label: 'Healthy launch',
+        impact: 'Login can validate once and hand straight into Home with a clean trust posture.',
+        recommendedMove: 'Connect with the saved or sample provider and advance immediately.',
+        tone: 'ready',
+      },
+      {
+        scenario: 'lineSaturated',
+        label: 'Lines maxed',
+        impact: 'Auth still succeeds, but Login has to warn that playback risk comes from provider capacity, not bad credentials.',
+        recommendedMove: 'Keep the provider facts visible and promote the healthiest saved-provider jump before playback is blamed.',
+        tone: 'watch',
+      },
+      {
+        scenario: 'expiredAccount',
+        label: 'Expired account',
+        impact: 'Fresh Xtream access is blocked, so Login must explain renewal or a provider switch without erasing the saved connection story.',
+        recommendedMove: 'Hold the shell in place, name the expiry plainly, and route the user into Home only through a healthy saved provider.',
+        tone: 'recover',
+      },
+      {
+        scenario: 'authUnstable',
+        label: 'Auth unstable',
+        impact: 'Fresh auth checks fail intermittently, but cached provider context should stay visible so Login still feels deliberate.',
+        recommendedMove: 'Keep retry and switch-provider actions on the same surface instead of bouncing the user into setup limbo.',
+        tone: 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home scenario matrix',
+    summary: scenario === 'healthy'
+      ? 'Home should prove how the premium browse shell behaves across happy-path and degraded-provider states without losing the same featured context.'
+      : 'Home should explain how each rehearsal mode affects the same hero, rails, and trust cockpit so the browse story survives provider churn.',
+    scenarios: [
+      {
+        scenario: 'healthy',
+        label: 'Healthy launch',
+        impact: 'Hero counts, quick rails, guide context, and provider facts all land together on first paint.',
+        recommendedMove: 'Use Home as the premium launch surface into Live, Favorites, Search, and Collections.',
+        tone: 'ready',
+      },
+      {
+        scenario: 'degradedEpg',
+        label: 'Guide degraded',
+        impact: 'Guide calls soften, but Home should keep featured context, counts, and launch actions visible.',
+        recommendedMove: 'Downgrade NOW and NEXT copy gracefully while leaving the same hero and quick rails intact.',
+        tone: 'watch',
+      },
+      {
+        scenario: 'degradedLive',
+        label: 'Live degraded',
+        impact: 'Home is still healthy enough to carry the product story even when Live needs a fallback launch path.',
+        recommendedMove: 'Keep Home confident and attach the rescue action directly to featured live surfaces before the user goes deeper.',
+        tone: 'watch',
+      },
+      {
+        scenario: 'expiredAccount',
+        label: 'Expired account',
+        impact: 'Fresh provider data may fail, so Home has to lean on cache while keeping renewal or provider-switch guidance above the rails.',
+        recommendedMove: 'Preserve the featured browse context and shift the main CTA toward a healthier saved provider.',
+        tone: 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live scenario matrix',
+    summary: scenario === 'healthy'
+      ? 'Live should make it obvious how preview, guide, and on-card recovery behave before the user ever hits a broken channel.'
+      : 'Live should keep the current rehearsal mode visible, but it also needs to map the other failure modes so channel-surf recovery stays product-shaped instead of support-shaped.',
+    scenarios: [
+      {
+        scenario: 'healthy',
+        label: 'Healthy surf',
+        impact: 'Category filter, preview, NOW/NEXT, and launch all stay attached to the same fast card flow.',
+        recommendedMove: 'Browse, preview, and play directly from the active card without leaving the grid.',
+        tone: 'ready',
+      },
+      {
+        scenario: 'degradedLive',
+        label: 'Catalog degraded',
+        impact: 'The live catalog itself weakens, so Live has to explain the failure while keeping the browser readable and recovery local.',
+        recommendedMove: 'Keep the current category visible and offer retry plus healthier-provider or same-category rescue from the same surface.',
+        tone: 'watch',
+      },
+      {
+        scenario: 'degradedEpg',
+        label: 'Guide degraded',
+        impact: 'NOW and NEXT become unreliable, but preview and channel-surf momentum should stay alive.',
+        recommendedMove: 'Fall back to clear guide copy instead of empty space and keep preview-led browsing active.',
+        tone: 'watch',
+      },
+      {
+        scenario: 'lineSaturated',
+        label: 'Capacity risk',
+        impact: 'The account can browse, but playback may fail because every line is in use.',
+        recommendedMove: 'Warn before launch and surface the healthiest exact copy or same-category rescue on the card itself.',
+        tone: 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -842,6 +956,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Shared escalation ladder',
       detail: 'Login, Home, and Live now publish the same first move, second move, and last safe fallback straight from the adapter manifest.',
       surface: 'live',
+    },
+    {
+      title: 'Scenario impact matrix',
+      detail: 'Login, Home, and Live now publish how healthy, degraded, and trust-risk rehearsals change each surface before the user hits a dead end.',
+      surface: 'home',
     },
   ],
   supportedScreens: [
@@ -988,6 +1107,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceExitCriteria: buildSurfaceExitCriteria(scenario),
   surfaceHandoffs: buildSurfaceHandoffs(scenario),
   surfaceEscalationLadders: buildSurfaceEscalationLadders(scenario),
+  surfaceScenarioMatrix: buildSurfaceScenarioMatrix(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

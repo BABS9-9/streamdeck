@@ -48,6 +48,7 @@ export function MockOperationsConsole({
   const exitCriteria = manifest?.surfaceExitCriteria.find((item) => item.screenId === screenId);
   const handoff = manifest?.surfaceHandoffs.find((item) => item.screenId === screenId);
   const escalationLadder = manifest?.surfaceEscalationLadders.find((item) => item.screenId === screenId);
+  const scenarioMatrix = manifest?.surfaceScenarioMatrix.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -212,6 +213,37 @@ export function MockOperationsConsole({
               <p className="text-[11px] uppercase tracking-[0.22em] text-fuchsia-200">Last safe fallback</p>
               <p className="mt-2 text-sm text-white">{escalationLadder.finalFallback}</p>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {scenarioMatrix ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{scenarioMatrix.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{scenarioMatrix.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              All rehearsals mapped
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {scenarioMatrix.scenarios.map((item) => {
+              const active = item.scenario === scenario;
+              return (
+                <div key={item.scenario} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]} ${active ? 'ring-1 ring-white/30' : ''}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                    <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                      {active ? 'Active now' : 'Available'}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-white">{item.impact}</p>
+                  <p className="mt-3 text-sm text-white/80">{item.recommendedMove}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : null}
