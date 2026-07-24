@@ -1322,6 +1322,92 @@ const buildSurfaceContradictionBoards = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceResetBoundaries = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login reset boundary',
+    summary: scenario === 'healthy'
+      ? 'Login should make it obvious that provider revalidation can happen in place and should not wipe setup confidence by default.'
+      : 'Login should say exactly which trust changes can refresh in place and which ones truly force a fresh start so recovery never feels punitive.',
+    boundaries: [
+      {
+        label: 'Trust recheck',
+        refreshesInPlace: scenario === 'healthy'
+          ? 'Revalidate auth, expiry, and line usage inside the current form.'
+          : 'Retry auth and provider trust in place without throwing away the saved-provider surface.',
+        preserves: 'Server URL, username, saved provider identity, and the active recovery prompt stay visible.',
+        hardResetTrigger: scenario === 'healthy'
+          ? 'Only a provider switch or explicit credential edit should reset the current Login story.'
+          : 'Only a different provider choice or new credentials should hard-reset Login; degraded auth alone should not.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider continuity',
+        refreshesInPlace: 'Switch the next recommended provider or retry target without dumping the user out of setup.',
+        preserves: 'Saved connection labels, sample-credential guidance, and the next hop into Home remain attached to the same surface.',
+        hardResetTrigger: 'Delete the saved connection or intentionally clear the setup state.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home reset boundary',
+    summary: scenario === 'healthy'
+      ? 'Home should preserve the premium browse shell through refreshes instead of acting like every trust wobble is a full-screen failure.'
+      : 'Home should tell the truth about what can refresh in place, what browse context survives, and what event actually justifies a hard reset.',
+    boundaries: [
+      {
+        label: 'Browse shell refresh',
+        refreshesInPlace: scenario === 'healthy'
+          ? 'Hero art, rail counts, and trust posture can all refresh inside the same Home shell.'
+          : 'Trust facts, hero freshness, and rail density should refresh inside Home even when the active provider is degraded.',
+        preserves: 'Featured focus, quick-launch intent, cached rails, and current recovery CTAs stay visible during the refresh.',
+        hardResetTrigger: scenario === 'healthy'
+          ? 'Only an intentional provider swap or a route change should rebuild Home from scratch.'
+          : 'Only losing both live truth and usable cached continuity should justify a hard Home reset.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Launch-path recovery',
+        refreshesInPlace: 'Swap to the healthiest exact provider or same-category rescue path directly on the same hero or rail.',
+        preserves: 'The original browse intent, featured context, and visible provider trust story stay attached to the CTA.',
+        hardResetTrigger: 'Only a missing fallback path or an explicit provider replacement should force Home back to a neutral state.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live reset boundary',
+    summary: scenario === 'healthy'
+      ? 'Live should keep surf momentum alive through guide, preview, and trust refreshes instead of punting the user out of the grid.'
+      : 'Live should publish which failures still allow in-place surf recovery and which ones actually force a hard grid reset.',
+    boundaries: [
+      {
+        label: 'Surf refresh',
+        refreshesInPlace: scenario === 'healthy'
+          ? 'Guide, preview, and playback readiness can refresh on the active card without losing the current category.'
+          : scenario === 'degradedEpg'
+            ? 'Guide truth can soften in place while the selected card and category stay live.'
+            : 'Grid trust, recovery posture, and launch safety should refresh in place before Live ever abandons the current surf flow.',
+        preserves: 'Selected category, selected card, preview art, favorites state, and visible recovery actions remain on-screen.',
+        hardResetTrigger: scenario === 'healthy'
+          ? 'Only an intentional category jump, provider swap, or explicit player launch should move the user out of the current grid story.'
+          : 'Only losing both the selected-card context and all safe rescue paths should justify a hard Live reset.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Playback rescue',
+        refreshesInPlace: 'Swap to the healthiest exact match or same-category fallback directly from the active card.',
+        preserves: 'Channel intent, category momentum, and the reason for the rescue stay attached to the same browsing surface.',
+        hardResetTrigger: 'Only a totally missing rescue path or a deliberate provider change should force Live back to first principles.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1532,6 +1618,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceEvidenceLedgers: buildSurfaceEvidenceLedgers(scenario),
   surfaceFreshnessBoards: buildSurfaceFreshnessBoards(scenario),
   surfaceContradictionBoards: buildSurfaceContradictionBoards(scenario),
+  surfaceResetBoundaries: buildSurfaceResetBoundaries(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

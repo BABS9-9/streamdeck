@@ -350,6 +350,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceResetBoundaries: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    boundaries: Array<{
+      label: string;
+      refreshesInPlace: string;
+      preserves: string;
+      hardResetTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;
