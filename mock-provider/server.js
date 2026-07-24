@@ -1494,6 +1494,90 @@ const buildSurfaceActionGates = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceIntentLocks = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login intent lock',
+    summary: scenario === 'healthy'
+      ? 'Login should protect the user intent to connect a known provider quickly without making them restart setup for every trust recheck.'
+      : 'Login should say exactly which setup intent stays protected through auth noise and which event actually breaks the path into Home.',
+    locks: [
+      {
+        label: 'Connect this provider',
+        protectedIntent: 'Keep the current server, username, and saved-provider identity anchored while trust revalidates in place.',
+        allowedDrift: scenario === 'healthy'
+          ? 'Auth, expiry, and line-capacity facts can refresh without changing the setup story.'
+          : 'Recovery copy, trust badges, and healthiest-provider suggestions may change while the typed credentials stay locked in place.',
+        breakCondition: scenario === 'healthy'
+          ? 'Only an intentional provider swap or credential edit should break the current connect intent.'
+          : 'Only a different provider choice or explicit credential replacement should break the current connect intent.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Use a saved shortcut',
+        protectedIntent: 'Keep the saved-provider shortcut tied to a clear next move instead of turning it into a blind trust leap.',
+        allowedDrift: 'The shortcut can downgrade from premium launch to recovery-first guidance without losing the provider identity or destination.',
+        breakCondition: 'Delete the saved connection or replace it with a healthier provider choice.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home intent lock',
+    summary: scenario === 'healthy'
+      ? 'Home should protect browse intent so featured discovery, quick rails, and provider trust can refresh without collapsing the product story.'
+      : 'Home should keep the user anchored to the same discovery intent even when trust, freshness, or recovery posture changes underneath it.',
+    locks: [
+      {
+        label: 'Stay in browse mode',
+        protectedIntent: 'Keep the user in the same featured or quick-rail discovery flow while Home refreshes provider truth in place.',
+        allowedDrift: scenario === 'healthy'
+          ? 'Hero counts, guide support, and provider trust chips can update without moving the user out of Home.'
+          : 'Hero confidence, trust language, and fallback actions may change while the same browse context stays visible.',
+        breakCondition: scenario === 'healthy'
+          ? 'Only a deliberate route change or provider swap should break Home browse intent.'
+          : 'Only losing both live truth and usable cached continuity should break the current Home browse intent.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Launch from this rail',
+        protectedIntent: 'Keep the chosen hero or quick rail as the launch anchor even if the recovery action changes.',
+        allowedDrift: 'The CTA can shift from premium launch to healthiest-provider or same-category rescue without losing the original discovery target.',
+        breakCondition: 'Only a missing rescue path or an intentional provider replacement should break the rail-level launch intent.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live intent lock',
+    summary: scenario === 'healthy'
+      ? 'Live should protect surf momentum so category choice, selected card, and preview context survive trust and guide refreshes.'
+      : 'Live should keep the user anchored to the same channel-surf intent even when the launch action has to downgrade into recovery.',
+    locks: [
+      {
+        label: 'Surf this category',
+        protectedIntent: 'Keep the selected category, selected card, and preview context attached to the current surf session.',
+        allowedDrift: scenario === 'healthy'
+          ? 'Guide detail, trust facts, and readiness copy can refresh without kicking the user out of the grid.'
+          : 'Guide fidelity, rescue copy, and CTA hierarchy may change while the same category surf stays alive.',
+        breakCondition: scenario === 'healthy'
+          ? 'Only an intentional category jump, player launch, or provider switch should break the current surf intent.'
+          : 'Only losing both the selected-card context and all safe rescue paths should break the current surf intent.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Launch this channel safely',
+        protectedIntent: 'Keep the current channel choice as the target even when Live has to hand launch authority to rescue-first actions.',
+        allowedDrift: 'The active action can pivot from Play to healthiest exact copy or same-category recovery without losing the chosen channel intent.',
+        breakCondition: 'Only a totally missing recovery path or an explicit provider replacement should break the channel-level launch intent.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1558,6 +1642,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface action gate',
       detail: 'Login, Home, and Live now publish which action stays premium, which fallback takes over first, and what unlocks the premium path again straight from the adapter manifest.',
       surface: 'login',
+    },
+    {
+      title: 'Surface intent lock',
+      detail: 'Login, Home, and Live now publish which user intent stays protected, what can drift around it, and what actually breaks that promise straight from the adapter manifest.',
+      surface: 'home',
     },
   ],
   supportedScreens: [
@@ -1711,6 +1800,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceContradictionBoards: buildSurfaceContradictionBoards(scenario),
   surfaceResetBoundaries: buildSurfaceResetBoundaries(scenario),
   surfaceActionGates: buildSurfaceActionGates(scenario),
+  surfaceIntentLocks: buildSurfaceIntentLocks(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

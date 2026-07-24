@@ -374,6 +374,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceIntentLocks: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    locks: Array<{
+      label: string;
+      protectedIntent: string;
+      allowedDrift: string;
+      breakCondition: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

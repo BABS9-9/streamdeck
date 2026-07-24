@@ -61,6 +61,7 @@ export function MockOperationsConsole({
   const contradictionBoard = manifest?.surfaceContradictionBoards.find((item) => item.screenId === screenId);
   const resetBoundary = manifest?.surfaceResetBoundaries.find((item) => item.screenId === screenId);
   const actionGate = manifest?.surfaceActionGates.find((item) => item.screenId === screenId);
+  const intentLock = manifest?.surfaceIntentLocks.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -443,6 +444,41 @@ export function MockOperationsConsole({
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Unlock condition</p>
                     <p className="mt-1 text-sm text-white/80">{gate.unlockCondition}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {intentLock ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{intentLock.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{intentLock.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Intent safety visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {intentLock.locks.map((lock) => (
+              <div key={lock.label} className={`rounded-2xl border p-4 ${readinessToneClasses[lock.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{lock.label}</p>
+                <div className="mt-3 grid gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Protected intent</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{lock.protectedIntent}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Allowed drift</p>
+                    <p className="mt-1 text-sm text-white/80">{lock.allowedDrift}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Break condition</p>
+                    <p className="mt-1 text-sm text-white/80">{lock.breakCondition}</p>
                   </div>
                 </div>
               </div>
