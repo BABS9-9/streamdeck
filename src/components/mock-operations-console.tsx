@@ -58,6 +58,7 @@ export function MockOperationsConsole({
   const promiseStack = manifest?.surfacePromiseStacks.find((item) => item.screenId === screenId);
   const evidenceLedger = manifest?.surfaceEvidenceLedgers.find((item) => item.screenId === screenId);
   const freshnessBoard = manifest?.surfaceFreshnessBoards.find((item) => item.screenId === screenId);
+  const contradictionBoard = manifest?.surfaceContradictionBoards.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -335,6 +336,41 @@ export function MockOperationsConsole({
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Recovery trigger</p>
                     <p className="mt-1 text-sm text-white/80">{budget.recoveryTrigger}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {contradictionBoard ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{contradictionBoard.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{contradictionBoard.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Contradictions resolved
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {contradictionBoard.contradictions.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <div className="mt-3 grid gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Conflicting signals</p>
+                    <p className="mt-1 text-sm text-white/80">{item.conflictingSignals}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Winning truth</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{item.winningTruth}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Suppress rule</p>
+                    <p className="mt-1 text-sm text-white/80">{item.suppressRule}</p>
                   </div>
                 </div>
               </div>

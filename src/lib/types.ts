@@ -338,6 +338,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceContradictionBoards: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    contradictions: Array<{
+      label: string;
+      conflictingSignals: string;
+      winningTruth: string;
+      suppressRule: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

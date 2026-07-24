@@ -1236,6 +1236,92 @@ const buildSurfaceFreshnessBoards = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceContradictionBoards = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login contradiction board',
+    summary: scenario === 'healthy'
+      ? 'Login should still publish which signal wins if saved-provider familiarity, live trust, and launch momentum ever disagree.'
+      : 'Login should make the winning truth explicit whenever the saved provider still looks familiar but live trust says the next move must change.',
+    contradictions: [
+      {
+        label: 'Saved provider looks healthy, live auth says no',
+        conflictingSignals: scenario === 'healthy'
+          ? 'A familiar saved provider can feel trustworthy even before the latest validation completes.'
+          : 'Saved-provider familiarity and remembered success can conflict with expired or unstable live auth truth.',
+        winningTruth: scenario === 'healthy'
+          ? 'Fresh auth validation outranks saved comfort before Login promotes Home.'
+          : 'The live auth result wins, even if the saved connection still looks polished and familiar.',
+        suppressRule: scenario === 'healthy'
+          ? 'Do not show a blind advance state until fresh trust is known.'
+          : 'Suppress launch-confident copy and promote recovery-first guidance until trust is clean again.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+      {
+        label: 'Auth succeeds, capacity says risky',
+        conflictingSignals: 'A green auth result can conflict with line-capacity pressure that makes playback unsafe.',
+        winningTruth: 'Capacity risk wins over generic success because the user’s next pain happens at launch, not login.',
+        suppressRule: 'Suppress “ready to stream” language and keep the healthiest-provider escape hatch visible before Home.',
+        tone: scenario === 'lineSaturated' ? 'watch' : 'ready',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home contradiction board',
+    summary: scenario === 'healthy'
+      ? 'Home should state which browse truth wins if cached continuity, live counts, and recovery posture ever drift apart.'
+      : 'Home should explain which message wins when the hero still looks premium but live browse truth no longer fully backs it.',
+    contradictions: [
+      {
+        label: 'Hero feels live, cache is carrying it',
+        conflictingSignals: scenario === 'healthy'
+          ? 'Featured art and rails can stay smooth even while a refresh is happening underneath them.'
+          : 'Cached hero continuity can look fully live even when fresh provider truth is partial or degraded.',
+        winningTruth: scenario === 'healthy'
+          ? 'Continuity can stay premium, but Home should only call the surface fully live once the refresh lands.'
+          : 'Cache-backed continuity wins over empty-state collapse, but it cannot be labeled as fully live provider truth.',
+        suppressRule: 'Suppress hard-live wording when the hero is being protected by cache and keep recovery language attached to the same rail.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Launch CTA looks confident, trust posture says recover',
+        conflictingSignals: 'A premium featured launch can conflict with expiry, auth instability, or provider-capacity warnings.',
+        winningTruth: 'Trust posture wins over hero confidence because the next action must stay safer than the artwork looks.',
+        suppressRule: 'Suppress blind play language and keep the healthiest-provider or same-category rescue attached to the featured surface.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live contradiction board',
+    summary: scenario === 'healthy'
+      ? 'Live should make clear which signal wins if preview confidence, guide confidence, and playback safety ever disagree.'
+      : 'Live should keep the surf flow honest when the grid still looks usable but guide, catalog, or provider trust is telling a more cautious story.',
+    contradictions: [
+      {
+        label: 'Preview looks ready, launch safety is degraded',
+        conflictingSignals: scenario === 'healthy'
+          ? 'A healthy preview can make the active card feel launch-ready before every playback risk is checked.'
+          : 'Preview art or motion can still look alive while capacity, auth, or provider degradation makes the active launch unsafe.',
+        winningTruth: scenario === 'healthy'
+          ? 'Launch safety must still win over visual confidence before the user presses play.'
+          : 'Recovery truth wins over visual preview confidence whenever the provider cannot safely back playback.',
+        suppressRule: 'Suppress “play now” certainty on the active card and elevate retry, healthiest-copy, or same-category rescue first.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Guide is stale, channel surf is still useful',
+        conflictingSignals: 'Missing or degraded NOW/NEXT can make the whole grid look broken even when category browse and preview still work.',
+        winningTruth: 'Surf continuity wins over guide completeness as long as the surface states that guide detail is the degraded layer.',
+        suppressRule: 'Suppress dead-air guide gaps; replace them with explicit fallback copy while keeping preview and category actions live.',
+        tone: scenario === 'degradedEpg' ? 'watch' : 'ready',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1290,6 +1376,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface freshness budget',
       detail: 'Login, Home, and Live now publish how fresh each trust and browse claim must be, what fallback stays safe, and when recovery takes over straight from the adapter manifest.',
       surface: 'home',
+    },
+    {
+      title: 'Surface contradiction board',
+      detail: 'Login, Home, and Live now publish which signal wins when live truth, cache continuity, and recovery posture disagree straight from the adapter manifest.',
+      surface: 'live',
     },
   ],
   supportedScreens: [
@@ -1440,6 +1531,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfacePromiseStacks: buildSurfacePromiseStacks(scenario),
   surfaceEvidenceLedgers: buildSurfaceEvidenceLedgers(scenario),
   surfaceFreshnessBoards: buildSurfaceFreshnessBoards(scenario),
+  surfaceContradictionBoards: buildSurfaceContradictionBoards(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
