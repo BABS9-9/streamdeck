@@ -242,6 +242,10 @@ export function LiveBrowser() {
     () => mockManifest?.surfaceResetBoundaries?.find((item) => item.screenId === 'live') ?? null,
     [mockManifest]
   );
+  const actionGate = useMemo(
+    () => mockManifest?.surfaceActionGates?.find((item) => item.screenId === 'live') ?? null,
+    [mockManifest]
+  );
 
   const getLiveVariants = (stream: XtreamStream) => {
     if (!activeConnection) return [] as ProviderVariant[];
@@ -432,6 +436,30 @@ export function LiveBrowser() {
                   <p className="mt-2 text-sm font-semibold text-white">{item.refreshesInPlace}</p>
                   <p className="mt-2 text-sm text-slate-400">{item.preserves}</p>
                   <p className="mt-3 text-sm text-slate-300">{item.hardResetTrigger}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {actionGate ? (
+          <div className="rounded-[1.5rem] border border-white/10 bg-white/5 px-5 py-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{actionGate.title}</p>
+                <p className="mt-2 text-sm text-slate-300">{actionGate.summary}</p>
+              </div>
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                Launch gate visible
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3 xl:grid-cols-2">
+              {actionGate.gates.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                  <p className="mt-2 text-sm font-semibold text-white">{item.primaryAction}</p>
+                  <p className="mt-2 text-sm text-slate-400">{item.downgradedAction}</p>
+                  <p className="mt-3 text-sm text-slate-300">{item.unlockCondition}</p>
                 </div>
               ))}
             </div>

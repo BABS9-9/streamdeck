@@ -1408,6 +1408,92 @@ const buildSurfaceResetBoundaries = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceActionGates = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login action gate',
+    summary: scenario === 'healthy'
+      ? 'Login should say exactly when Connect is truly premium and when recovery into a healthier saved provider is the safer first action.'
+      : 'Login should downgrade the loudest button before the user walks into bad auth, expired access, or maxed lines with false confidence.',
+    gates: [
+      {
+        label: 'Connect CTA',
+        primaryAction: scenario === 'healthy'
+          ? 'Connect with saved or sample credentials and move straight into Home.'
+          : 'Keep Connect available only as a trust-aware action, not as a blind promise of safe launch.',
+        downgradedAction: scenario === 'healthy'
+          ? 'If trust is still checking, hold the premium tone and keep retry guidance visible in place.'
+          : 'Promote recover into Home on the healthiest saved provider before asking for another blind auth attempt.',
+        unlockCondition: scenario === 'healthy'
+          ? 'Fresh auth, valid account status, and usable provider capacity keep Connect premium.'
+          : 'Restore the premium Connect path only after fresh auth is clean and account pressure no longer outranks launch confidence.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider shortcut',
+        primaryAction: 'Let the saved-provider card stay one move away from Home without turning it into a stale trust shortcut.',
+        downgradedAction: 'Downgrade the shortcut into a recovery move when live trust says this provider should not own the next launch.',
+        unlockCondition: 'The shortcut becomes premium again once the saved provider validates cleanly and no better provider posture exists.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home action gate',
+    summary: scenario === 'healthy'
+      ? 'Home should state when featured launch stays premium and when provider recovery needs to take over the brightest CTA.'
+      : 'Home should not let a cinematic hero keep selling a blind play move after trust, freshness, or provider capacity says recovery first.',
+    gates: [
+      {
+        label: 'Featured launch',
+        primaryAction: scenario === 'healthy'
+          ? 'Keep the featured play path premium while hero truth, provider trust, and launch safety all line up.'
+          : 'Only treat featured launch as premium while the active provider can still back the next move.',
+        downgradedAction: scenario === 'healthy'
+          ? 'If Home is refreshing, keep the same featured shell live and attach trust-aware copy to the CTA.'
+          : 'Promote healthiest-provider or same-category rescue on the hero before the user clicks into a dead launch.',
+        unlockCondition: 'Restore premium featured launch only when fresh Home truth and provider posture both support the same next action again.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Quick rails',
+        primaryAction: 'Keep quick rails feeling instant while their linked surfaces still have safe launch paths behind them.',
+        downgradedAction: 'Downgrade rails into recovery-led navigation when the provider can no longer back the normal browse path safely.',
+        unlockCondition: 'Rail actions regain premium status once the linked surface validates that its trust and launch story are aligned again.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live action gate',
+    summary: scenario === 'healthy'
+      ? 'Live should say when play now is truly safe and when rescue-first actions need to take over without killing surf momentum.'
+      : 'Live should downgrade the hottest launch action before preview confidence tricks the user into clicking through provider failure.',
+    gates: [
+      {
+        label: 'Active card play',
+        primaryAction: scenario === 'healthy'
+          ? 'Keep Play premium when selected-card trust, preview confidence, guide context, and provider capacity all support launch.'
+          : 'Only let Play feel premium while the active card still has live launch safety behind it.',
+        downgradedAction: scenario === 'healthy'
+          ? 'If Live is rechecking trust, keep surf context and make retry or rescue visible on the same card.'
+          : 'Promote healthiest exact copy or same-category rescue before asking the user to press Play again.',
+        unlockCondition: 'Restore premium Play only when the active card regains fresh launch safety and no stronger recovery warning is active.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'lineSaturated' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Category surf actions',
+        primaryAction: 'Keep category changes, favorites, and preview motion feeling live while the grid still supports safe browsing.',
+        downgradedAction: 'Downgrade the active card into rescue-led surf copy when the grid can still browse but the current provider should stop owning launch.',
+        unlockCondition: 'Bring back premium surf actions once fresh trust confirms the current category can safely launch again from the active provider.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1467,6 +1553,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface contradiction board',
       detail: 'Login, Home, and Live now publish which signal wins when live truth, cache continuity, and recovery posture disagree straight from the adapter manifest.',
       surface: 'live',
+    },
+    {
+      title: 'Surface action gate',
+      detail: 'Login, Home, and Live now publish which action stays premium, which fallback takes over first, and what unlocks the premium path again straight from the adapter manifest.',
+      surface: 'login',
     },
   ],
   supportedScreens: [
@@ -1619,6 +1710,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceFreshnessBoards: buildSurfaceFreshnessBoards(scenario),
   surfaceContradictionBoards: buildSurfaceContradictionBoards(scenario),
   surfaceResetBoundaries: buildSurfaceResetBoundaries(scenario),
+  surfaceActionGates: buildSurfaceActionGates(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

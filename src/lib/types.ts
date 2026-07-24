@@ -362,6 +362,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceActionGates: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    gates: Array<{
+      label: string;
+      primaryAction: string;
+      downgradedAction: string;
+      unlockCondition: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;
