@@ -422,6 +422,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceRecoveryWitnesses: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    witnesses: Array<{
+      label: string;
+      requiredEvidence: string;
+      carriesForward: string;
+      trustBreakTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

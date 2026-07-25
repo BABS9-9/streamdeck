@@ -1836,6 +1836,90 @@ const buildSurfaceConfidenceFloors = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceRecoveryWitnesses = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login recovery witness',
+    summary: scenario === 'healthy'
+      ? 'Login recovery only feels trustworthy if the shell leaves visible proof of which provider survived, why it is still safe, and where the user goes next.'
+      : 'Login should say what visible evidence has to remain on-screen to make recovery believable, what setup context must carry forward with it, and what missing proof means the rescue can no longer be sold as trustworthy.',
+    witnesses: [
+      {
+        label: 'Saved-provider witness',
+        requiredEvidence: scenario === 'healthy'
+          ? 'The shell still shows the saved-provider name, current trust posture, and the safer next move without wiping the form.'
+          : 'The shell must still show which provider failed, which saved provider is healthier, and why that recommendation outranks another blind retry.',
+        carriesForward: 'Keep the typed server, the selected saved connection, and the intended next hop into Home visible together.',
+        trustBreakTrigger: scenario === 'healthy'
+          ? 'If Login cannot still name the active or healthier provider, the recovery shortcut stops being credible.'
+          : 'If provider identity or the reason for the recommendation disappears, Login must stop framing the rescue as a premium fast path.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Connect-path witness',
+        requiredEvidence: 'The screen still shows whether Connect, Retry, or Switch provider now owns the next safe move.',
+        carriesForward: 'Keep the connect form, trust message, and recovery CTA hierarchy aligned on the same screen.',
+        trustBreakTrigger: 'If the user must guess which button is now honest, Login has lost enough proof to market the fallback as trustworthy.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home recovery witness',
+    summary: scenario === 'healthy'
+      ? 'Home recovery only feels premium if the hero and rails still leave visible proof of which browse path survived and why the next move is still safe.'
+      : 'Home should say what visible evidence must stay on-screen to make hero or rail recovery believable, what browse context must carry forward with it, and what missing proof means the fallback has turned into confidence theater.',
+    witnesses: [
+      {
+        label: 'Hero witness',
+        requiredEvidence: scenario === 'healthy'
+          ? 'The hero still shows who owns launch, whether trust is live or cached, and what fallback remains safe if the featured path softens.'
+          : 'The hero must still show whether launch is owned by the active provider, cached context, or a rescue path before it keeps acting cinematic.',
+        carriesForward: 'Keep the featured title, provider posture, and next-safe action visible together instead of resetting to generic browse wallpaper.',
+        trustBreakTrigger: scenario === 'healthy'
+          ? 'If Home cannot still show why the hero CTA is safe, the cinematic polish is no longer enough.'
+          : 'If the hero cannot name which path survived and why, Home must stop pretending the featured launch is still premium.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rail witness',
+        requiredEvidence: 'Each rescue rail still shows whether it is preserving the active provider story, switching to a healthier provider, or keeping same-category continuity.',
+        carriesForward: 'Keep row titles, selected provider context, and rescue CTA copy aligned so the user sees what survived at a glance.',
+        trustBreakTrigger: 'If a rail fallback cannot show who owns it anymore, that rail must stop behaving like a premium browse shortcut.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live recovery witness',
+    summary: scenario === 'healthy'
+      ? 'Live recovery only feels honest if the active card still leaves visible proof of what survived the degraded moment and who safely owns the next launch.'
+      : 'Live should say what visible evidence must stay attached to the active card to make rescue believable, what surf context must carry forward with it, and what missing proof means preview or recovery can no longer be trusted.',
+    witnesses: [
+      {
+        label: 'Selected-card witness',
+        requiredEvidence: scenario === 'healthy'
+          ? 'The active card still shows selected channel identity, launch owner, and enough guide or preview truth to keep surf confidence honest.'
+          : 'The active card must still show whether preview is decorative, whether Play is safe, and whether rescue now owns launch before surf confidence stays premium.',
+        carriesForward: 'Keep the selected category, highlighted card, and next launch owner visible while the grid stays in place.',
+        trustBreakTrigger: scenario === 'healthy'
+          ? 'If the selected card cannot still prove why launch is safe, the surf flow loses its premium witness.'
+          : 'If the active card cannot show what survived and who safely owns launch now, Live must stop selling rescue as effortless.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rescue-path witness',
+        requiredEvidence: 'The card still shows whether exact-match rescue or same-category continuity is carrying the surf session forward.',
+        carriesForward: 'Keep the user on the same category and selected-card story even when the safer provider changes.',
+        trustBreakTrigger: 'If Live can no longer show which recovery path preserved the surf session, the fallback becomes a disguised restart instead of a trustworthy rescue.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1920,6 +2004,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface confidence floor',
       detail: 'Login, Home, and Live now publish the minimum proof needed to keep a premium posture, what downgrade takes over below that floor, and what forces a hard stop straight from the adapter manifest.',
       surface: 'home',
+    },
+    {
+      title: 'Surface recovery witness',
+      detail: 'Login, Home, and Live now publish the visible evidence that must survive fallback, the user context that carries forward with it, and the proof gap that breaks trust straight from the adapter manifest.',
+      surface: 'live',
     },
   ],
   supportedScreens: [
@@ -2077,6 +2166,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceExplanationBoundaries: buildSurfaceExplanationBoundaries(scenario),
   surfaceAutonomyBoundaries: buildSurfaceAutonomyBoundaries(scenario),
   surfaceConfidenceFloors: buildSurfaceConfidenceFloors(scenario),
+  surfaceRecoveryWitnesses: buildSurfaceRecoveryWitnesses(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
