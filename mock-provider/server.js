@@ -1746,6 +1746,96 @@ const buildSurfaceAutonomyBoundaries = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceConfidenceFloors = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login confidence floor',
+    summary: scenario === 'healthy'
+      ? 'Login can stay premium as long as it still proves who the provider is, whether trust is current, and where the user safely goes next.'
+      : 'Login should say what minimum trust proof must still hold before the surface keeps a premium posture, what downgrade takes over below that floor, and what trigger forces a hard stop.',
+    floors: [
+      {
+        label: 'Connection confidence',
+        minimumProof: scenario === 'healthy'
+          ? 'The shell still knows the selected provider identity, fresh auth posture, and safe next hop into Home.'
+          : 'The shell must still know whether auth is fresh, stale, expired, unstable, or capacity-risky before it keeps sounding launch-ready.',
+        downgradeMode: scenario === 'healthy'
+          ? 'If trust is merely aging, Login can downgrade into visible revalidation while keeping sample credentials and saved providers intact.'
+          : 'If confidence drops below launch-ready, Login must downgrade into recovery-led copy and visible healthiest-provider escape hatches instead of decorative trust language.',
+        hardStopTrigger: scenario === 'healthy'
+          ? 'Only a real auth failure or an intentional provider change should break the premium setup posture.'
+          : 'Any expired account, repeated failed auth, or missing provider identity forces Login to stop pretending connect is the default next move.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider confidence',
+        minimumProof: 'The shell still knows which saved provider is currently healthiest and why it is safer than the active one.',
+        downgradeMode: 'If that ranking goes soft, Login must downgrade into explicit “retry or switch” language instead of implying one-tap certainty.',
+        hardStopTrigger: 'If no trustworthy provider ranking survives, Login must stop promoting shortcut recovery as a premium default.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home confidence floor',
+    summary: scenario === 'healthy'
+      ? 'Home can stay cinematic as long as featured browse, quick rails, and provider trust still point at a genuinely safe next move.'
+      : 'Home should say what minimum browse and trust proof must still hold before the hero keeps a premium posture, what downgrade takes over below that floor, and what trigger forces a hard stop.',
+    floors: [
+      {
+        label: 'Hero confidence',
+        minimumProof: scenario === 'healthy'
+          ? 'The hero still has trustworthy provider posture plus a safe featured or recovery launch path.'
+          : 'The hero must still know whether it is showing live truth, safe cached truth, or a recovery-owned launch before it keeps acting cinematic.',
+        downgradeMode: scenario === 'healthy'
+          ? 'If trust softens, Home can downgrade into cache-aware rails and visible rescue actions while preserving the browse frame.'
+          : 'If featured confidence falls below safe launch, Home must downgrade into recovery-first hero language and cached browse context instead of glossy certainty.',
+        hardStopTrigger: scenario === 'healthy'
+          ? 'Only a real mismatch between hero confidence and launch safety should break the premium hero posture.'
+          : 'Any moment the hero cannot name who safely owns the next launch forces Home to stop selling premium confidence and hand control back clearly.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rail confidence',
+        minimumProof: 'Quick rails still know whether they are launching default provider flow, healthier-provider rescue, or same-category continuity.',
+        downgradeMode: 'If rail ownership gets fuzzy, Home must downgrade into explicit rescue framing instead of ambient premium shortcuts.',
+        hardStopTrigger: 'If the shell cannot explain why a rail CTA is still safe, that rail must stop behaving like a premium default launch.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live confidence floor',
+    summary: scenario === 'healthy'
+      ? 'Live can stay slick as long as the selected card still proves whether preview, guide, and launch authority belong to the same safe surf flow.'
+      : 'Live should say what minimum surf proof must still hold before preview and on-card launch keep a premium posture, what downgrade takes over below that floor, and what trigger forces a hard stop.',
+    floors: [
+      {
+        label: 'Selected-card confidence',
+        minimumProof: scenario === 'healthy'
+          ? 'The selected card still has trustworthy launch authority, preview support, and enough guide truth to keep the surf flow honest.'
+          : 'The selected card must still know whether Play, preview, or rescue owns the next move before it keeps surf momentum feeling premium.',
+        downgradeMode: scenario === 'healthy'
+          ? 'If preview or guide confidence softens, Live can downgrade into fallback art and rescue-ready card copy while preserving selection.'
+          : 'If launch authority drops below premium confidence, Live must downgrade into rescue-led surf language and explicit provider ownership instead of seductive preview motion.',
+        hardStopTrigger: scenario === 'healthy'
+          ? 'Only a direct mismatch between selected-card launch safety and visible confidence should break the premium surf posture.'
+          : 'Any time preview, guide, and launch truth no longer point at the same safe owner, Live must stop implying effortless playback.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Recovery confidence',
+        minimumProof: 'The active card still knows whether exact-match rescue or same-category continuity is the safest fallback.',
+        downgradeMode: 'If fallback ranking gets soft, Live must downgrade into explicit “do not trust preview alone” recovery copy.',
+        hardStopTrigger: 'If Live cannot name a safe launch owner for the current surf context, the card must stop acting launch-ready.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1825,6 +1915,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface autonomy boundary',
       detail: 'Login, Home, and Live now publish what the shell can recover automatically, what the user still owns, and what forces an explicit handoff straight from the adapter manifest.',
       surface: 'login',
+    },
+    {
+      title: 'Surface confidence floor',
+      detail: 'Login, Home, and Live now publish the minimum proof needed to keep a premium posture, what downgrade takes over below that floor, and what forces a hard stop straight from the adapter manifest.',
+      surface: 'home',
     },
   ],
   supportedScreens: [
@@ -1981,6 +2076,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceIntentLocks: buildSurfaceIntentLocks(scenario),
   surfaceExplanationBoundaries: buildSurfaceExplanationBoundaries(scenario),
   surfaceAutonomyBoundaries: buildSurfaceAutonomyBoundaries(scenario),
+  surfaceConfidenceFloors: buildSurfaceConfidenceFloors(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

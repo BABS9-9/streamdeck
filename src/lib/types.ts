@@ -410,6 +410,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceConfidenceFloors: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    floors: Array<{
+      label: string;
+      minimumProof: string;
+      downgradeMode: string;
+      hardStopTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;
