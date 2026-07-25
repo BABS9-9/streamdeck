@@ -386,6 +386,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceExplanationBoundaries: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    boundaries: Array<{
+      label: string;
+      mustSayExplicitly: string;
+      canStayImplied: string;
+      forcedDisclosureTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

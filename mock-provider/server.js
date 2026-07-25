@@ -1578,6 +1578,90 @@ const buildSurfaceIntentLocks = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceExplanationBoundaries = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login explanation boundary',
+    summary: scenario === 'healthy'
+      ? 'Login should say the trust-critical setup facts out loud, while keeping the premium tone free from unnecessary support narration.'
+      : 'Login should declare which provider risks must be explicit immediately, which setup confidence can stay implied, and when blunt recovery language has to take over.',
+    boundaries: [
+      {
+        label: 'Trust disclosure',
+        mustSayExplicitly: scenario === 'healthy'
+          ? 'State which provider is being connected, whether auth is fresh, and whether the account looks launch-ready.'
+          : 'State the actual provider risk directly: expired account, unstable auth, or maxed lines cannot stay buried in decorative trust copy.',
+        canStayImplied: 'Premium visual polish, saved-provider familiarity, and the fact that Home is the next destination can stay implied by the shell.',
+        forcedDisclosureTrigger: scenario === 'healthy'
+          ? 'Only a real trust downgrade should force the copy to become more literal than premium.'
+          : 'Any failed auth check, expired status, or capacity warning forces blunt recovery wording before another connect attempt.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider reassurance',
+        mustSayExplicitly: 'Tell the user when a healthier saved provider is the safer next move than retrying the active one.',
+        canStayImplied: 'The saved-provider card can still feel lightweight and one-tap without re-explaining the entire connection model.',
+        forcedDisclosureTrigger: 'The moment the active provider stops being the safest next launch owner, the shortcut has to explain why it downgraded.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home explanation boundary',
+    summary: scenario === 'healthy'
+      ? 'Home should say enough about freshness, trust, and launch readiness to keep browse confidence high without turning the hero into a support article.'
+      : 'Home should declare which degraded truths must be spoken plainly, which product confidence can stay ambient, and when the hero has to stop implying everything is fine.',
+    boundaries: [
+      {
+        label: 'Hero truth disclosure',
+        mustSayExplicitly: scenario === 'healthy'
+          ? 'Call out provider readiness, featured launch safety, and any cache or guide fallback that affects the next move.'
+          : 'State when the hero is leaning on cached truth, rescue-first launch, or degraded provider posture instead of pretending the featured path is fully live.',
+        canStayImplied: 'The cinematic browse tone, category density, and quick-rail momentum can stay implied by the layout and interaction model.',
+        forcedDisclosureTrigger: scenario === 'healthy'
+          ? 'Only a mismatch between featured confidence and provider trust should force stronger explanatory copy.'
+          : 'Any time recovery outranks featured launch, the hero must explain the downgrade explicitly instead of relying on badges alone.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rail recovery disclosure',
+        mustSayExplicitly: 'Say when a rail is sending the user into a healthier provider or same-category rescue instead of the default launch path.',
+        canStayImplied: 'The broader promise that StreamDeck still feels premium during recovery can stay visual and interaction-driven.',
+        forcedDisclosureTrigger: 'A rail CTA switching away from its normal owner must explain the recovery ownership change immediately.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live explanation boundary',
+    summary: scenario === 'healthy'
+      ? 'Live should say the surf-critical truth clearly while letting the grid stay fast, visual, and not overloaded with operator prose.'
+      : 'Live should declare which launch and guide risks must be explicit on-card, which surf confidence can stay ambient, and when rescue copy must override preview seduction.',
+    boundaries: [
+      {
+        label: 'On-card launch disclosure',
+        mustSayExplicitly: scenario === 'healthy'
+          ? 'State when the selected card is launch-ready, when guide truth is partial, and when playback rescue is available.'
+          : 'State when Play is no longer the safest move, when preview is only decorative confidence, and when rescue has taken over launch authority.',
+        canStayImplied: 'The feeling of fast category surf, visual scanning, and live-TV momentum can stay implied by the grid and preview behavior.',
+        forcedDisclosureTrigger: scenario === 'healthy'
+          ? 'Only a direct mismatch between the selected card and safe launch should force stronger language.'
+          : 'Any time preview confidence outruns launch safety, the card must switch to plain recovery language immediately.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Category rescue disclosure',
+        mustSayExplicitly: 'Explain when the surf session is being preserved through exact-match rescue or same-category recovery rather than the original provider.',
+        canStayImplied: 'The broader premium promise that the user did not lose their place can stay visible through preserved selection and category state.',
+        forcedDisclosureTrigger: 'A provider handoff inside the same surf flow must explain who owns launch now and why.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1647,6 +1731,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface intent lock',
       detail: 'Login, Home, and Live now publish which user intent stays protected, what can drift around it, and what actually breaks that promise straight from the adapter manifest.',
       surface: 'home',
+    },
+    {
+      title: 'Surface explanation boundary',
+      detail: 'Login, Home, and Live now publish what must be said explicitly, what can stay implied, and what forces blunt recovery language straight from the adapter manifest.',
+      surface: 'live',
     },
   ],
   supportedScreens: [
@@ -1801,6 +1890,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceResetBoundaries: buildSurfaceResetBoundaries(scenario),
   surfaceActionGates: buildSurfaceActionGates(scenario),
   surfaceIntentLocks: buildSurfaceIntentLocks(scenario),
+  surfaceExplanationBoundaries: buildSurfaceExplanationBoundaries(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
