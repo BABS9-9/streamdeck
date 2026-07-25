@@ -63,6 +63,7 @@ export function MockOperationsConsole({
   const actionGate = manifest?.surfaceActionGates.find((item) => item.screenId === screenId);
   const intentLock = manifest?.surfaceIntentLocks.find((item) => item.screenId === screenId);
   const explanationBoundary = manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === screenId);
+  const autonomyBoundary = manifest?.surfaceAutonomyBoundaries.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -515,6 +516,41 @@ export function MockOperationsConsole({
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Forced disclosure trigger</p>
                     <p className="mt-1 text-sm text-white/80">{item.forcedDisclosureTrigger}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {autonomyBoundary ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{autonomyBoundary.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{autonomyBoundary.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Automation limits visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {autonomyBoundary.boundaries.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <div className="mt-3 grid gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Auto maintains</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{item.autoMaintains}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">User owns</p>
+                    <p className="mt-1 text-sm text-white/80">{item.userOwns}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Forced handoff trigger</p>
+                    <p className="mt-1 text-sm text-white/80">{item.forcedHandoffTrigger}</p>
                   </div>
                 </div>
               </div>

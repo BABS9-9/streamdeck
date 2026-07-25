@@ -1662,6 +1662,90 @@ const buildSurfaceExplanationBoundaries = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceAutonomyBoundaries = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login autonomy boundary',
+    summary: scenario === 'healthy'
+      ? 'Login should quietly refresh trust and saved-provider posture, but the user must still own the final provider choice and credential edits.'
+      : 'Login should say which trust and recovery moves the shell can handle automatically, which choice still belongs to the user, and what forces a hard handoff before setup becomes dishonest.',
+    boundaries: [
+      {
+        label: 'Trust revalidation',
+        autoMaintains: scenario === 'healthy'
+          ? 'Refresh auth, expiry, and line-capacity facts in place while keeping the current server and saved-provider identity visible.'
+          : 'Auto-refresh trust posture and downgrade recovery copy in place so the user sees the real provider risk without rebuilding the form.',
+        userOwns: 'The user still owns changing the server, replacing credentials, or choosing a different saved provider as the primary source.',
+        forcedHandoffTrigger: scenario === 'healthy'
+          ? 'Only an intentional provider change or credential edit should force Login back into explicit user control.'
+          : 'Any failed auth result, expired account, or repeated unstable check forces Login to hand the next move back to the user explicitly.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider rescue',
+        autoMaintains: 'Keep healthiest saved-provider suggestions hot and revalidated so recovery options stay current without extra clicks.',
+        userOwns: 'The user still decides whether to retry the active provider or switch to the healthier saved option.',
+        forcedHandoffTrigger: 'The shell must stop feeling one-tap automatic once the safer route requires a different provider than the user selected.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home autonomy boundary',
+    summary: scenario === 'healthy'
+      ? 'Home should refresh hero trust, counts, and browse rails automatically, but the user must still own which destination and provider they actually launch.'
+      : 'Home should say which product polish can stay automatic during degradation, which recovery choice still belongs to the user, and what event forces an explicit handoff before the hero starts lying.',
+    boundaries: [
+      {
+        label: 'Hero and rail maintenance',
+        autoMaintains: scenario === 'healthy'
+          ? 'Refresh hero counts, featured trust posture, and quick-rail readiness in place without interrupting browse flow.'
+          : 'Auto-refresh hero confidence, cached browse context, and recovery copy so the screen stays alive while the provider weakens.',
+        userOwns: 'The user still owns whether to open Live, switch providers, or accept a rescue path instead of the default featured launch.',
+        forcedHandoffTrigger: scenario === 'healthy'
+          ? 'Only a mismatch between featured polish and real launch safety should force Home into an explicit recovery handoff.'
+          : 'The moment recovery outranks the normal hero CTA, Home must hand the launch choice back to the user explicitly.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Cross-provider rescue suggestion',
+        autoMaintains: 'Keep healthier-provider and same-category rescue options ranked in the background so the best fallback stays visible immediately.',
+        userOwns: 'The user still chooses whether to stay with the active provider story or jump to the recommended fallback owner.',
+        forcedHandoffTrigger: 'Once the default provider no longer safely owns launch, Home must make the provider switch a visible user choice rather than a hidden automation.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live autonomy boundary',
+    summary: scenario === 'healthy'
+      ? 'Live should automatically preserve surf context, preview focus, and guide refreshes, but the user must still own the moment a different provider or rescue path takes over launch.'
+      : 'Live should say which surf behaviors stay automatic through degradation, which launch choice stays user-owned, and what trigger forces an explicit handoff before preview motion outruns trust.',
+    boundaries: [
+      {
+        label: 'Surf continuity',
+        autoMaintains: scenario === 'healthy'
+          ? 'Preserve selected category, selected card, preview target, and guide refresh in place while the user keeps surfing.'
+          : 'Preserve the same category surf and selected-card context while Live swaps in rescue copy, fallback guide posture, or provider warnings automatically.',
+        userOwns: 'The user still owns whether to press Play, launch an alternate provider copy, or leave the current surf session.',
+        forcedHandoffTrigger: scenario === 'healthy'
+          ? 'Only a direct mismatch between selected-card confidence and real launch safety should force Live into an explicit user decision.'
+          : 'Any time Live wants to hand launch to a different provider or rescue path, it must surface that switch as an explicit user choice.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'On-card rescue',
+        autoMaintains: 'Keep alternate exact copies and same-category rescues ranked and visible on the active card without dumping the user out of the grid.',
+        userOwns: 'The user still owns accepting the rescue launch and deciding whether the provider handoff is worth taking.',
+        forcedHandoffTrigger: 'The shell must stop auto-feeling premium the moment preview confidence and rescue ownership point at different providers.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -1736,6 +1820,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface explanation boundary',
       detail: 'Login, Home, and Live now publish what must be said explicitly, what can stay implied, and what forces blunt recovery language straight from the adapter manifest.',
       surface: 'live',
+    },
+    {
+      title: 'Surface autonomy boundary',
+      detail: 'Login, Home, and Live now publish what the shell can recover automatically, what the user still owns, and what forces an explicit handoff straight from the adapter manifest.',
+      surface: 'login',
     },
   ],
   supportedScreens: [
@@ -1891,6 +1980,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceActionGates: buildSurfaceActionGates(scenario),
   surfaceIntentLocks: buildSurfaceIntentLocks(scenario),
   surfaceExplanationBoundaries: buildSurfaceExplanationBoundaries(scenario),
+  surfaceAutonomyBoundaries: buildSurfaceAutonomyBoundaries(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

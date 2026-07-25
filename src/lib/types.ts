@@ -398,6 +398,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceAutonomyBoundaries: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    boundaries: Array<{
+      label: string;
+      autoMaintains: string;
+      userOwns: string;
+      forcedHandoffTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;
