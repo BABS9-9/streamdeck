@@ -2004,6 +2004,90 @@ const buildSurfaceRecoveryWitnesses = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceFallbackCosts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login fallback cost',
+    summary: scenario === 'healthy'
+      ? 'Login can stay premium while degraded recovery still makes the lost convenience explicit instead of silently charging the user setup friction.'
+      : 'Login should say what premium convenience has already been lost, what safe value is still preserved, and what additional loss means the shell must stop presenting the downgrade as a polished continuation.',
+    costs: [
+      {
+        label: 'Fresh-auth convenience',
+        visibleLoss: scenario === 'healthy'
+          ? 'The user has not yet lost fresh-auth confidence, so Login can stay one-step and launch-ready.'
+          : 'The user has already lost effortless fresh-auth confidence, so Login must stop acting like retrying the same provider is frictionless.',
+        preservedValue: 'Saved providers, entered server details, and the next-safe recovery move still stay visible on the same surface.',
+        hardStopThreshold: scenario === 'healthy'
+          ? 'Only a real trust failure should force Login out of its premium posture.'
+          : 'If Login also loses provider identity or the safest next move, it must stop presenting the fallback as premium and switch to blunt recovery guidance.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'One-tap confidence',
+        visibleLoss: 'The shortcut feel is gone the moment a healthier saved provider becomes safer than the one the user picked.',
+        preservedValue: 'The shell still preserves the same saved-provider story and keeps the switch action adjacent to the degraded trust facts.',
+        hardStopThreshold: 'If the safer provider swap is no longer explainable in one glance, Login must stop posing as a premium shortcut.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home fallback cost',
+    summary: scenario === 'healthy'
+      ? 'Home can stay cinematic while degraded browse still makes the lost premium layer explicit instead of pretending the hero is fully live.'
+      : 'Home should say what premium browse capability has already been lost, what honest value is still preserved, and what additional loss means the hero has to stop acting like a polished default path.',
+    costs: [
+      {
+        label: 'Hero certainty',
+        visibleLoss: scenario === 'healthy'
+          ? 'The hero has not yet lost live-launch certainty, so the featured path can still read as premium.'
+          : 'The hero has already lost some live certainty, so Home must say when it is leaning on cache, rescue-first launch, or degraded trust instead of a fully live featured path.',
+        preservedValue: 'Featured title context, provider posture, quick rails, and the next-safe move still stay visible together on first paint.',
+        hardStopThreshold: scenario === 'healthy'
+          ? 'Only a real mismatch between featured polish and launch safety should force a downgrade.'
+          : 'If Home can no longer say what survives or who safely owns launch, the hero must stop behaving like a premium cinematic shortcut.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rail directness',
+        visibleLoss: 'The user may lose the default provider or direct featured launch, even if the same browse session is still preserved.',
+        preservedValue: 'Category density, browse momentum, and rescue paths still remain attached to recognizable rails instead of collapsing into utility states.',
+        hardStopThreshold: 'If the rails can no longer say what they saved versus what they lost, Home must stop presenting fallback as a premium rail experience.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live fallback cost',
+    summary: scenario === 'healthy'
+      ? 'Live can stay slick while degraded surf still makes the lost capability explicit instead of letting preview motion hide what the user gave up.'
+      : 'Live should say what surf capability was already lost, what honest value is still preserved, and what additional loss means the selected-card recovery can no longer pass as seamless.',
+    costs: [
+      {
+        label: 'Launch purity',
+        visibleLoss: scenario === 'healthy'
+          ? 'The user has not yet lost direct launch confidence, so Play and preview can still feel clean and premium.'
+          : 'The user may already have lost direct launch purity, because rescue, same-category fallback, or preview-only confidence has taken over part of the surf story.',
+        preservedValue: 'Selected card, current category, and the safest next launch owner still remain attached to the same surf session.',
+        hardStopThreshold: scenario === 'healthy'
+          ? 'Only a direct mismatch between preview confidence and launch safety should force a more explicit downgrade.'
+          : 'If the card cannot still say what capability was lost and who owns the safer path now, Live must stop selling the fallback as seamless surf.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Exact-match continuity',
+        visibleLoss: 'The user may lose the exact provider copy or exact selected channel, even when same-category surf continuity still survives.',
+        preservedValue: 'The grid, selected category, and visible rescue action still preserve surf momentum better than a cold restart.',
+        hardStopThreshold: 'If Live can no longer explain whether it preserved the exact match, the category, or only the safer provider, the fallback has become too lossy to market as premium.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2098,6 +2182,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface recovery witness',
       detail: 'Login, Home, and Live now publish the visible evidence that must survive fallback, the user context that carries forward with it, and the proof gap that breaks trust straight from the adapter manifest.',
       surface: 'live',
+    },
+    {
+      title: 'Surface fallback cost',
+      detail: 'Login, Home, and Live now publish what premium capability the user already lost, what value still survives, and what additional loss means the shell must stop selling the downgrade as premium straight from the adapter manifest.',
+      surface: 'home',
     },
   ],
   supportedScreens: [
@@ -2257,6 +2346,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceIdentityAnchors: buildSurfaceIdentityAnchors(scenario),
   surfaceConfidenceFloors: buildSurfaceConfidenceFloors(scenario),
   surfaceRecoveryWitnesses: buildSurfaceRecoveryWitnesses(scenario),
+  surfaceFallbackCosts: buildSurfaceFallbackCosts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

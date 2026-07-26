@@ -103,6 +103,10 @@ export default function LoginPage() {
     () => mockManifest?.surfaceRecoveryWitnesses?.find((item) => item.screenId === 'login') ?? null,
     [mockManifest]
   );
+  const fallbackCost = useMemo(
+    () => mockManifest?.surfaceFallbackCosts?.find((item) => item.screenId === 'login') ?? null,
+    [mockManifest]
+  );
   const healthiestConnection = useMemo(() => getHealthiestSavedProvider({
     connections,
     connectionStatus,
@@ -457,6 +461,30 @@ export default function LoginPage() {
                     <p className="mt-2 text-sm font-semibold text-white">{item.requiredEvidence}</p>
                     <p className="mt-3 text-sm text-slate-300">{item.carriesForward}</p>
                     <p className="mt-3 text-sm text-slate-400">{item.trustBreakTrigger}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {fallbackCost ? (
+            <div className="mt-6 rounded-[1.6rem] border border-white/10 bg-white/5 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{fallbackCost.title}</p>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{fallbackCost.summary}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300">
+                  Fallback cost made explicit
+                </span>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {fallbackCost.costs.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                    <p className="mt-2 text-sm font-semibold text-white">{item.visibleLoss}</p>
+                    <p className="mt-3 text-sm text-slate-300">{item.preservedValue}</p>
+                    <p className="mt-3 text-sm text-slate-400">{item.hardStopThreshold}</p>
                   </div>
                 ))}
               </div>
