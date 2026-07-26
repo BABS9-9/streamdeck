@@ -64,6 +64,7 @@ export function MockOperationsConsole({
   const intentLock = manifest?.surfaceIntentLocks.find((item) => item.screenId === screenId);
   const explanationBoundary = manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === screenId);
   const autonomyBoundary = manifest?.surfaceAutonomyBoundaries.find((item) => item.screenId === screenId);
+  const identityAnchor = manifest?.surfaceIdentityAnchors.find((item) => item.screenId === screenId);
   const confidenceFloor = manifest?.surfaceConfidenceFloors.find((item) => item.screenId === screenId);
   const recoveryWitness = manifest?.surfaceRecoveryWitnesses.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
@@ -555,6 +556,30 @@ export function MockOperationsConsole({
                     <p className="mt-1 text-sm text-white/80">{item.forcedHandoffTrigger}</p>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {identityAnchor ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{identityAnchor.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{identityAnchor.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Identity stays visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {identityAnchor.anchors.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{item.mustStayVisible}</p>
+                <p className="mt-2 text-sm text-white/80">{item.preservesMeaning}</p>
+                <p className="mt-3 text-sm text-white/80">{item.breakTrigger}</p>
               </div>
             ))}
           </div>

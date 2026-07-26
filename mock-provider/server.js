@@ -1746,6 +1746,90 @@ const buildSurfaceAutonomyBoundaries = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceIdentityAnchors = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login identity anchor',
+    summary: scenario === 'healthy'
+      ? 'Login stays premium only while the screen keeps proving which provider is being connected, which saved provider is being suggested, and which trust posture owns the next move.'
+      : 'Login should say which provider and trust markers must stay visible during recovery, what meaning that preserved identity protects, and what missing proof turns fallback into an anonymous setup shuffle.',
+    anchors: [
+      {
+        label: 'Provider identity',
+        mustStayVisible: scenario === 'healthy'
+          ? 'The selected server, saved-provider name, and current account posture stay visible next to the connect path.'
+          : 'The failed provider, the healthier saved provider, and the reason that recommendation is safer must stay visible together.',
+        preservesMeaning: 'The user understands whose credentials are active, whose trust is degraded, and whose Home path would take over next.',
+        breakTrigger: scenario === 'healthy'
+          ? 'If Login hides which provider owns the next move, the premium setup story becomes generic and brittle.'
+          : 'If recovery no longer names which provider failed or which provider is rescuing the flow, Login has lost its identity anchor.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Scenario ownership',
+        mustStayVisible: 'The active rehearsal mode and trust state stay attached to the same provider story instead of floating as detached warning copy.',
+        preservesMeaning: 'The user can tell whether retry, connect, or switch-provider ownership changed because of this provider, not because the whole app forgot who it was talking about.',
+        breakTrigger: 'If scenario or trust copy survives without provider ownership beside it, the fallback starts reading like random setup friction.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home identity anchor',
+    summary: scenario === 'healthy'
+      ? 'Home stays cinematic only while the hero and rails keep proving which provider owns the browse session, which trust posture is current, and whose fallback would take over if launch shifts.'
+      : 'Home should say which provider and browse markers must stay visible during fallback, what meaning they preserve, and what missing identity proof turns the hero into anonymous confidence theater.',
+    anchors: [
+      {
+        label: 'Browse-session owner',
+        mustStayVisible: scenario === 'healthy'
+          ? 'The active provider label, trust posture, and hero launch owner stay visible with the featured rail story.'
+          : 'The current provider, cached-vs-live posture, and rescue owner must stay visible on the same Home frame.',
+        preservesMeaning: 'The user understands whether the hero still belongs to the active provider, a cached continuation, or a healthier-provider rescue path.',
+        breakTrigger: scenario === 'healthy'
+          ? 'If the hero keeps selling launch without naming who owns it, Home loses its premium identity anchor.'
+          : 'If the hero cannot say whose Home story survived, the fallback becomes anonymous wallpaper instead of trustworthy browse continuity.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rail continuity',
+        mustStayVisible: 'Quick rails keep the provider label or rescue owner attached when launch authority changes under the surface.',
+        preservesMeaning: 'The user can tell whether a rail is preserving the current provider story or switching to a healthier owner before leaving Home.',
+        breakTrigger: 'If a rail CTA no longer reveals who owns launch, Home has lost enough identity proof to treat that rail like a premium shortcut.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live identity anchor',
+    summary: scenario === 'healthy'
+      ? 'Live stays slick only while the selected card keeps proving which provider, category, and launch owner define the current surf session.'
+      : 'Live should say which provider and surf markers must stay visible during rescue, what meaning they preserve, and what missing identity proof turns fallback into a disguised channel jump.',
+    anchors: [
+      {
+        label: 'Selected-card owner',
+        mustStayVisible: scenario === 'healthy'
+          ? 'The selected channel, provider label, selected category, and launch owner stay attached to the active card.'
+          : 'The active card must still show which provider weakened, which category the user is surfing, and who now safely owns launch.',
+        preservesMeaning: 'The user understands whether the current card is still the same surf session or a rescue path attached to that session.',
+        breakTrigger: scenario === 'healthy'
+          ? 'If the active card cannot still name who owns Play, Live loses its surf identity anchor.'
+          : 'If the selected card loses provider or category identity during rescue, the fallback becomes an anonymous jump instead of controlled continuity.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rescue ownership',
+        mustStayVisible: 'Exact-match rescue or same-category continuity stays labeled with the provider taking over and the context it preserved.',
+        preservesMeaning: 'The user can see whether fallback kept the same channel identity, the same category surf, or only the safer provider owner.',
+        breakTrigger: 'If rescue stays clickable without saying who took over or what context survived, Live has lost enough identity proof to market it as seamless.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceConfidenceFloors = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -2001,6 +2085,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       surface: 'login',
     },
     {
+      title: 'Surface identity anchor',
+      detail: 'Login, Home, and Live now publish which provider, account, scenario, and content markers must stay visible so fallback never becomes an anonymous premium illusion straight from the adapter manifest.',
+      surface: 'home',
+    },
+    {
       title: 'Surface confidence floor',
       detail: 'Login, Home, and Live now publish the minimum proof needed to keep a premium posture, what downgrade takes over below that floor, and what forces a hard stop straight from the adapter manifest.',
       surface: 'home',
@@ -2165,6 +2254,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceIntentLocks: buildSurfaceIntentLocks(scenario),
   surfaceExplanationBoundaries: buildSurfaceExplanationBoundaries(scenario),
   surfaceAutonomyBoundaries: buildSurfaceAutonomyBoundaries(scenario),
+  surfaceIdentityAnchors: buildSurfaceIdentityAnchors(scenario),
   surfaceConfidenceFloors: buildSurfaceConfidenceFloors(scenario),
   surfaceRecoveryWitnesses: buildSurfaceRecoveryWitnesses(scenario),
   scenarioSpotlight: {

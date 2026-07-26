@@ -410,6 +410,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceIdentityAnchors: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    anchors: Array<{
+      label: string;
+      mustStayVisible: string;
+      preservesMeaning: string;
+      breakTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceConfidenceFloors: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;
