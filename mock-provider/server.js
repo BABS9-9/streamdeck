@@ -2178,6 +2178,90 @@ const buildSurfaceRescueReceipts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceProofDebts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login proof debt',
+    summary: scenario === 'healthy'
+      ? 'Login stays premium when it admits exactly how much trust is still unsettled, what confidence is being borrowed from saved-provider context, and what fresh proof clears that debt.'
+      : 'Login should say what trust uncertainty is still being carried, what confidence the shell is borrowing to stay useful, and what evidence must land before Connect feels honestly premium again.',
+    debts: [
+      {
+        label: 'Fresh-auth debt',
+        carriedUncertainty: scenario === 'healthy'
+          ? 'Fresh auth still needs to be re-earned each time the user changes providers, even though the shell already knows the saved-provider story.'
+          : 'The shell is still carrying uncertainty about whether fresh auth, expiry, or line capacity changed since the last known good state.',
+        borrowedConfidence: 'Saved provider identity, visible account posture, and intact connection form context keep Login useful before a fresh auth roundtrip finishes.',
+        repaymentTrigger: scenario === 'healthy'
+          ? 'A fresh auth check plus a clear next-safe move into Home repays the setup debt.'
+          : 'A confirmed auth result or an explicit healthier-provider handoff must land before Login can stop sounding like recovery-first setup.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Shortcut debt',
+        carriedUncertainty: 'One-tap recovery still carries uncertainty until the shell can prove why this saved provider outranks a blind retry.',
+        borrowedConfidence: 'The recommendation borrows confidence from the saved-provider roster, last known trust facts, and visible CTA hierarchy.',
+        repaymentTrigger: 'The shell has to prove the safer provider choice or fall back to blunt retry-versus-switch language before the shortcut can feel premium again.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home proof debt',
+    summary: scenario === 'healthy'
+      ? 'Home stays cinematic when it admits what browse truth is still unsettled, what confidence is being borrowed from cache or rescue posture, and what proof clears that debt before the hero overclaims certainty.'
+      : 'Home should say what browse uncertainty is still being carried, what confidence the shell is borrowing to stay useful, and what evidence must land before the hero can honestly read as premium again.',
+    debts: [
+      {
+        label: 'Hero-launch debt',
+        carriedUncertainty: scenario === 'healthy'
+          ? 'The hero still carries small uncertainty about live freshness between paints, even when provider posture is healthy.'
+          : 'The hero is still carrying uncertainty about whether live trust, cache truth, or rescue ownership now safely owns the featured launch.',
+        borrowedConfidence: 'Featured artwork, provider posture, quick rails, and visible launch ownership let Home stay useful while fresh proof catches up.',
+        repaymentTrigger: scenario === 'healthy'
+          ? 'A fresh provider-backed launch path repays the hero debt before the next featured click.'
+          : 'Home needs a clear live refresh or an explicit recovery-owned launch label before the hero can stop borrowing premium confidence.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rail-continuity debt',
+        carriedUncertainty: 'Quick rails still carry uncertainty whenever same-category continuity or healthier-provider rescue might outrank the direct featured path.',
+        borrowedConfidence: 'Row density, preserved browse frame, and visible rescue language keep the rails useful before every title path is freshly proven.',
+        repaymentTrigger: 'Each rail must either refresh into a clearly owned launch path or keep admitting that it is borrowing confidence from recovery context.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live proof debt',
+    summary: scenario === 'healthy'
+      ? 'Live stays slick when it admits what surf truth is still unsettled, what confidence is being borrowed from preview or category continuity, and what proof clears that debt before Play overclaims safety.'
+      : 'Live should say what surf uncertainty is still being carried, what confidence the shell is borrowing to keep the grid useful, and what evidence must land before preview or Play can honestly feel premium again.',
+    debts: [
+      {
+        label: 'Preview debt',
+        carriedUncertainty: scenario === 'healthy'
+          ? 'Preview motion still carries small uncertainty until launch authority, guide truth, and playback readiness align on the same selected card.'
+          : 'The active card is still carrying uncertainty about whether preview is real proof, decorative motion, or just a bridge toward rescue-owned launch.',
+        borrowedConfidence: 'Selected-card context, category continuity, and visible launch ownership let Live stay fast before every preview state is fully proven.',
+        repaymentTrigger: scenario === 'healthy'
+          ? 'Preview, Play, and guide truth aligning on the same safe owner repays the surf debt.'
+          : 'Live needs either restored launch authority or an explicit rescue-owned Play path before preview can stop borrowing confidence.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Fallback-ranking debt',
+        carriedUncertainty: 'Exact-match rescue and same-category continuity still carry uncertainty until the shell can prove which fallback preserved the most honest surf story.',
+        borrowedConfidence: 'The grid, current category, and selected-card state keep the browse session alive while fallback ranking settles.',
+        repaymentTrigger: 'Live must either prove the safer launch owner or keep the fallback framed as borrowed-confidence recovery instead of seamless playback.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2282,6 +2366,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface rescue receipt',
       detail: 'Login, Home, and Live now publish what user context survived fallback, what changed under the hood, and what the user should reconfirm before trusting the next move straight from the adapter manifest.',
       surface: 'live',
+    },
+    {
+      title: 'Surface proof debt',
+      detail: 'Login, Home, and Live now publish what uncertainty the shell is still carrying, what confidence it is borrowing, and what evidence must land before the next move can honestly feel premium again straight from the adapter manifest.',
+      surface: 'login',
     },
   ],
   supportedScreens: [
@@ -2443,6 +2532,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceRecoveryWitnesses: buildSurfaceRecoveryWitnesses(scenario),
   surfaceFallbackCosts: buildSurfaceFallbackCosts(scenario),
   surfaceRescueReceipts: buildSurfaceRescueReceipts(scenario),
+  surfaceProofDebts: buildSurfaceProofDebts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
