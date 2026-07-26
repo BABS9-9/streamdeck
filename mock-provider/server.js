@@ -2088,6 +2088,96 @@ const buildSurfaceFallbackCosts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceRescueReceipts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login rescue receipt',
+    summary: scenario === 'healthy'
+      ? 'Login can stay premium when any recovery still leaves a crisp receipt for what setup context survived, what connection logic changed, and what the user should reconfirm before moving on.'
+      : 'Login should say what setup context survived the fallback, what the shell changed under the hood, and what the user must reconfirm before trusting the next move.',
+    receipts: [
+      {
+        label: 'Saved-provider swap receipt',
+        preservedContext: scenario === 'healthy'
+          ? 'Typed credentials, saved-provider identity, and the intended move into Home all stay visible together.'
+          : 'The form state, saved-provider list, and the original intent to enter Home still stay intact during recovery.',
+        changedUnderTheHood: scenario === 'healthy'
+          ? 'Nothing changed yet; the shell is still prepared to switch recovery ownership to the healthiest saved provider without wiping the setup state.'
+          : 'The shell may have reassigned the safest next move from retrying the active provider to switching onto the healthiest saved provider.',
+        requiresReconfirmation: scenario === 'healthy'
+          ? 'The user only needs to reconfirm that the selected provider is still the one they want to launch with.'
+          : 'The user should reconfirm which provider now owns the next move before treating Connect like a direct, one-provider path.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Trust posture receipt',
+        preservedContext: 'The login shell still preserves provider identity, trust facts, and the visible next-safe CTA on the same screen.',
+        changedUnderTheHood: 'Fresh auth may have been downgraded into cached trust posture, retry guidance, or provider-switch guidance.',
+        requiresReconfirmation: 'The user should reconfirm whether Retry, Switch provider, or Connect is now the honest next action.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home rescue receipt',
+    summary: scenario === 'healthy'
+      ? 'Home can stay cinematic when any fallback still leaves a receipt for what browse context survived, what launch ownership shifted, and what the user should reconfirm before clicking the hero or a rail.'
+      : 'Home should say what browse context survived the fallback, what the shell changed under the hood, and what the user must reconfirm before trusting the next launch.',
+    receipts: [
+      {
+        label: 'Hero rescue receipt',
+        preservedContext: scenario === 'healthy'
+          ? 'The featured title, quick rails, provider posture, and first-paint browse frame all stay intact.'
+          : 'The featured title, the same Home rails, and the current browse frame stay visible even when live trust weakens.',
+        changedUnderTheHood: scenario === 'healthy'
+          ? 'Nothing changed yet; the hero can still hand off to healthier-provider or cached fallback ownership without collapsing the Home frame.'
+          : 'The hero may now be launching from cache, recovery ownership, or same-category continuity instead of a fully live direct path.',
+        requiresReconfirmation: scenario === 'healthy'
+          ? 'The user only needs to reconfirm that the hero still represents the launch path they want.'
+          : 'The user should reconfirm whether the hero is still the direct launch path or a recovery-owned route before treating it as a premium shortcut.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rail continuity receipt',
+        preservedContext: 'Row labels, category density, and the current provider story still stay attached to recognizable browse rails.',
+        changedUnderTheHood: 'A rail may have swapped from direct provider launch into healthier-provider rescue or same-category continuity.',
+        requiresReconfirmation: 'The user should reconfirm whether the rail preserved the exact title path, the same category, or only the safer provider owner.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live rescue receipt',
+    summary: scenario === 'healthy'
+      ? 'Live can stay slick when any fallback still leaves a receipt for what surf context survived, what playback ownership shifted, and what the user should reconfirm before trusting preview or Play.'
+      : 'Live should say what surf context survived the fallback, what the shell changed under the hood, and what the user must reconfirm before trusting preview or launch.',
+    receipts: [
+      {
+        label: 'Selected-card rescue receipt',
+        preservedContext: scenario === 'healthy'
+          ? 'The selected card, category surf context, and visible launch owner all stay attached to the same browsing session.'
+          : 'The selected card and category surf context stay in place even when preview, guide, or provider trust degrades.',
+        changedUnderTheHood: scenario === 'healthy'
+          ? 'Nothing changed yet; the card can still route into exact-match rescue or same-category continuity without losing the selected surf context.'
+          : 'The shell may now be using fallback art, healthier-provider rescue, or same-category continuity instead of a direct launch on the active provider.',
+        requiresReconfirmation: scenario === 'healthy'
+          ? 'The user only needs to reconfirm that preview and Play still belong to the same safe launch owner.'
+          : 'The user should reconfirm whether preview is decorative, whether Play still owns the next move, and whether rescue changed the actual provider path.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Fallback path receipt',
+        preservedContext: 'The grid, selected category, and the current surf story still stay visible instead of forcing a cold reset.',
+        changedUnderTheHood: 'The fallback may have preserved the exact channel, only the same category, or only the healthier provider owner.',
+        requiresReconfirmation: 'The user should reconfirm exactly which part of the surf story survived before treating the fallback as seamless.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2187,6 +2277,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface fallback cost',
       detail: 'Login, Home, and Live now publish what premium capability the user already lost, what value still survives, and what additional loss means the shell must stop selling the downgrade as premium straight from the adapter manifest.',
       surface: 'home',
+    },
+    {
+      title: 'Surface rescue receipt',
+      detail: 'Login, Home, and Live now publish what user context survived fallback, what changed under the hood, and what the user should reconfirm before trusting the next move straight from the adapter manifest.',
+      surface: 'live',
     },
   ],
   supportedScreens: [
@@ -2347,6 +2442,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceConfidenceFloors: buildSurfaceConfidenceFloors(scenario),
   surfaceRecoveryWitnesses: buildSurfaceRecoveryWitnesses(scenario),
   surfaceFallbackCosts: buildSurfaceFallbackCosts(scenario),
+  surfaceRescueReceipts: buildSurfaceRescueReceipts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

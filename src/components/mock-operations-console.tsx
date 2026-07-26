@@ -68,6 +68,7 @@ export function MockOperationsConsole({
   const confidenceFloor = manifest?.surfaceConfidenceFloors.find((item) => item.screenId === screenId);
   const recoveryWitness = manifest?.surfaceRecoveryWitnesses.find((item) => item.screenId === screenId);
   const fallbackCost = manifest?.surfaceFallbackCosts.find((item) => item.screenId === screenId);
+  const rescueReceipt = manifest?.surfaceRescueReceipts.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -684,6 +685,41 @@ export function MockOperationsConsole({
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Hard-stop threshold</p>
                     <p className="mt-1 text-sm text-white/80">{item.hardStopThreshold}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {rescueReceipt ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{rescueReceipt.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{rescueReceipt.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Rescue receipt visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {rescueReceipt.receipts.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <div className="mt-3 grid gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Preserved context</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{item.preservedContext}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Changed under the hood</p>
+                    <p className="mt-1 text-sm text-white/80">{item.changedUnderTheHood}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Requires reconfirmation</p>
+                    <p className="mt-1 text-sm text-white/80">{item.requiresReconfirmation}</p>
                   </div>
                 </div>
               </div>
