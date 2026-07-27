@@ -2514,6 +2514,90 @@ const buildSurfaceRetryContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceProviderSwitchContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login provider-switch contract',
+    summary: scenario === 'healthy'
+      ? 'Login can keep the current provider in front while fresh auth proof is still landing, but it should switch as soon as a healthier saved provider clearly owns the safer path into Home.'
+      : 'Login should publish when the current provider has honestly lost setup ownership, what context a switch must preserve, and what proof lets the current provider keep the surface.',
+    switches: [
+      {
+        label: 'Switch away from unstable auth',
+        switchTrigger: scenario === 'healthy'
+          ? 'Switch only when a healthier saved provider clearly outranks the current line on auth, expiry, or connection pressure.'
+          : 'Switch as soon as auth stays unstable, expiry is confirmed, or line pressure makes another saved provider the safer owner of Home.',
+        preservesContext: 'Carry the typed server memory, chosen provider label, trust facts, and intended Home handoff so the move feels like rescue, not restart.',
+        stayProof: scenario === 'healthy'
+          ? 'Fresh auth success plus visible provider trust keeps the current provider in control.'
+          : 'Only a fresh auth recovery with visible trust posture should keep the current provider from losing the next move.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Switch saved-provider shortcut owner',
+        switchTrigger: 'Switch once the shortcut can no longer honestly claim it is faster or safer than moving to a healthier saved provider.',
+        preservesContext: 'Preserve the chosen destination, saved-provider comparison, and user confidence that setup progress survived the swap.',
+        stayProof: 'A visible trust comparison showing this provider still wins keeps the shortcut on the current owner.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home provider-switch contract',
+    summary: scenario === 'healthy'
+      ? 'Home can keep the current provider as the cinematic browse owner while featured proof and rails still reinforce the same discovery story, but it should switch once recovery truth clearly outranks live refresh.'
+      : 'Home should publish when the current provider has honestly lost browse ownership, what discovery context a switch must preserve, and what proof lets the current provider keep the hero.',
+    switches: [
+      {
+        label: 'Switch featured browse owner',
+        switchTrigger: scenario === 'healthy'
+          ? 'Switch only when cached browse continuity and a healthier provider together tell a safer discovery story than waiting on the current hero refresh.'
+          : 'Switch as soon as recovery posture is doing more real work than live provider refresh and the same featured intent can survive elsewhere.',
+        preservesContext: 'Carry the hero title, quick rails, provider trust posture, and next-safe-launch language so discovery momentum survives the provider swap.',
+        stayProof: scenario === 'healthy'
+          ? 'Fresh featured proof plus visible provider trust keeps Home on the current provider.'
+          : 'Only a live refresh that restores current browse authority should keep the current provider in control of the hero.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Switch rail launch owner',
+        switchTrigger: 'Switch once the safest launch path on the rail clearly belongs to another saved provider or same-intent recovery route.',
+        preservesContext: 'Preserve the selected rail, featured context, and launch target so the user never has to rediscover what they meant to watch.',
+        stayProof: 'A current-provider launch proof that still outranks every alternate keeps the rail on the same owner.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live provider-switch contract',
+    summary: scenario === 'healthy'
+      ? 'Live can keep the current provider on the selected card while preview, guide, and launch proof still point to the same surf owner, but it should switch as soon as rescue owns the safer next play.'
+      : 'Live should publish when the current provider has honestly lost surf ownership, what selected-card context a switch must preserve, and what proof lets the current provider keep Play.',
+    switches: [
+      {
+        label: 'Switch selected-card owner',
+        switchTrigger: scenario === 'healthy'
+          ? 'Switch only when same-category rescue or a healthier provider clearly owns a safer launch than the current selected card.'
+          : 'Switch as soon as preview, guide, or line posture weakens enough that rescue owns the safest next Play on the selected card.',
+        preservesContext: 'Carry the selected category, selected card, channel identity, preview target, and recovery comparison so surf rhythm survives the swap.',
+        stayProof: scenario === 'healthy'
+          ? 'Preview, guide, and launch ownership aligning on the same card keeps Live on the current provider.'
+          : 'Only restored launch authority on the same selected card should keep the current provider from losing Play ownership.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Switch guide-and-preview owner',
+        switchTrigger: 'Switch once the card looks playable only because stale art or partial guide context is masking that another provider now owns the safer launch.',
+        preservesContext: 'Preserve category focus, channel meaning, and the current rescue explanation so the user keeps their place in the grid.',
+        stayProof: 'A recovered preview-plus-guide state that points back to the same launch owner lets Live stay on the current provider.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2793,6 +2877,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceClaimCeilings: buildSurfaceClaimCeilings(scenario),
   surfaceInterruptionBudgets: buildSurfaceInterruptionBudgets(scenario),
   surfaceRetryContracts: buildSurfaceRetryContracts(scenario),
+  surfaceProviderSwitchContracts: buildSurfaceProviderSwitchContracts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

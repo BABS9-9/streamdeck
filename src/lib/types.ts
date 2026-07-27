@@ -518,6 +518,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceProviderSwitchContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    switches: Array<{
+      label: string;
+      switchTrigger: string;
+      preservesContext: string;
+      stayProof: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;
