@@ -2262,6 +2262,90 @@ const buildSurfaceProofDebts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceClaimCeilings = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login claim ceiling',
+    summary: scenario === 'healthy'
+      ? 'Login can stay premium when it caps its promise at safe provider entry, visible trust posture, and one honest move into Home until fresh auth proof fully lands.'
+      : 'Login should say the strongest promise it can still make, what setup confidence it must stop implying, and what proof raises Connect back to a premium claim.',
+    ceilings: [
+      {
+        label: 'Connection promise ceiling',
+        allowedPromise: scenario === 'healthy'
+          ? 'The shell can promise a safe saved-provider entry point plus a clear next step into Home.'
+          : 'The shell can promise a visible trust-led recovery path without pretending fresh provider auth is already settled.',
+        forbiddenOverclaim: 'Do not imply that Connect is frictionless, final, or playback-safe if auth, expiry, or line posture is still unsettled.',
+        upgradeProof: scenario === 'healthy'
+          ? 'A fresh auth success plus a visible Home handoff raises the ceiling back to a fully premium login claim.'
+          : 'Confirmed auth health or an explicit healthier-provider handoff must land before Login can sound fully premium again.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider shortcut ceiling',
+        allowedPromise: 'The shell can promise that switching providers is faster and safer than retyping credentials from scratch.',
+        forbiddenOverclaim: 'Do not imply the recommended saved provider is automatically the best playback owner if the ranking proof is still borrowed.',
+        upgradeProof: 'A visible trust comparison or fresh provider validation has to land before the shortcut can claim best-path certainty.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home claim ceiling',
+    summary: scenario === 'healthy'
+      ? 'Home can stay cinematic when it caps its promise at fast browse, visible provider posture, and honest launch ownership until the featured path is freshly proven.'
+      : 'Home should say the strongest browse promise it can still make, what premium story it must stop overselling, and what proof raises the hero back to a full premium claim.',
+    ceilings: [
+      {
+        label: 'Hero promise ceiling',
+        allowedPromise: scenario === 'healthy'
+          ? 'The hero can promise a fast launch path with visible provider ownership and current browse context.'
+          : 'The hero can promise a safe next move plus preserved browse context without pretending every featured claim is freshly live.',
+        forbiddenOverclaim: 'Do not let featured artwork or bold CTA language imply live certainty if cache, rescue posture, or partial trust now owns the launch.',
+        upgradeProof: scenario === 'healthy'
+          ? 'A fresh provider-backed featured launch path keeps the hero at premium claim height.'
+          : 'A restored live refresh or an explicit recovery-owned launch label must land before Home can reclaim full premium hero language.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Quick-rail promise ceiling',
+        allowedPromise: 'Rails can promise fast navigation, preserved context, and an honest recovery path when the source weakens.',
+        forbiddenOverclaim: 'Do not imply every rail item is equally launch-ready if same-category rescue or healthier-provider substitution may outrank the direct click.',
+        upgradeProof: 'Fresh rail-level launch proof or explicit recovery ownership has to land before the rail copy can sound fully premium again.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live claim ceiling',
+    summary: scenario === 'healthy'
+      ? 'Live can stay slick when it caps its promise at fast surf, visible preview ownership, and safe card-level recovery until preview, guide, and launch proof fully align.'
+      : 'Live should say the strongest surf promise it can still make, what playback confidence it must stop implying, and what proof raises Play back to a premium claim.',
+    ceilings: [
+      {
+        label: 'Preview promise ceiling',
+        allowedPromise: scenario === 'healthy'
+          ? 'The selected card can promise fast preview-led surf with a visible path into playback.'
+          : 'The selected card can promise preserved surf context plus the safest next move without pretending preview already proves launch safety.',
+        forbiddenOverclaim: 'Do not let motion, guide snippets, or the Play CTA imply that preview alone proves playback authority under degraded provider conditions.',
+        upgradeProof: scenario === 'healthy'
+          ? 'Preview, guide, and launch authority aligning on the same card keep the premium surf claim honest.'
+          : 'Restored launch authority or an explicit rescue-owned Play path must land before Live can claim premium playback confidence again.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Fallback promise ceiling',
+        allowedPromise: 'Fallback can promise preserved category momentum and the safest visible recovery path.',
+        forbiddenOverclaim: 'Do not imply exact-channel continuity if the shell only proved same-category rescue, healthier-provider ownership, or partial preview continuity.',
+        upgradeProof: 'Exact launch proof or a clearly labeled same-category rescue outcome must land before the fallback can sound seamless.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2371,6 +2455,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface proof debt',
       detail: 'Login, Home, and Live now publish what uncertainty the shell is still carrying, what confidence it is borrowing, and what evidence must land before the next move can honestly feel premium again straight from the adapter manifest.',
       surface: 'login',
+    },
+    {
+      title: 'Surface claim ceiling',
+      detail: 'Login, Home, and Live now publish the strongest promise each surface is still allowed to make, what overclaim must stay off-screen, and what proof raises that ceiling back to premium straight from the adapter manifest.',
+      surface: 'home',
     },
   ],
   supportedScreens: [
@@ -2533,6 +2622,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceFallbackCosts: buildSurfaceFallbackCosts(scenario),
   surfaceRescueReceipts: buildSurfaceRescueReceipts(scenario),
   surfaceProofDebts: buildSurfaceProofDebts(scenario),
+  surfaceClaimCeilings: buildSurfaceClaimCeilings(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
