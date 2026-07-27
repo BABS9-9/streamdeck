@@ -2346,6 +2346,90 @@ const buildSurfaceClaimCeilings = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceInterruptionBudgets = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login interruption budget',
+    summary: scenario === 'healthy'
+      ? 'Login can ask for a very short pause while validation settles, but the provider identity and fastest safe next move must stay visible the whole time.'
+      : 'Login should publish how long it is allowed to keep the user waiting, what visible continuity buys that time, and when it must escalate instead of hiding behind a spinner.',
+    budgets: [
+      {
+        label: 'Fresh validation delay budget',
+        acceptableDelay: scenario === 'healthy'
+          ? 'A brief validation pause is acceptable if Connect still feels like one continuous move into Home.'
+          : 'Only a short retry window is acceptable before Login must switch from hopeful loading into explicit recovery copy.',
+        continuityLayer: 'Keep the selected provider, trust facts, and healthiest-provider escape hatch visible while validation runs.',
+        escalationTrigger: scenario === 'healthy'
+          ? 'Escalate as soon as the wait hides provider ownership or makes the next safe move ambiguous.'
+          : 'Escalate as soon as retries outlast the visible trust story or the user can no longer tell whether auth is progressing.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider shortcut budget',
+        acceptableDelay: 'Provider switching can take a beat, but it should feel faster than re-entering credentials from scratch.',
+        continuityLayer: 'Carry the chosen provider name, account posture, and destination into Home without resetting the form ritual.',
+        escalationTrigger: 'Escalate if the shortcut feels like a full restart or loses the provider comparison that justified the switch.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home interruption budget',
+    summary: scenario === 'healthy'
+      ? 'Home can spend a moment refreshing featured browse proof, but the cinematic shell only stays honest if the rails remain useful while that refresh lands.'
+      : 'Home should publish how long featured browse can stay in a transitional state, what cached continuity keeps the surface premium enough, and when it must escalate instead of stalling beautifully.',
+    budgets: [
+      {
+        label: 'Hero refresh delay budget',
+        acceptableDelay: scenario === 'healthy'
+          ? 'A short hero refresh is acceptable if counts, artwork, and the next launch move stay stable on screen.'
+          : 'Only a brief refresh grace window is acceptable before Home must admit the hero is running on cache or recovery posture.',
+        continuityLayer: 'Keep saved rails, provider facts, and a named recovery launch path visible while the hero refreshes.',
+        escalationTrigger: scenario === 'healthy'
+          ? 'Escalate once the hero pause starts feeling decorative instead of useful.'
+          : 'Escalate once the hero stops proving current browse authority and the shell is only borrowing confidence from cache.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rail continuity budget',
+        acceptableDelay: 'Rails can tolerate stale edges briefly if the next safe launch path stays obvious.',
+        continuityLayer: 'Use cached card context, provider trust posture, and explicit recovery ownership to keep the rail actionable.',
+        escalationTrigger: 'Escalate if the user would need Settings or support knowledge to understand why a rail still deserves a click.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live interruption budget',
+    summary: scenario === 'healthy'
+      ? 'Live can spend a split second arming preview or NOW/NEXT, but surf flow only stays premium if the selected card keeps proving what happens next.'
+      : 'Live should publish how long surf can tolerate preview, guide, or provider wobble, what continuity layer keeps the card trustworthy, and when it must escalate instead of faking momentum.',
+    budgets: [
+      {
+        label: 'Preview arming delay budget',
+        acceptableDelay: scenario === 'healthy'
+          ? 'A quick preview arm is acceptable if the card still feels instantly playable.'
+          : 'Only a short preview grace window is acceptable before the shell must admit it is preserving surf context rather than live preview confidence.',
+        continuityLayer: 'Keep channel identity, category focus, guide context, and rescue ownership attached to the same card while preview catches up.',
+        escalationTrigger: scenario === 'healthy'
+          ? 'Escalate once preview delay starts breaking the surf rhythm.'
+          : 'Escalate once motion or stale art is the only thing making the card look playable.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Guide fallback delay budget',
+        acceptableDelay: 'Guide softness is acceptable briefly if the user can still surf and launch without losing channel context.',
+        continuityLayer: 'Use the current category, selected channel, and explicit rescue path to preserve momentum while NOW and NEXT recover.',
+        escalationTrigger: 'Escalate if the shell keeps pretty motion alive after guide, preview, and launch ownership have all gone soft at once.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2623,6 +2707,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceRescueReceipts: buildSurfaceRescueReceipts(scenario),
   surfaceProofDebts: buildSurfaceProofDebts(scenario),
   surfaceClaimCeilings: buildSurfaceClaimCeilings(scenario),
+  surfaceInterruptionBudgets: buildSurfaceInterruptionBudgets(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

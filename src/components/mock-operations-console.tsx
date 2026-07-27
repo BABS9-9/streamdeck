@@ -71,6 +71,7 @@ export function MockOperationsConsole({
   const rescueReceipt = manifest?.surfaceRescueReceipts.find((item) => item.screenId === screenId);
   const proofDebt = manifest?.surfaceProofDebts.find((item) => item.screenId === screenId);
   const claimCeiling = manifest?.surfaceClaimCeilings.find((item) => item.screenId === screenId);
+  const interruptionBudget = manifest?.surfaceInterruptionBudgets.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -792,6 +793,41 @@ export function MockOperationsConsole({
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Upgrade proof</p>
                     <p className="mt-1 text-sm text-white/80">{item.upgradeProof}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {interruptionBudget ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{interruptionBudget.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{interruptionBudget.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Delay honesty visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {interruptionBudget.budgets.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <div className="mt-3 grid gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Acceptable delay</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{item.acceptableDelay}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Continuity layer</p>
+                    <p className="mt-1 text-sm text-white/80">{item.continuityLayer}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Escalation trigger</p>
+                    <p className="mt-1 text-sm text-white/80">{item.escalationTrigger}</p>
                   </div>
                 </div>
               </div>

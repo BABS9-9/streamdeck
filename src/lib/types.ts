@@ -494,6 +494,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceInterruptionBudgets: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    budgets: Array<{
+      label: string;
+      acceptableDelay: string;
+      continuityLayer: string;
+      escalationTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;
