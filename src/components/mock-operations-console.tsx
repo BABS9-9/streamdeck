@@ -72,6 +72,7 @@ export function MockOperationsConsole({
   const proofDebt = manifest?.surfaceProofDebts.find((item) => item.screenId === screenId);
   const claimCeiling = manifest?.surfaceClaimCeilings.find((item) => item.screenId === screenId);
   const interruptionBudget = manifest?.surfaceInterruptionBudgets.find((item) => item.screenId === screenId);
+  const retryContract = manifest?.surfaceRetryContracts.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -828,6 +829,41 @@ export function MockOperationsConsole({
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Escalation trigger</p>
                     <p className="mt-1 text-sm text-white/80">{item.escalationTrigger}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {retryContract ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{retryContract.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{retryContract.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Retry honesty visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {retryContract.retries.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <div className="mt-3 grid gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Honest retry window</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{item.honestRetryWindow}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Preserves context</p>
+                    <p className="mt-1 text-sm text-white/80">{item.preservesContext}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Give-up trigger</p>
+                    <p className="mt-1 text-sm text-white/80">{item.giveUpTrigger}</p>
                   </div>
                 </div>
               </div>

@@ -2430,6 +2430,90 @@ const buildSurfaceInterruptionBudgets = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceRetryContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login retry contract',
+    summary: scenario === 'healthy'
+      ? 'Login can offer a fast retry while the same provider still credibly owns the next move, but retry only stays honest if the saved escape route remains visible.'
+      : 'Login should publish when retrying the current provider is still honest, what setup context retry is allowed to preserve, and what trigger means the shell must stop selling retry before it turns into spinner theater.',
+    retries: [
+      {
+        label: 'Reconnect this provider',
+        honestRetryWindow: scenario === 'healthy'
+          ? 'Retry stays honest while auth is freshening the same provider story and the next move still points cleanly into Home.'
+          : 'Retry is only honest during a short trust-refresh window where the same provider can still plausibly own the next launch.',
+        preservesContext: 'Keep the typed server, saved-provider identity, trust facts, and healthiest-provider fallback visible while retry runs.',
+        giveUpTrigger: scenario === 'healthy'
+          ? 'Stop nudging retry as soon as provider ownership becomes ambiguous or a healthier saved provider clearly outranks it.'
+          : 'Stop nudging retry as soon as auth stays unstable, expiry is confirmed, or line pressure makes another provider the safer launch owner.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Retry saved shortcut',
+        honestRetryWindow: 'A saved-provider shortcut stays honest only while it still resolves faster than asking the user to rebuild setup by hand.',
+        preservesContext: 'Preserve the chosen provider name, account posture, and Home destination so retry still feels like one move, not a reset.',
+        giveUpTrigger: 'Stop nudging the shortcut once the shell can no longer explain why this provider is still safer than switching.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home retry contract',
+    summary: scenario === 'healthy'
+      ? 'Home can retry featured browse proof in place while the same provider still owns discovery, but retry stops being honest when cache or rescue already tells a safer story.'
+      : 'Home should publish when retrying the active provider is still honest, what browse context can survive that retry, and what trigger means the hero must hand authority to recovery instead.',
+    retries: [
+      {
+        label: 'Retry featured refresh',
+        honestRetryWindow: scenario === 'healthy'
+          ? 'Retry stays honest while featured rails and provider facts are refreshing toward the same browse story.'
+          : 'Retry is only honest during a short grace window where cached browse context is holding the same featured intent alive.',
+        preservesContext: 'Keep the hero, quick rails, provider trust posture, and same next-safe-move language visible while refresh runs.',
+        giveUpTrigger: scenario === 'healthy'
+          ? 'Stop nudging retry once the hero no longer adds fresher truth than the cached or rescue path already visible.'
+          : 'Stop nudging retry once cached continuity or healthier-provider recovery is doing more real work than the live provider refresh.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Retry this rail launch owner',
+        honestRetryWindow: 'A rail-level retry stays honest only while the active provider still has a believable claim to own the next launch.',
+        preservesContext: 'Preserve the selected rail, featured identity, and recovery comparison so the user never loses discovery intent.',
+        giveUpTrigger: 'Stop nudging retry once the safest next move is clearly a healthier provider or same-category rescue.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live retry contract',
+    summary: scenario === 'healthy'
+      ? 'Live can retry preview, guide, or launch authority in place while the selected card still belongs to the same surf session, but retry stops being honest when rescue already owns the safer next move.'
+      : 'Live should publish when retrying the active provider is still honest, what surf context retry is allowed to preserve, and what trigger means the selected card must hand launch authority to recovery.',
+    retries: [
+      {
+        label: 'Retry selected-card launch',
+        honestRetryWindow: scenario === 'healthy'
+          ? 'Retry stays honest while the selected card still points at the same provider, same surf context, and same likely launch owner.'
+          : 'Retry is only honest during a short selected-card recovery window where the same provider can still plausibly reclaim launch authority.',
+        preservesContext: 'Keep the selected category, selected card, preview target, guide state, and rescue comparison attached to the same surf path.',
+        giveUpTrigger: scenario === 'healthy'
+          ? 'Stop nudging retry once preview confidence and launch safety stop pointing at the same card.'
+          : 'Stop nudging retry once same-category rescue or an alternate provider becomes safer than asking the user to hit Play again on the weakened source.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Retry guide and preview sync',
+        honestRetryWindow: 'Guide or preview retry stays honest only while the user can still surf and launch without rebuilding their place in the grid.',
+        preservesContext: 'Preserve category focus, channel identity, and the current fallback owner while Live re-arms preview or NOW and NEXT.',
+        giveUpTrigger: 'Stop nudging retry once stale art or partial guide context is the only thing making the card look playable.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2708,6 +2792,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceProofDebts: buildSurfaceProofDebts(scenario),
   surfaceClaimCeilings: buildSurfaceClaimCeilings(scenario),
   surfaceInterruptionBudgets: buildSurfaceInterruptionBudgets(scenario),
+  surfaceRetryContracts: buildSurfaceRetryContracts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
