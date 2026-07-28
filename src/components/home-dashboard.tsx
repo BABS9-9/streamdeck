@@ -362,6 +362,10 @@ export function HomeDashboard() {
     () => mockManifest?.surfaceProviderSwitchContracts?.find((item) => item.screenId === 'home') ?? null,
     [mockManifest]
   );
+  const providerChoiceContract = useMemo(
+    () => mockManifest?.surfaceProviderChoiceContracts?.find((item) => item.screenId === 'home') ?? null,
+    [mockManifest]
+  );
 
   if (!activeConnection) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No active provider. Go back to login and connect first.</div>;
@@ -816,6 +820,30 @@ export function HomeDashboard() {
                 <p className="mt-2 text-sm font-semibold text-white">{item.switchTrigger}</p>
                 <p className="mt-3 text-sm text-slate-300">{item.preservesContext}</p>
                 <p className="mt-3 text-sm text-slate-400">{item.stayProof}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {providerChoiceContract ? (
+        <section className="rounded-[1.5rem] border border-white/10 bg-black/20 px-5 py-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{providerChoiceContract.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{providerChoiceContract.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Browse choice honesty visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {providerChoiceContract.choices.map((item) => (
+              <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{item.autoPickTrigger}</p>
+                <p className="mt-3 text-sm text-slate-300">{item.equivalenceProof}</p>
+                <p className="mt-3 text-sm text-slate-400">{item.userChoiceTrigger}</p>
               </div>
             ))}
           </div>

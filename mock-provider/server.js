@@ -2598,6 +2598,90 @@ const buildSurfaceProviderSwitchContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceProviderChoiceContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login provider-choice contract',
+    summary: scenario === 'healthy'
+      ? 'Login can auto-pick the healthiest saved provider only while the account story, Home destination, and trust posture are equivalent enough to keep setup intent intact.'
+      : 'Login should publish when StreamDeck may auto-pick the healthiest provider, what proof makes that shortcut honest, and what ambiguity means the user must choose the provider explicitly.',
+    choices: [
+      {
+        label: 'Auto-pick the healthiest saved provider',
+        autoPickTrigger: scenario === 'healthy'
+          ? 'Auto-pick only when one saved provider clearly wins on auth, expiry, and line pressure while still pointing to the same Home launch.'
+          : 'Auto-pick as soon as one saved provider clearly restores launch safety and the weakened provider no longer owns a believable path into Home.',
+        equivalenceProof: 'The provider names may differ, but the destination, account trust story, and next move into Home must remain equivalent and visible.',
+        userChoiceTrigger: scenario === 'healthy'
+          ? 'Ask the user to choose if two providers look equally healthy or if switching would change the setup story they think they are confirming.'
+          : 'Ask the user to choose once the rescue would change provider identity, account expectations, or the confidence story enough that the shortcut stops being obvious.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Choose between saved-provider shortcuts',
+        autoPickTrigger: 'Auto-pick only while one shortcut is measurably safer and faster than presenting a choice chip set.',
+        equivalenceProof: 'The same saved credentials, same Home target, and same trust facts must survive the shortcut for auto-pick to stay honest.',
+        userChoiceTrigger: 'Ask the user to choose once two saved shortcuts preserve intent equally well or each one trades a different risk.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home provider-choice contract',
+    summary: scenario === 'healthy'
+      ? 'Home can auto-pick a healthier provider only while the featured title, rail intent, and launch story stay equivalent enough that discovery still feels continuous.'
+      : 'Home should publish when StreamDeck may auto-pick the healthiest provider for browse rescue, what equivalence proof makes that auto-pick honest, and what ambiguity forces the user to choose.',
+    choices: [
+      {
+        label: 'Auto-pick featured browse rescue',
+        autoPickTrigger: scenario === 'healthy'
+          ? 'Auto-pick only when one healthier provider preserves the same featured title, same next launch, and a clearly better trust posture.'
+          : 'Auto-pick as soon as one healthier provider can preserve the same discovery intent while the weakened hero no longer owns the safest next move.',
+        equivalenceProof: 'The hero identity, quick-rail intent, and launch promise must stay materially the same even if the provider under the hood changes.',
+        userChoiceTrigger: scenario === 'healthy'
+          ? 'Ask the user to choose if alternate providers would change the featured title, rail emphasis, or launch confidence story.'
+          : 'Ask the user to choose once rescue would swap the hero, reorder the discovery story, or trade stronger trust for weaker content continuity.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Choose the launch owner for this rail',
+        autoPickTrigger: 'Auto-pick only while one provider clearly preserves the selected rail and the next-safe-launch target better than every other option.',
+        equivalenceProof: 'The same rail meaning, same title family, and same launch destination must survive the provider swap for auto-pick to stay invisible.',
+        userChoiceTrigger: 'Ask the user to choose once alternate providers split between stronger trust, stronger catalog depth, or stronger continuity with prior history.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live provider-choice contract',
+    summary: scenario === 'healthy'
+      ? 'Live can auto-pick a healthier provider only while the selected channel, category surf context, and Play outcome stay equivalent enough that the swap does not feel like a different watch decision.'
+      : 'Live should publish when StreamDeck may auto-pick the healthiest provider for surf rescue, what equivalence proof makes that auto-pick honest, and what ambiguity forces the user to choose the source explicitly.',
+    choices: [
+      {
+        label: 'Auto-pick selected-card rescue',
+        autoPickTrigger: scenario === 'healthy'
+          ? 'Auto-pick only when one healthier provider preserves the same selected channel intent and clearly owns the safest next Play.'
+          : 'Auto-pick as soon as one healthier provider can preserve the same surf target while preview, guide, or line pressure makes the current source unsafe.',
+        equivalenceProof: 'The same category, same channel identity, and same likely Play outcome must survive the rescue for auto-pick to stay honest.',
+        userChoiceTrigger: scenario === 'healthy'
+          ? 'Ask the user to choose if alternate providers disagree on channel identity, guide confidence, or whether the selected card is really the same watch target.'
+          : 'Ask the user to choose once rescue becomes approximate, category-only, or split between a safer provider and a truer channel match.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Choose between exact and approximate rescue',
+        autoPickTrigger: 'Auto-pick only while one provider clearly wins both trust and channel equivalence on the selected card.',
+        equivalenceProof: 'Preview identity, selected-card meaning, and surf momentum must all survive the swap for silent rescue to stay credible.',
+        userChoiceTrigger: 'Ask the user to choose once the best trust source is not the best channel match or when same-category rescue becomes the only viable fallback.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2878,6 +2962,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceInterruptionBudgets: buildSurfaceInterruptionBudgets(scenario),
   surfaceRetryContracts: buildSurfaceRetryContracts(scenario),
   surfaceProviderSwitchContracts: buildSurfaceProviderSwitchContracts(scenario),
+  surfaceProviderChoiceContracts: buildSurfaceProviderChoiceContracts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
