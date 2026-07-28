@@ -2766,6 +2766,90 @@ const buildSurfaceProviderReturnContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceProviderStabilityContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login provider-stability contract',
+    summary: scenario === 'healthy'
+      ? 'Login should keep the current provider as the safe owner of fresh Home launches only while auth, line posture, and trust facts stay stable enough to hold through the next move.'
+      : 'Login should publish when the current provider is stable enough to keep owning fresh Home launches, what jitter can be tolerated without yanking the setup flow away, and what instability means rescue should stay primary.',
+    stabilities: [
+      {
+        label: 'Keep current-provider login ownership',
+        stabilityThreshold: scenario === 'healthy'
+          ? 'Keep the current provider primary while recent auth checks, expiry posture, and line usage all reinforce the same safe Home handoff.'
+          : 'Only keep the current provider primary after fresh auth proof, calmer line posture, and consistent trust facts hold long enough to make the next Home launch feel boring again.',
+        toleratedVolatility: 'A brief validation wobble or one stale trust refresh is acceptable only if the saved-provider story and Home destination remain unchanged and visible.',
+        keepRescuePrimaryTrigger: scenario === 'healthy'
+          ? 'Keep rescue primary once auth, expiry, or line posture starts changing the Home story faster than the current provider can prove stability.'
+          : 'Keep rescue primary while auth keeps wobbling, line pressure keeps spiking, or provider trust still needs caveats before the user can safely leave Login.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Keep saved-provider shortcut ownership',
+        stabilityThreshold: 'A saved-provider shortcut stays primary only while it remains the safest repeatable one-tap path into Home, not just the most recently recovered one.',
+        toleratedVolatility: 'Minor timestamp drift or one delayed trust refresh is acceptable if the shortcut still points to the same provider identity and same next move.',
+        keepRescuePrimaryTrigger: 'Keep rescue primary while the preferred shortcut still needs explanation, visible warnings, or a weaker CTA than the fallback owner.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home provider-stability contract',
+    summary: scenario === 'healthy'
+      ? 'Home should keep the current provider as the browse owner only while the hero, rails, and trust posture stay stable enough that fresh launches still feel safely attached to the same discovery story.'
+      : 'Home should publish when the current provider is stable enough to keep owning fresh browse launches, what volatility the hero can tolerate, and what instability means rescue should stay primary.',
+    stabilities: [
+      {
+        label: 'Keep featured browse ownership',
+        stabilityThreshold: scenario === 'healthy'
+          ? 'Keep the current provider primary while the hero, quick rails, and trust cues all keep reinforcing the same discovery and launch story.'
+          : 'Only keep the current provider primary after live refresh, cached continuity, and trust cues stop contradicting one another across the hero and quick rails.',
+        toleratedVolatility: 'A short guide miss or one delayed hero refresh is acceptable if cached browse context still protects the same featured title and same next-safe launch.',
+        keepRescuePrimaryTrigger: scenario === 'healthy'
+          ? 'Keep rescue primary once the hero needs repeated explanation or the current provider can no longer hold the same browse story across refreshes.'
+          : 'Keep rescue primary while the hero keeps flipping between trust states, cached continuity is doing most of the real work, or the original source still cannot hold the same launch story twice in a row.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Keep rail launch ownership',
+        stabilityThreshold: 'A rail stays on the current provider only while repeated launches would keep the same title family, same trust posture, and same recovery fallback hierarchy.',
+        toleratedVolatility: 'Small artwork or metadata drift is acceptable if the rail meaning and launch confidence do not materially change.',
+        keepRescuePrimaryTrigger: 'Keep rescue primary while the current provider still changes which card is safest or needs per-launch caveats that the fallback owner does not.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live provider-stability contract',
+    summary: scenario === 'healthy'
+      ? 'Live should keep the current provider as the selected-card owner only while preview, guide, and Play confidence stay stable enough that the next launch still belongs to the same surf path.'
+      : 'Live should publish when the current provider is stable enough to keep owning fresh Play launches, what surf jitter can be tolerated, and what instability means rescue should stay primary.',
+    stabilities: [
+      {
+        label: 'Keep selected-card Play ownership',
+        stabilityThreshold: scenario === 'healthy'
+          ? 'Keep the current provider primary while preview, NOW and NEXT, and Play confidence keep reinforcing the same selected-card launch owner.'
+          : 'Only keep the current provider primary after preview, guide, and line posture stop wobbling enough that the same selected card can safely own the next Play again.',
+        toleratedVolatility: 'A short preview buffer or one guide miss is acceptable if the same channel identity and same safest Play owner remain obvious on the selected card.',
+        keepRescuePrimaryTrigger: scenario === 'healthy'
+          ? 'Keep rescue primary once the current provider keeps changing whether the card is really safe to play.'
+          : 'Keep rescue primary while preview keeps dropping, guide confidence keeps flickering, line posture still shadows Play, or the same selected card cannot hold launch ownership for more than a moment.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Keep category rescue parked on fallback',
+        stabilityThreshold: 'Return from category rescue only when the original provider can repeatedly prove the exact channel or same surf target is healthy enough to own new launches again.',
+        toleratedVolatility: 'Minor card-level guide drift is acceptable if category focus, channel meaning, and Play ownership still point to the same source.',
+        keepRescuePrimaryTrigger: 'Keep rescue primary while the exact-match source still alternates between safer playback and truer identity instead of cleanly owning both.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2885,6 +2969,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface provider-return contract',
       detail: 'Login, Home, and Live now publish when the original provider has honestly earned the user back, what continuity must survive that return, and what instability means the rescue provider should stay in control straight from the adapter manifest.',
       surface: 'live',
+    },
+    {
+      title: 'Surface provider-stability contract',
+      detail: 'Login, Home, and Live now publish when a provider is stable enough to own fresh launches again, what volatility can be tolerated, and what instability means rescue should stay primary straight from the adapter manifest.',
+      surface: 'home',
     },
   ],
   supportedScreens: [
@@ -3053,6 +3142,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceProviderSwitchContracts: buildSurfaceProviderSwitchContracts(scenario),
   surfaceProviderChoiceContracts: buildSurfaceProviderChoiceContracts(scenario),
   surfaceProviderReturnContracts: buildSurfaceProviderReturnContracts(scenario),
+  surfaceProviderStabilityContracts: buildSurfaceProviderStabilityContracts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
