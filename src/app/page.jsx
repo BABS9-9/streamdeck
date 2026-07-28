@@ -135,6 +135,10 @@ export default function LoginPage() {
     () => mockManifest?.surfaceProviderChoiceContracts?.find((item) => item.screenId === 'login') ?? null,
     [mockManifest]
   );
+  const providerReturnContract = useMemo(
+    () => mockManifest?.surfaceProviderReturnContracts?.find((item) => item.screenId === 'login') ?? null,
+    [mockManifest]
+  );
   const healthiestConnection = useMemo(() => getHealthiestSavedProvider({
     connections,
     connectionStatus,
@@ -681,6 +685,30 @@ export default function LoginPage() {
                     <p className="mt-2 text-sm font-semibold text-white">{item.autoPickTrigger}</p>
                     <p className="mt-3 text-sm text-slate-300">{item.equivalenceProof}</p>
                     <p className="mt-3 text-sm text-slate-400">{item.userChoiceTrigger}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {providerReturnContract ? (
+            <div className="mt-6 rounded-[1.6rem] border border-white/10 bg-white/5 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{providerReturnContract.title}</p>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{providerReturnContract.summary}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300">
+                  Provider-return honesty visible
+                </span>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {providerReturnContract.returns.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                    <p className="mt-2 text-sm font-semibold text-white">{item.returnTrigger}</p>
+                    <p className="mt-3 text-sm text-slate-300">{item.preservesContext}</p>
+                    <p className="mt-3 text-sm text-slate-400">{item.stayOnRescueTrigger}</p>
                   </div>
                 ))}
               </div>

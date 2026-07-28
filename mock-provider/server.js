@@ -2682,6 +2682,90 @@ const buildSurfaceProviderChoiceContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceProviderReturnContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login provider-return contract',
+    summary: scenario === 'healthy'
+      ? 'Login should return from a rescue provider back to the original saved source only when that source has clearly earned safe Home ownership again.'
+      : 'Login should publish when the original provider has honestly recovered enough to take setup ownership back, what continuity must survive that return, and what instability means the rescue provider should stay in control.',
+    returns: [
+      {
+        label: 'Return Home ownership to the original provider',
+        returnTrigger: scenario === 'healthy'
+          ? 'Return only when the original provider restores clean auth, acceptable line capacity, and the same Home handoff the rescue provider preserved.'
+          : 'Return only after fresh auth proof stabilizes, line pressure relaxes, and the original provider can tell the same Home story without hiding the prior risk.',
+        preservesContext: 'Keep the typed server memory, saved-provider identity, trust facts, and planned Home destination visible so returning feels earned, not random.',
+        stayOnRescueTrigger: scenario === 'healthy'
+          ? 'Stay on the rescue provider if the original source still changes the trust story or cannot prove the same next move cleanly.'
+          : 'Stay on the rescue provider while auth still wobbles, expiry or line pressure remains visible, or the original source cannot reclaim Home without making setup feel risky again.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Return the preferred saved-provider shortcut',
+        returnTrigger: 'Return the preferred shortcut only when it is once again the safest and clearest one-tap path into Home.',
+        preservesContext: 'Preserve the same shortcut label, provider comparison, and setup momentum the rescue path already protected.',
+        stayOnRescueTrigger: 'Keep the shortcut on rescue while the original source still needs explanation, caveats, or a weaker CTA than the fallback owner.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home provider-return contract',
+    summary: scenario === 'healthy'
+      ? 'Home should return from a rescue provider back to the preferred source only when the original provider can restore the same browse story without downgrading trust or discovery continuity.'
+      : 'Home should publish when the original provider has honestly recovered enough to own browse again, what discovery continuity must survive that return, and what instability means rescue should keep the hero.',
+    returns: [
+      {
+        label: 'Return featured browse ownership',
+        returnTrigger: scenario === 'healthy'
+          ? 'Return only when the original provider restores the same hero identity, launch story, and trust posture the rescue path was preserving.'
+          : 'Return only after fresh browse proof makes the original provider capable of carrying the same hero, rail intent, and launch confidence without leaning on apology copy.',
+        preservesContext: 'Keep the hero title, quick rails, provider facts, and next-safe-launch language intact so discovery continuity survives the return.',
+        stayOnRescueTrigger: scenario === 'healthy'
+          ? 'Stay on rescue if going back would reorder the browse story, weaken trust cues, or make the next launch less safe.'
+          : 'Stay on rescue while the original provider still risks swapping the hero, softening trust posture, or making the user rediscover what they already meant to watch.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Return this rail launch owner',
+        returnTrigger: 'Return the rail owner only when the original provider again wins both trust and continuity for the same selected launch target.',
+        preservesContext: 'Preserve rail meaning, selected title family, and prior watch intent so the user never feels the browse path reset under them.',
+        stayOnRescueTrigger: 'Keep the rescue owner while the original source still offers a weaker launch, a thinner catalog copy, or a noisier trust story.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live provider-return contract',
+    summary: scenario === 'healthy'
+      ? 'Live should return from a rescue provider back to the preferred source only when the original provider can restore the same channel, category, and Play confidence without breaking surf momentum.'
+      : 'Live should publish when the original provider has honestly recovered enough to take the selected card back, what surf continuity must survive that return, and what instability means rescue should keep Play ownership.',
+    returns: [
+      {
+        label: 'Return selected-card ownership',
+        returnTrigger: scenario === 'healthy'
+          ? 'Return only when the original provider restores the same channel identity, guide confidence, and safer Play ownership on the selected card.'
+          : 'Return only after preview, guide, and line posture recover enough that the original provider can reclaim the same selected card without weakening the surf path.',
+        preservesContext: 'Keep the selected category, selected card, channel identity, preview target, and same rescue comparison visible so surf rhythm survives the return.',
+        stayOnRescueTrigger: scenario === 'healthy'
+          ? 'Stay on rescue if returning would make Play less certain, blur channel equivalence, or break category momentum.'
+          : 'Stay on rescue while preview or guide confidence still flickers, line pressure still shadows Play, or the original source cannot prove it is the same watch target again.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Return from category rescue to exact channel owner',
+        returnTrigger: 'Return from category-level rescue only when the original provider can again prove the exact channel match is healthier than staying on fallback.',
+        preservesContext: 'Preserve category focus, channel meaning, and the user’s current surf rhythm while the exact-match owner earns the card back.',
+        stayOnRescueTrigger: 'Keep category rescue in control while the exact-match source still creates ambiguity between safer playback and truer channel identity.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -2796,6 +2880,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       title: 'Surface claim ceiling',
       detail: 'Login, Home, and Live now publish the strongest promise each surface is still allowed to make, what overclaim must stay off-screen, and what proof raises that ceiling back to premium straight from the adapter manifest.',
       surface: 'home',
+    },
+    {
+      title: 'Surface provider-return contract',
+      detail: 'Login, Home, and Live now publish when the original provider has honestly earned the user back, what continuity must survive that return, and what instability means the rescue provider should stay in control straight from the adapter manifest.',
+      surface: 'live',
     },
   ],
   supportedScreens: [
@@ -2963,6 +3052,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceRetryContracts: buildSurfaceRetryContracts(scenario),
   surfaceProviderSwitchContracts: buildSurfaceProviderSwitchContracts(scenario),
   surfaceProviderChoiceContracts: buildSurfaceProviderChoiceContracts(scenario),
+  surfaceProviderReturnContracts: buildSurfaceProviderReturnContracts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
