@@ -566,6 +566,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceCanonicalProviderIdentityContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    identities: Array<{
+      label: string;
+      canonicalOwner: string;
+      aliasCoverage: string;
+      mismatchTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   scenarioSpotlight: {
     title: string;
     summary: string;

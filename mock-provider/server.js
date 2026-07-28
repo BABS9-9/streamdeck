@@ -1830,6 +1830,90 @@ const buildSurfaceIdentityAnchors = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceCanonicalProviderIdentityContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login canonical provider identity',
+    summary: scenario === 'healthy'
+      ? 'Login should prove that reconnecting with trimmed URLs, default-port variants, or saved labels still resolves to one canonical provider owner before saved trust or shortcut recovery takes over.'
+      : 'Login should say when a reconnect still belongs to the same provider owner, which saved aliases are safe to absorb, and what mismatch means the shell must stop selling recovery as the same account story.',
+    identities: [
+      {
+        label: 'Reconnect owner',
+        canonicalOwner: scenario === 'healthy'
+          ? 'Normalize server + username into one canonical provider key before saved-provider trust, Home shortcuts, or resume recovery attach to it.'
+          : 'Keep recovery pinned to the same canonical provider key even when the reconnect URL, saved label, or retry path looks slightly different.',
+        aliasCoverage: 'Accept trimmed host variants, default-port differences, and prior saved labels as aliases under the same provider owner instead of duplicating the account.',
+        mismatchTrigger: scenario === 'healthy'
+          ? 'If reconnect produces a second provider record for the same account, Login loses the right to call the next move seamless.'
+          : 'If recovery cannot prove the reconnect still belongs to the same canonical owner, Login must present it as a different provider choice instead of a continuation.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-state continuity',
+        canonicalOwner: 'Favorites, watch history, collections, and cached Home trust only stay premium when they resolve back to the same canonical provider owner.',
+        aliasCoverage: 'Hydration may merge legacy IDs and prior server formatting into the current canonical owner as long as username ownership still matches.',
+        mismatchTrigger: 'If saved history or favorites could attach to two provider owners at once, Login must stop implying one-tap continuity.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home canonical provider identity',
+    summary: scenario === 'healthy'
+      ? 'Home should keep the hero, rails, and trust posture attached to one canonical provider owner even when the saved provider was previously stored under a different host format or label.'
+      : 'Home should say when cached rails still belong to the same provider owner, which alias history is safe to absorb into that owner, and what mismatch means fallback has become a new provider story.',
+    identities: [
+      {
+        label: 'Hero owner',
+        canonicalOwner: scenario === 'healthy'
+          ? 'The hero launch, trust posture, and featured counts should all resolve to one canonical provider key.'
+          : 'The fallback hero must still say whether it belongs to the current canonical provider owner or a healthier replacement owner.',
+        aliasCoverage: 'Saved connection labels, prior host spellings, and normalized ports may differ, but the hero still counts as the same provider if the canonical owner matches.',
+        mismatchTrigger: scenario === 'healthy'
+          ? 'If Home can no longer prove the hero and trust posture share one provider owner, the cinematic story is overclaiming.'
+          : 'If cached Home state looks continuous but belongs to a different canonical owner, Home must surface a provider switch instead of pretending the hero survived intact.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Rail recovery ownership',
+        canonicalOwner: 'Quick rails may recommend a healthier provider, but they must show whether that recommendation preserves the original provider owner or hands off to a new canonical owner.',
+        aliasCoverage: 'Alternate saved labels can collapse under the same provider owner without forcing the user to relearn their library.',
+        mismatchTrigger: 'If a rail rescue changes provider ownership without naming that change, Home loses the right to market it as a premium shortcut.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live canonical provider identity',
+    summary: scenario === 'healthy'
+      ? 'Live should keep the selected card, preview, and launch owner tied to one canonical provider identity so exact-copy rescue and same-category rescue never blur into the wrong source story.'
+      : 'Live should say when the current surf session still belongs to the same canonical owner, which alias history is safe to absorb, and what mismatch means rescue became a different provider jump.',
+    identities: [
+      {
+        label: 'Surf-session owner',
+        canonicalOwner: scenario === 'healthy'
+          ? 'The selected card, preview URL, and Play ownership should all resolve to one canonical provider key.'
+          : 'When rescue kicks in, Live must still tell the user whether the surf session stayed on the same canonical provider owner or moved to a new one.',
+        aliasCoverage: 'Prior saved labels and normalized host differences may still count as the same source owner if the canonical provider key matches.',
+        mismatchTrigger: scenario === 'healthy'
+          ? 'If preview, selected card, and launch ownership point at different provider identities, Live has lost enough proof to feel seamless.'
+          : 'If rescue launches under a different canonical owner without naming that handoff, Live must stop presenting it as the same surf session.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Exact-copy versus rescue',
+        canonicalOwner: 'Exact duplicates only count as the same continuity story when they map back to the same canonical provider owner; otherwise they are an explicit provider rescue.',
+        aliasCoverage: 'Live may absorb legacy IDs and alias labels while keeping favorites and history attached to the canonical owner the user already trusts.',
+        mismatchTrigger: 'If alternate playback launches can inherit favorites or history without proving canonical ownership, Live is overstating continuity.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceConfidenceFloors = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -3143,6 +3227,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceProviderChoiceContracts: buildSurfaceProviderChoiceContracts(scenario),
   surfaceProviderReturnContracts: buildSurfaceProviderReturnContracts(scenario),
   surfaceProviderStabilityContracts: buildSurfaceProviderStabilityContracts(scenario),
+  surfaceCanonicalProviderIdentityContracts: buildSurfaceCanonicalProviderIdentityContracts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

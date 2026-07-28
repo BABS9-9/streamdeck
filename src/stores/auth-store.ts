@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { isMockProviderServer } from '@/lib/mock-provider';
+import { buildCanonicalProviderId, canonicalizeSavedConnection } from '@/lib/provider-identity';
 import { authenticate } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
 import { ConnectionStatus, ProviderAuthSummary, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
@@ -70,26 +71,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   connectionStatus: {},
   hydrate: () => {
     if (get().initialized) return;
-    const connections = storage.getConnections();
-    const activeId = storage.getActiveConnectionId();
+    const { connections, activeConnectionId: activeId } = storage.hydrateCanonicalProviderState();
     const activeConnection = connections.find((item) => item.id === activeId) ?? connections[0] ?? null;
     set({ connections, activeConnection, initialized: true });
   },
   connect: async (credentials) => {
     set({ loading: true, error: null });
-    const connectionId = `${credentials.server}-${credentials.username}`;
+    const trimmedCredentials = {
+      ...credentials,
+      server: credentials.server.trim(),
+      username: credentials.username.trim(),
+      password: credentials.password.trim(),
+    };
+    const connectionId = buildCanonicalProviderId(trimmedCredentials);
     set((state) => ({
       connectionStatus: { ...state.connectionStatus, [connectionId]: checkingStatus },
     }));
     try {
-      const session = await authenticate(credentials);
-      const connection: SavedConnection = {
+      const session = await authenticate(trimmedCredentials);
+      const connection = canonicalizeSavedConnection({
         id: connectionId,
-        name: new URL(credentials.server).host,
+        name: new URL(trimmedCredentials.server).host,
         connectedAt: Date.now(),
         lastAuthSummary: buildAuthSummary(session),
-        ...credentials,
-      };
+        ...trimmedCredentials,
+      } satisfies SavedConnection);
       const existing = get().connections.filter((item) => item.id !== connection.id);
       const connections = [connection, ...existing];
       storage.saveConnections(connections);
@@ -157,7 +163,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const session = await authenticate(connection);
       const nextConnections = get().connections.map((item) => item.id === id
-        ? { ...item, lastAuthSummary: buildAuthSummary(session) }
+        ? canonicalizeSavedConnection({ ...item, lastAuthSummary: buildAuthSummary(session) })
         : item);
       storage.saveConnections(nextConnections);
       set((state) => ({

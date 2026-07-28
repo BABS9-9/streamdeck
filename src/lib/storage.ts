@@ -1,3 +1,4 @@
+import { canonicalizeSavedConnection, getProviderIdentityCandidates } from './provider-identity';
 import { LibraryCollection, ProviderCatalog, ProviderHomeSnapshot, SavedConnection, WatchHistoryItem } from './types';
 
 const KEYS = {
@@ -22,6 +23,66 @@ const safeJsonParse = <T,>(value: string | null, fallback: T): T => {
 };
 
 const isBrowser = () => typeof window !== 'undefined';
+
+const dedupeNumbers = (values: number[]) => [...new Set(values.filter((value) => Number.isFinite(value)))];
+
+const pickNewerConnection = (current: SavedConnection, incoming: SavedConnection) => {
+  if ((incoming.connectedAt || 0) >= (current.connectedAt || 0)) {
+    return {
+      ...current,
+      ...incoming,
+      lastAuthSummary: incoming.lastAuthSummary || current.lastAuthSummary,
+      connectedAt: Math.max(current.connectedAt || 0, incoming.connectedAt || 0),
+    };
+  }
+
+  return {
+    ...incoming,
+    ...current,
+    lastAuthSummary: current.lastAuthSummary || incoming.lastAuthSummary,
+    connectedAt: Math.max(current.connectedAt || 0, incoming.connectedAt || 0),
+  };
+};
+
+const remapProviderMap = <T,>(source: Record<string, T>, aliasMap: Record<string, string>, merge?: (current: T, incoming: T) => T) => {
+  return Object.entries(source).reduce<Record<string, T>>((acc, [providerId, value]) => {
+    const canonicalProviderId = aliasMap[providerId] || providerId;
+    if (canonicalProviderId in acc && merge) {
+      acc[canonicalProviderId] = merge(acc[canonicalProviderId], value);
+    } else if (!(canonicalProviderId in acc)) {
+      acc[canonicalProviderId] = value;
+    }
+    return acc;
+  }, {});
+};
+
+const remapHistory = (history: WatchHistoryItem[], aliasMap: Record<string, string>) =>
+  history.reduce<WatchHistoryItem[]>((acc, item) => {
+    const providerId = aliasMap[item.providerId] || item.providerId;
+    const remapped = {
+      ...item,
+      providerId,
+      id: `${providerId}-${item.streamId}`,
+    };
+    const existingIndex = acc.findIndex((entry) => entry.id === remapped.id);
+    if (existingIndex >= 0) {
+      if ((acc[existingIndex].updatedAt || 0) < (remapped.updatedAt || 0)) acc[existingIndex] = remapped;
+      return acc;
+    }
+    acc.push(remapped);
+    return acc;
+  }, []);
+
+const remapCollections = (collections: LibraryCollection[], aliasMap: Record<string, string>) =>
+  collections.map((collection) => ({
+    ...collection,
+    items: collection.items.reduce<LibraryCollection['items']>((items, item) => {
+      const providerId = aliasMap[item.providerId] || item.providerId;
+      if (items.some((entry) => entry.providerId === providerId && entry.streamId === item.streamId)) return items;
+      items.push({ ...item, providerId });
+      return items;
+    }, []),
+  }));
 
 export const storage = {
   getConnections(): SavedConnection[] {
@@ -131,5 +192,51 @@ export const storage = {
     const snapshots = storage.getHomeSnapshots();
     delete snapshots[providerId];
     localStorage.setItem(KEYS.homeSnapshots, JSON.stringify(snapshots));
+  },
+  hydrateCanonicalProviderState(): { connections: SavedConnection[]; activeConnectionId: string | null } {
+    if (!isBrowser()) return { connections: [], activeConnectionId: null };
+
+    const rawConnections = safeJsonParse<SavedConnection[]>(localStorage.getItem(KEYS.connections), []);
+    const activeConnectionId = localStorage.getItem(KEYS.activeConnection);
+    const aliasMap: Record<string, string> = {};
+
+    const mergedConnections = rawConnections.reduce<Record<string, SavedConnection>>((acc, connection) => {
+      const normalized = canonicalizeSavedConnection(connection);
+      const { canonicalId, aliases } = getProviderIdentityCandidates({
+        ...connection,
+        id: normalized.id,
+      });
+      aliases.forEach((alias) => {
+        aliasMap[alias] = canonicalId;
+      });
+      acc[canonicalId] = acc[canonicalId] ? pickNewerConnection(acc[canonicalId], normalized) : normalized;
+      return acc;
+    }, {});
+
+    const connections = Object.values(mergedConnections).sort((left, right) => (right.connectedAt || 0) - (left.connectedAt || 0));
+    const nextActiveConnectionId = activeConnectionId ? aliasMap[activeConnectionId] || activeConnectionId : connections[0]?.id || null;
+
+    const providerFavorites = remapProviderMap(storage.getProviderFavorites(), aliasMap, (current, incoming) =>
+      dedupeNumbers([...current, ...incoming])
+    );
+    const catalogs = remapProviderMap(storage.getCatalogs(), aliasMap, (current, incoming) =>
+      (incoming.updatedAt || 0) >= (current.updatedAt || 0) ? incoming : current
+    );
+    const homeSnapshots = remapProviderMap(storage.getHomeSnapshots(), aliasMap, (current, incoming) =>
+      (incoming.updatedAt || 0) >= (current.updatedAt || 0) ? incoming : current
+    );
+    const history = remapHistory(storage.getHistory(), aliasMap).sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0)).slice(0, 12);
+    const collections = remapCollections(storage.getCollections(), aliasMap);
+
+    localStorage.setItem(KEYS.connections, JSON.stringify(connections));
+    if (nextActiveConnectionId) localStorage.setItem(KEYS.activeConnection, nextActiveConnectionId);
+    else localStorage.removeItem(KEYS.activeConnection);
+    localStorage.setItem(KEYS.favorites, JSON.stringify(providerFavorites));
+    localStorage.setItem(KEYS.catalogs, JSON.stringify(catalogs));
+    localStorage.setItem(KEYS.homeSnapshots, JSON.stringify(homeSnapshots));
+    localStorage.setItem(KEYS.history, JSON.stringify(history));
+    localStorage.setItem(KEYS.collections, JSON.stringify(collections));
+
+    return { connections, activeConnectionId: nextActiveConnectionId };
   },
 };

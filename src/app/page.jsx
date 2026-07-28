@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { buildCanonicalProviderId, getProviderIdentityCandidates } from '@/lib/provider-identity';
 import { getHealthiestSavedProvider, getRecoveryActionLabel, getRecoverySupportLabel } from '@/lib/provider-recovery';
 import { useAuthStore } from '@/stores/auth-store';
 import { MockOperationsConsole } from '@/components/mock-operations-console';
@@ -143,11 +144,20 @@ export default function LoginPage() {
     () => mockManifest?.surfaceProviderStabilityContracts?.find((item) => item.screenId === 'login') ?? null,
     [mockManifest]
   );
+  const canonicalProviderIdentityContract = useMemo(
+    () => mockManifest?.surfaceCanonicalProviderIdentityContracts?.find((item) => item.screenId === 'login') ?? null,
+    [mockManifest]
+  );
   const healthiestConnection = useMemo(() => getHealthiestSavedProvider({
     connections,
     connectionStatus,
     activeConnectionId: activeConnection?.id,
   }), [activeConnection?.id, connectionStatus, connections]);
+  const loginCanonicalIdentity = useMemo(() => buildCanonicalProviderId({ server, username }), [server, username]);
+  const savedProviderAliases = useMemo(() => {
+    const aliasSet = new Set(connections.flatMap((connection) => getProviderIdentityCandidates(connection).aliases));
+    return aliasSet.size;
+  }, [connections]);
 
   useEffect(() => {
     hydrate();
@@ -449,6 +459,35 @@ export default function LoginPage() {
                     <p className="mt-2 text-sm font-semibold text-white">{item.mustStayVisible}</p>
                     <p className="mt-2 text-sm text-slate-400">{item.preservesMeaning}</p>
                     <p className="mt-3 text-sm text-slate-300">{item.breakTrigger}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {canonicalProviderIdentityContract ? (
+            <div className="mt-6 rounded-[1.6rem] border border-white/10 bg-white/5 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{canonicalProviderIdentityContract.title}</p>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{canonicalProviderIdentityContract.summary}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-300">
+                  {connections.length} saved owner{connections.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <div className="mt-4 rounded-2xl border border-violet-400/20 bg-violet-500/10 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-violet-200">Current canonical provider key</p>
+                <p className="mt-2 break-all text-sm font-semibold text-white">{loginCanonicalIdentity}</p>
+                <p className="mt-2 text-sm text-violet-100/80">Saved alias coverage in browser storage: {savedProviderAliases} recognized provider IDs.</p>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {canonicalProviderIdentityContract.identities.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                    <p className="mt-2 text-sm font-semibold text-white">{item.canonicalOwner}</p>
+                    <p className="mt-2 text-sm text-slate-400">{item.aliasCoverage}</p>
+                    <p className="mt-3 text-sm text-slate-300">{item.mismatchTrigger}</p>
                   </div>
                 ))}
               </div>

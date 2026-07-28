@@ -77,6 +77,7 @@ export function MockOperationsConsole({
   const providerChoiceContract = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === screenId);
   const providerReturnContract = manifest?.surfaceProviderReturnContracts.find((item) => item.screenId === screenId);
   const providerStabilityContract = manifest?.surfaceProviderStabilityContracts.find((item) => item.screenId === screenId);
+  const canonicalProviderIdentityContract = manifest?.surfaceCanonicalProviderIdentityContracts.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -590,6 +591,30 @@ export function MockOperationsConsole({
                 <p className="mt-2 text-sm font-semibold text-white">{item.mustStayVisible}</p>
                 <p className="mt-2 text-sm text-white/80">{item.preservesMeaning}</p>
                 <p className="mt-3 text-sm text-white/80">{item.breakTrigger}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {canonicalProviderIdentityContract ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{canonicalProviderIdentityContract.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{canonicalProviderIdentityContract.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Canonical owner visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {canonicalProviderIdentityContract.identities.map((item) => (
+              <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{item.canonicalOwner}</p>
+                <p className="mt-2 text-sm text-slate-400">{item.aliasCoverage}</p>
+                <p className="mt-3 text-sm text-slate-300">{item.mismatchTrigger}</p>
               </div>
             ))}
           </div>
