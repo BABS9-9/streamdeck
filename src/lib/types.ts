@@ -566,6 +566,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceRecoveryPlans: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    plans: Array<{
+      label: string;
+      fastestRoute: string;
+      preservedContext: string;
+      healthierProviderHandoff: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceCanonicalProviderIdentityContracts: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;

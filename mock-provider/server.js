@@ -405,6 +405,69 @@ const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
   },
 });
 
+const buildManifestSurfaceRecoveryPlans = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Surface recovery plan',
+    summary: 'Login should never strand the user in credential repair if a healthier saved provider can safely own the next move.',
+    plans: [
+      {
+        label: scenario === 'healthy' ? 'Primary fallback route' : 'Fastest safe login route',
+        fastestRoute: scenario === 'expiredAccount'
+          ? 'Skip reconnecting into the expired source and open Home on the healthiest saved provider.'
+          : scenario === 'lineSaturated'
+            ? 'Skip another launch attempt on the maxed account and open Home on the healthiest saved provider.'
+            : scenario === 'authUnstable'
+              ? 'Keep the saved connection visible, but hand the next move to Home on the healthiest saved provider.'
+              : 'Open Home on the healthiest saved provider before risky trust spreads deeper into the shell.',
+        preservedContext: 'Keep the saved provider identity, sample credentials, and trust posture visible so recovery still feels anchored to the same account story.',
+        healthierProviderHandoff: 'The healthiest saved provider owns the next launch once Login stops being the honest place to keep retrying.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'authUnstable' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Surface recovery plan',
+    summary: 'Home should preserve browse momentum while moving onto the healthiest provider before the featured rail becomes a trap.',
+    plans: [
+      {
+        label: scenario === 'healthy' ? 'Browse-preserving route' : 'Fastest safe Home route',
+        fastestRoute: scenario === 'expiredAccount'
+          ? 'Move Home onto the healthiest saved provider while the expired source falls back to cache and same-category live rescue.'
+          : scenario === 'lineSaturated'
+            ? 'Move featured rails and quick actions onto the healthiest saved provider before playback fails.'
+            : scenario === 'authUnstable'
+              ? 'Keep cached rails visible, but point the primary recovery move toward the healthiest saved provider.'
+              : 'Move Home onto the healthiest saved provider before stale trust infects the rest of the browse session.',
+        preservedContext: 'Keep the featured rail, spotlight intent, and same-category live recovery path visible even when the exact copy changes providers.',
+        healthierProviderHandoff: 'The healthiest saved provider takes over launch ownership while Home preserves the same discovery posture.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'authUnstable' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Surface recovery plan',
+    summary: 'Live should preserve surf momentum and category context while handing launch ownership to the healthiest provider before the user blames the channel itself.',
+    plans: [
+      {
+        label: scenario === 'healthy' ? 'Surf-preserving route' : 'Fastest safe Live route',
+        fastestRoute: scenario === 'expiredAccount'
+          ? 'Jump straight into the same Live category on the healthiest saved provider instead of forcing a reconnect.'
+          : scenario === 'lineSaturated'
+            ? 'Move Live onto the healthiest saved provider before another line-capacity failure lands on the same card.'
+            : scenario === 'authUnstable'
+              ? 'Keep the current browse context visible, but make the one-tap escape hatch the same category on the healthiest saved provider.'
+              : 'Pivot Live into the healthiest saved provider while preserving channel-surf momentum and category context.',
+        preservedContext: 'Keep the active category, selected card, preview expectations, and recovery explanation visible so the user does not lose their place.',
+        healthierProviderHandoff: 'The healthiest saved provider owns the next launch even when the exact duplicate is missing and the fallback becomes category-preserving instead.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'authUnstable' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildOperatorHeadline = (scenario = 'healthy') => {
   if (scenario === 'expiredAccount') {
     return {
@@ -3227,6 +3290,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceProviderChoiceContracts: buildSurfaceProviderChoiceContracts(scenario),
   surfaceProviderReturnContracts: buildSurfaceProviderReturnContracts(scenario),
   surfaceProviderStabilityContracts: buildSurfaceProviderStabilityContracts(scenario),
+  surfaceRecoveryPlans: buildManifestSurfaceRecoveryPlans(scenario),
   surfaceCanonicalProviderIdentityContracts: buildSurfaceCanonicalProviderIdentityContracts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',

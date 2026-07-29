@@ -77,6 +77,7 @@ export function MockOperationsConsole({
   const providerChoiceContract = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === screenId);
   const providerReturnContract = manifest?.surfaceProviderReturnContracts.find((item) => item.screenId === screenId);
   const providerStabilityContract = manifest?.surfaceProviderStabilityContracts.find((item) => item.screenId === screenId);
+  const recoveryPlan = manifest?.surfaceRecoveryPlans.find((item) => item.screenId === screenId);
   const canonicalProviderIdentityContract = manifest?.surfaceCanonicalProviderIdentityContracts.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
@@ -615,6 +616,30 @@ export function MockOperationsConsole({
                 <p className="mt-2 text-sm font-semibold text-white">{item.canonicalOwner}</p>
                 <p className="mt-2 text-sm text-slate-400">{item.aliasCoverage}</p>
                 <p className="mt-3 text-sm text-slate-300">{item.mismatchTrigger}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {recoveryPlan ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{recoveryPlan.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{recoveryPlan.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Fastest safe route
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-3">
+            {recoveryPlan.plans.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{item.fastestRoute}</p>
+                <p className="mt-3 text-sm text-white/80">{item.preservedContext}</p>
+                <p className="mt-3 text-sm text-white/80">{item.healthierProviderHandoff}</p>
               </div>
             ))}
           </div>
