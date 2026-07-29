@@ -315,6 +315,10 @@ export function LiveBrowser() {
     () => mockManifest?.surfaceCanonicalProviderIdentityContracts?.find((item) => item.screenId === 'live') ?? null,
     [mockManifest]
   );
+  const fallbackRankingContract = useMemo(
+    () => mockManifest?.surfaceFallbackRankingContracts?.find((item) => item.screenId === 'live') ?? null,
+    [mockManifest]
+  );
   const activeCanonicalIdentity = useMemo(
     () => (activeConnection ? buildCanonicalProviderId(activeConnection) : null),
     [activeConnection]
@@ -664,6 +668,30 @@ export function LiveBrowser() {
                   <p className="mt-2 text-sm font-semibold text-white">{item.canonicalOwner}</p>
                   <p className="mt-2 text-sm text-slate-400">{item.aliasCoverage}</p>
                   <p className="mt-3 text-sm text-slate-300">{item.mismatchTrigger}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {fallbackRankingContract ? (
+          <div className="rounded-[1.5rem] border border-white/10 bg-white/5 px-5 py-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{fallbackRankingContract.title}</p>
+                <p className="mt-2 text-sm text-slate-300">{fallbackRankingContract.summary}</p>
+              </div>
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                Leader: {healthiestConnection?.name ?? activeConnection.name}
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3 xl:grid-cols-2">
+              {fallbackRankingContract.rankings.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                  <p className="mt-2 text-sm font-semibold text-white">{item.currentLeader}</p>
+                  <p className="mt-3 text-sm text-slate-300">{item.rankingEvidence}</p>
+                  <p className="mt-3 text-sm text-slate-400">{item.rerankTrigger}</p>
                 </div>
               ))}
             </div>

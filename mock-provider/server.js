@@ -1977,6 +1977,90 @@ const buildSurfaceCanonicalProviderIdentityContracts = (scenario = 'healthy') =>
   },
 ]);
 
+const buildSurfaceFallbackRankingContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login fallback-ranking contract',
+    summary: scenario === 'healthy'
+      ? 'Login should show which saved provider currently leads the Home rescue stack so a one-tap shortcut never feels like a blind guess.'
+      : 'Login should publish which saved provider currently leads rescue, what trust evidence put it there, and what new proof would rerank the stack before the user gets pushed into the wrong Home owner.',
+    rankings: [
+      {
+        label: 'Lead the Home rescue stack',
+        currentLeader: scenario === 'healthy'
+          ? 'The leader is the saved provider with the cleanest auth, calmest line posture, and clearest Home handoff.'
+          : 'The leader is the saved provider that can still deliver a believable Home launch while the active source has lost setup trust.',
+        rankingEvidence: 'Rank auth health, expiry posture, line capacity, and whether the same saved-provider identity can carry the user into Home without rewriting the trust story.',
+        rerankTrigger: scenario === 'healthy'
+          ? 'Rerank the moment another provider gains a cleaner trust posture or the current leader needs caveats that the runner-up does not.'
+          : 'Rerank as soon as fresh auth proof lands, line pressure changes, or the current leader starts needing more explanation than a competitor.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Lead the one-tap saved shortcut',
+        currentLeader: 'The shortcut leader is whichever provider preserves the fastest safe move into Home without hiding risk behind the CTA.',
+        rankingEvidence: 'The winning shortcut has to combine the clearest trust story with the least surprising launch destination for the user.',
+        rerankTrigger: 'Rerank once two saved providers preserve Home equally well or the current shortcut keeps needing warning copy to stay honest.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home fallback-ranking contract',
+    summary: scenario === 'healthy'
+      ? 'Home should show which saved provider currently leads browse rescue so hero and rail fallbacks keep the discovery story honest.'
+      : 'Home should publish which saved provider leads browse rescue, what continuity evidence put it on top, and what proof would rerank the stack before hero recovery feels arbitrary.',
+    rankings: [
+      {
+        label: 'Lead the featured rescue stack',
+        currentLeader: scenario === 'healthy'
+          ? 'The leader is the saved provider that best preserves the same hero, same launch story, and strongest trust posture.'
+          : 'The leader is the saved provider that can keep the same discovery story alive while the current hero has lost the safest next move.',
+        rankingEvidence: 'Rank exact hero continuity first, then trust posture, then how much of the rail story survives without forcing the user to rediscover what they meant to launch.',
+        rerankTrigger: scenario === 'healthy'
+          ? 'Rerank when another provider preserves the hero equally well but carries a cleaner trust posture or stronger launch certainty.'
+          : 'Rerank as soon as a provider restores fresher browse proof, stronger rail continuity, or less caveated launch ownership than the current leader.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Lead the rail launch stack',
+        currentLeader: 'The rail leader is whichever provider keeps the same title family, same rail meaning, and safest next launch with the least explanation debt.',
+        rankingEvidence: 'Trust ranking is not enough by itself; the winning rail provider also has to preserve why this rail mattered on the current Home frame.',
+        rerankTrigger: 'Rerank once another provider offers stronger continuity for the same rail or the current leader starts changing what the rail promises.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live fallback-ranking contract',
+    summary: scenario === 'healthy'
+      ? 'Live should show which saved provider currently leads surf rescue so exact-match recovery and same-category fallback do not feel interchangeable.'
+      : 'Live should publish which saved provider leads surf rescue, what playback evidence put it on top, and what new proof would rerank the stack before Play gets handed to the wrong owner.',
+    rankings: [
+      {
+        label: 'Lead the selected-card rescue stack',
+        currentLeader: scenario === 'healthy'
+          ? 'The leader is the saved provider that best preserves the same selected channel, same category surf, and safest next Play.'
+          : 'The leader is the saved provider that can still preserve the watch target while preview, guide, or line posture have made the current source unsafe.',
+        rankingEvidence: 'Rank exact channel continuity first, then preview and guide confidence, then line posture, and only then fall back to same-category rescue if exact-match proof weakens.',
+        rerankTrigger: scenario === 'healthy'
+          ? 'Rerank when another provider proves the same channel with cleaner preview or safer Play ownership than the current leader.'
+          : 'Rerank as soon as preview health flips, guide confidence recovers, or the current leader falls back from exact-match rescue to approximate same-category rescue.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Lead the category fallback stack',
+        currentLeader: 'When exact-channel rescue is weak, the leader becomes the provider that keeps the same category surf meaning with the safest next Play.',
+        rankingEvidence: 'A category fallback only wins if it keeps surf momentum clearer than a riskier exact match or a provider with weaker trust posture.',
+        rerankTrigger: 'Rerank once an exact match becomes healthy again or a safer provider can preserve more of the same watch decision than the current fallback leader.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceConfidenceFloors = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -3292,6 +3376,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceProviderStabilityContracts: buildSurfaceProviderStabilityContracts(scenario),
   surfaceRecoveryPlans: buildManifestSurfaceRecoveryPlans(scenario),
   surfaceCanonicalProviderIdentityContracts: buildSurfaceCanonicalProviderIdentityContracts(scenario),
+  surfaceFallbackRankingContracts: buildSurfaceFallbackRankingContracts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
