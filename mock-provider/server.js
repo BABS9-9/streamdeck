@@ -38,6 +38,12 @@ const liveCategories = [
   ['10', 'International'],
 ].map(([category_id, category_name], index) => ({ category_id, category_name, parent_id: 0, sort: index + 1 }));
 
+const providerDescriptor = {
+  providerName: 'NorthStar Mock Xtream',
+  region: 'Ontario demo cluster',
+  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, and playback demos.',
+};
+
 const channelNames = {
   Sports: ['TSN Prime', 'Arena One', 'GoalLine 24', 'Fight Night+', 'CourtVision', 'North Ice', 'Action Sports', 'FastTrack'],
   News: ['World Report', 'NewsNow', 'Capital Desk', '24 North', 'Global Wire', 'Metro Live'],
@@ -46,7 +52,7 @@ const channelNames = {
   Kids: ['Tiny Tunes', 'Adventure Jr', 'Cartoon Galaxy', 'Storybook TV', 'Kids Club'],
   Music: ['Pulse FM TV', 'Top 40 Live', 'Acoustic Room', 'Indie Mix', 'Classic Gold'],
   Documentary: ['Wild Planet', 'Deep History', 'Science Scope', 'True North Docs', 'Explorer HD'],
-  Local: ['Toronto One', 'Ontario Live', 'City Pulse', 'Local Weather', 'Morning Ontario'],
+  Local: ['Toronto One', 'Ontario Live', 'City Pulse', 'Local Weather', 'Morning Ontario', 'Peel Region News'],
   Lifestyle: ['Home Craft', 'Travel Loop', 'Food District', 'Wellness Now', 'Style Studio'],
   International: ['Euro Live', 'Latino Plus', 'Asia World', 'Global Culture', 'World Sport Intl'],
 };
@@ -291,6 +297,24 @@ const buildTrustSignals = (scenario = 'healthy') => {
     },
   ];
 };
+
+const buildDifferentiators = () => ([
+  {
+    title: 'Premium-first login',
+    detail: 'The demo path is built to prove StreamDeck can connect like an IPTV utility but feel like a polished streaming product from the first screen.',
+    surface: 'login',
+  },
+  {
+    title: 'Believable home destination',
+    detail: 'The mock adapter ships enough live, movie, series, and guide data to make Home feel curated instead of empty or obviously fake.',
+    surface: 'home',
+  },
+  {
+    title: 'Real live browse rehearsal',
+    detail: 'Live categories, channel logos, NOW/NEXT data, and playable HLS streams are all included so the prototype can actually be demoed end to end.',
+    surface: 'live',
+  },
+]);
 
 const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
   login: {
@@ -2997,6 +3021,90 @@ const buildSurfaceProviderReturnContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceFallbackEquivalenceContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login fallback-equivalence contract',
+    summary: scenario === 'healthy'
+      ? 'Login should tell the user whether the rescue provider preserves the same saved-provider experience, only an approximate shortcut, or a true restart into a different account story.'
+      : 'Login should publish whether fallback keeps the same saved-provider experience, only preserves a rough shortcut, or forces an honest restart into a different account story.',
+    equivalence: [
+      {
+        label: 'Saved-provider shortcut',
+        equivalentExperience: scenario === 'healthy'
+          ? 'Equivalent only when fallback preserves the same canonical provider owner, same Home destination, and the same trust posture the user thinks they are confirming.'
+          : 'Equivalent only when the fallback still lands on the same canonical provider owner and Home destination without rewriting the trust story.',
+        approximateExperience: 'Approximate when the healthiest fallback still reaches Home fast but changes the saved-provider label, warning posture, or the reason why this shortcut is safe.',
+        restartTrigger: scenario === 'healthy'
+          ? 'Treat it as a restart once the rescue changes account meaning, requires new credential trust, or lands the user somewhere other than the expected Home path.'
+          : 'Treat it as a restart once rescue changes provider identity, asks for fresh trust, or can no longer honestly claim it is the same saved-provider move.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Direct reconnect',
+        equivalentExperience: 'Equivalent only when reconnect still points at the same provider owner and restores the same next move without hidden caveats.',
+        approximateExperience: 'Approximate when reconnect works, but only by softening confidence, delaying validation, or borrowing trust from a healthier saved fallback.',
+        restartTrigger: 'Restart once reconnect requires different credentials, a different provider owner, or a different first destination than the user set out to confirm.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home fallback-equivalence contract',
+    summary: scenario === 'healthy'
+      ? 'Home should tell the user whether rescue preserves the same discovery surface, only keeps the rough browsing intent, or resets the product story into a different launch experience.'
+      : 'Home should publish whether fallback preserves the same discovery surface, only keeps a rough browse intent, or forces a reset into a different launch story.',
+    equivalence: [
+      {
+        label: 'Hero and quick-rail rescue',
+        equivalentExperience: scenario === 'healthy'
+          ? 'Equivalent only when rescue preserves the same hero title, same quick-launch meaning, and the same safest next play under a healthier provider.'
+          : 'Equivalent only when the fallback keeps the same hero, same quick rails, and the same next-safe launch even while provider trust changes under the hood.',
+        approximateExperience: 'Approximate when the healthiest fallback can keep the same mood and category intent, but swaps the hero, reorders the rails, or weakens metadata confidence.',
+        restartTrigger: scenario === 'healthy'
+          ? 'Treat it as a reset once rescue changes what the screen is about, replaces the launch path, or forces the user to rediscover the title family they already chose.'
+          : 'Treat it as a reset once rescue cannot keep the same discovery story and instead drops the user into a different hero, thinner rail set, or a new browse path.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Featured live handoff',
+        equivalentExperience: 'Equivalent only when the featured live fallback preserves the same channel identity, same row context, and same play promise from Home.',
+        approximateExperience: 'Approximate when Home can preserve the same live category or title family, but not the exact featured launch target.',
+        restartTrigger: 'Restart once the rescue loses both the exact featured card and the surrounding discovery context that made the Home launch feel intentional.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live fallback-equivalence contract',
+    summary: scenario === 'healthy'
+      ? 'Live should tell the user whether rescue keeps the exact same watch target, only keeps the same category momentum, or forces a true restart into a different surf path.'
+      : 'Live should publish whether fallback keeps the exact watch target, only preserves category momentum, or forces a real restart into a different surf path.',
+    equivalence: [
+      {
+        label: 'Selected channel rescue',
+        equivalentExperience: scenario === 'healthy'
+          ? 'Equivalent only when fallback preserves the same channel identity, same selected-card meaning, and the same likely play outcome under a healthier provider.'
+          : 'Equivalent only when rescue still lands on the same selected channel and keeps preview plus play meaning intact, even though the provider owner changes.',
+        approximateExperience: 'Approximate when the healthiest fallback can preserve the same live category and surf momentum, but not the exact selected channel copy.',
+        restartTrigger: scenario === 'healthy'
+          ? 'Treat it as a restart once rescue loses the selected channel identity and must send the user into a different category, card, or fresh browse context.'
+          : 'Treat it as a restart once rescue cannot keep the selected card or category momentum and instead forces the user to rebuild the surf path from scratch.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Preview-to-play handoff',
+        equivalentExperience: 'Equivalent only when the fallback provider can keep the same preview target and turn it into the same play decision without changing watch meaning.',
+        approximateExperience: 'Approximate when the preview survives as the same category or same network family, but not the exact watch target the selected card promised.',
+        restartTrigger: 'Restart once the fallback can no longer make the preview and play flow feel like the same channel decision the user already made.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceProviderStabilityContracts = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -3097,116 +3205,10 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   },
   sampleCredentials: {
     server: host,
-    username: 'test',
-    password: 'test',
+    username: 'demo',
+    password: 'demo',
   },
-  differentiators: [
-    {
-      title: 'Trust-first login',
-      detail: 'Login can connect, validate, save, and rehearse failure without dropping the provider context.',
-      surface: 'login',
-    },
-    {
-      title: 'Home with provider truth',
-      detail: 'Home combines hero browse rails, inline guide context, and saved-provider recovery instead of hiding account risk in Settings.',
-      surface: 'home',
-    },
-    {
-      title: 'Live TV surf flow',
-      detail: 'Live keeps filtering, preview, NOW/NEXT, and fallback launch paths in one browser instead of forcing guide-first detours.',
-      surface: 'live',
-    },
-    {
-      title: 'Shared escalation ladder',
-      detail: 'Login, Home, and Live now publish the same first move, second move, and last safe fallback straight from the adapter manifest.',
-      surface: 'live',
-    },
-    {
-      title: 'Scenario impact matrix',
-      detail: 'Login, Home, and Live now publish how healthy, degraded, and trust-risk rehearsals change each surface before the user hits a dead end.',
-      surface: 'home',
-    },
-    {
-      title: 'Surface promise stack',
-      detail: 'Login, Home, and Live now publish what the screen proves now, what it protects next, and why the next move is still safe straight from the adapter manifest.',
-      surface: 'login',
-    },
-    {
-      title: 'Surface freshness budget',
-      detail: 'Login, Home, and Live now publish how fresh each trust and browse claim must be, what fallback stays safe, and when recovery takes over straight from the adapter manifest.',
-      surface: 'home',
-    },
-    {
-      title: 'Surface contradiction board',
-      detail: 'Login, Home, and Live now publish which signal wins when live truth, cache continuity, and recovery posture disagree straight from the adapter manifest.',
-      surface: 'live',
-    },
-    {
-      title: 'Surface action gate',
-      detail: 'Login, Home, and Live now publish which action stays premium, which fallback takes over first, and what unlocks the premium path again straight from the adapter manifest.',
-      surface: 'login',
-    },
-    {
-      title: 'Surface intent lock',
-      detail: 'Login, Home, and Live now publish which user intent stays protected, what can drift around it, and what actually breaks that promise straight from the adapter manifest.',
-      surface: 'home',
-    },
-    {
-      title: 'Surface explanation boundary',
-      detail: 'Login, Home, and Live now publish what must be said explicitly, what can stay implied, and what forces blunt recovery language straight from the adapter manifest.',
-      surface: 'live',
-    },
-    {
-      title: 'Surface autonomy boundary',
-      detail: 'Login, Home, and Live now publish what the shell can recover automatically, what the user still owns, and what forces an explicit handoff straight from the adapter manifest.',
-      surface: 'login',
-    },
-    {
-      title: 'Surface identity anchor',
-      detail: 'Login, Home, and Live now publish which provider, account, scenario, and content markers must stay visible so fallback never becomes an anonymous premium illusion straight from the adapter manifest.',
-      surface: 'home',
-    },
-    {
-      title: 'Surface confidence floor',
-      detail: 'Login, Home, and Live now publish the minimum proof needed to keep a premium posture, what downgrade takes over below that floor, and what forces a hard stop straight from the adapter manifest.',
-      surface: 'home',
-    },
-    {
-      title: 'Surface recovery witness',
-      detail: 'Login, Home, and Live now publish the visible evidence that must survive fallback, the user context that carries forward with it, and the proof gap that breaks trust straight from the adapter manifest.',
-      surface: 'live',
-    },
-    {
-      title: 'Surface fallback cost',
-      detail: 'Login, Home, and Live now publish what premium capability the user already lost, what value still survives, and what additional loss means the shell must stop selling the downgrade as premium straight from the adapter manifest.',
-      surface: 'home',
-    },
-    {
-      title: 'Surface rescue receipt',
-      detail: 'Login, Home, and Live now publish what user context survived fallback, what changed under the hood, and what the user should reconfirm before trusting the next move straight from the adapter manifest.',
-      surface: 'live',
-    },
-    {
-      title: 'Surface proof debt',
-      detail: 'Login, Home, and Live now publish what uncertainty the shell is still carrying, what confidence it is borrowing, and what evidence must land before the next move can honestly feel premium again straight from the adapter manifest.',
-      surface: 'login',
-    },
-    {
-      title: 'Surface claim ceiling',
-      detail: 'Login, Home, and Live now publish the strongest promise each surface is still allowed to make, what overclaim must stay off-screen, and what proof raises that ceiling back to premium straight from the adapter manifest.',
-      surface: 'home',
-    },
-    {
-      title: 'Surface provider-return contract',
-      detail: 'Login, Home, and Live now publish when the original provider has honestly earned the user back, what continuity must survive that return, and what instability means the rescue provider should stay in control straight from the adapter manifest.',
-      surface: 'live',
-    },
-    {
-      title: 'Surface provider-stability contract',
-      detail: 'Login, Home, and Live now publish when a provider is stable enough to own fresh launches again, what volatility can be tolerated, and what instability means rescue should stay primary straight from the adapter manifest.',
-      surface: 'home',
-    },
-  ],
+  differentiators: buildDifferentiators(),
   supportedScreens: [
     {
       id: 'login',
@@ -3377,6 +3379,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceRecoveryPlans: buildManifestSurfaceRecoveryPlans(scenario),
   surfaceCanonicalProviderIdentityContracts: buildSurfaceCanonicalProviderIdentityContracts(scenario),
   surfaceFallbackRankingContracts: buildSurfaceFallbackRankingContracts(scenario),
+  surfaceFallbackEquivalenceContracts: buildSurfaceFallbackEquivalenceContracts(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'

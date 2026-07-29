@@ -80,6 +80,7 @@ export function MockOperationsConsole({
   const recoveryPlan = manifest?.surfaceRecoveryPlans.find((item) => item.screenId === screenId);
   const canonicalProviderIdentityContract = manifest?.surfaceCanonicalProviderIdentityContracts.find((item) => item.screenId === screenId);
   const fallbackRankingContract = manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === screenId);
+  const fallbackEquivalenceContract = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -641,6 +642,41 @@ export function MockOperationsConsole({
                 <p className="mt-2 text-sm font-semibold text-white">{item.currentLeader}</p>
                 <p className="mt-3 text-sm text-white/80">{item.rankingEvidence}</p>
                 <p className="mt-3 text-sm text-white/80">{item.rerankTrigger}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {fallbackEquivalenceContract ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{fallbackEquivalenceContract.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{fallbackEquivalenceContract.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Rescue honesty visible
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {fallbackEquivalenceContract.equivalence.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <div className="mt-3 grid gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Equivalent experience</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{item.equivalentExperience}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Approximate experience</p>
+                    <p className="mt-1 text-sm text-white/80">{item.approximateExperience}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Restart trigger</p>
+                    <p className="mt-1 text-sm text-white/80">{item.restartTrigger}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
