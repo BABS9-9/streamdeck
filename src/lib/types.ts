@@ -250,6 +250,18 @@ export type MockProviderManifest = {
     userPromise: string;
     commandChips: string[];
   }>;
+  surfaceLaunchReadinessContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    readiness: Array<{
+      label: string;
+      safeWhen: string;
+      blockedWhen: string;
+      recoveryMove: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceScorecards: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;

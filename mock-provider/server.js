@@ -3189,6 +3189,96 @@ const buildSurfaceProviderStabilityContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceLaunchReadinessContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login launch readiness',
+    summary: scenario === 'healthy'
+      ? 'Login should tell the truth about whether Connect is merely valid auth, genuinely safe to hand into Home, or already leaning on recovery.'
+      : 'Login should make the next safe move explicit before weak auth, line pressure, or unstable provider trust gets misread as a generic setup failure.',
+    readiness: [
+      {
+        label: 'Connect into Home',
+        safeWhen: scenario === 'healthy'
+          ? 'Fresh auth, stable account posture, and a visible saved-provider owner all point at the same Home handoff.'
+          : 'Only treat Connect as safe when the provider can still credibly own the next Home launch instead of just passing one auth check.',
+        blockedWhen: scenario === 'healthy'
+          ? 'Connect should soften as soon as auth, expiry, or line posture stop reinforcing the same next move.'
+          : 'Block confidence when auth is unstable, the account is expired, or line pressure makes another provider safer than the current one.',
+        recoveryMove: scenario === 'healthy'
+          ? 'Keep the current provider visible and let the user move forward without retyping anything.'
+          : 'Push the user toward the healthiest saved provider or a trust-led retry instead of pretending the current source is fine.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider shortcut',
+        safeWhen: 'A saved provider is launch-ready only when it stays the fastest clear path into Home and still owns the best trust posture.',
+        blockedWhen: 'Do not sell the shortcut as safe if it only won on recency, not on current provider health or playback readiness.',
+        recoveryMove: 'Keep alternate saved providers visible so switching feels like a guided handoff, not a setup restart.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home launch readiness',
+    summary: scenario === 'healthy'
+      ? 'Home should make it obvious whether the hero and quick rails are safe launch surfaces right now or are being held together by cache and fallback continuity.'
+      : 'Home should publish when the featured path is still genuinely launch-ready, when the shell is borrowing confidence from cached browse state, and when recovery owns the next move.',
+    readiness: [
+      {
+        label: 'Featured launch',
+        safeWhen: scenario === 'healthy'
+          ? 'The hero is safe when provider trust, featured artwork, counts, and launch ownership all tell the same story.'
+          : 'Only treat the hero as launch-ready when the featured path has current provider support instead of only cached browse confidence.',
+        blockedWhen: scenario === 'healthy'
+          ? 'Do not overclaim hero confidence once the provider story, guide freshness, or fallback owner starts drifting.'
+          : 'Block confidence when cache is doing more real work than the live provider or when rescue ownership needs to be named first.',
+        recoveryMove: scenario === 'healthy'
+          ? 'Use quick rails and keep provider posture visible if the hero needs a brief refresh.'
+          : 'Route the user to the safest quick-launch rail or recovery-owned browse path instead of stalling on one cinematic hero.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Quick-launch rails',
+        safeWhen: 'A rail is safe when it preserves the same browse intent and the same launch owner stays obvious from the card.',
+        blockedWhen: 'Do not let every card look equally ready if some launches are cache-backed, fallback-owned, or only approximate matches.',
+        recoveryMove: 'Keep rails live as the recovery surface so browse can continue without dumping the user back to Settings or Login.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live launch readiness',
+    summary: scenario === 'healthy'
+      ? 'Live should tell the user whether the selected card is truly ready to play now, merely safe to preview, or already leaning on rescue logic.'
+      : 'Live should keep surf speed high while being explicit about when preview, guide, or provider pressure means the next Play move is only partially proven.',
+    readiness: [
+      {
+        label: 'Selected-channel Play',
+        safeWhen: scenario === 'healthy'
+          ? 'Play is safe when preview, NOW / NEXT, and provider posture all reinforce the same selected channel.'
+          : 'Treat Play as safe only when the selected card still has a clear launch owner and preview is more than decorative motion.',
+        blockedWhen: scenario === 'healthy'
+          ? 'Do not let motion alone imply readiness if guide truth or provider posture goes soft.'
+          : 'Block confidence when preview keeps dropping, guide confidence flickers, or line saturation means another provider now owns the safer Play.',
+        recoveryMove: scenario === 'healthy'
+          ? 'Keep the same card selected and refresh the preview path in place.'
+          : 'Offer exact-channel rescue if available, otherwise keep the user inside the same category with an honest fallback label.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Category surf continuity',
+        safeWhen: 'Surfing stays launch-ready when the selected card, current category, and next-safe provider still travel together.',
+        blockedWhen: 'Do not present the grid as fully healthy if the user can keep browsing but the launch owner is shifting underneath the selected card.',
+        recoveryMove: 'Preserve the selected category and explain whether fallback kept the exact channel, only the same category, or requires a restart.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -3349,6 +3439,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       commandChips: ['Preview first', 'NOW / NEXT', 'On-card recovery'],
     },
   ],
+  surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceScorecards: buildSurfaceScorecards(scenario),
   surfaceExitCriteria: buildSurfaceExitCriteria(scenario),
   surfaceHandoffs: buildSurfaceHandoffs(scenario),

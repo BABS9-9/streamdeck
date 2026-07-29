@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest } from '@/lib/mock-provider';
+import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { useAuthStore } from '@/stores/auth-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -73,6 +74,10 @@ export default function LoginPage() {
   );
   const fallbackEquivalence = useMemo(
     () => manifest?.surfaceFallbackEquivalenceContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const launchReadiness = useMemo(
+    () => manifest?.surfaceLaunchReadinessContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
 
@@ -151,6 +156,10 @@ export default function LoginPage() {
               </div>
             </div>
           ) : null}
+
+          <div className="mt-6">
+            <SurfaceLaunchReadiness contract={launchReadiness} badge="Connect honesty" />
+          </div>
         </section>
 
         <section className="rounded-[2rem] border border-white/10 bg-[#0b1020]/80 p-8 shadow-2xl shadow-black/40 backdrop-blur lg:p-10">
