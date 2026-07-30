@@ -274,6 +274,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceDowngradeLadders: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    rungs: Array<{
+      label: string;
+      keeps: string;
+      loses: string;
+      handoffTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceScorecards: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;

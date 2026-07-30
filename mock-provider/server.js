@@ -3269,6 +3269,99 @@ const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceDowngradeLadders = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login downgrade ladder',
+    summary: scenario === 'healthy'
+      ? 'Login should tell the user whether StreamDeck can still hand off the same provider exactly, only approximate that handoff from saved facts, or needs a clean reconnect.'
+      : 'Login should show when the saved-provider story is still exact, when it is only borrowing from saved facts, and when reconnect is the only honest next move.',
+    rungs: [
+      {
+        label: 'Exact same-provider handoff',
+        keeps: scenario === 'healthy' ? 'Saved provider, fresh auth proof, and immediate Home ownership stay attached to the same provider record.' : 'Saved provider identity and recent trust proof still support a same-provider Home handoff.',
+        loses: 'Nothing yet; the user is still moving through the same provider owner.',
+        handoffTrigger: 'Hold this rung until fresh auth proof, account state, and launch-readiness all still agree.',
+        tone: 'ready',
+      },
+      {
+        label: 'Approximate cached handoff',
+        keeps: 'Provider identity, saved credentials, and the fastest route back into Home remain available.',
+        loses: 'Fresh auth certainty drops, so Home may open on saved truth while reconnect finishes or fallback takes ownership.',
+        handoffTrigger: 'Use this rung when auth is stale, unstable, or briefly unavailable but the saved provider story is still believable.',
+        tone: 'watch',
+      },
+      {
+        label: 'Fresh reconnect restart',
+        keeps: 'Only the account label and reconnect affordance survive.',
+        loses: 'Exact Home ownership and cached trust authority both fall away.',
+        handoffTrigger: 'Trigger this rung when auth fails, the account is expired, or provider identity no longer matches the saved owner.',
+        tone: 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home downgrade ladder',
+    summary: scenario === 'healthy'
+      ? 'Home should publish whether the hero and quick rails are still exact to the active provider, already leaning on approximate fallback, or back to a fresh browse restart.'
+      : 'Home should show how far the shell has already slid from exact provider browse into approximate rescue before it finally has to restart discovery.',
+    rungs: [
+      {
+        label: 'Exact featured browse',
+        keeps: 'Featured hero, quick live rail, and provider counts all come from the active provider with current browse context intact.',
+        loses: 'Nothing beyond ordinary provider latency tolerance.',
+        handoffTrigger: 'Keep this rung while featured content, counts, and launch ownership still come from the active provider.',
+        tone: 'ready',
+      },
+      {
+        label: 'Approximate fallback browse',
+        keeps: 'Hero mood, category direction, and quick-entry rails still carry the same user intent.',
+        loses: 'Exact provider freshness drops, so rows may come from cache or a healthier rescue provider instead of the original source.',
+        handoffTrigger: 'Use this rung when Home can still preserve the same browse story but needs cache or rescue data to keep the shell moving.',
+        tone: 'watch',
+      },
+      {
+        label: 'Fresh browse restart',
+        keeps: 'Only top-level navigation and recovery entry points stay stable.',
+        loses: 'Featured continuity, quick-rail certainty, and the current browse story all reset.',
+        handoffTrigger: 'Trigger this rung when cached browse proof is exhausted or provider contradiction makes the current Home story no longer believable.',
+        tone: 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live downgrade ladder',
+    summary: scenario === 'healthy'
+      ? 'Live should tell the user whether StreamDeck is still holding the exact selected channel, only a same-category rescue, or a full fresh channel restart.'
+      : 'Live should show how far surf continuity has already degraded before the user taps Play again.',
+    rungs: [
+      {
+        label: 'Exact-channel surf',
+        keeps: 'Selected channel, preview path, and NOW/NEXT intent all stay attached to the same channel.',
+        loses: 'Nothing beyond normal playback jitter tolerance.',
+        handoffTrigger: 'Hold this rung while preview, guide, and launch readiness still support the exact selected channel.',
+        tone: 'ready',
+      },
+      {
+        label: 'Approximate same-category rescue',
+        keeps: 'Category intent, surf momentum, and a fast alternate launch stay alive.',
+        loses: 'Exact channel ownership drops, so the shell may rescue into a same-category alternate or fallback preview.',
+        handoffTrigger: 'Use this rung when the exact selected channel cannot be trusted but category-level intent can still be preserved honestly.',
+        tone: 'watch',
+      },
+      {
+        label: 'Fresh channel restart',
+        keeps: 'Only the live category shell and search/filter context remain.',
+        loses: 'Exact selected-channel continuity and rescue-channel confidence both collapse.',
+        handoffTrigger: 'Trigger this rung when preview, guide, and fallback all fail to support an honest next play from the current card.',
+        tone: 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceLaunchReadinessContracts = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -3521,6 +3614,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   ],
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceContinuityWindows: buildSurfaceContinuityWindows(scenario),
+  surfaceDowngradeLadders: buildSurfaceDowngradeLadders(scenario),
   surfaceScorecards: buildSurfaceScorecards(scenario),
   surfaceExitCriteria: buildSurfaceExitCriteria(scenario),
   surfaceHandoffs: buildSurfaceHandoffs(scenario),

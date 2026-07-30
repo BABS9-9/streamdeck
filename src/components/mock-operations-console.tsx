@@ -82,6 +82,7 @@ export function MockOperationsConsole({
   const fallbackRankingContract = manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === screenId);
   const fallbackEquivalenceContract = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === screenId);
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === screenId);
+  const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -1224,6 +1225,30 @@ export function MockOperationsConsole({
                 <p className="mt-1 text-sm text-white/80">{item.downgradeAfter}</p>
                 <p className="mt-3 text-xs uppercase tracking-[0.22em] text-white/70">Reset trigger</p>
                 <p className="mt-1 text-sm text-white/80">{item.resetTrigger}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {downgradeLadder ? (
+        <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-200">{downgradeLadder.title}</p>
+              <p className="mt-2 text-sm text-white">{downgradeLadder.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Exact to restart
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-3">
+            {downgradeLadder.rungs.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <p className="mt-2 text-sm text-white"><span className="font-semibold">Keeps:</span> {item.keeps}</p>
+                <p className="mt-2 text-sm text-white/80"><span className="font-semibold text-white">Loses:</span> {item.loses}</p>
+                <p className="mt-2 text-sm text-white/80"><span className="font-semibold text-white">Trigger:</span> {item.handoffTrigger}</p>
               </div>
             ))}
           </div>

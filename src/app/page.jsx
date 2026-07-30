@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest } from '@/lib/mock-provider';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
+import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -83,6 +84,10 @@ export default function LoginPage() {
   );
   const continuityWindow = useMemo(
     () => manifest?.surfaceContinuityWindows?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const downgradeLadder = useMemo(
+    () => manifest?.surfaceDowngradeLadders?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
 
@@ -168,6 +173,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceContinuityWindow contract={continuityWindow} badge="Handoff window" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
           </div>
         </section>
 
