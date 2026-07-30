@@ -61,6 +61,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should publish the exact downgrade ladder from exact continuity, to approximate rescue, to honest restart so users know what they still keep before they tap again.
 - The app should make each rung feel intentional instead of letting degraded states blur together into vague "something is wrong" copy.
 
+### 12. Surface provider-choice truth
+- Backup providers are only helpful if StreamDeck tells the truth about when it may choose for the user versus when it must ask.
+- Login, Home, and Live should publish when one provider clearly preserves the same outcome, what proof makes that silent handoff honest, and what ambiguity forces an explicit choice.
+- Premium fallback should feel smart when equivalence is real and respectful when the decision would materially change the user's launch story.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -74,6 +79,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish whether the next launch is safe now, what currently blocks it, and what recovery move should take over first.
 - Login, Home, and Live also publish how long exact continuity is still being preserved before the shell must downgrade the experience or force a reset.
 - Login, Home, and Live also publish the downgrade ladder that names what continuity is still exact, what has already slipped to approximate rescue, and what condition forces a full restart.
+- Login, Home, and Live also publish when StreamDeck may auto-pick a healthier provider, what makes that choice equivalent, and when the user must pick the provider explicitly.
 
 ## Immediate Implementation Focus
 
@@ -84,6 +90,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Connect should clearly distinguish between "auth succeeded" and "this provider is ready to own the next Home launch."
 - Saved-provider shortcuts should state how long they can preserve a same-provider handoff before the user needs a trust-led retry or a provider switch.
 - Saved-provider shortcuts should also show the downgrade ladder from exact same-provider handoff, to approximate cached handoff, to restart-level reconnect.
+- Saved-provider shortcuts should also tell the user when StreamDeck may quietly pick the healthiest provider versus when setup intent changed enough that the provider choice belongs to the user.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -92,6 +99,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The hero and quick rails should tell the user whether the featured launch is safe now or recovery-owned.
 - Hero and quick rails should also say how long the current browse context is still exact before cached continuity or rescue turns into an honest downgrade.
 - Hero and quick rails should also show the downgrade ladder from exact featured browse, to approximate fallback rows, to a fresh browse restart.
+- Hero and quick rails should also tell the user when a healthier provider can be chosen silently because discovery stays equivalent, and when the shell must surface the trade-off.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -101,6 +109,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Play should never look equally trustworthy across healthy preview, guide drift, and line-pressure scenarios; the selected card needs explicit launch-readiness truth.
 - The selected card should also state how long exact-channel continuity is still being preserved before Live has to collapse down to same-category rescue or a fresh channel pick.
 - The selected card should also show the downgrade ladder from exact-channel surf, to same-category rescue, to a fresh channel restart.
+- The selected card should also say when StreamDeck can auto-pick the healthier source because the watch target is still the same, and when rescue is ambiguous enough that the user must choose.
 
 ## Non-Goals For This Pass
 
