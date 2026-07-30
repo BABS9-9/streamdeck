@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderManifest } from '@/lib/mock-provider';
+import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderManifest, NormalizedEpg, XtreamStream } from '@/lib/types';
@@ -158,6 +159,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const continuityWindow = useMemo(
+    () => manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
 
   if (!activeConnection) {
     return (
@@ -258,6 +263,7 @@ export function HomeDashboard() {
       ) : null}
 
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Hero launch safety" />
+      <SurfaceContinuityWindow contract={continuityWindow} badge="Browse continuity" />
 
       <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
         <div className="flex items-center justify-between gap-4">

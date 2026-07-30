@@ -51,6 +51,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish what makes the next action safe right now, what signal is still blocking confidence, and what the fastest honest recovery move is.
 - The shell should never make the user translate provider health into launch confidence on their own.
 
+### 10. Surface continuity window
+- Users should not have to guess how long StreamDeck can keep their exact setup, browse, or channel intent intact once the provider starts wobbling.
+- Login, Home, and Live should publish the exact continuity window they are preserving, when the shell is only borrowing time from cache or fallback, and what forces a reset.
+- Premium rescue means preserving intent for as long as the product can honestly hold it, then naming the downgrade before trust breaks.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -62,6 +67,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The mock provider is realistic enough to demo auth, categories, channels, guide data, and playback without depending on a live customer account.
 - Login, Home, and Live publish whether fallback keeps an exact experience, an approximate one, or a reset-level restart.
 - Login, Home, and Live also publish whether the next launch is safe now, what currently blocks it, and what recovery move should take over first.
+- Login, Home, and Live also publish how long exact continuity is still being preserved before the shell must downgrade the experience or force a reset.
 
 ## Immediate Implementation Focus
 
@@ -70,12 +76,14 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Visible saved providers with health and reconnect affordances.
 - No dead-end state after a failed auth check.
 - Connect should clearly distinguish between "auth succeeded" and "this provider is ready to own the next Home launch."
+- Saved-provider shortcuts should state how long they can preserve a same-provider handoff before the user needs a trust-led retry or a provider switch.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
 - Cache-aware loading so the screen stays believable even when the provider slows down.
 - Provider status visible, but secondary to content discovery.
 - The hero and quick rails should tell the user whether the featured launch is safe now or recovery-owned.
+- Hero and quick rails should also say how long the current browse context is still exact before cached continuity or rescue turns into an honest downgrade.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -83,6 +91,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Channel surfing should feel immediate.
 - When the selected channel falls back to another provider, Live should state whether the rescue is exact-channel, same-category, or a fresh restart.
 - Play should never look equally trustworthy across healthy preview, guide drift, and line-pressure scenarios; the selected card needs explicit launch-readiness truth.
+- The selected card should also state how long exact-channel continuity is still being preserved before Live has to collapse down to same-category rescue or a fresh channel pick.
 
 ## Non-Goals For This Pass
 

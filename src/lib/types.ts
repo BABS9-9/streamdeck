@@ -262,6 +262,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceContinuityWindows: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    windows: Array<{
+      label: string;
+      preservesFor: string;
+      downgradeAfter: string;
+      resetTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceScorecards: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;

@@ -3189,6 +3189,86 @@ const buildSurfaceProviderStabilityContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login continuity window',
+    summary: scenario === 'healthy'
+      ? 'Login should say how long the same saved-provider handoff still counts as the exact same connection story before the shell must downgrade to retry or switch guidance.'
+      : 'Login should name when it is still preserving a same-provider handoff, when it is only borrowing time from saved credentials, and when the setup story has to reset honestly.',
+    windows: [
+      {
+        label: 'Saved-provider handoff',
+        preservesFor: scenario === 'healthy'
+          ? 'Keep the same provider owner, same credentials, and same next Home destination while trust signals still reinforce one clean handoff.'
+          : 'Preserve the same saved-provider shortcut only while the account still looks trustworthy enough that reconnect feels like the same move, not a gamble.',
+        downgradeAfter: 'Downgrade to retry-or-switch guidance once auth, expiry, or line posture stop pointing at one obvious Home owner.',
+        resetTrigger: scenario === 'healthy'
+          ? 'Reset when the saved provider stops being the same safe next move or no longer maps to the same canonical owner.'
+          : 'Reset when auth instability, expiry, or line saturation make a fresh trust check or a different provider the only honest next move.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Typed credential continuity',
+        preservesFor: 'Keep the current typed credentials intact through a trust-led retry so the user does not have to rebuild setup context from scratch.',
+        downgradeAfter: 'Downgrade once repeated failures prove the current credential set is only historical input, not a launchable provider identity.',
+        resetTrigger: 'Reset when the next safe move requires a different provider owner, different credentials, or a full reconnect explanation.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home continuity window',
+    summary: scenario === 'healthy'
+      ? 'Home should publish how long the same featured story and same browse intent stay exact before the shell has to admit it is leaning on cache or recovery.'
+      : 'Home should tell the truth about when hero and rails are still the same browse session, when continuity is only approximate, and when the user is no longer in the same Home story.',
+    windows: [
+      {
+        label: 'Hero browse continuity',
+        preservesFor: scenario === 'healthy'
+          ? 'Keep the same featured launch story while provider trust, artwork, counts, and launch ownership stay aligned.'
+          : 'Preserve the same hero story only while cached context and live provider posture still point at the same launch owner.',
+        downgradeAfter: 'Downgrade to rail-led browsing once the hero depends more on cached confidence or fallback ownership than current provider proof.',
+        resetTrigger: 'Reset the hero promise when the featured path changes provider meaning, loses category intent, or can no longer honestly own the next launch.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Quick-rail continuity',
+        preservesFor: 'Keep the same browse intent and same card meaning while rails can still route the user into the same category or title family without surprise.',
+        downgradeAfter: 'Downgrade when rail clicks are still useful but no longer exact because fallback or cache is doing more work than the named provider.',
+        resetTrigger: 'Reset when rails stop preserving category intent and the user must pick a new provider story or start a new browse path.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live continuity window',
+    summary: scenario === 'healthy'
+      ? 'Live should show how long the selected card still represents the same channel session before surf continuity drops to same-category rescue or a full reset.'
+      : 'Live should make explicit when the selected card is still the same exact channel story, when the shell is only keeping the same category alive, and when surf continuity is gone.',
+    windows: [
+      {
+        label: 'Exact-channel continuity',
+        preservesFor: scenario === 'healthy'
+          ? 'Keep the same selected channel, same card identity, and same Play owner while preview, guide, and provider trust reinforce one exact-channel session.'
+          : 'Preserve exact-channel surf continuity only while preview, guide, and fallback logic still agree that this is the same channel session.',
+        downgradeAfter: 'Downgrade to same-category rescue once the card still points in the right direction but exact-channel ownership is no longer fully proven.',
+        resetTrigger: 'Reset when preview, guide, and provider posture no longer agree on one exact selected channel the user can trust.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Category-surf continuity',
+        preservesFor: 'Keep the same category rail, same surf momentum, and same fastest safe next channel while rescue is still meaningfully inside the current browse lane.',
+        downgradeAfter: 'Downgrade when the shell can only preserve rough live-TV momentum instead of the same channel lane the user chose.',
+        resetTrigger: 'Reset when provider pressure forces a fresh channel pick that no longer belongs to the same selected-card or same-category rescue story.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceLaunchReadinessContracts = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -3440,6 +3520,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
     },
   ],
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
+  surfaceContinuityWindows: buildSurfaceContinuityWindows(scenario),
   surfaceScorecards: buildSurfaceScorecards(scenario),
   surfaceExitCriteria: buildSurfaceExitCriteria(scenario),
   surfaceHandoffs: buildSurfaceHandoffs(scenario),

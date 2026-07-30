@@ -81,6 +81,7 @@ export function MockOperationsConsole({
   const canonicalProviderIdentityContract = manifest?.surfaceCanonicalProviderIdentityContracts.find((item) => item.screenId === screenId);
   const fallbackRankingContract = manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === screenId);
   const fallbackEquivalenceContract = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === screenId);
+  const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === screenId);
   const activeScenario = health.healthScenarios?.[health.activeScenario];
 
   return (
@@ -1199,6 +1200,33 @@ export function MockOperationsConsole({
           <ol className="mt-3 space-y-2 text-sm text-slate-300">
             {health.recommendedDemoSequence.map((item, index) => <li key={item}>{index + 1}. {item}</li>)}
           </ol>
+        </div>
+      ) : null}
+
+      {continuityWindow ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{continuityWindow.title}</p>
+              <p className="mt-2 text-sm text-slate-300">{continuityWindow.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-white/80">
+              Continuity budget
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {continuityWindow.windows.map((item) => (
+              <div key={item.label} className={`rounded-2xl border p-4 ${readinessToneClasses[item.tone]}`}>
+                <p className="text-[11px] uppercase tracking-[0.22em]">{item.label}</p>
+                <p className="mt-3 text-xs uppercase tracking-[0.22em] text-white/70">Preserves for</p>
+                <p className="mt-1 text-sm text-white">{item.preservesFor}</p>
+                <p className="mt-3 text-xs uppercase tracking-[0.22em] text-white/70">Downgrade after</p>
+                <p className="mt-1 text-sm text-white/80">{item.downgradeAfter}</p>
+                <p className="mt-3 text-xs uppercase tracking-[0.22em] text-white/70">Reset trigger</p>
+                <p className="mt-1 text-sm text-white/80">{item.resetTrigger}</p>
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 
