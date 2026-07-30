@@ -56,6 +56,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should publish the exact continuity window they are preserving, when the shell is only borrowing time from cache or fallback, and what forces a reset.
 - Premium rescue means preserving intent for as long as the product can honestly hold it, then naming the downgrade before trust breaks.
 
+### 11. Surface downgrade ladder
+- A premium IPTV shell should not hide the sequence of compromises it is already making on the user's behalf.
+- Login, Home, and Live should publish the exact downgrade ladder from exact continuity, to approximate rescue, to honest restart so users know what they still keep before they tap again.
+- The app should make each rung feel intentional instead of letting degraded states blur together into vague "something is wrong" copy.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -68,6 +73,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live publish whether fallback keeps an exact experience, an approximate one, or a reset-level restart.
 - Login, Home, and Live also publish whether the next launch is safe now, what currently blocks it, and what recovery move should take over first.
 - Login, Home, and Live also publish how long exact continuity is still being preserved before the shell must downgrade the experience or force a reset.
+- Login, Home, and Live also publish the downgrade ladder that names what continuity is still exact, what has already slipped to approximate rescue, and what condition forces a full restart.
 
 ## Immediate Implementation Focus
 
@@ -77,6 +83,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - No dead-end state after a failed auth check.
 - Connect should clearly distinguish between "auth succeeded" and "this provider is ready to own the next Home launch."
 - Saved-provider shortcuts should state how long they can preserve a same-provider handoff before the user needs a trust-led retry or a provider switch.
+- Saved-provider shortcuts should also show the downgrade ladder from exact same-provider handoff, to approximate cached handoff, to restart-level reconnect.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -84,6 +91,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Provider status visible, but secondary to content discovery.
 - The hero and quick rails should tell the user whether the featured launch is safe now or recovery-owned.
 - Hero and quick rails should also say how long the current browse context is still exact before cached continuity or rescue turns into an honest downgrade.
+- Hero and quick rails should also show the downgrade ladder from exact featured browse, to approximate fallback rows, to a fresh browse restart.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -92,6 +100,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - When the selected channel falls back to another provider, Live should state whether the rescue is exact-channel, same-category, or a fresh restart.
 - Play should never look equally trustworthy across healthy preview, guide drift, and line-pressure scenarios; the selected card needs explicit launch-readiness truth.
 - The selected card should also state how long exact-channel continuity is still being preserved before Live has to collapse down to same-category rescue or a fresh channel pick.
+- The selected card should also show the downgrade ladder from exact-channel surf, to same-category rescue, to a fresh channel restart.
 
 ## Non-Goals For This Pass
 
