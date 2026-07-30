@@ -6,6 +6,7 @@ import { fetchMockProviderHealth, fetchMockProviderManifest } from '@/lib/mock-p
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
+import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { useAuthStore } from '@/stores/auth-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -88,6 +89,10 @@ export default function LoginPage() {
   );
   const downgradeLadder = useMemo(
     () => manifest?.surfaceDowngradeLadders?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const providerChoice = useMemo(
+    () => manifest?.surfaceProviderChoiceContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
 
@@ -177,6 +182,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
           </div>
         </section>
 

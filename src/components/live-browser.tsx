@@ -5,6 +5,7 @@ import { fetchMockProviderManifest } from '@/lib/mock-provider';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
+import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderManifest, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -123,12 +124,14 @@ export function LiveBrowser() {
   const launchReadiness = manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'live') ?? null;
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
+  const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
 
   return (
     <div className="space-y-6">
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Play confidence" />
       <SurfaceContinuityWindow contract={continuityWindow} badge="Surf continuity" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
+      <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04]">
