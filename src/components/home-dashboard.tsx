@@ -7,6 +7,7 @@ import { SurfaceContinuityWindow } from '@/components/surface-continuity-window'
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
+import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderManifest, NormalizedEpg, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -173,6 +174,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const recoveryPlan = useMemo(
+    () => manifest?.surfaceRecoveryPlans.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
 
   if (!activeConnection) {
     return (
@@ -276,6 +281,7 @@ export function HomeDashboard() {
       <SurfaceContinuityWindow contract={continuityWindow} badge="Browse continuity" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
+      <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
 
       <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
         <div className="flex items-center justify-between gap-4">

@@ -310,6 +310,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Recovery route on login',
+    detail: 'The adapter now publishes the fastest safe handoff once Login stops being the honest owner of the next Home launch.',
+    surface: 'login',
+  },
+  {
     title: 'Believable home destination',
     detail: 'The mock adapter ships enough live, movie, series, and guide data to make Home feel curated instead of empty or obviously fake.',
     surface: 'home',
@@ -320,6 +325,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Recovery route on Home',
+    detail: 'The adapter now publishes the fastest safe browse-preserving move once the current provider should stop owning featured and quick-launch actions.',
+    surface: 'home',
+  },
+  {
     title: 'Real live browse rehearsal',
     detail: 'Live categories, channel logos, NOW/NEXT data, and playable HLS streams are all included so the prototype can actually be demoed end to end.',
     surface: 'live',
@@ -327,6 +337,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Provider-choice truth on Live',
     detail: 'Selected-card rescue now tells the user when StreamDeck can silently pick the safest equivalent source and when rescue changed enough that the user must choose.',
+    surface: 'live',
+  },
+  {
+    title: 'Recovery route on Live',
+    detail: 'The adapter now publishes the fastest safe same-category or healthier-provider move once exact-channel launch is no longer honest.',
     surface: 'live',
   },
 ]);
@@ -3476,8 +3491,8 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, provider choice, and recovery truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same next move, provider-choice truth, and recovery story instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, provider choice, recovery route, and recovery truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same next move, provider-choice truth, and recovery route instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
   },

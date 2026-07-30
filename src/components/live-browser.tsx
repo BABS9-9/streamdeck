@@ -6,6 +6,7 @@ import { SurfaceContinuityWindow } from '@/components/surface-continuity-window'
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
+import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderManifest, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -125,6 +126,7 @@ export function LiveBrowser() {
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
   const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
+  const recoveryPlan = manifest?.surfaceRecoveryPlans.find((item) => item.screenId === 'live') ?? null;
 
   return (
     <div className="space-y-6">
@@ -132,6 +134,7 @@ export function LiveBrowser() {
       <SurfaceContinuityWindow contract={continuityWindow} badge="Surf continuity" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
+      <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04]">

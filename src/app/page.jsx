@@ -7,6 +7,7 @@ import { SurfaceContinuityWindow } from '@/components/surface-continuity-window'
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
+import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { useAuthStore } from '@/stores/auth-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -93,6 +94,10 @@ export default function LoginPage() {
   );
   const providerChoice = useMemo(
     () => manifest?.surfaceProviderChoiceContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const recoveryPlan = useMemo(
+    () => manifest?.surfaceRecoveryPlans?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
 
@@ -186,6 +191,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
           </div>
         </section>
 
