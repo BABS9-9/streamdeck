@@ -320,6 +320,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Proof debt on login',
+    detail: 'The adapter now publishes what login confidence is still borrowed from saved-provider memory and what fresh proof repays that debt before Connect feels premium again.',
+    surface: 'login',
+  },
+  {
     title: 'Believable home destination',
     detail: 'The mock adapter ships enough live, movie, series, and guide data to make Home feel curated instead of empty or obviously fake.',
     surface: 'home',
@@ -340,6 +345,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Proof debt on Home',
+    detail: 'The adapter now publishes what browse confidence is still borrowed from cache or rescue posture and what proof repays that debt before the hero overclaims certainty.',
+    surface: 'home',
+  },
+  {
     title: 'Real live browse rehearsal',
     detail: 'Live categories, channel logos, NOW/NEXT data, and playable HLS streams are all included so the prototype can actually be demoed end to end.',
     surface: 'live',
@@ -357,6 +367,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Freshness truth on Live',
     detail: 'The adapter now publishes when guide and preview proof are current, when surf context is only safely borrowed, and when recovery must replace stale play confidence.',
+    surface: 'live',
+  },
+  {
+    title: 'Proof debt on Live',
+    detail: 'The adapter now publishes what surf confidence is still borrowed from preview or category continuity and what proof repays that debt before Play overclaims safety.',
     surface: 'live',
   },
   {
@@ -3516,7 +3531,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-choice truth in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-choice truth and proof-debt honesty in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
@@ -3709,7 +3724,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
-      ? 'The happy path should walk cleanly from saved-provider login into Home and then into Live without any dead-end utility screens.'
+      ? 'The happy path should walk cleanly from saved-provider login into Home and then into Live without hiding what proof is fresh versus lightly borrowed.'
       : scenario === 'degradedLive'
         ? 'This rehearsal is about keeping Home and Login confident while Live explains degraded browse conditions without pretending the whole provider disappeared.'
         : scenario === 'degradedSearch'
@@ -3720,7 +3735,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
               ? 'This rehearsal is about showing account pressure before playback gets blamed, while keeping healthier-provider recovery obvious.'
               : scenario === 'expiredAccount'
                 ? 'This rehearsal is about keeping the saved-provider story understandable even when fresh Xtream requests are blocked.'
-                : 'This rehearsal is about holding cached context in place while auth confidence drops and the next move stays explicit.',
+                : 'This rehearsal is about holding cached context in place while auth confidence drops, borrowed proof debt stays visible, and the next move stays explicit.',
     surfaces: scenario === 'degradedSearch'
       ? ['login', 'home']
       : scenario === 'degradedLive'
@@ -3772,6 +3787,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
     'Connect with demo/demo on http://localhost:3579',
     'Open Home and verify hero counts plus provider fact grid',
     'Open Live and confirm preview + NOW/NEXT + provider fallback actions',
+    'Confirm Login, Home, and Live each publish what confidence is borrowed versus freshly proven before the next action is treated as premium',
     'Flip to a degraded scenario and confirm Login, Home, and Live refresh in place instead of blanking out',
   ],
   capabilityMatrix: [
