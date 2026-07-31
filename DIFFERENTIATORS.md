@@ -76,6 +76,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish the freshness budget behind their current trust claims so stale auth, stale hero rails, and stale live previews never masquerade as real-time proof.
 - StreamDeck should feel calm under cache, but never vague about freshness.
 
+### 15. Demoable provider rehearsal
+- Most IPTV prototypes only prove the happy path. StreamDeck should also prove what happens when auth drifts, guide data disappears, lines max out, or the account expires.
+- The mock Xtream adapter should let Login, Home, and Live hot-swap those scenarios in place so the product can be demoed honestly without a live customer outage.
+- A surface that can rehearse degraded truth on demand is easier to ship, easier to QA, and more trustworthy in front of real buyers.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -92,6 +97,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish when StreamDeck may auto-pick a healthier provider, what makes that choice equivalent, and when the user must pick the provider explicitly.
 - Login, Home, and Live also publish the fastest safe recovery route, what context survives that move, and when the healthiest saved provider takes over launch ownership.
 - Login, Home, and Live also publish what freshness window is still live, what fallback window is still safe, and what trigger forces the surface to stop claiming current proof.
+- Login, Home, and Live can be re-run against healthy, degraded, saturated, unstable, and expired mock-provider modes without leaving the product shell.
 
 ## Immediate Implementation Focus
 
