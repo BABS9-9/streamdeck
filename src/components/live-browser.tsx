@@ -8,6 +8,7 @@ import { SurfaceContinuityWindow } from '@/components/surface-continuity-window'
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
+import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
@@ -154,6 +155,7 @@ export function LiveBrowser() {
   const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
   const recoveryPlan = manifest?.surfaceRecoveryPlans.find((item) => item.screenId === 'live') ?? null;
   const freshnessBoard = manifest?.surfaceFreshnessBoards.find((item) => item.screenId === 'live') ?? null;
+  const proofDebt = manifest?.surfaceProofDebts.find((item) => item.screenId === 'live') ?? null;
 
   return (
     <div className="space-y-6">
@@ -165,6 +167,7 @@ export function LiveBrowser() {
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
+      <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04]">

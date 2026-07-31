@@ -9,6 +9,7 @@ import { SurfaceContinuityWindow } from '@/components/surface-continuity-window'
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
+import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
@@ -210,6 +211,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceFreshnessBoards.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const proofDebt = useMemo(
+    () => manifest?.surfaceProofDebts.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
 
   if (!activeConnection) {
     return (
@@ -318,6 +323,7 @@ export function HomeDashboard() {
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
+      <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
 
       <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
         <div className="flex items-center justify-between gap-4">

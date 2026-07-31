@@ -8,6 +8,7 @@ import { SurfaceContinuityWindow } from '@/components/surface-continuity-window'
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
+import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { useAuthStore } from '@/stores/auth-store';
@@ -114,6 +115,10 @@ export default function LoginPage() {
     () => manifest?.surfaceFreshnessBoards?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
+  const proofDebt = useMemo(
+    () => manifest?.surfaceProofDebts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -217,6 +222,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
           </div>
         </section>
 
