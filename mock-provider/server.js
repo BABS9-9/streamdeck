@@ -359,6 +359,21 @@ const buildDifferentiators = () => ([
     detail: 'The adapter now publishes when guide and preview proof are current, when surf context is only safely borrowed, and when recovery must replace stale play confidence.',
     surface: 'live',
   },
+  {
+    title: 'Scenario-switched rehearsal',
+    detail: 'The adapter is not just fake data. It hot-swaps realistic provider failure modes in-app so Login, Home, and Live can be demoed under pressure without changing environments.',
+    surface: 'login',
+  },
+  {
+    title: 'Scenario-switched rehearsal',
+    detail: 'Home can refresh against healthy, degraded, saturated, and expired provider states in place so browse continuity is demoable instead of theoretical.',
+    surface: 'home',
+  },
+  {
+    title: 'Scenario-switched rehearsal',
+    detail: 'Live can re-run its category and guide flow against changing provider conditions while staying on the same surface, proving surf resilience instead of describing it.',
+    surface: 'live',
+  },
 ]);
 
 const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
@@ -3754,10 +3769,10 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
                 ],
   },
   demoChecklist: [
-    'Connect with test/test on localhost:3579',
+    'Connect with demo/demo on http://localhost:3579',
     'Open Home and verify hero counts plus provider fact grid',
     'Open Live and confirm preview + NOW/NEXT + provider fallback actions',
-    'Flip to a degraded scenario and confirm the shell keeps context instead of blanking out',
+    'Flip to a degraded scenario and confirm Login, Home, and Live refresh in place instead of blanking out',
   ],
   capabilityMatrix: [
     { label: 'Live groups', value: String(liveCategories.length) },
@@ -3982,8 +3997,8 @@ const server = http.createServer((req, res) => {
                   : ['Connect with mock credentials', 'Open Home and verify provider trust + hero guide data', 'Open Live and surf preview cards with inline NOW and NEXT'],
       sampleCredentials: {
         server: host,
-        username: 'test',
-        password: 'test',
+        username: 'demo',
+        password: 'demo',
       },
       demoFlows: {
         login: degradedLive

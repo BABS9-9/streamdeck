@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { fetchMockProviderHealth, fetchMockProviderManifest } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { MockDemoBoard } from '@/components/mock-demo-board';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
@@ -38,15 +39,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState('demo');
   const [manifest, setManifest] = useState(null);
   const [health, setHealth] = useState(null);
+  const [scenario, setScenario] = useState('healthy');
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
   useEffect(() => {
+    setScenario(getSelectedMockProviderScenario());
+    return subscribeToMockProviderScenario((nextScenario) => {
+      setScenario(nextScenario);
+    });
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
-    fetchMockProviderManifest(MOCK_SERVER)
+    fetchMockProviderManifest(MOCK_SERVER, scenario)
       .then((data) => {
         if (!cancelled) setManifest(data);
       })
@@ -54,7 +63,7 @@ export default function LoginPage() {
         if (!cancelled) setManifest(null);
       });
 
-    fetchMockProviderHealth(MOCK_SERVER)
+    fetchMockProviderHealth(MOCK_SERVER, scenario)
       .then((data) => {
         if (!cancelled) setHealth(data);
       })
@@ -65,7 +74,7 @@ export default function LoginPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [scenario]);
 
   const handleConnect = async (event) => {
     event.preventDefault();
@@ -153,6 +162,10 @@ export default function LoginPage() {
                 ))}
               </div>
             ) : null}
+          </div>
+
+          <div className="mt-6">
+            <MockDemoBoard health={health} manifest={manifest} screenId="login" />
           </div>
 
           {fallbackEquivalence ? (

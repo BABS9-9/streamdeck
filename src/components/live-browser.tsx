@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { fetchMockProviderManifest } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, isMockProviderServer, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { MockDemoBoard } from '@/components/mock-demo-board';
+import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
@@ -9,7 +11,7 @@ import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
-import { MockProviderManifest, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderManifest, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -34,11 +36,17 @@ export function LiveBrowser() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [manifest, setManifest] = useState<MockProviderManifest | null>(null);
+  const [health, setHealth] = useState<MockProviderHealth | null>(null);
+  const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
+
+  useEffect(() => subscribeToMockProviderScenario((nextScenario) => {
+    setScenario(nextScenario);
+  }), []);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchMockProviderManifest(MOCK_SERVER)
+    fetchMockProviderManifest(MOCK_SERVER, scenario)
       .then((data) => {
         if (!cancelled) setManifest(data);
       })
@@ -49,7 +57,23 @@ export function LiveBrowser() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [scenario]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMockProviderHealth(MOCK_SERVER, scenario)
+      .then((data) => {
+        if (!cancelled) setHealth(data);
+      })
+      .catch(() => {
+        if (!cancelled) setHealth(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scenario]);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,7 +105,7 @@ export function LiveBrowser() {
     return () => {
       cancelled = true;
     };
-  }, [activeConnection]);
+  }, [activeConnection, scenario]);
 
   useEffect(() => {
     let cancelled = false;
@@ -121,6 +145,7 @@ export function LiveBrowser() {
   }
 
   const providerStatus = connectionStatus[activeConnection.id];
+  const isMockConnection = isMockProviderServer(activeConnection.server);
   const canPlaySelected = Boolean(selectedStream && previewUrl);
   const fallbackEquivalence = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'live') ?? null;
   const launchReadiness = manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'live') ?? null;
@@ -132,6 +157,8 @@ export function LiveBrowser() {
 
   return (
     <div className="space-y-6">
+      {isMockConnection ? <MockScenarioControl /> : null}
+      {isMockConnection ? <MockDemoBoard health={health} manifest={manifest} screenId="live" /> : null}
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Play confidence" />
       <SurfaceContinuityWindow contract={continuityWindow} badge="Surf continuity" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
