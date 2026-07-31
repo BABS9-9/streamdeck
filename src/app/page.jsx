@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest } from '@/lib/mock-provider';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
+import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
@@ -98,6 +99,10 @@ export default function LoginPage() {
   );
   const recoveryPlan = useMemo(
     () => manifest?.surfaceRecoveryPlans?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const freshnessBoard = useMemo(
+    () => manifest?.surfaceFreshnessBoards?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
 
@@ -195,6 +200,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
           </div>
         </section>
 

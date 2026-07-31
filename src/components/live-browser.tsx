@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderManifest } from '@/lib/mock-provider';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
+import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
@@ -127,6 +128,7 @@ export function LiveBrowser() {
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
   const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
   const recoveryPlan = manifest?.surfaceRecoveryPlans.find((item) => item.screenId === 'live') ?? null;
+  const freshnessBoard = manifest?.surfaceFreshnessBoards.find((item) => item.screenId === 'live') ?? null;
 
   return (
     <div className="space-y-6">
@@ -135,6 +137,7 @@ export function LiveBrowser() {
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
+      <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04]">

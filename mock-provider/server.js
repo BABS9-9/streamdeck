@@ -315,6 +315,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Freshness truth on login',
+    detail: 'The adapter now publishes when auth proof is live, when only saved-provider identity is still safe to trust, and when recovery must outrank reconnect.',
+    surface: 'login',
+  },
+  {
     title: 'Believable home destination',
     detail: 'The mock adapter ships enough live, movie, series, and guide data to make Home feel curated instead of empty or obviously fake.',
     surface: 'home',
@@ -330,6 +335,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Freshness truth on Home',
+    detail: 'The adapter now publishes when featured rails are live, when cached Home is still safe, and when stale provider truth forces recovery-led browse.',
+    surface: 'home',
+  },
+  {
     title: 'Real live browse rehearsal',
     detail: 'Live categories, channel logos, NOW/NEXT data, and playable HLS streams are all included so the prototype can actually be demoed end to end.',
     surface: 'live',
@@ -342,6 +352,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Recovery route on Live',
     detail: 'The adapter now publishes the fastest safe same-category or healthier-provider move once exact-channel launch is no longer honest.',
+    surface: 'live',
+  },
+  {
+    title: 'Freshness truth on Live',
+    detail: 'The adapter now publishes when guide and preview proof are current, when surf context is only safely borrowed, and when recovery must replace stale play confidence.',
     surface: 'live',
   },
 ]);
@@ -1280,8 +1295,8 @@ const buildSurfaceFreshnessBoards = (scenario = 'healthy') => ([
     screenId: 'login',
     title: 'Login freshness budget',
     summary: scenario === 'healthy'
-      ? 'Login should publish how fresh auth and trust facts must be before the user moves into Home.'
-      : 'Login should tell the truth about how long saved trust can stay useful before recovery needs to lead the surface.',
+      ? 'Login should publish exactly how fresh auth and trust facts must be before the user moves into Home.'
+      : 'Login should tell the truth about how long saved trust can stay useful before stale auth proof forces recovery to lead the surface.',
     budgets: [
       {
         label: 'Auth truth',
@@ -1306,7 +1321,7 @@ const buildSurfaceFreshnessBoards = (scenario = 'healthy') => ([
     title: 'Home freshness budget',
     summary: scenario === 'healthy'
       ? 'Home should state how long hero, counts, and trust cues stay premium before cached continuity takes over.'
-      : 'Home should be explicit about when the featured story is still safe from cache and when trust recovery must take the lead.',
+      : 'Home should be explicit about when the featured story is still safe from cache and when stale browse proof means trust recovery must take the lead.',
     budgets: [
       {
         label: 'Hero + counts',
@@ -1331,7 +1346,7 @@ const buildSurfaceFreshnessBoards = (scenario = 'healthy') => ([
     title: 'Live freshness budget',
     summary: scenario === 'healthy'
       ? 'Live should tell the user how fresh preview, guide, and recovery claims are before they press play.'
-      : 'Live should separate usable surf continuity from stale playback certainty so degraded browse never feels misleading.',
+      : 'Live should separate usable surf continuity from stale playback certainty so degraded browse never feels like live launch proof.',
     budgets: [
       {
         label: 'Guide + preview',
