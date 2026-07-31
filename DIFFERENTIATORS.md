@@ -86,6 +86,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish what uncertainty is still being carried, what confidence is being borrowed to keep the surface useful, and what event repays that debt.
 - StreamDeck should feel calm under borrowed confidence, but never vague about what still needs to be re-proven.
 
+### 17. Surface confidence floor
+- Premium polish should not survive below the minimum proof needed to make the next move honest.
+- Login, Home, and Live should each publish the minimum proof still holding, the downgrade mode that takes over when confidence slips, and the hard-stop trigger that ends premium posture entirely.
+- StreamDeck should feel cinematic while confidence is real, and visibly downgrade before style outruns truth.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -103,6 +108,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish the fastest safe recovery route, what context survives that move, and when the healthiest saved provider takes over launch ownership.
 - Login, Home, and Live also publish what freshness window is still live, what fallback window is still safe, and what trigger forces the surface to stop claiming current proof.
 - Login, Home, and Live also publish what proof debt is still outstanding, what confidence is being borrowed to keep the surface usable, and what event repays that debt.
+- Login, Home, and Live also publish the confidence floor that still makes the next move honest, the downgrade that takes over below it, and the hard-stop trigger that ends premium posture.
 - Login, Home, and Live can be re-run against healthy, degraded, saturated, unstable, and expired mock-provider modes without leaving the product shell.
 
 ## Immediate Implementation Focus
@@ -118,6 +124,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Saved-provider shortcuts should also tell the user the fastest honest recovery route once the current provider should stop owning the next Home launch.
 - Saved-provider shortcuts should also tell the user when auth truth is fresh, when only saved provider identity is still safe to show, and when recovery must outrank reconnect.
 - Saved-provider shortcuts should also tell the user what trust debt is still unsettled, what confidence is being borrowed from saved-provider memory, and what proof repays that debt before Connect feels premium again.
+- Saved-provider shortcuts should also tell the user the minimum trust proof still holding, the downgrade mode below that floor, and the hard-stop trigger that makes premium login posture dishonest.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -130,6 +137,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Hero and quick rails should also show the fastest safe recovery route when browse can stay alive but the current provider should stop owning launch.
 - Hero and quick rails should also tell the user when the featured story is still live, when cached Home remains safe, and when freshness dropped far enough that recovery must lead the surface.
 - Hero and quick rails should also tell the user what browse proof debt is still outstanding, what confidence is being borrowed from cache or rescue posture, and what proof repays that debt before the hero overclaims certainty.
+- Hero and quick rails should also tell the user the minimum browse proof still holding, the downgrade mode below that floor, and the hard-stop trigger that ends cinematic confidence.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -143,6 +151,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The selected card should also show the fastest safe recovery route when exact-channel launch is no longer honest but same-category surf can still survive.
 - The selected card should also tell the user when guide and preview proof are current, when surf context is only safely borrowed, and when stale launch confidence must give way to recovery-first copy.
 - The selected card should also tell the user what surf proof debt is still outstanding, what confidence is being borrowed from preview or same-category continuity, and what proof repays that debt before Play sounds fully safe.
+- The selected card should also tell the user the minimum surf proof still holding, the downgrade mode below that floor, and the hard-stop trigger that ends premium play confidence.
 
 ## Non-Goals For This Pass
 
