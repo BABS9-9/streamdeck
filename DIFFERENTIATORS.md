@@ -81,6 +81,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - The mock Xtream adapter should let Login, Home, and Live hot-swap those scenarios in place so the product can be demoed honestly without a live customer outage.
 - A surface that can rehearse degraded truth on demand is easier to ship, easier to QA, and more trustworthy in front of real buyers.
 
+### 16. Surface proof debt
+- Premium IPTV shells should admit when part of the current confidence is borrowed from cache, saved-provider memory, or preview continuity instead of fresh provider proof.
+- Login, Home, and Live should each publish what uncertainty is still being carried, what confidence is being borrowed to keep the surface useful, and what event repays that debt.
+- StreamDeck should feel calm under borrowed confidence, but never vague about what still needs to be re-proven.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -97,6 +102,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish when StreamDeck may auto-pick a healthier provider, what makes that choice equivalent, and when the user must pick the provider explicitly.
 - Login, Home, and Live also publish the fastest safe recovery route, what context survives that move, and when the healthiest saved provider takes over launch ownership.
 - Login, Home, and Live also publish what freshness window is still live, what fallback window is still safe, and what trigger forces the surface to stop claiming current proof.
+- Login, Home, and Live also publish what proof debt is still outstanding, what confidence is being borrowed to keep the surface usable, and what event repays that debt.
 - Login, Home, and Live can be re-run against healthy, degraded, saturated, unstable, and expired mock-provider modes without leaving the product shell.
 
 ## Immediate Implementation Focus
@@ -111,6 +117,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Saved-provider shortcuts should also tell the user when StreamDeck may quietly pick the healthiest provider versus when setup intent changed enough that the provider choice belongs to the user.
 - Saved-provider shortcuts should also tell the user the fastest honest recovery route once the current provider should stop owning the next Home launch.
 - Saved-provider shortcuts should also tell the user when auth truth is fresh, when only saved provider identity is still safe to show, and when recovery must outrank reconnect.
+- Saved-provider shortcuts should also tell the user what trust debt is still unsettled, what confidence is being borrowed from saved-provider memory, and what proof repays that debt before Connect feels premium again.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -122,6 +129,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Hero and quick rails should also tell the user when a healthier provider can be chosen silently because discovery stays equivalent, and when the shell must surface the trade-off.
 - Hero and quick rails should also show the fastest safe recovery route when browse can stay alive but the current provider should stop owning launch.
 - Hero and quick rails should also tell the user when the featured story is still live, when cached Home remains safe, and when freshness dropped far enough that recovery must lead the surface.
+- Hero and quick rails should also tell the user what browse proof debt is still outstanding, what confidence is being borrowed from cache or rescue posture, and what proof repays that debt before the hero overclaims certainty.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -134,6 +142,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The selected card should also say when StreamDeck can auto-pick the healthier source because the watch target is still the same, and when rescue is ambiguous enough that the user must choose.
 - The selected card should also show the fastest safe recovery route when exact-channel launch is no longer honest but same-category surf can still survive.
 - The selected card should also tell the user when guide and preview proof are current, when surf context is only safely borrowed, and when stale launch confidence must give way to recovery-first copy.
+- The selected card should also tell the user what surf proof debt is still outstanding, what confidence is being borrowed from preview or same-category continuity, and what proof repays that debt before Play sounds fully safe.
 
 ## Non-Goals For This Pass
 
