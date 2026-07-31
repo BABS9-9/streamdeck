@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, isMockProviderServer, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
+import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
@@ -156,6 +157,7 @@ export function LiveBrowser() {
   const recoveryPlan = manifest?.surfaceRecoveryPlans.find((item) => item.screenId === 'live') ?? null;
   const freshnessBoard = manifest?.surfaceFreshnessBoards.find((item) => item.screenId === 'live') ?? null;
   const proofDebt = manifest?.surfaceProofDebts.find((item) => item.screenId === 'live') ?? null;
+  const confidenceFloor = manifest?.surfaceConfidenceFloors.find((item) => item.screenId === 'live') ?? null;
 
   return (
     <div className="space-y-6">
@@ -168,6 +170,7 @@ export function LiveBrowser() {
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+      <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04]">

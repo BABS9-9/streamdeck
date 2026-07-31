@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { MockDemoBoard } from '@/components/mock-demo-board';
+import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
@@ -119,6 +120,10 @@ export default function LoginPage() {
     () => manifest?.surfaceProofDebts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
+  const confidenceFloor = useMemo(
+    () => manifest?.surfaceConfidenceFloors?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -226,6 +231,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
           </div>
         </section>
 

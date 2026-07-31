@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, isMockProviderServer, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
+import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
@@ -215,6 +216,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceProofDebts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const confidenceFloor = useMemo(
+    () => manifest?.surfaceConfidenceFloors.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
 
   if (!activeConnection) {
     return (
@@ -324,6 +329,7 @@ export function HomeDashboard() {
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+      <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
 
       <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
         <div className="flex items-center justify-between gap-4">
