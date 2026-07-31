@@ -71,6 +71,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish the fastest recovery route, the context that still survives that handoff, and which healthier provider now owns the next launch.
 - Premium recovery feels guided, not improvised.
 
+### 14. Surface freshness truth
+- Cached rescue is only premium if the user can tell what is still fresh, what is safely borrowed from the last known-good state, and what is no longer honest to launch from.
+- Login, Home, and Live should each publish the freshness budget behind their current trust claims so stale auth, stale hero rails, and stale live previews never masquerade as real-time proof.
+- StreamDeck should feel calm under cache, but never vague about freshness.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -86,6 +91,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish the downgrade ladder that names what continuity is still exact, what has already slipped to approximate rescue, and what condition forces a full restart.
 - Login, Home, and Live also publish when StreamDeck may auto-pick a healthier provider, what makes that choice equivalent, and when the user must pick the provider explicitly.
 - Login, Home, and Live also publish the fastest safe recovery route, what context survives that move, and when the healthiest saved provider takes over launch ownership.
+- Login, Home, and Live also publish what freshness window is still live, what fallback window is still safe, and what trigger forces the surface to stop claiming current proof.
 
 ## Immediate Implementation Focus
 
@@ -98,6 +104,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Saved-provider shortcuts should also show the downgrade ladder from exact same-provider handoff, to approximate cached handoff, to restart-level reconnect.
 - Saved-provider shortcuts should also tell the user when StreamDeck may quietly pick the healthiest provider versus when setup intent changed enough that the provider choice belongs to the user.
 - Saved-provider shortcuts should also tell the user the fastest honest recovery route once the current provider should stop owning the next Home launch.
+- Saved-provider shortcuts should also tell the user when auth truth is fresh, when only saved provider identity is still safe to show, and when recovery must outrank reconnect.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -108,6 +115,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Hero and quick rails should also show the downgrade ladder from exact featured browse, to approximate fallback rows, to a fresh browse restart.
 - Hero and quick rails should also tell the user when a healthier provider can be chosen silently because discovery stays equivalent, and when the shell must surface the trade-off.
 - Hero and quick rails should also show the fastest safe recovery route when browse can stay alive but the current provider should stop owning launch.
+- Hero and quick rails should also tell the user when the featured story is still live, when cached Home remains safe, and when freshness dropped far enough that recovery must lead the surface.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -119,6 +127,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The selected card should also show the downgrade ladder from exact-channel surf, to same-category rescue, to a fresh channel restart.
 - The selected card should also say when StreamDeck can auto-pick the healthier source because the watch target is still the same, and when rescue is ambiguous enough that the user must choose.
 - The selected card should also show the fastest safe recovery route when exact-channel launch is no longer honest but same-category surf can still survive.
+- The selected card should also tell the user when guide and preview proof are current, when surf context is only safely borrowed, and when stale launch confidence must give way to recovery-first copy.
 
 ## Non-Goals For This Pass
 
