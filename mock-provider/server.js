@@ -325,6 +325,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Confidence floor on login',
+    detail: 'The adapter now publishes the minimum honest proof below the login polish, the downgrade mode that takes over when trust slips, and the hard-stop trigger that ends premium connect posture.',
+    surface: 'login',
+  },
+  {
     title: 'Believable home destination',
     detail: 'The mock adapter ships enough live, movie, series, and guide data to make Home feel curated instead of empty or obviously fake.',
     surface: 'home',
@@ -350,6 +355,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Confidence floor on Home',
+    detail: 'The adapter now publishes the minimum browse proof behind the hero, the downgrade mode that takes over below that floor, and the hard-stop trigger that ends cinematic certainty.',
+    surface: 'home',
+  },
+  {
     title: 'Real live browse rehearsal',
     detail: 'Live categories, channel logos, NOW/NEXT data, and playable HLS streams are all included so the prototype can actually be demoed end to end.',
     surface: 'live',
@@ -372,6 +382,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Proof debt on Live',
     detail: 'The adapter now publishes what surf confidence is still borrowed from preview or category continuity and what proof repays that debt before Play overclaims safety.',
+    surface: 'live',
+  },
+  {
+    title: 'Confidence floor on Live',
+    detail: 'The adapter now publishes the minimum surf proof behind Play, the downgrade mode that takes over below that floor, and the hard-stop trigger that ends premium channel-launch confidence.',
     surface: 'live',
   },
   {
@@ -615,6 +630,7 @@ const buildRecoveryActions = (scenario = 'healthy') => {
       'Let Login, Home, and Live explain that cached browsing can continue while auth retries fail.',
       'Offer quick revalidate and switch-provider actions before the user assumes the whole app is broken.',
       'Do not clear saved rails or guide context just because the latest trust check failed.',
+      'Verify that Login, Home, and Live visibly downgrade to their confidence-floor state before premium launch copy survives another tap.',
     ];
   }
 
