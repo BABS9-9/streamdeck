@@ -10,6 +10,7 @@ import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
+import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
@@ -194,6 +195,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const launchOwnership = useMemo(
+    () => manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const continuityWindow = useMemo(
     () => manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -333,6 +338,7 @@ export function HomeDashboard() {
       ) : null}
 
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Hero launch safety" />
+      <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
       <SurfaceContinuityWindow contract={continuityWindow} badge="Browse continuity" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />

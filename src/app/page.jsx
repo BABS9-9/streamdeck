@@ -9,6 +9,7 @@ import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
+import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
@@ -96,6 +97,10 @@ export default function LoginPage() {
   );
   const launchReadiness = useMemo(
     () => manifest?.surfaceLaunchReadinessContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const launchOwnership = useMemo(
+    () => manifest?.surfaceLaunchOwnerships?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const continuityWindow = useMemo(
@@ -217,6 +222,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceLaunchReadiness contract={launchReadiness} badge="Connect honesty" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
           </div>
 
           <div className="mt-6">
