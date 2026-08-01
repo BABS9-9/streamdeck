@@ -96,6 +96,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish the strongest promise they can still make, the overclaim they must suppress, and the proof that earns premium language back.
 - StreamDeck should sound ambitious only when the surface has actually re-earned that ambition.
 
+### 19. Surface rescue receipt
+- Recovery should leave a visible receipt instead of silently changing the product story under the user.
+- Login, Home, and Live should each publish what context survived, what changed under the hood, and what the user should reconfirm before treating rescue as seamless.
+- StreamDeck should make fallback feel guided and premium when the receipt is clear, and explicitly non-seamless when it is not.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -115,6 +120,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish what proof debt is still outstanding, what confidence is being borrowed to keep the surface usable, and what event repays that debt.
 - Login, Home, and Live also publish the strongest promise they can still make, the overclaim they must suppress, and the proof that lifts the claim ceiling back up.
 - Login, Home, and Live also publish the confidence floor that still makes the next move honest, the downgrade that takes over below it, and the hard-stop trigger that ends premium posture.
+- Login, Home, and Live also publish a rescue receipt that says what context survived, what changed under the hood, and what the user should reconfirm before trusting fallback as seamless.
 - Login, Home, and Live can be re-run against healthy, degraded, saturated, unstable, and expired mock-provider modes without leaving the product shell.
 
 ## Immediate Implementation Focus
@@ -132,6 +138,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Saved-provider shortcuts should also tell the user what trust debt is still unsettled, what confidence is being borrowed from saved-provider memory, and what proof repays that debt before Connect feels premium again.
 - Saved-provider shortcuts should also tell the user the strongest promise Login can still make, what overclaim Connect must suppress, and what proof raises premium setup language back up.
 - Saved-provider shortcuts should also tell the user the minimum trust proof still holding, the downgrade mode below that floor, and the hard-stop trigger that makes premium login posture dishonest.
+- Saved-provider shortcuts should also leave a rescue receipt that says what setup context survived, what fallback logic changed under the hood, and what the user should reconfirm before Connect is treated like a seamless continuation.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -146,6 +153,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Hero and quick rails should also tell the user what browse proof debt is still outstanding, what confidence is being borrowed from cache or rescue posture, and what proof repays that debt before the hero overclaims certainty.
 - Hero and quick rails should also tell the user the strongest browse promise Home can still make, what overclaim the hero must suppress, and what proof raises premium browse language back up.
 - Hero and quick rails should also tell the user the minimum browse proof still holding, the downgrade mode below that floor, and the hard-stop trigger that ends cinematic confidence.
+- Hero and quick rails should also leave a rescue receipt that says what browse context survived, what launch ownership changed under the hood, and what the user should reconfirm before the hero still feels seamless.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -161,6 +169,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The selected card should also tell the user what surf proof debt is still outstanding, what confidence is being borrowed from preview or same-category continuity, and what proof repays that debt before Play sounds fully safe.
 - The selected card should also tell the user the strongest surf promise Live can still make, what overclaim Play must suppress, and what proof raises premium playback language back up.
 - The selected card should also tell the user the minimum surf proof still holding, the downgrade mode below that floor, and the hard-stop trigger that ends premium play confidence.
+- The selected card should also leave a rescue receipt that says what surf context survived, what playback ownership changed under the hood, and what the user should reconfirm before preview or Play is treated as seamless.
 
 ## Non-Goals For This Pass
 
