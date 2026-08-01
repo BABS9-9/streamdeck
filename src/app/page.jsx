@@ -13,6 +13,7 @@ import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
+import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { useAuthStore } from '@/stores/auth-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -119,6 +120,10 @@ export default function LoginPage() {
   );
   const proofDebt = useMemo(
     () => manifest?.surfaceProofDebts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const rescueReceipt = useMemo(
+    () => manifest?.surfaceRescueReceipts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const claimCeiling = useMemo(
@@ -236,6 +241,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
           </div>
 
           <div className="mt-6">

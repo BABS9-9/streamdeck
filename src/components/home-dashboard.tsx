@@ -14,6 +14,7 @@ import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
+import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, NormalizedEpg, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -217,6 +218,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceProofDebts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const rescueReceipt = useMemo(
+    () => manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const claimCeiling = useMemo(
     () => manifest?.surfaceClaimCeilings.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -334,6 +339,7 @@ export function HomeDashboard() {
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+      <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceClaimCeiling contract={claimCeiling} badge="Claim ceiling" />
       <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
 

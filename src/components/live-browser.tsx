@@ -13,6 +13,7 @@ import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
+import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -158,6 +159,7 @@ export function LiveBrowser() {
   const recoveryPlan = manifest?.surfaceRecoveryPlans.find((item) => item.screenId === 'live') ?? null;
   const freshnessBoard = manifest?.surfaceFreshnessBoards.find((item) => item.screenId === 'live') ?? null;
   const proofDebt = manifest?.surfaceProofDebts.find((item) => item.screenId === 'live') ?? null;
+  const rescueReceipt = manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'live') ?? null;
   const claimCeiling = manifest?.surfaceClaimCeilings.find((item) => item.screenId === 'live') ?? null;
   const confidenceFloor = manifest?.surfaceConfidenceFloors.find((item) => item.screenId === 'live') ?? null;
 
@@ -172,6 +174,7 @@ export function LiveBrowser() {
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+      <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceClaimCeiling contract={claimCeiling} badge="Claim ceiling" />
       <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
 
