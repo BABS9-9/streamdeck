@@ -325,6 +325,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Rescue receipt on login',
+    detail: 'The adapter now publishes what setup context survived fallback, what changed under the hood, and what the user should reconfirm before Connect feels seamless again.',
+    surface: 'login',
+  },
+  {
     title: 'Confidence floor on login',
     detail: 'The adapter now publishes the minimum honest proof below the login polish, the downgrade mode that takes over when trust slips, and the hard-stop trigger that ends premium connect posture.',
     surface: 'login',
@@ -360,6 +365,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Rescue receipt on Home',
+    detail: 'The adapter now publishes what browse context survived fallback, what launch ownership changed under the hood, and what the user should reconfirm before the hero feels seamless again.',
+    surface: 'home',
+  },
+  {
     title: 'Confidence floor on Home',
     detail: 'The adapter now publishes the minimum browse proof behind the hero, the downgrade mode that takes over below that floor, and the hard-stop trigger that ends cinematic certainty.',
     surface: 'home',
@@ -392,6 +402,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Proof debt on Live',
     detail: 'The adapter now publishes what surf confidence is still borrowed from preview or category continuity and what proof repays that debt before Play overclaims safety.',
+    surface: 'live',
+  },
+  {
+    title: 'Rescue receipt on Live',
+    detail: 'The adapter now publishes what surf context survived fallback, what playback ownership changed under the hood, and what the user should reconfirm before preview or Play feels seamless again.',
     surface: 'live',
   },
   {
@@ -3567,10 +3582,10 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, provider choice, recovery route, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same next move, provider-choice truth, recovery route, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
-    failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
+    failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
   sampleCredentials: {
     server: host,
@@ -3588,6 +3603,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Connect with the local mock credentials',
         'Switch scenarios without leaving the screen',
         'Jump to the healthiest saved provider when trust degrades',
+        'Login rescue receipt stays visible before Connect implies seamless fallback',
         'Keep the current claim ceiling honest before premium connect copy survives degraded proof',
       ],
       verificationTarget: 'Saved-provider login has to feel safe, deliberate, and one move away from Home.',
@@ -3602,6 +3618,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Featured live card launches playback directly',
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
+        'Hero rescue receipt stays visible before fallback launch feels seamless',
         'Hero claim ceiling stays visible before cinematic browse language outruns proof',
       ],
       verificationTarget: 'Home needs to prove this is a product surface, not a provider admin screen.',
@@ -3616,6 +3633,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Filter by category and search without leaving the page',
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
+        'Selected-card rescue receipt stays visible before fallback playback feels seamless',
         'Selected-card claim ceiling stays visible before Play sounds safer than current proof',
       ],
       verificationTarget: 'Live browsing should feel fast enough that users stop thinking about the provider.',
@@ -3758,18 +3776,18 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
-      ? 'The happy path should walk cleanly from saved-provider login into Home and then into Live without hiding what proof is fresh versus lightly borrowed or what premium language is still capped.'
+      ? 'The happy path should walk cleanly from saved-provider login into Home and then into Live without hiding what proof is fresh versus lightly borrowed, what premium language is still capped, or what fallback change would need a visible rescue receipt.'
       : scenario === 'degradedLive'
-        ? 'This rehearsal is about keeping Home and Login confident while Live explains degraded browse conditions without pretending the whole provider disappeared.'
+        ? 'This rehearsal is about keeping Home and Login confident while Live explains degraded browse conditions, shows what changed under the hood, and avoids pretending the whole provider disappeared.'
         : scenario === 'degradedSearch'
-          ? 'This rehearsal is about preserving the product shell while catalog-heavy surfaces lose depth and recovery messaging has to stay specific.'
+          ? 'This rehearsal is about preserving the product shell while catalog-heavy surfaces lose depth, rescue receipts stay explicit, and recovery messaging stays specific.'
           : scenario === 'degradedEpg'
-            ? 'This rehearsal is about letting guide data fail quietly while the launch path, preview flow, and trust shell stay intact.'
+            ? 'This rehearsal is about letting guide data fail quietly while the launch path, preview flow, trust shell, and rescue receipts stay intact.'
             : scenario === 'lineSaturated'
-              ? 'This rehearsal is about showing account pressure before playback gets blamed, while keeping healthier-provider recovery obvious.'
+              ? 'This rehearsal is about showing account pressure before playback gets blamed, while keeping healthier-provider recovery and its visible receipt obvious.'
               : scenario === 'expiredAccount'
-                ? 'This rehearsal is about keeping the saved-provider story understandable even when fresh Xtream requests are blocked.'
-                : 'This rehearsal is about holding cached context in place while auth confidence drops, borrowed proof debt stays visible, the claim ceiling stays honest, and the next move stays explicit.',
+                ? 'This rehearsal is about keeping the saved-provider story understandable even when fresh Xtream requests are blocked, including what changed under the hood when rescue takes over.'
+                : 'This rehearsal is about holding cached context in place while auth confidence drops, borrowed proof debt stays visible, rescue receipts stay explicit, the claim ceiling stays honest, and the next move stays explicit.',
     surfaces: scenario === 'degradedSearch'
       ? ['login', 'home']
       : scenario === 'degradedLive'
