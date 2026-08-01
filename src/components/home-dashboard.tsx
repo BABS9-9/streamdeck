@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, isMockProviderServer, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
@@ -216,6 +217,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceProofDebts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const claimCeiling = useMemo(
+    () => manifest?.surfaceClaimCeilings.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const confidenceFloor = useMemo(
     () => manifest?.surfaceConfidenceFloors.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -329,6 +334,7 @@ export function HomeDashboard() {
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+      <SurfaceClaimCeiling contract={claimCeiling} badge="Claim ceiling" />
       <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
 
       <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">

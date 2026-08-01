@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { MockDemoBoard } from '@/components/mock-demo-board';
+import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -120,6 +121,10 @@ export default function LoginPage() {
     () => manifest?.surfaceProofDebts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
+  const claimCeiling = useMemo(
+    () => manifest?.surfaceClaimCeilings?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
   const confidenceFloor = useMemo(
     () => manifest?.surfaceConfidenceFloors?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
@@ -231,6 +236,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceClaimCeiling contract={claimCeiling} badge="Claim ceiling" />
           </div>
 
           <div className="mt-6">
