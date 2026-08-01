@@ -330,6 +330,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Proof provenance on login',
+    detail: 'The adapter now publishes whether Connect is backed by fresh auth proof, saved-provider continuity, or rescue-owned logic before setup polish outruns the real trust source.',
+    surface: 'login',
+  },
+  {
     title: 'Confidence floor on login',
     detail: 'The adapter now publishes the minimum honest proof below the login polish, the downgrade mode that takes over when trust slips, and the hard-stop trigger that ends premium connect posture.',
     surface: 'login',
@@ -370,6 +375,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Proof provenance on Home',
+    detail: 'The adapter now publishes whether the hero is backed by live provider browse proof, cached continuity, or rescue-owned launch logic before Home keeps sounding current.',
+    surface: 'home',
+  },
+  {
     title: 'Confidence floor on Home',
     detail: 'The adapter now publishes the minimum browse proof behind the hero, the downgrade mode that takes over below that floor, and the hard-stop trigger that ends cinematic certainty.',
     surface: 'home',
@@ -407,6 +417,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Rescue receipt on Live',
     detail: 'The adapter now publishes what surf context survived fallback, what playback ownership changed under the hood, and what the user should reconfirm before preview or Play feels seamless again.',
+    surface: 'live',
+  },
+  {
+    title: 'Proof provenance on Live',
+    detail: 'The adapter now publishes whether Play is backed by live preview plus guide proof, same-category continuity, or rescue-owned logic before playback confidence gets overstated.',
     surface: 'live',
   },
   {
@@ -2638,6 +2653,96 @@ const buildSurfaceProofDebts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceProofProvenances = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login proof-provenance contract',
+    summary: scenario === 'healthy'
+      ? 'Login should say whether Connect is currently backed by fresh auth proof, saved-provider continuity, or rescue logic before the setup flow sounds effortless.'
+      : 'Login should publish what proof source is backing Connect right now, why that source is still honest enough to act on, and what source change must be disclosed before setup language stays premium.',
+    sources: [
+      {
+        label: 'Fresh auth-backed Connect',
+        currentSource: scenario === 'healthy'
+          ? 'Fresh auth proof, current account posture, and the active saved-provider identity all back the next Home launch.'
+          : 'Fresh auth proof is only partially backing Connect, so the shell should name exactly how much of the login story is still live versus borrowed.',
+        honestyReason: scenario === 'healthy'
+          ? 'This is honest because the latest auth result, line posture, and expiry facts all still point to one safe Home owner.'
+          : 'This stays honest only while the latest auth result still materially supports the same saved-provider handoff instead of merely echoing old confidence.',
+        disclosureTrigger: scenario === 'healthy'
+          ? 'Disclose a source shift as soon as saved-provider memory or rescue logic starts doing more real work than fresh auth proof.'
+          : 'Disclose immediately when stale auth, saved-provider memory, or rescue logic becomes the real reason Connect still looks safe.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider continuity',
+        currentSource: 'Saved provider identity, stored credentials, and the last known-good trust posture are carrying the setup story forward while fresh proof catches up.',
+        honestyReason: 'This is still useful because the provider identity, destination, and recovery path remain clear even when fresh auth certainty softens.',
+        disclosureTrigger: 'Disclose louder once saved-provider continuity stops mapping cleanly to the same next Home owner and rescue has to take over.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home proof-provenance contract',
+    summary: scenario === 'healthy'
+      ? 'Home should tell the user whether the hero and rails are being backed by live provider browse proof, safe cached continuity, or a rescue-owned launch path.'
+      : 'Home should publish the current proof source behind featured browse, why that source is still honest enough to launch from, and what source shift must be disclosed before the shell keeps sounding current.',
+    sources: [
+      {
+        label: 'Live browse proof',
+        currentSource: scenario === 'healthy'
+          ? 'Fresh provider browse data, current counts, and live launch ownership are backing the hero and quick rails.'
+          : 'Live provider browse proof is only partially intact, so the hero has to admit where cache or rescue posture is already helping carry the launch story.',
+        honestyReason: scenario === 'healthy'
+          ? 'This is honest because the hero, rail counts, and launch CTA all still come from the active provider without hidden rescue doing the real work.'
+          : 'This stays honest only while live provider proof still materially reinforces the same featured launch instead of simply decorating a cached or rescued story.',
+        disclosureTrigger: scenario === 'healthy'
+          ? 'Disclose the source shift as soon as cached browse continuity or rescue ownership starts carrying the hero more than live provider proof.'
+          : 'Disclose immediately when the hero is mostly being held together by cache or rescue rather than current provider browse truth.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Cached browse continuity',
+        currentSource: 'Saved Home rails, prior featured context, and preserved browse intent are keeping discovery intact while fresh provider truth is catching up.',
+        honestyReason: 'This is still honest because the user can keep the same browse posture and category momentum even though freshness has softened.',
+        disclosureTrigger: 'Disclose louder once cached continuity stops protecting the same featured story and rescue becomes the real owner of the next launch.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live proof-provenance contract',
+    summary: scenario === 'healthy'
+      ? 'Live should say whether the next Play is backed by live preview plus guide proof, borrowed same-category continuity, or explicit rescue logic before motion implies too much trust.'
+      : 'Live should publish what proof source is backing the selected-card Play flow, why that source is still honest enough to use, and what source shift must be disclosed before playback language stays premium.',
+    sources: [
+      {
+        label: 'Live preview plus guide proof',
+        currentSource: scenario === 'healthy'
+          ? 'Current preview motion, NOW / NEXT truth, and the active provider posture all back the next Play tap on the selected card.'
+          : 'Preview and guide proof are only partially backing Play, so the card should say exactly where same-category continuity or rescue logic is already helping.',
+        honestyReason: scenario === 'healthy'
+          ? 'This is honest because preview, guide, and provider health still reinforce the same exact-channel decision.'
+          : 'This stays honest only while preview or guide proof still materially supports the same selected-card meaning instead of merely borrowing confidence from rescue.',
+        disclosureTrigger: scenario === 'healthy'
+          ? 'Disclose the source shift as soon as same-category continuity or rescue logic becomes more responsible for safe Play than current preview and guide proof.'
+          : 'Disclose immediately when Play is mostly being carried by same-category rescue or fallback logic instead of current preview and guide truth.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Same-category continuity',
+        currentSource: 'Selected-card intent, active category momentum, and rescue-ready surf context are keeping Live usable while exact-channel proof softens.',
+        honestyReason: 'This is still honest because the user keeps the same live lane and fastest safe next move even when the exact selected channel is no longer fully proven.',
+        disclosureTrigger: 'Disclose louder once same-category continuity stops preserving the same surf lane and Live must force a fresh channel pick or full rescue handoff.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceClaimCeilings = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -3679,13 +3784,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with launch-ownership truth, provider-choice honesty, proof-debt visibility, and claim-ceiling discipline in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, provider-choice honesty, proof-debt visibility, and claim-ceiling discipline in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -3706,6 +3811,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Switch scenarios without leaving the screen',
         'Jump to the healthiest saved provider when trust degrades',
         'Launch ownership stays visible before Connect implies the current provider still owns Home',
+        'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
         'Login rescue receipt stays visible before Connect implies seamless fallback',
         'Keep the current claim ceiling honest before premium connect copy survives degraded proof',
       ],
@@ -3722,6 +3828,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
         'Hero launch ownership stays visible before fallback silently takes the featured CTA',
+        'Hero proof provenance stays visible before cache or rescue sounds like live provider browse proof',
         'Hero rescue receipt stays visible before fallback launch feels seamless',
         'Hero claim ceiling stays visible before cinematic browse language outruns proof',
       ],
@@ -3738,6 +3845,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
         'Selected-card launch ownership stays visible before Play silently changes hands',
+        'Selected-card proof provenance stays visible before same-category rescue sounds like exact-channel proof',
         'Selected-card rescue receipt stays visible before fallback playback feels seamless',
         'Selected-card claim ceiling stays visible before Play sounds safer than current proof',
       ],
@@ -3868,6 +3976,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceFallbackCosts: buildSurfaceFallbackCosts(scenario),
   surfaceRescueReceipts: buildSurfaceRescueReceipts(scenario),
   surfaceProofDebts: buildSurfaceProofDebts(scenario),
+  surfaceProofProvenances: buildSurfaceProofProvenances(scenario),
   surfaceClaimCeilings: buildSurfaceClaimCeilings(scenario),
   surfaceInterruptionBudgets: buildSurfaceInterruptionBudgets(scenario),
   surfaceRetryContracts: buildSurfaceRetryContracts(scenario),

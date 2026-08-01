@@ -530,6 +530,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceProofProvenances: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    sources: Array<{
+      label: string;
+      currentSource: string;
+      honestyReason: string;
+      disclosureTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceClaimCeilings: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;
