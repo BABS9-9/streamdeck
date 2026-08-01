@@ -262,6 +262,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceLaunchOwnerships: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    owners: Array<{
+      label: string;
+      currentOwner: string;
+      ownershipProof: string;
+      transferTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceContinuityWindows: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;

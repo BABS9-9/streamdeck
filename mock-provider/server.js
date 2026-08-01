@@ -3573,17 +3573,119 @@ const buildSurfaceLaunchReadinessContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceLaunchOwnerships = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login launch-ownership contract',
+    summary: scenario === 'healthy'
+      ? 'Login should make it obvious which provider currently owns the next Home handoff and what proof keeps Connect attached to that owner.'
+      : 'Login should publish when the current provider still owns the next Home handoff, when rescue has already taken control, and what transfer trigger moved ownership away from the original source.',
+    owners: [
+      {
+        label: 'Primary Connect owner',
+        currentOwner: scenario === 'healthy'
+          ? 'The current provider owns Connect while fresh auth, line posture, and expiry facts still support the same Home destination.'
+          : scenario === 'expiredAccount'
+            ? 'Recovery owns Connect because the current provider can no longer honestly take the user into Home.'
+            : 'The current provider only partially owns Connect; rescue is shadowing the next move until auth and trust facts stabilize.',
+        ownershipProof: scenario === 'healthy'
+          ? 'Ownership stays with the current provider only when the latest auth check, saved-provider identity, and launch-readiness cues all point to the same Home owner.'
+          : 'Ownership is only honest when the shell can name whether fresh auth proof or a healthier saved provider is actually backing the next Home launch.',
+        transferTrigger: scenario === 'healthy'
+          ? 'Transfer Connect ownership once auth, expiry, or line posture stops supporting the same saved-provider handoff.'
+          : 'Transfer Connect ownership to rescue when auth instability, expiry, or line saturation makes retry-or-switch safer than pretending the current provider is still primary.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Saved-provider shortcut owner',
+        currentOwner: scenario === 'healthy'
+          ? 'A saved-provider shortcut owns the next tap only when it remains the safest one-step path into Home.'
+          : 'The healthiest saved-provider shortcut owns the next tap only if it is safer than the current typed credentials and keeps the same setup story visible.',
+        ownershipProof: 'The shortcut has to prove more than recency. It needs the best current trust posture, the clearest Home destination, and the least explanatory debt.',
+        transferTrigger: 'Transfer ownership away from the shortcut once another provider becomes the safer Home owner or the shortcut needs caveats the rescue owner does not.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home launch-ownership contract',
+    summary: scenario === 'healthy'
+      ? 'Home should publish which provider currently owns the next featured or rail launch so the hero never hides a transfer of control.'
+      : 'Home should tell the truth about whether the current provider, cached browse continuity, or a rescue path now owns the next launch from the hero and quick rails.',
+    owners: [
+      {
+        label: 'Featured hero owner',
+        currentOwner: scenario === 'healthy'
+          ? 'The active provider owns the featured launch while the hero, counts, and trust posture still reinforce one clean browse story.'
+          : scenario === 'degradedLive' || scenario === 'degradedEpg'
+            ? 'Cached continuity and rescue posture are helping own the featured launch until the active provider can fully re-prove it.'
+            : 'Recovery owns the featured launch because the original provider can no longer support the same hero promise cleanly.',
+        ownershipProof: scenario === 'healthy'
+          ? 'Hero ownership is only honest when the featured title, launch CTA, and provider trust all still come from the same live source.'
+          : 'Hero ownership has to name whether the launch is being backed by live provider proof, safe cached continuity, or a healthier fallback path.',
+        transferTrigger: scenario === 'healthy'
+          ? 'Transfer hero ownership once the featured path depends more on fallback, cache, or recovery than on current provider proof.'
+          : 'Transfer hero ownership fully to rescue once the original provider keeps changing the safest launch story or can no longer hold the same browse promise across refreshes.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Quick-rail owner',
+        currentOwner: scenario === 'healthy'
+          ? 'Each quick rail owns its next launch only while the card meaning and provider owner stay aligned.'
+          : 'Quick rails stay owned by the fastest safe path, even if that means rescue or cache is quietly doing more real work than the named provider.',
+        ownershipProof: 'Rail ownership is earned when the next click still preserves the same browse intent, same title family, and same honest launch owner.',
+        transferTrigger: 'Transfer rail ownership when the click would keep the same mood but no longer the same provider-backed launch story.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live launch-ownership contract',
+    summary: scenario === 'healthy'
+      ? 'Live should tell the user who actually owns the next Play tap on the selected card before preview motion implies more than current proof.'
+      : 'Live should publish when the current provider still owns the next Play tap, when same-category rescue took control, and what event transfers ownership off the selected card.',
+    owners: [
+      {
+        label: 'Selected-card Play owner',
+        currentOwner: scenario === 'healthy'
+          ? 'The current provider owns Play while preview, NOW / NEXT, and line posture still reinforce the same selected channel.'
+          : scenario === 'degradedLive' || scenario === 'lineSaturated'
+            ? 'Rescue is partially owning Play because the selected card still carries intent, but the original provider no longer fully owns the safest launch.'
+            : 'Recovery owns the next Play tap until the selected card can be re-proven as the safest exact-channel launch.',
+        ownershipProof: scenario === 'healthy'
+          ? 'Play ownership is only honest when preview, guide truth, and provider health all still support the same exact-channel decision.'
+          : 'Play ownership must name whether the next tap is backed by exact-channel proof, same-category rescue, or a recovery-first path.',
+        transferTrigger: scenario === 'healthy'
+          ? 'Transfer Play ownership once guide truth, preview stability, or line posture stops supporting the same selected-channel launch.'
+          : 'Transfer Play ownership fully to rescue when preview keeps dropping, guide confidence flickers, or line pressure makes another provider the safer owner.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Category rescue owner',
+        currentOwner: scenario === 'healthy'
+          ? 'Category rescue is on standby only; it does not own the next Play unless exact-channel proof softens first.'
+          : 'Category rescue owns the next surf move only while it can still preserve the same live lane more honestly than the original selected card.',
+        ownershipProof: 'Rescue ownership is honest only when it keeps the same category momentum and can explain exactly what watch meaning survived the handoff.',
+        transferTrigger: 'Transfer rescue ownership away once neither the exact selected card nor the same category can support an honest next Play and Live must force a fresh channel pick.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-choice truth, proof-debt honesty, and claim-ceiling discipline in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with launch-ownership truth, provider-choice honesty, proof-debt visibility, and claim-ceiling discipline in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
       ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -3603,6 +3705,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Connect with the local mock credentials',
         'Switch scenarios without leaving the screen',
         'Jump to the healthiest saved provider when trust degrades',
+        'Launch ownership stays visible before Connect implies the current provider still owns Home',
         'Login rescue receipt stays visible before Connect implies seamless fallback',
         'Keep the current claim ceiling honest before premium connect copy survives degraded proof',
       ],
@@ -3618,6 +3721,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Featured live card launches playback directly',
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
+        'Hero launch ownership stays visible before fallback silently takes the featured CTA',
         'Hero rescue receipt stays visible before fallback launch feels seamless',
         'Hero claim ceiling stays visible before cinematic browse language outruns proof',
       ],
@@ -3633,6 +3737,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Filter by category and search without leaving the page',
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
+        'Selected-card launch ownership stays visible before Play silently changes hands',
         'Selected-card rescue receipt stays visible before fallback playback feels seamless',
         'Selected-card claim ceiling stays visible before Play sounds safer than current proof',
       ],
@@ -3740,6 +3845,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
     },
   ],
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
+  surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceContinuityWindows: buildSurfaceContinuityWindows(scenario),
   surfaceDowngradeLadders: buildSurfaceDowngradeLadders(scenario),
   surfaceScorecards: buildSurfaceScorecards(scenario),
