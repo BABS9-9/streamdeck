@@ -330,6 +330,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Claim ceiling on login',
+    detail: 'The adapter now publishes the strongest promise Login can still make, the overclaim Connect must suppress, and the proof that earns premium setup language back.',
+    surface: 'login',
+  },
+  {
     title: 'Believable home destination',
     detail: 'The mock adapter ships enough live, movie, series, and guide data to make Home feel curated instead of empty or obviously fake.',
     surface: 'home',
@@ -360,6 +365,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Claim ceiling on Home',
+    detail: 'The adapter now publishes the strongest browse promise Home can still make, the hero overclaim it must suppress, and the proof that earns premium browse language back.',
+    surface: 'home',
+  },
+  {
     title: 'Real live browse rehearsal',
     detail: 'Live categories, channel logos, NOW/NEXT data, and playable HLS streams are all included so the prototype can actually be demoed end to end.',
     surface: 'live',
@@ -387,6 +397,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Confidence floor on Live',
     detail: 'The adapter now publishes the minimum surf proof behind Play, the downgrade mode that takes over below that floor, and the hard-stop trigger that ends premium channel-launch confidence.',
+    surface: 'live',
+  },
+  {
+    title: 'Claim ceiling on Live',
+    detail: 'The adapter now publishes the strongest surf promise Live can still make, the playback overclaim it must suppress, and the proof that earns premium play language back.',
     surface: 'live',
   },
   {
@@ -3547,13 +3562,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-choice truth and proof-debt honesty in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-choice truth, proof-debt honesty, and claim-ceiling discipline in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, provider choice, recovery route, and recovery truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same next move, provider-choice truth, and recovery route instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, provider choice, recovery route, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same next move, provider-choice truth, recovery route, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
   },
@@ -3573,6 +3588,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Connect with the local mock credentials',
         'Switch scenarios without leaving the screen',
         'Jump to the healthiest saved provider when trust degrades',
+        'Keep the current claim ceiling honest before premium connect copy survives degraded proof',
       ],
       verificationTarget: 'Saved-provider login has to feel safe, deliberate, and one move away from Home.',
       successSignal: 'The user can connect or switch providers without asking what to do next.',
@@ -3586,6 +3602,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Featured live card launches playback directly',
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
+        'Hero claim ceiling stays visible before cinematic browse language outruns proof',
       ],
       verificationTarget: 'Home needs to prove this is a product surface, not a provider admin screen.',
       successSignal: 'Hero context, quick rails, and trust cues stay visible together on the first paint.',
@@ -3599,6 +3616,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Filter by category and search without leaving the page',
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
+        'Selected-card claim ceiling stays visible before Play sounds safer than current proof',
       ],
       verificationTarget: 'Live browsing should feel fast enough that users stop thinking about the provider.',
       successSignal: 'The user can filter, preview, and recover from one channel card without losing browse context.',
@@ -3740,7 +3758,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
-      ? 'The happy path should walk cleanly from saved-provider login into Home and then into Live without hiding what proof is fresh versus lightly borrowed.'
+      ? 'The happy path should walk cleanly from saved-provider login into Home and then into Live without hiding what proof is fresh versus lightly borrowed or what premium language is still capped.'
       : scenario === 'degradedLive'
         ? 'This rehearsal is about keeping Home and Login confident while Live explains degraded browse conditions without pretending the whole provider disappeared.'
         : scenario === 'degradedSearch'
@@ -3751,7 +3769,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
               ? 'This rehearsal is about showing account pressure before playback gets blamed, while keeping healthier-provider recovery obvious.'
               : scenario === 'expiredAccount'
                 ? 'This rehearsal is about keeping the saved-provider story understandable even when fresh Xtream requests are blocked.'
-                : 'This rehearsal is about holding cached context in place while auth confidence drops, borrowed proof debt stays visible, and the next move stays explicit.',
+                : 'This rehearsal is about holding cached context in place while auth confidence drops, borrowed proof debt stays visible, the claim ceiling stays honest, and the next move stays explicit.',
     surfaces: scenario === 'degradedSearch'
       ? ['login', 'home']
       : scenario === 'degradedLive'
@@ -3762,6 +3780,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Login should hand the user into Home without any admin-panel detour.',
         'Home should make the Live launch path obvious from the first screenful.',
         'Live should keep preview plus NOW/NEXT attached to the browsing flow.',
+        'All three surfaces should keep their claim ceiling visible before premium language outruns proof.',
       ]
       : scenario === 'degradedLive'
         ? [
@@ -3804,6 +3823,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
     'Open Home and verify hero counts plus provider fact grid',
     'Open Live and confirm preview + NOW/NEXT + provider fallback actions',
     'Confirm Login, Home, and Live each publish what confidence is borrowed versus freshly proven before the next action is treated as premium',
+    'Confirm Login, Home, and Live each show the current claim ceiling before premium copy outruns proof',
     'Flip to a degraded scenario and confirm Login, Home, and Live refresh in place instead of blanking out',
   ],
   capabilityMatrix: [
