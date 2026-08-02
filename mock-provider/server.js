@@ -360,6 +360,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Intent lock on login',
+    detail: 'The adapter now publishes what setup intent Login is still protecting, what trust drift is acceptable without breaking that path, and what event truly forces a fresh start.',
+    surface: 'login',
+  },
+  {
     title: 'Believable home destination',
     detail: 'The mock adapter ships enough live, movie, series, and guide data to make Home feel curated instead of empty or obviously fake.',
     surface: 'home',
@@ -420,6 +425,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Intent lock on Home',
+    detail: 'The adapter now publishes what browse intent Home is still protecting, what freshness or recovery drift is acceptable, and what break truly forces a reset.',
+    surface: 'home',
+  },
+  {
     title: 'Real live browse rehearsal',
     detail: 'Live categories, channel logos, NOW/NEXT data, and playable HLS streams are all included so the prototype can actually be demoed end to end.',
     surface: 'live',
@@ -477,6 +487,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Identity anchor on Live',
     detail: 'The adapter now publishes which channel, category, or launch owner still anchors the surf story, what meaning that anchor preserves, and what break turns rescue into a disguised channel jump.',
+    surface: 'live',
+  },
+  {
+    title: 'Intent lock on Live',
+    detail: 'The adapter now publishes what surf or channel intent Live is still protecting, what guide or rescue drift is acceptable, and what break truly ends the current path.',
     surface: 'live',
   },
   {
@@ -3829,13 +3844,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, action-gated CTAs, fallback-cost honesty, provider-choice truth, proof-debt visibility, claim-ceiling discipline, and identity-anchor clarity in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, intent-lock continuity, action-gated CTAs, fallback-cost honesty, provider-choice truth, proof-debt visibility, claim-ceiling discipline, and identity-anchor clarity in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, intent locks, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, intent lock, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -3857,6 +3872,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Jump to the healthiest saved provider when trust degrades',
         'Launch ownership stays visible before Connect implies the current provider still owns Home',
         'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
+        'Login intent lock stays visible before trust noise makes setup feel like a fresh restart',
         'Connect action gate stays visible before the loudest CTA outruns current trust',
         'Login fallback cost stays visible before degraded recovery pretends convenience stayed fully intact',
         'Login identity anchor stays visible before recovery turns into an anonymous provider shuffle',
@@ -3877,6 +3893,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Scenario toggles refresh Home in place',
         'Hero launch ownership stays visible before fallback silently takes the featured CTA',
         'Hero proof provenance stays visible before cache or rescue sounds like live provider browse proof',
+        'Hero intent lock stays visible before trust drift makes the same browse story feel reset',
         'Hero action gate stays visible before cinematic browse CTA outruns current trust',
         'Hero fallback cost stays visible before preserved rails masquerade as fully live browse certainty',
         'Hero identity anchor stays visible before fallback keeps sounding like the same browse owner without proof',
@@ -3897,6 +3914,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Exact-provider fallback or same-category rescue stays on-card',
         'Selected-card launch ownership stays visible before Play silently changes hands',
         'Selected-card proof provenance stays visible before same-category rescue sounds like exact-channel proof',
+        'Selected-card intent lock stays visible before guide or rescue drift makes the surf target feel reset',
         'Selected-card action gate stays visible before Play outruns current launch proof',
         'Selected-card fallback cost stays visible before preserved surf momentum pretends exact-launch confidence survived',
         'Selected-card identity anchor stays visible before rescue feels like the same watch target without proof',
