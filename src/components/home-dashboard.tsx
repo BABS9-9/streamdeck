@@ -10,6 +10,7 @@ import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
+import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
@@ -237,6 +238,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const fallbackCost = useMemo(
+    () => manifest?.surfaceFallbackCosts.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const claimCeiling = useMemo(
     () => manifest?.surfaceClaimCeilings.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -358,6 +363,7 @@ export function HomeDashboard() {
       <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
+      <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
       <SurfaceClaimCeiling contract={claimCeiling} badge="Claim ceiling" />
       <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
 
