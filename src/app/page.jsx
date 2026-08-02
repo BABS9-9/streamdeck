@@ -12,6 +12,7 @@ import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
+import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -133,6 +134,10 @@ export default function LoginPage() {
   );
   const proofProvenance = useMemo(
     () => manifest?.surfaceProofProvenances?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const intentLock = useMemo(
+    () => manifest?.surfaceIntentLocks?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const actionGate = useMemo(
@@ -274,6 +279,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
           </div>
 
           <div className="mt-6">

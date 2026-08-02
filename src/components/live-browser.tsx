@@ -12,6 +12,7 @@ import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
+import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -166,6 +167,7 @@ export function LiveBrowser() {
   const freshnessBoard = manifest?.surfaceFreshnessBoards.find((item) => item.screenId === 'live') ?? null;
   const proofDebt = manifest?.surfaceProofDebts.find((item) => item.screenId === 'live') ?? null;
   const proofProvenance = manifest?.surfaceProofProvenances.find((item) => item.screenId === 'live') ?? null;
+  const intentLock = manifest?.surfaceIntentLocks.find((item) => item.screenId === 'live') ?? null;
   const actionGate = manifest?.surfaceActionGates.find((item) => item.screenId === 'live') ?? null;
   const rescueReceipt = manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'live') ?? null;
   const fallbackCost = manifest?.surfaceFallbackCosts.find((item) => item.screenId === 'live') ?? null;
@@ -186,6 +188,7 @@ export function LiveBrowser() {
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
       <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
+      <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />

@@ -13,6 +13,7 @@ import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
+import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -231,6 +232,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceProofProvenances.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const intentLock = useMemo(
+    () => manifest?.surfaceIntentLocks.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const actionGate = useMemo(
     () => manifest?.surfaceActionGates.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -366,6 +371,7 @@ export function HomeDashboard() {
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
       <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
+      <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
