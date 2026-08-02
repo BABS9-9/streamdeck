@@ -111,6 +111,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish the proof source currently backing the next move, why that source is still honest enough to act on, and what change forces a louder disclosure.
 - StreamDeck should make live proof feel strongest, cached proof feel clearly borrowed, and rescue-led proof feel explicit instead of silently bundled into the surface mood.
 
+### 22. Surface action gate
+- Premium actions should visibly downgrade before the loudest button asks the user to walk into weak proof.
+- Login, Home, and Live should each publish what keeps Connect, the hero CTA, or Play premium right now, what safer fallback action should take over when proof drops, and what re-unlocks the premium path.
+- StreamDeck should make the brightest action feel earned instead of letting surface polish outrun the current launch truth.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -133,6 +138,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish a rescue receipt that says what context survived, what changed under the hood, and what the user should reconfirm before trusting fallback as seamless.
 - Login, Home, and Live also publish which provider or rescue path currently owns the next launch, what proof keeps that owner honest, and what trigger transfers launch control.
 - Login, Home, and Live also publish what proof source is backing the next move right now, why that source is still honest enough to use, and what source change must be disclosed before the shell keeps sounding premium.
+- Login, Home, and Live also publish when their primary action is still premium, what downgraded action should take over first, and what proof re-unlocks the premium CTA.
 - Login, Home, and Live can be re-run against healthy, degraded, saturated, unstable, and expired mock-provider modes without leaving the product shell.
 
 ## Immediate Implementation Focus
@@ -153,6 +159,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Saved-provider shortcuts should also leave a rescue receipt that says what setup context survived, what fallback logic changed under the hood, and what the user should reconfirm before Connect is treated like a seamless continuation.
 - Saved-provider shortcuts should also tell the user which provider currently owns the next Home launch, what proof keeps that ownership honest, and what trigger transfers Connect ownership to rescue.
 - Saved-provider shortcuts should also tell the user whether Connect is currently backed by fresh auth proof, saved-provider memory, or rescue logic, and what source switch forces louder disclosure before Login keeps sounding effortless.
+- Saved-provider shortcuts should also tell the user when Connect is still the premium move, what safer recovery action should take over first, and what proof puts the premium CTA back on top.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -170,6 +177,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Hero and quick rails should also leave a rescue receipt that says what browse context survived, what launch ownership changed under the hood, and what the user should reconfirm before the hero still feels seamless.
 - Hero and quick rails should also tell the user which provider or fallback path currently owns the next browse launch, what proof keeps that owner honest, and what event transfers ownership elsewhere.
 - Hero and quick rails should also tell the user whether the next launch is backed by live provider data, safe cached browse truth, or rescue-owned proof, and what source switch must be disclosed before the hero keeps sounding current.
+- Hero and quick rails should also tell the user when featured launch is still the premium move, what safer fallback action should replace it first, and what proof re-unlocks premium browse CTA language.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -188,6 +196,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The selected card should also leave a rescue receipt that says what surf context survived, what playback ownership changed under the hood, and what the user should reconfirm before preview or Play is treated as seamless.
 - The selected card should also tell the user which provider or rescue path currently owns the next Play tap, what proof keeps that owner honest, and what event transfers playback ownership away from the current card.
 - The selected card should also tell the user whether Play is currently backed by live preview plus guide proof, borrowed same-category continuity, or explicit rescue logic, and what source shift must be disclosed before Live keeps sounding safe.
+- The selected card should also tell the user when Play is still the premium move, what rescue-first action should replace it when proof drops, and what evidence re-opens premium playback confidence.
 
 ## Non-Goals For This Pass
 
