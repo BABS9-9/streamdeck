@@ -335,6 +335,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Action gate on login',
+    detail: 'The adapter now publishes when Connect is still the premium move, what safer recovery action takes over first, and what proof re-opens the premium path.',
+    surface: 'login',
+  },
+  {
     title: 'Confidence floor on login',
     detail: 'The adapter now publishes the minimum honest proof below the login polish, the downgrade mode that takes over when trust slips, and the hard-stop trigger that ends premium connect posture.',
     surface: 'login',
@@ -380,6 +385,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Action gate on Home',
+    detail: 'The adapter now publishes when featured launch is still the premium move, what safer fallback action should replace it first, and what proof re-opens premium browse confidence.',
+    surface: 'home',
+  },
+  {
     title: 'Confidence floor on Home',
     detail: 'The adapter now publishes the minimum browse proof behind the hero, the downgrade mode that takes over below that floor, and the hard-stop trigger that ends cinematic certainty.',
     surface: 'home',
@@ -422,6 +432,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Proof provenance on Live',
     detail: 'The adapter now publishes whether Play is backed by live preview plus guide proof, same-category continuity, or rescue-owned logic before playback confidence gets overstated.',
+    surface: 'live',
+  },
+  {
+    title: 'Action gate on Live',
+    detail: 'The adapter now publishes when Play is still the premium move, what rescue-first action should replace it when proof drops, and what evidence re-opens premium playback confidence.',
     surface: 'live',
   },
   {
@@ -3784,13 +3799,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, provider-choice honesty, proof-debt visibility, and claim-ceiling discipline in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, action-gated CTAs, provider-choice honesty, proof-debt visibility, and claim-ceiling discipline in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, action gates, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, action gate, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -3812,6 +3827,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Jump to the healthiest saved provider when trust degrades',
         'Launch ownership stays visible before Connect implies the current provider still owns Home',
         'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
+        'Connect action gate stays visible before the loudest CTA outruns current trust',
         'Login rescue receipt stays visible before Connect implies seamless fallback',
         'Keep the current claim ceiling honest before premium connect copy survives degraded proof',
       ],
@@ -3829,6 +3845,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Scenario toggles refresh Home in place',
         'Hero launch ownership stays visible before fallback silently takes the featured CTA',
         'Hero proof provenance stays visible before cache or rescue sounds like live provider browse proof',
+        'Hero action gate stays visible before cinematic browse CTA outruns current trust',
         'Hero rescue receipt stays visible before fallback launch feels seamless',
         'Hero claim ceiling stays visible before cinematic browse language outruns proof',
       ],
@@ -3846,6 +3863,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Exact-provider fallback or same-category rescue stays on-card',
         'Selected-card launch ownership stays visible before Play silently changes hands',
         'Selected-card proof provenance stays visible before same-category rescue sounds like exact-channel proof',
+        'Selected-card action gate stays visible before Play outruns current launch proof',
         'Selected-card rescue receipt stays visible before fallback playback feels seamless',
         'Selected-card claim ceiling stays visible before Play sounds safer than current proof',
       ],
