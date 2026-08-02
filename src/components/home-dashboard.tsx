@@ -12,6 +12,7 @@ import { SurfaceContinuityWindow } from '@/components/surface-continuity-window'
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
+import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -242,6 +243,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceFallbackCosts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const identityAnchor = useMemo(
+    () => manifest?.surfaceIdentityAnchors.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const claimCeiling = useMemo(
     () => manifest?.surfaceClaimCeilings.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -364,6 +369,7 @@ export function HomeDashboard() {
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
+      <SurfaceIdentityAnchor contract={identityAnchor} badge="Identity anchor" />
       <SurfaceClaimCeiling contract={claimCeiling} badge="Claim ceiling" />
       <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
 

@@ -11,6 +11,7 @@ import { SurfaceContinuityWindow } from '@/components/surface-continuity-window'
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
+import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -144,6 +145,10 @@ export default function LoginPage() {
   );
   const fallbackCost = useMemo(
     () => manifest?.surfaceFallbackCosts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const identityAnchor = useMemo(
+    () => manifest?.surfaceIdentityAnchors?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const claimCeiling = useMemo(
@@ -281,6 +286,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceIdentityAnchor contract={identityAnchor} badge="Identity anchor" />
           </div>
 
           <div className="mt-6">
