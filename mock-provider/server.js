@@ -355,6 +355,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Identity anchor on login',
+    detail: 'The adapter now publishes which provider identity or launch owner must stay visible for Login to keep making sense, what meaning that anchor preserves, and what break ends polished recovery.',
+    surface: 'login',
+  },
+  {
     title: 'Believable home destination',
     detail: 'The mock adapter ships enough live, movie, series, and guide data to make Home feel curated instead of empty or obviously fake.',
     surface: 'home',
@@ -410,6 +415,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Identity anchor on Home',
+    detail: 'The adapter now publishes which provider, hero, or fallback owner still anchors the browse story, what meaning that anchor preserves, and what break turns premium rescue into anonymous confidence theater.',
+    surface: 'home',
+  },
+  {
     title: 'Real live browse rehearsal',
     detail: 'Live categories, channel logos, NOW/NEXT data, and playable HLS streams are all included so the prototype can actually be demoed end to end.',
     surface: 'live',
@@ -462,6 +472,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Claim ceiling on Live',
     detail: 'The adapter now publishes the strongest surf promise Live can still make, the playback overclaim it must suppress, and the proof that earns premium play language back.',
+    surface: 'live',
+  },
+  {
+    title: 'Identity anchor on Live',
+    detail: 'The adapter now publishes which channel, category, or launch owner still anchors the surf story, what meaning that anchor preserves, and what break turns rescue into a disguised channel jump.',
     surface: 'live',
   },
   {
@@ -3814,13 +3829,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, action-gated CTAs, fallback-cost honesty, provider-choice truth, proof-debt visibility, and claim-ceiling discipline in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, action-gated CTAs, fallback-cost honesty, provider-choice truth, proof-debt visibility, claim-ceiling discipline, and identity-anchor clarity in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, action gates, fallback cost, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, action gate, fallback cost, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -3844,6 +3859,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
         'Connect action gate stays visible before the loudest CTA outruns current trust',
         'Login fallback cost stays visible before degraded recovery pretends convenience stayed fully intact',
+        'Login identity anchor stays visible before recovery turns into an anonymous provider shuffle',
         'Login rescue receipt stays visible before Connect implies seamless fallback',
         'Keep the current claim ceiling honest before premium connect copy survives degraded proof',
       ],
@@ -3863,6 +3879,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Hero proof provenance stays visible before cache or rescue sounds like live provider browse proof',
         'Hero action gate stays visible before cinematic browse CTA outruns current trust',
         'Hero fallback cost stays visible before preserved rails masquerade as fully live browse certainty',
+        'Hero identity anchor stays visible before fallback keeps sounding like the same browse owner without proof',
         'Hero rescue receipt stays visible before fallback launch feels seamless',
         'Hero claim ceiling stays visible before cinematic browse language outruns proof',
       ],
@@ -3882,6 +3899,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Selected-card proof provenance stays visible before same-category rescue sounds like exact-channel proof',
         'Selected-card action gate stays visible before Play outruns current launch proof',
         'Selected-card fallback cost stays visible before preserved surf momentum pretends exact-launch confidence survived',
+        'Selected-card identity anchor stays visible before rescue feels like the same watch target without proof',
         'Selected-card rescue receipt stays visible before fallback playback feels seamless',
         'Selected-card claim ceiling stays visible before Play sounds safer than current proof',
       ],
