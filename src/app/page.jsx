@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { MockDemoBoard } from '@/components/mock-demo-board';
+import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
@@ -130,6 +131,10 @@ export default function LoginPage() {
   );
   const proofProvenance = useMemo(
     () => manifest?.surfaceProofProvenances?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const actionGate = useMemo(
+    () => manifest?.surfaceActionGates?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const rescueReceipt = useMemo(
@@ -259,6 +264,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceActionGate contract={actionGate} badge="Action gate" />
           </div>
 
           <div className="mt-6">
