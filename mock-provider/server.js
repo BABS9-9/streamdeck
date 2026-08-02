@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, and playback demos.',
+  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, and fallback-cost honesty demos.',
 };
 
 const channelNames = {
@@ -340,6 +340,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Fallback cost on login',
+    detail: 'The adapter now publishes what premium setup convenience Login already lost, what safe value still survives, and what extra loss ends the polished shortcut story.',
+    surface: 'login',
+  },
+  {
     title: 'Confidence floor on login',
     detail: 'The adapter now publishes the minimum honest proof below the login polish, the downgrade mode that takes over when trust slips, and the hard-stop trigger that ends premium connect posture.',
     surface: 'login',
@@ -390,6 +395,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Fallback cost on Home',
+    detail: 'The adapter now publishes what cinematic browse confidence Home already lost, what honest browse value still survives, and what extra loss ends the premium hero story.',
+    surface: 'home',
+  },
+  {
     title: 'Confidence floor on Home',
     detail: 'The adapter now publishes the minimum browse proof behind the hero, the downgrade mode that takes over below that floor, and the hard-stop trigger that ends cinematic certainty.',
     surface: 'home',
@@ -437,6 +447,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Action gate on Live',
     detail: 'The adapter now publishes when Play is still the premium move, what rescue-first action should replace it when proof drops, and what evidence re-opens premium playback confidence.',
+    surface: 'live',
+  },
+  {
+    title: 'Fallback cost on Live',
+    detail: 'The adapter now publishes what exact-match or direct-launch confidence Live already lost, what surf value still survives, and what extra loss means fallback can no longer pass as seamless.',
     surface: 'live',
   },
   {
@@ -3799,13 +3814,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, action-gated CTAs, provider-choice honesty, proof-debt visibility, and claim-ceiling discipline in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, action-gated CTAs, fallback-cost honesty, provider-choice truth, proof-debt visibility, and claim-ceiling discipline in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, action gates, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, action gate, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, action gates, fallback cost, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, action gate, fallback cost, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -3828,6 +3843,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Launch ownership stays visible before Connect implies the current provider still owns Home',
         'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
         'Connect action gate stays visible before the loudest CTA outruns current trust',
+        'Login fallback cost stays visible before degraded recovery pretends convenience stayed fully intact',
         'Login rescue receipt stays visible before Connect implies seamless fallback',
         'Keep the current claim ceiling honest before premium connect copy survives degraded proof',
       ],
@@ -3846,6 +3862,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Hero launch ownership stays visible before fallback silently takes the featured CTA',
         'Hero proof provenance stays visible before cache or rescue sounds like live provider browse proof',
         'Hero action gate stays visible before cinematic browse CTA outruns current trust',
+        'Hero fallback cost stays visible before preserved rails masquerade as fully live browse certainty',
         'Hero rescue receipt stays visible before fallback launch feels seamless',
         'Hero claim ceiling stays visible before cinematic browse language outruns proof',
       ],
@@ -3864,6 +3881,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Selected-card launch ownership stays visible before Play silently changes hands',
         'Selected-card proof provenance stays visible before same-category rescue sounds like exact-channel proof',
         'Selected-card action gate stays visible before Play outruns current launch proof',
+        'Selected-card fallback cost stays visible before preserved surf momentum pretends exact-launch confidence survived',
         'Selected-card rescue receipt stays visible before fallback playback feels seamless',
         'Selected-card claim ceiling stays visible before Play sounds safer than current proof',
       ],
