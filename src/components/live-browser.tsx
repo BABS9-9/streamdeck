@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, isMockProviderServer, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { SurfaceActionGate } from '@/components/surface-action-gate';
+import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
@@ -172,6 +173,7 @@ export function LiveBrowser() {
   const intentLock = manifest?.surfaceIntentLocks.find((item) => item.screenId === 'live') ?? null;
   const actionGate = manifest?.surfaceActionGates.find((item) => item.screenId === 'live') ?? null;
   const explanationBoundary = manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === 'live') ?? null;
+  const autonomyBoundary = manifest?.surfaceAutonomyBoundaries.find((item) => item.screenId === 'live') ?? null;
   const recoveryWitness = manifest?.surfaceRecoveryWitnesses.find((item) => item.screenId === 'live') ?? null;
   const rescueReceipt = manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'live') ?? null;
   const fallbackCost = manifest?.surfaceFallbackCosts.find((item) => item.screenId === 'live') ?? null;
@@ -195,6 +197,7 @@ export function LiveBrowser() {
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
+      <SurfaceAutonomyBoundary contract={autonomyBoundary} badge="Autonomy boundary" />
       <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />

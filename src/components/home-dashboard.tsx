@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, isMockProviderServer, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { SurfaceActionGate } from '@/components/surface-action-gate';
+import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
@@ -246,6 +247,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const autonomyBoundary = useMemo(
+    () => manifest?.surfaceAutonomyBoundaries.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const recoveryWitness = useMemo(
     () => manifest?.surfaceRecoveryWitnesses.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -384,6 +389,7 @@ export function HomeDashboard() {
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
+      <SurfaceAutonomyBoundary contract={autonomyBoundary} badge="Autonomy boundary" />
       <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
