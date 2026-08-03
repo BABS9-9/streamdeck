@@ -141,6 +141,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish what evidence must remain attached to the current surface, what context that evidence carries forward, and what missing proof means rescue has become a disguised restart.
 - StreamDeck should feel trustworthy during degraded moments because recovery leaves a witness behind, not because the shell stays cinematic.
 
+### 28. Surface autonomy boundary
+- Premium recovery should make it obvious what StreamDeck can keep maintaining automatically and what choice still belongs to the user instead of letting fallback feel like hidden automation.
+- Login, Home, and Live should each publish what the shell may preserve or re-rank in place, what provider or launch decision the user still owns, and what trigger forces an explicit handoff before the product starts lying.
+- StreamDeck should feel smart because automation stays inside honest boundaries, not because rescue silently rewrites the user's launch story.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -169,6 +174,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish what user intent they are still protecting, what safe drift is allowed while that intent stays intact, and what specific break ends the current path.
 - Login, Home, and Live also publish what degraded truth must now be said explicitly, what premium confidence can stay implied, and what trigger forces the shell to stop hiding behind ambient polish.
 - Login, Home, and Live also publish what visible recovery witness must remain on-screen, what context that witness proves survived, and what missing proof means fallback has turned into a disguised restart.
+- Login, Home, and Live also publish what trust, browse, or surf work StreamDeck may keep maintaining automatically, what provider or launch choice still belongs to the user, and what trigger forces an explicit handoff.
 - Login, Home, and Live can be re-run against healthy, degraded, saturated, unstable, and expired mock-provider modes without leaving the product shell.
 
 ## Immediate Implementation Focus
@@ -195,6 +201,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Saved-provider shortcuts should also tell the user what setup intent is still protected, what trust or recovery drift can happen without breaking that intent, and what event truly forces a fresh login story.
 - Saved-provider shortcuts should also tell the user what provider risk Login must now say plainly, what setup calm can stay implied by the shell, and what trigger forces blunt recovery copy before Connect stays premium.
 - Saved-provider shortcuts should also leave a visible recovery witness that proves which provider survived, why it is still safe, and what missing proof would force Login to stop selling fallback as trustworthy.
+- Saved-provider shortcuts should also tell the user what trust or recovery work Login can maintain automatically, what provider choice or credential change still belongs to them, and what event forces an explicit handoff back to the user.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -218,6 +225,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Hero and quick rails should also tell the user what browse intent is still locked, what freshness or recovery drift can happen without losing that discovery story, and what break really forces a reset.
 - Hero and quick rails should also tell the user what degraded browse truth Home must now say out loud, what premium confidence can remain ambient, and what trigger forces the hero to stop implying everything is still fully live.
 - Hero and quick rails should also leave a visible recovery witness that proves which browse path survived, what launch owner still makes it safe, and what missing proof means the cinematic story has become confidence theater.
+- Hero and quick rails should also tell the user what browse maintenance Home can keep automatic, what launch or provider decision still belongs to them, and what trigger forces the hero to hand choice back explicitly.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -242,6 +250,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The selected card should also tell the user what surf or channel intent is still locked, what guide or rescue drift can happen without losing that target, and what break truly ends the current path.
 - The selected card should also tell the user what launch or guide risk Live must now state explicitly, what surf momentum can stay ambient, and what trigger forces plain recovery language before preview seduction outruns launch truth.
 - The selected card should also leave a visible recovery witness that proves what survived the degraded moment, who now owns the next launch, and what missing proof means rescue has become a disguised channel restart.
+- The selected card should also tell the user what surf continuity Live can keep automatic, what playback or provider switch still belongs to them, and what trigger forces the card to hand launch choice back explicitly.
 
 ## Non-Goals For This Pass
 
