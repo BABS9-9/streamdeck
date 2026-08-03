@@ -131,6 +131,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish what intent is being protected, what drift is still acceptable while the screen stays truthful, and what break actually ends the current path.
 - StreamDeck should feel steady under degraded conditions because the product keeps the same mission alive until there is a real reason to reset it.
 
+### 26. Surface explanation boundary
+- Premium shells should know exactly what truth must be stated plainly and what confidence can stay ambient instead of letting degraded states hide behind cinematic polish.
+- Login, Home, and Live should each publish what must be said explicitly, what can remain implied by the product shell, and what trigger forces blunt disclosure before trust drifts into theater.
+- StreamDeck should feel polished because it speaks clearly at the right moment, not because it leaves the user to decode degraded truth alone.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -157,6 +162,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish what premium convenience or certainty the current fallback already cost, what honest value is still preserved, and what further loss ends the premium rescue story.
 - Login, Home, and Live also publish what identity must stay visible through fallback, what meaning that anchor preserves, and what break forces a more explicit reset.
 - Login, Home, and Live also publish what user intent they are still protecting, what safe drift is allowed while that intent stays intact, and what specific break ends the current path.
+- Login, Home, and Live also publish what degraded truth must now be said explicitly, what premium confidence can stay implied, and what trigger forces the shell to stop hiding behind ambient polish.
 - Login, Home, and Live can be re-run against healthy, degraded, saturated, unstable, and expired mock-provider modes without leaving the product shell.
 
 ## Immediate Implementation Focus
@@ -181,6 +187,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Saved-provider shortcuts should also tell the user what premium convenience Login already lost, what setup value still survives, and what further loss means the shell must stop presenting recovery as a polished shortcut.
 - Saved-provider shortcuts should also tell the user what provider identity or next-launch owner must stay visible for Login to keep making sense, and what break means recovery has to reset more explicitly.
 - Saved-provider shortcuts should also tell the user what setup intent is still protected, what trust or recovery drift can happen without breaking that intent, and what event truly forces a fresh login story.
+- Saved-provider shortcuts should also tell the user what provider risk Login must now say plainly, what setup calm can stay implied by the shell, and what trigger forces blunt recovery copy before Connect stays premium.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -202,6 +209,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Hero and quick rails should also tell the user what cinematic browse confidence Home already lost, what value still survives, and what further loss means the hero must stop acting like a premium shortcut.
 - Hero and quick rails should also tell the user what provider, title, or fallback owner still anchors the browse story, and what break means Home has to stop pretending the same launch story still exists.
 - Hero and quick rails should also tell the user what browse intent is still locked, what freshness or recovery drift can happen without losing that discovery story, and what break really forces a reset.
+- Hero and quick rails should also tell the user what degraded browse truth Home must now say out loud, what premium confidence can remain ambient, and what trigger forces the hero to stop implying everything is still fully live.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -224,6 +232,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The selected card should also tell the user what exact-match or direct-launch confidence Live already lost, what surf value still survives, and what further loss means fallback can no longer pass as seamless.
 - The selected card should also tell the user what channel, category, or launch owner still anchors the surf story, and what break means Live must stop presenting recovery as the same watch target.
 - The selected card should also tell the user what surf or channel intent is still locked, what guide or rescue drift can happen without losing that target, and what break truly ends the current path.
+- The selected card should also tell the user what launch or guide risk Live must now state explicitly, what surf momentum can stay ambient, and what trigger forces plain recovery language before preview seduction outruns launch truth.
 
 ## Non-Goals For This Pass
 

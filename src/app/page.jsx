@@ -9,6 +9,7 @@ import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
+import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
@@ -142,6 +143,10 @@ export default function LoginPage() {
   );
   const actionGate = useMemo(
     () => manifest?.surfaceActionGates?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const explanationBoundary = useMemo(
+    () => manifest?.surfaceExplanationBoundaries?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const rescueReceipt = useMemo(
@@ -287,6 +292,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceActionGate contract={actionGate} badge="Action gate" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
           </div>
 
           <div className="mt-6">

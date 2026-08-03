@@ -9,6 +9,7 @@ import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
+import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
@@ -169,6 +170,7 @@ export function LiveBrowser() {
   const proofProvenance = manifest?.surfaceProofProvenances.find((item) => item.screenId === 'live') ?? null;
   const intentLock = manifest?.surfaceIntentLocks.find((item) => item.screenId === 'live') ?? null;
   const actionGate = manifest?.surfaceActionGates.find((item) => item.screenId === 'live') ?? null;
+  const explanationBoundary = manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === 'live') ?? null;
   const rescueReceipt = manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'live') ?? null;
   const fallbackCost = manifest?.surfaceFallbackCosts.find((item) => item.screenId === 'live') ?? null;
   const identityAnchor = manifest?.surfaceIdentityAnchors.find((item) => item.screenId === 'live') ?? null;
@@ -190,6 +192,7 @@ export function LiveBrowser() {
       <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
+      <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
       <SurfaceIdentityAnchor contract={identityAnchor} badge="Identity anchor" />

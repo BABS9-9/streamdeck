@@ -10,6 +10,7 @@ import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
+import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
@@ -240,6 +241,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceActionGates.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const explanationBoundary = useMemo(
+    () => manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const rescueReceipt = useMemo(
     () => manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -373,6 +378,7 @@ export function HomeDashboard() {
       <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
+      <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
       <SurfaceIdentityAnchor contract={identityAnchor} badge="Identity anchor" />

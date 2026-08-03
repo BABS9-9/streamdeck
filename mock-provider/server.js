@@ -365,6 +365,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Explanation boundary on login',
+    detail: 'The adapter now publishes what provider risk Login must say plainly, what setup confidence can stay ambient, and what trigger forces blunt disclosure before Connect keeps sounding premium.',
+    surface: 'login',
+  },
+  {
     title: 'Believable home destination',
     detail: 'The mock adapter ships enough live, movie, series, and guide data to make Home feel curated instead of empty or obviously fake.',
     surface: 'home',
@@ -430,6 +435,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Explanation boundary on Home',
+    detail: 'The adapter now publishes what degraded browse truth the hero must now say out loud, what premium confidence can stay ambient, and what trigger forces the featured story to stop implying everything is still fully live.',
+    surface: 'home',
+  },
+  {
     title: 'Real live browse rehearsal',
     detail: 'Live categories, channel logos, NOW/NEXT data, and playable HLS streams are all included so the prototype can actually be demoed end to end.',
     surface: 'live',
@@ -492,6 +502,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Intent lock on Live',
     detail: 'The adapter now publishes what surf or channel intent Live is still protecting, what guide or rescue drift is acceptable, and what break truly ends the current path.',
+    surface: 'live',
+  },
+  {
+    title: 'Explanation boundary on Live',
+    detail: 'The adapter now publishes what launch or guide risk the selected card must say explicitly, what surf momentum can stay ambient, and what trigger forces plain recovery language before preview mood outruns launch truth.',
     surface: 'live',
   },
   {
@@ -3844,13 +3859,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, intent-lock continuity, action-gated CTAs, fallback-cost honesty, provider-choice truth, proof-debt visibility, claim-ceiling discipline, and identity-anchor clarity in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, intent locks, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, intent lock, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, intent locks, explanation boundaries, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, intent lock, explanation boundary, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -3873,6 +3888,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Launch ownership stays visible before Connect implies the current provider still owns Home',
         'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
         'Login intent lock stays visible before trust noise makes setup feel like a fresh restart',
+        'Login explanation boundary stays visible before degraded provider truth hides behind premium setup polish',
         'Connect action gate stays visible before the loudest CTA outruns current trust',
         'Login fallback cost stays visible before degraded recovery pretends convenience stayed fully intact',
         'Login identity anchor stays visible before recovery turns into an anonymous provider shuffle',
@@ -3894,6 +3910,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Hero launch ownership stays visible before fallback silently takes the featured CTA',
         'Hero proof provenance stays visible before cache or rescue sounds like live provider browse proof',
         'Hero intent lock stays visible before trust drift makes the same browse story feel reset',
+        'Hero explanation boundary stays visible before cached or rescue-owned browse keeps sounding fully live',
         'Hero action gate stays visible before cinematic browse CTA outruns current trust',
         'Hero fallback cost stays visible before preserved rails masquerade as fully live browse certainty',
         'Hero identity anchor stays visible before fallback keeps sounding like the same browse owner without proof',
@@ -3915,6 +3932,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Selected-card launch ownership stays visible before Play silently changes hands',
         'Selected-card proof provenance stays visible before same-category rescue sounds like exact-channel proof',
         'Selected-card intent lock stays visible before guide or rescue drift makes the surf target feel reset',
+        'Selected-card explanation boundary stays visible before preview mood outruns launch truth',
         'Selected-card action gate stays visible before Play outruns current launch proof',
         'Selected-card fallback cost stays visible before preserved surf momentum pretends exact-launch confidence survived',
         'Selected-card identity anchor stays visible before rescue feels like the same watch target without proof',
@@ -4063,7 +4081,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
-      ? 'The happy path should walk cleanly from saved-provider login into Home and then into Live without hiding what proof is fresh versus lightly borrowed, what premium language is still capped, or what fallback change would need a visible rescue receipt.'
+      ? 'The happy path should walk cleanly from saved-provider login into Home and then into Live without hiding what proof is fresh versus lightly borrowed, what premium language is still capped, what degraded truth must now be said explicitly, or what fallback change would need a visible rescue receipt.'
       : scenario === 'degradedLive'
         ? 'This rehearsal is about keeping Home and Login confident while Live explains degraded browse conditions, shows what changed under the hood, and avoids pretending the whole provider disappeared.'
         : scenario === 'degradedSearch'
@@ -4086,6 +4104,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Home should make the Live launch path obvious from the first screenful.',
         'Live should keep preview plus NOW/NEXT attached to the browsing flow.',
         'All three surfaces should keep their claim ceiling visible before premium language outruns proof.',
+        'All three surfaces should keep their explanation boundary visible before degraded truth hides behind polish.',
       ]
       : scenario === 'degradedLive'
         ? [
@@ -4128,6 +4147,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
     'Open Home and verify hero counts plus provider fact grid',
     'Open Live and confirm preview + NOW/NEXT + provider fallback actions',
     'Confirm Login, Home, and Live each publish what confidence is borrowed versus freshly proven before the next action is treated as premium',
+    'Confirm Login, Home, and Live each publish what truth must be spoken plainly versus what can stay ambient before degraded states are treated as premium',
     'Confirm Login, Home, and Live each show the current claim ceiling before premium copy outruns proof',
     'Flip to a degraded scenario and confirm Login, Home, and Live refresh in place instead of blanking out',
   ],
