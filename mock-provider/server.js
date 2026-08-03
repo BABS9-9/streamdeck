@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, and fallback-cost honesty demos.',
+  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, fallback-cost honesty, and interruption-budget demos.',
 };
 
 const channelNames = {
@@ -3889,13 +3889,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, intent locks, explanation boundaries, autonomy limits, recovery witnesses, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, intent lock, explanation boundary, autonomy boundary, recovery witness, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, intent locks, explanation boundaries, autonomy limits, interruption budgets, recovery witnesses, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, intent lock, explanation boundary, autonomy boundary, interruption budget, recovery witness, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -3920,6 +3920,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Login intent lock stays visible before trust noise makes setup feel like a fresh restart',
         'Login explanation boundary stays visible before degraded provider truth hides behind premium setup polish',
         'Login autonomy boundary stays visible before recovery feels like hidden automation instead of a user-owned setup choice',
+        'Login interruption budget stays visible before validation delay turns into silent spinner theater',
         'Login recovery witness stays visible before fallback asks the user to trust a provider switch on mood alone',
         'Connect action gate stays visible before the loudest CTA outruns current trust',
         'Login fallback cost stays visible before degraded recovery pretends convenience stayed fully intact',
@@ -3943,6 +3944,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Hero proof provenance stays visible before cache or rescue sounds like live provider browse proof',
         'Hero intent lock stays visible before trust drift makes the same browse story feel reset',
         'Hero explanation boundary stays visible before cached or rescue-owned browse keeps sounding fully live',
+        'Hero interruption budget stays visible before refresh delay pretends the same browse story is still fully current',
         'Hero autonomy boundary stays visible before Home quietly chooses around the user and calls it premium rescue',
         'Hero recovery witness stays visible before fallback asks the user to trust the featured launch without proof of what survived',
         'Hero action gate stays visible before cinematic browse CTA outruns current trust',
@@ -3967,6 +3969,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Selected-card proof provenance stays visible before same-category rescue sounds like exact-channel proof',
         'Selected-card intent lock stays visible before guide or rescue drift makes the surf target feel reset',
         'Selected-card explanation boundary stays visible before preview mood outruns launch truth',
+        'Selected-card interruption budget stays visible before preview or guide delay pretends the same Play confidence is still intact',
         'Selected-card autonomy boundary stays visible before Live quietly changes launch ownership and hides the choice from the user',
         'Selected-card recovery witness stays visible before fallback asks the user to trust rescue without proof of what survived on-card',
         'Selected-card action gate stays visible before Play outruns current launch proof',
