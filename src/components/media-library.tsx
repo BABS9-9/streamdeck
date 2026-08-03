@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getProviderTrustDisplay, getProviderTrustLabel, ProviderVariant } from '@/lib/provider-recovery';
+import { buildProviderVariant, buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getProviderTrustDisplay, getProviderTrustLabel, ProviderVariant, rankProviderVariants } from '@/lib/provider-recovery';
 import { buildVariantContinuityPayload, describeSeriesCompletenessBand, SearchResultVariantPayload } from '@/lib/search-continuity';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getContentId, getSeriesInfo, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
@@ -27,33 +27,33 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
 };
 
 const toSearchVariantPayload = ({
+  variant,
   provider,
   item,
-  kind,
 }: {
+  variant: Pick<ProviderVariant, 'providerId' | 'providerName' | 'title' | 'streamId' | 'kind' | 'artwork' | 'categoryId' | 'categoryName' | 'playbackUrl' | 'seriesId' | 'year' | 'plot' | 'trustScore' | 'warning'> & {
+    compositeScore: number;
+    isPrimary: boolean;
+  };
   provider: NonNullable<ReturnType<typeof useAuthStore.getState>['activeConnection']>;
   item: XtreamStream;
-  kind: 'movie' | 'series';
 }): SearchResultVariantPayload => ({
-  providerId: provider.id,
-  providerName: provider.name,
-  title: item.name,
-  streamId: getContentId(item),
-  kind,
-  artwork: getArtwork(item),
-  categoryId: item.category_id,
-  categoryName: item.genre || item.channel_group,
-  playbackUrl: kind === 'movie' ? buildVodStreamUrl(provider, item) : null,
-  seriesId: item.series_id,
-  year: item.year,
-  plot: item.plot,
-  trustScore: 0,
-  warning: null,
+  ...variant,
   stream: item,
-  compositeScore: 0,
-  isPrimary: true,
   provider,
   item,
+});
+
+const toVariantStream = (variant: ProviderVariant, kind: 'movie' | 'series'): XtreamStream => ({
+  stream_id: variant.kind === 'movie' ? variant.streamId : undefined,
+  series_id: variant.seriesId ?? (variant.kind === 'series' ? variant.streamId : undefined),
+  name: variant.title,
+  stream_type: kind,
+  category_id: variant.categoryId || 'alternate',
+  stream_icon: variant.artwork,
+  cover: variant.artwork,
+  plot: variant.plot,
+  year: variant.year,
 });
 
 export function MediaLibrary({
@@ -293,64 +293,87 @@ export function MediaLibrary({
       year: selectedSeries.year,
     });
   }, [activeConnection, providerVariants, selectedSeries]);
+
+  const buildContinuityVariants = ({
+    item,
+    kind,
+    alternateVariants,
+  }: {
+    item: XtreamStream;
+    kind: 'movie' | 'series';
+    alternateVariants: ProviderVariant[];
+  }) => {
+    if (!activeConnection) return [] as SearchResultVariantPayload[];
+
+    const activeVariant = buildProviderVariant({
+      connection: activeConnection,
+      status: connectionStatus[activeConnection.id],
+      item,
+      kind,
+    });
+
+    const variantLookup = new Map<string, SearchResultVariantPayload>();
+    const registerVariant = (variant: ProviderVariant, provider: NonNullable<ReturnType<typeof useAuthStore.getState>['activeConnection']>, sourceItem: XtreamStream) => {
+      const key = `${variant.providerId}-${variant.streamId}`;
+      const rankedVariant = {
+        ...variant,
+        compositeScore: variant.trustScore,
+        isPrimary: false,
+      };
+      variantLookup.set(key, toSearchVariantPayload({
+        variant: rankedVariant,
+        provider,
+        item: sourceItem,
+      }));
+    };
+
+    registerVariant(activeVariant, activeConnection, item);
+
+    alternateVariants.forEach((variant) => {
+      const provider = connections.find((connection) => connection.id === variant.providerId);
+      if (!provider) return;
+      registerVariant(variant, provider, variant.stream || toVariantStream(variant, kind));
+    });
+
+    return rankProviderVariants([...variantLookup.values()]).map((variant) => {
+      const matched = variantLookup.get(`${variant.providerId}-${variant.streamId}`);
+      if (!matched) return null;
+      return {
+        ...variant,
+        provider: matched.provider,
+        item: matched.item,
+      } satisfies SearchResultVariantPayload;
+    }).filter(Boolean) as SearchResultVariantPayload[];
+  };
+
   const movieContinuity = useMemo(() => {
     if (!featuredMovie || !activeConnection) return null;
     return buildVariantContinuityPayload({
       title: featuredMovie.name,
       kind: 'movie',
-      variants: [
-        toSearchVariantPayload({ provider: activeConnection, item: featuredMovie, kind: 'movie' }),
-        ...movieVariants.map((variant) => ({
-          ...variant,
-          compositeScore: variant.trustScore,
-          isPrimary: false,
-          provider: connections.find((connection) => connection.id === variant.providerId) || activeConnection,
-          item: variant.stream || {
-            stream_id: variant.streamId,
-            series_id: variant.seriesId,
-            name: variant.title,
-            stream_type: 'movie',
-            category_id: variant.categoryId || 'alternate',
-            stream_icon: variant.artwork,
-            cover: variant.artwork,
-            plot: variant.plot,
-            year: variant.year,
-          },
-        })),
-      ],
+      variants: buildContinuityVariants({
+        item: featuredMovie,
+        kind: 'movie',
+        alternateVariants: movieVariants,
+      }),
       activeConnectionId: activeConnection.id,
       history: watchHistory,
     });
-  }, [activeConnection, connections, featuredMovie, movieVariants, watchHistory]);
+  }, [activeConnection, buildContinuityVariants, connectionStatus, featuredMovie, movieVariants, watchHistory]);
   const seriesContinuity = useMemo(() => {
     if (!selectedSeries || !activeConnection) return null;
     return buildVariantContinuityPayload({
       title: selectedSeries.name,
       kind: 'series',
-      variants: [
-        toSearchVariantPayload({ provider: activeConnection, item: selectedSeries, kind: 'series' }),
-        ...selectedSeriesVariants.map((variant) => ({
-          ...variant,
-          compositeScore: variant.trustScore,
-          isPrimary: false,
-          provider: connections.find((connection) => connection.id === variant.providerId) || activeConnection,
-          item: variant.stream || {
-            stream_id: variant.streamId,
-            series_id: variant.seriesId,
-            name: variant.title,
-            stream_type: 'series',
-            category_id: variant.categoryId || 'alternate',
-            stream_icon: variant.artwork,
-            cover: variant.artwork,
-            plot: variant.plot,
-            year: variant.year,
-          },
-        })),
-      ],
+      variants: buildContinuityVariants({
+        item: selectedSeries,
+        kind: 'series',
+        alternateVariants: selectedSeriesVariants,
+      }),
       activeConnectionId: activeConnection.id,
       history: watchHistory,
     });
-  }, [activeConnection, connections, selectedSeries, selectedSeriesVariants, watchHistory]);
+  }, [activeConnection, buildContinuityVariants, connectionStatus, selectedSeries, selectedSeriesVariants, watchHistory]);
 
   const bannerTone = cacheMode === 'offline'
     ? 'border-amber-400/30 bg-amber-500/10 text-amber-100'

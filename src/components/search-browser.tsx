@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
-import { buildGroupedSearchResults, describeSeriesCompletenessBand, GroupedSearchResult } from '@/lib/search-continuity';
+import { buildGroupedSearchResults, describeSeriesCompletenessBand, GroupedSearchResult, SearchResultVariantPayload } from '@/lib/search-continuity';
 import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId } from '@/lib/xtream-api';
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
@@ -39,6 +39,33 @@ const getVariantActionLabel = (kind: GroupedSearchResult['kind']) => {
   if (kind === 'live') return 'Play live';
   if (kind === 'movie') return 'Play movie';
   return 'Browse series';
+};
+
+const buildSeriesResultHref = (result: Pick<GroupedSearchResult, 'item' | 'continuity'>) => {
+  const contentId = getContentId(result.item);
+  const season = result.continuity.canonicalEpisodeMapping?.preferredSeasonNumber;
+  const episode = result.continuity.canonicalEpisodeMapping?.preferredEpisodeNumber;
+  const params = new URLSearchParams({ seriesId: String(result.item.series_id ?? contentId) });
+
+  if (season) params.set('season', String(season));
+  if (episode) params.set('episode', String(episode));
+
+  return `/series?${params.toString()}`;
+};
+
+const buildSeriesVariantHref = (
+  result: Pick<GroupedSearchResult, 'continuity'>,
+  variant: Pick<SearchResultVariantPayload, 'item'>
+) => {
+  const variantContentId = getContentId(variant.item);
+  const season = result.continuity.canonicalEpisodeMapping?.preferredSeasonNumber;
+  const episode = result.continuity.canonicalEpisodeMapping?.preferredEpisodeNumber;
+  const params = new URLSearchParams({ seriesId: String(variant.item.series_id ?? variantContentId) });
+
+  if (season) params.set('season', String(season));
+  if (episode) params.set('episode', String(episode));
+
+  return `/series?${params.toString()}`;
 };
 
 export function SearchBrowser() {
@@ -529,7 +556,7 @@ export function SearchBrowser() {
                             <div className="flex flex-wrap gap-2">
                               {result.kind === 'series' ? (
                                 <Link
-                                  href={`/series?seriesId=${variant.item.series_id ?? variantContentId}`}
+                                  href={buildSeriesVariantHref(result, variant)}
                                   onClick={() => setActiveConnection(variant.provider.id)}
                                   className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
                                 >
@@ -574,7 +601,7 @@ export function SearchBrowser() {
                     </button>
                   ) : (
                     <Link
-                      href={`/series?seriesId=${contentId}`}
+                      href={buildSeriesResultHref(result)}
                       onClick={() => setActiveConnection(result.provider.id)}
                       className="flex-1 rounded-2xl border border-white/10 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/5"
                     >
