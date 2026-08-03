@@ -19,6 +19,7 @@ import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
+import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
@@ -245,6 +246,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const recoveryWitness = useMemo(
+    () => manifest?.surfaceRecoveryWitnesses.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const rescueReceipt = useMemo(
     () => manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -379,6 +384,7 @@ export function HomeDashboard() {
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
+      <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
       <SurfaceIdentityAnchor contract={identityAnchor} badge="Identity anchor" />

@@ -18,6 +18,7 @@ import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
+import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
@@ -147,6 +148,10 @@ export default function LoginPage() {
   );
   const explanationBoundary = useMemo(
     () => manifest?.surfaceExplanationBoundaries?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const recoveryWitness = useMemo(
+    () => manifest?.surfaceRecoveryWitnesses?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const rescueReceipt = useMemo(
@@ -296,6 +301,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
           </div>
 
           <div className="mt-6">
