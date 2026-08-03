@@ -1,5 +1,5 @@
 import { canonicalizeSavedConnection, getProviderIdentityCandidates } from './provider-identity';
-import { LibraryCollection, ProviderCatalog, ProviderHomeSnapshot, SavedConnection, WatchHistoryItem } from './types';
+import { FavoriteEntry, LibraryCollection, ProviderCatalog, ProviderHomeSnapshot, SavedConnection, WatchHistoryItem } from './types';
 
 const KEYS = {
   connections: 'streamdeck.connections',
@@ -25,6 +25,62 @@ const safeJsonParse = <T,>(value: string | null, fallback: T): T => {
 const isBrowser = () => typeof window !== 'undefined';
 
 const dedupeNumbers = (values: number[]) => [...new Set(values.filter((value) => Number.isFinite(value)))];
+
+const isFavoriteEntry = (value: unknown): value is FavoriteEntry => (
+  typeof value === 'object'
+  && value !== null
+  && Number.isFinite((value as FavoriteEntry).streamId)
+  && typeof (value as FavoriteEntry).providerId === 'string'
+);
+
+const mergeFavoriteEntries = (current: FavoriteEntry[], incoming: FavoriteEntry[]) => {
+  const merged = [...current, ...incoming].reduce<Record<number, FavoriteEntry>>((acc, entry) => {
+    const existing = acc[entry.streamId];
+    if (!existing || (entry.updatedAt || 0) >= (existing.updatedAt || 0)) {
+      acc[entry.streamId] = entry;
+    }
+    return acc;
+  }, {});
+  return Object.values(merged).sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0));
+};
+
+const normalizeProviderFavoriteEntries = (value: unknown) => {
+  if (!value || Array.isArray(value) || typeof value !== 'object') return {} as Record<string, FavoriteEntry[]>;
+
+  return Object.entries(value as Record<string, unknown>).reduce<Record<string, FavoriteEntry[]>>((acc, [providerId, entries]) => {
+    if (!Array.isArray(entries)) return acc;
+
+    const normalized = entries.reduce<FavoriteEntry[]>((items, entry) => {
+      if (typeof entry === 'number' && Number.isFinite(entry)) {
+        items.push({
+          providerId,
+          streamId: entry,
+          kind: 'movie',
+          title: '',
+          addedAt: 0,
+          updatedAt: 0,
+        });
+        return items;
+      }
+
+      if (!isFavoriteEntry(entry)) return items;
+
+      items.push({
+        ...entry,
+        providerId,
+        streamId: Number(entry.streamId),
+        title: entry.title || '',
+        kind: entry.kind || 'movie',
+        addedAt: entry.addedAt || entry.updatedAt || 0,
+        updatedAt: entry.updatedAt || entry.addedAt || 0,
+      });
+      return items;
+    }, []);
+
+    if (normalized.length > 0) acc[providerId] = mergeFavoriteEntries([], normalized);
+    return acc;
+  }, {});
+};
 
 const pickNewerConnection = (current: SavedConnection, incoming: SavedConnection) => {
   if ((incoming.connectedAt || 0) >= (current.connectedAt || 0)) {
@@ -84,6 +140,19 @@ const remapCollections = (collections: LibraryCollection[], aliasMap: Record<str
     }, []),
   }));
 
+const remapFavoriteEntries = (favorites: Record<string, FavoriteEntry[]>, aliasMap: Record<string, string>) =>
+  Object.entries(favorites).reduce<Record<string, FavoriteEntry[]>>((acc, [providerId, entries]) => {
+    const canonicalProviderId = aliasMap[providerId] || providerId;
+    const remapped = entries.map((entry) => ({
+      ...entry,
+      providerId: canonicalProviderId,
+    }));
+    acc[canonicalProviderId] = acc[canonicalProviderId]
+      ? mergeFavoriteEntries(acc[canonicalProviderId], remapped)
+      : mergeFavoriteEntries([], remapped);
+    return acc;
+  }, {});
+
 export const storage = {
   getConnections(): SavedConnection[] {
     if (!isBrowser()) return [];
@@ -115,9 +184,30 @@ export const storage = {
   },
   getProviderFavorites(): Record<string, number[]> {
     if (!isBrowser()) return {};
-    return safeJsonParse(localStorage.getItem(KEYS.favorites), {});
+    return Object.fromEntries(
+      Object.entries(storage.getProviderFavoriteEntries()).map(([providerId, entries]) => [providerId, dedupeNumbers(entries.map((entry) => entry.streamId))])
+    );
   },
   saveProviderFavorites(favorites: Record<string, number[]>) {
+    if (!isBrowser()) return;
+    const entries = Object.entries(favorites).reduce<Record<string, FavoriteEntry[]>>((acc, [providerId, streamIds]) => {
+      acc[providerId] = dedupeNumbers(streamIds).map((streamId) => ({
+        providerId,
+        streamId,
+        kind: 'movie',
+        title: '',
+        addedAt: 0,
+        updatedAt: 0,
+      }));
+      return acc;
+    }, {});
+    storage.saveProviderFavoriteEntries(entries);
+  },
+  getProviderFavoriteEntries(): Record<string, FavoriteEntry[]> {
+    if (!isBrowser()) return {};
+    return normalizeProviderFavoriteEntries(safeJsonParse<unknown>(localStorage.getItem(KEYS.favorites), {}));
+  },
+  saveProviderFavoriteEntries(favorites: Record<string, FavoriteEntry[]>) {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.favorites, JSON.stringify(favorites));
   },
@@ -216,9 +306,7 @@ export const storage = {
     const connections = Object.values(mergedConnections).sort((left, right) => (right.connectedAt || 0) - (left.connectedAt || 0));
     const nextActiveConnectionId = activeConnectionId ? aliasMap[activeConnectionId] || activeConnectionId : connections[0]?.id || null;
 
-    const providerFavorites = remapProviderMap(storage.getProviderFavorites(), aliasMap, (current, incoming) =>
-      dedupeNumbers([...current, ...incoming])
-    );
+    const providerFavoriteEntries = remapFavoriteEntries(storage.getProviderFavoriteEntries(), aliasMap);
     const catalogs = remapProviderMap(storage.getCatalogs(), aliasMap, (current, incoming) =>
       (incoming.updatedAt || 0) >= (current.updatedAt || 0) ? incoming : current
     );
@@ -231,7 +319,7 @@ export const storage = {
     localStorage.setItem(KEYS.connections, JSON.stringify(connections));
     if (nextActiveConnectionId) localStorage.setItem(KEYS.activeConnection, nextActiveConnectionId);
     else localStorage.removeItem(KEYS.activeConnection);
-    localStorage.setItem(KEYS.favorites, JSON.stringify(providerFavorites));
+    localStorage.setItem(KEYS.favorites, JSON.stringify(providerFavoriteEntries));
     localStorage.setItem(KEYS.catalogs, JSON.stringify(catalogs));
     localStorage.setItem(KEYS.homeSnapshots, JSON.stringify(homeSnapshots));
     localStorage.setItem(KEYS.history, JSON.stringify(history));

@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustDisplay, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
-import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
+import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
+import { useLibraryStore } from '@/stores/library-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
@@ -37,7 +38,10 @@ export function LibraryCollections({ mode }: CollectionsProps) {
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const validateConnection = useAuthStore((state) => state.validateConnection);
-  const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
+  const getFavoriteEntriesForProvider = useFavoritesStore((state) => state.getFavoriteEntriesForProvider);
+  const getCatalogSnapshot = useLibraryStore((state) => state.getCatalogSnapshot);
+  const markCatalogFromCache = useLibraryStore((state) => state.markCatalogFromCache);
+  const refreshProviderCatalog = useLibraryStore((state) => state.refreshProviderCatalog);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const playStream = usePlayerStore((state) => state.playStream);
 
@@ -78,8 +82,9 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     let cancelled = false;
     if (!activeConnection || mode !== 'favorites') return;
 
-    const cached = getCachedSearchCatalog(activeConnection.id, Number.MAX_SAFE_INTEGER);
+    const cached = getCatalogSnapshot(activeConnection.id, Number.MAX_SAFE_INTEGER);
     if (cached) {
+      markCatalogFromCache(activeConnection.id);
       const mergedCached = [...cached.live, ...cached.vod, ...cached.series];
       setCatalog(Object.fromEntries(mergedCached.map((item) => [getContentId(item), item])));
       setCacheState('cached');
@@ -89,7 +94,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     }
 
     setLoading(true);
-    refreshSearchCatalog(activeConnection)
+    refreshProviderCatalog(activeConnection)
       .then((freshCatalog) => {
         if (cancelled) return;
         const merged = [...freshCatalog.live, ...freshCatalog.vod, ...freshCatalog.series];
@@ -105,16 +110,35 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     return () => {
       cancelled = true;
     };
-  }, [activeConnection, connections, mode]);
+  }, [activeConnection, getCatalogSnapshot, markCatalogFromCache, mode, refreshProviderCatalog]);
 
-  const favoriteIds = useMemo(
-    () => (activeConnection ? getFavoritesForProvider(activeConnection.id) : []),
-    [activeConnection, getFavoritesForProvider]
+  const favoriteEntries = useMemo(
+    () => (activeConnection ? getFavoriteEntriesForProvider(activeConnection.id) : []),
+    [activeConnection, getFavoriteEntriesForProvider]
   );
 
   const favoriteItems = useMemo(
-    () => favoriteIds.map((id) => catalog[id]).filter(Boolean),
-    [catalog, favoriteIds]
+    () => favoriteEntries.map((entry) => {
+      const cachedItem = catalog[entry.streamId];
+      if (cachedItem) return { entry, item: cachedItem };
+
+      const fallbackItem: XtreamStream = {
+        name: entry.title || 'Saved favorite',
+        stream_type: entry.kind,
+        stream_id: entry.kind === 'series' ? undefined : entry.streamId,
+        series_id: entry.kind === 'series' ? entry.seriesId ?? entry.streamId : undefined,
+        category_id: entry.categoryId || 'saved',
+        channel_group: entry.categoryName,
+        stream_icon: entry.artwork,
+        cover: entry.artwork,
+        plot: entry.plot,
+        genre: entry.genre,
+        year: entry.year,
+      };
+
+      return { entry, item: fallbackItem };
+    }),
+    [catalog, favoriteEntries]
   );
 
   const continueItems = useMemo(
@@ -132,13 +156,13 @@ export function LibraryCollections({ mode }: CollectionsProps) {
 
   const variantSummary = useMemo(() => {
     const summary: Record<string, ProviderVariant[]> = {};
-    favoriteItems.forEach((item) => {
-      summary[`favorite:${getContentId(item)}`] = getAlternateProviderVariants({
+    favoriteItems.forEach(({ item, entry }) => {
+      summary[`favorite:${entry.streamId}`] = getAlternateProviderVariants({
         providerVariants,
         activeConnectionId: activeConnection?.id,
-        title: item.name,
-        kind: item.stream_type as 'live' | 'movie' | 'series',
-        year: item.year,
+        title: item.name || entry.title,
+        kind: entry.kind,
+        year: item.year || entry.year,
       });
     });
 
@@ -148,6 +172,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         activeConnectionId: activeConnection?.id,
         title: item.title,
         kind: item.kind,
+        year: item.year,
         seriesTitle: item.seriesTitle,
       });
     });
@@ -458,13 +483,13 @@ export function LibraryCollections({ mode }: CollectionsProps) {
           {cacheState === 'cached' ? <div className="mb-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">Loaded favorites from cached provider catalog first, then refreshed in the background.</div> : null}
           {!loading && favoriteItems.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Save channels or titles from Live, Movies, or Series and they will show up here for {activeConnection.name}.</div> : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {favoriteItems.map((item) => {
+            {favoriteItems.map(({ entry, item }) => {
               const playbackUrl = item.stream_type === 'live'
                 ? buildLiveStreamUrl(activeConnection, item)
                 : item.stream_type === 'series'
                   ? null
                   : buildVodStreamUrl(activeConnection, item);
-              const contentId = getContentId(item);
+              const contentId = entry.streamId;
               const seriesResume = item.stream_type === 'series' ? seriesResumeLookup[normalizeLibraryKey(item.name)] : null;
               return (
                 <article key={`${item.stream_type}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
@@ -480,7 +505,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   {item.stream_type === 'series' && seriesResume ? (
                     <p className="mt-3 text-xs leading-5 text-emerald-200">Resume context found for S{seriesResume.seasonNumber}E{seriesResume.episodeNumber}, so alternate provider copies can jump straight back into the episode.</p>
                   ) : null}
-                  {renderProviderVariants(variantSummary[`favorite:${contentId}`] || [], item.stream_type === 'series' && seriesResume
+                  {renderProviderVariants(variantSummary[`favorite:${entry.streamId}`] || [], item.stream_type === 'series' && seriesResume
                     ? {
                         seriesTitle: item.name,
                         seasonNumber: seriesResume.seasonNumber,
@@ -511,8 +536,8 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                         streamId: contentId,
                         kind: 'series',
                         artwork: getArtwork(item),
-                        categoryId: item.category_id,
-                        seriesId: item.series_id ?? contentId,
+                        categoryId: item.category_id || entry.categoryId,
+                        seriesId: item.series_id ?? entry.seriesId ?? contentId,
                         trustScore: 0,
                       }, {
                         title: item.name,

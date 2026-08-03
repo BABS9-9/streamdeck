@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getProviderTrustDisplay, getProviderTrustLabel, ProviderVariant } from '@/lib/provider-recovery';
+import { buildVariantContinuityPayload, describeSeriesCompletenessBand, SearchResultVariantPayload } from '@/lib/search-continuity';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
-import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, getSeries, getSeriesInfo, getVodStreams, refreshSearchCatalog, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
+import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getContentId, getSeriesInfo, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderScenario, XtreamEpisode, XtreamSeriesInfo, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
+import { useLibraryStore } from '@/stores/library-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
@@ -24,6 +26,36 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   authUnstable: 'Auth unstable',
 };
 
+const toSearchVariantPayload = ({
+  provider,
+  item,
+  kind,
+}: {
+  provider: NonNullable<ReturnType<typeof useAuthStore.getState>['activeConnection']>;
+  item: XtreamStream;
+  kind: 'movie' | 'series';
+}): SearchResultVariantPayload => ({
+  providerId: provider.id,
+  providerName: provider.name,
+  title: item.name,
+  streamId: getContentId(item),
+  kind,
+  artwork: getArtwork(item),
+  categoryId: item.category_id,
+  categoryName: item.genre || item.channel_group,
+  playbackUrl: kind === 'movie' ? buildVodStreamUrl(provider, item) : null,
+  seriesId: item.series_id,
+  year: item.year,
+  plot: item.plot,
+  trustScore: 0,
+  warning: null,
+  stream: item,
+  compositeScore: 0,
+  isPrimary: true,
+  provider,
+  item,
+});
+
 export function MediaLibrary({
   kind,
   initialSeriesId,
@@ -39,6 +71,9 @@ export function MediaLibrary({
   const connections = useAuthStore((state) => state.connections);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const getCatalogSnapshot = useLibraryStore((state) => state.getCatalogSnapshot);
+  const markCatalogFromCache = useLibraryStore((state) => state.markCatalogFromCache);
+  const refreshProviderCatalog = useLibraryStore((state) => state.refreshProviderCatalog);
   const playStream = usePlayerStore((state) => state.playStream);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
 
@@ -91,10 +126,11 @@ export function MediaLibrary({
     let cancelled = false;
     setLoading(true);
 
-    const cachedCatalog = getCachedSearchCatalog(activeConnection.id, Number.POSITIVE_INFINITY);
+    const cachedCatalog = getCatalogSnapshot(activeConnection.id, Number.POSITIVE_INFINITY);
     const cachedItems = kind === 'movies' ? cachedCatalog?.vod : cachedCatalog?.series;
 
     if (cachedItems?.length) {
+      markCatalogFromCache(activeConnection.id);
       setItems(cachedItems);
       setCacheMode('cached');
       setCacheMessage(
@@ -109,9 +145,9 @@ export function MediaLibrary({
       setCacheMessage(null);
     }
 
-    const loader = kind === 'movies' ? getVodStreams(activeConnection) : getSeries(activeConnection);
-    loader.then((nextItems) => {
+    refreshProviderCatalog(activeConnection).then((freshCatalog) => {
       if (cancelled) return;
+      const nextItems = kind === 'movies' ? freshCatalog.vod : freshCatalog.series;
       setItems(nextItems);
       setLoading(false);
       setCacheMode('live');
@@ -123,7 +159,6 @@ export function MediaLibrary({
           : null
       );
       setScenarioRefreshing(false);
-      refreshSearchCatalog(activeConnection).catch(() => null);
     }).catch(() => {
       if (cancelled) return;
       if (cachedItems?.length) {
@@ -146,7 +181,7 @@ export function MediaLibrary({
     return () => {
       cancelled = true;
     };
-  }, [activeConnection, kind, scenario, scenarioRefreshing]);
+  }, [activeConnection, getCatalogSnapshot, kind, markCatalogFromCache, refreshProviderCatalog, scenario, scenarioRefreshing]);
 
   const providerHistory = useMemo(
     () => (activeConnection ? watchHistory.filter((item) => item.providerId === activeConnection.id && item.kind !== 'live') : []),
@@ -258,6 +293,64 @@ export function MediaLibrary({
       year: selectedSeries.year,
     });
   }, [activeConnection, providerVariants, selectedSeries]);
+  const movieContinuity = useMemo(() => {
+    if (!featuredMovie || !activeConnection) return null;
+    return buildVariantContinuityPayload({
+      title: featuredMovie.name,
+      kind: 'movie',
+      variants: [
+        toSearchVariantPayload({ provider: activeConnection, item: featuredMovie, kind: 'movie' }),
+        ...movieVariants.map((variant) => ({
+          ...variant,
+          compositeScore: variant.trustScore,
+          isPrimary: false,
+          provider: connections.find((connection) => connection.id === variant.providerId) || activeConnection,
+          item: variant.stream || {
+            stream_id: variant.streamId,
+            series_id: variant.seriesId,
+            name: variant.title,
+            stream_type: 'movie',
+            category_id: variant.categoryId || 'alternate',
+            stream_icon: variant.artwork,
+            cover: variant.artwork,
+            plot: variant.plot,
+            year: variant.year,
+          },
+        })),
+      ],
+      activeConnectionId: activeConnection.id,
+      history: watchHistory,
+    });
+  }, [activeConnection, connections, featuredMovie, movieVariants, watchHistory]);
+  const seriesContinuity = useMemo(() => {
+    if (!selectedSeries || !activeConnection) return null;
+    return buildVariantContinuityPayload({
+      title: selectedSeries.name,
+      kind: 'series',
+      variants: [
+        toSearchVariantPayload({ provider: activeConnection, item: selectedSeries, kind: 'series' }),
+        ...selectedSeriesVariants.map((variant) => ({
+          ...variant,
+          compositeScore: variant.trustScore,
+          isPrimary: false,
+          provider: connections.find((connection) => connection.id === variant.providerId) || activeConnection,
+          item: variant.stream || {
+            stream_id: variant.streamId,
+            series_id: variant.seriesId,
+            name: variant.title,
+            stream_type: 'series',
+            category_id: variant.categoryId || 'alternate',
+            stream_icon: variant.artwork,
+            cover: variant.artwork,
+            plot: variant.plot,
+            year: variant.year,
+          },
+        })),
+      ],
+      activeConnectionId: activeConnection.id,
+      history: watchHistory,
+    });
+  }, [activeConnection, connections, selectedSeries, selectedSeriesVariants, watchHistory]);
 
   const bannerTone = cacheMode === 'offline'
     ? 'border-amber-400/30 bg-amber-500/10 text-amber-100'
@@ -382,9 +475,16 @@ export function MediaLibrary({
         <ProviderRecoveryRail
           tone={activeProviderNeedsRecovery ? 'amber' : 'emerald'}
           eyebrow="Provider variants"
-          title="This title also exists on healthier saved providers."
-          detail="Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first."
+          title={options?.type === 'series' ? 'Series continuity is portable across saved providers.' : 'This title also exists on healthier saved providers.'}
+          detail={options?.type === 'series'
+            ? seriesContinuity?.summary || 'Canonical episode mapping still protects series rescue before playback switches providers.'
+            : movieContinuity?.summary || 'Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first.'}
         />
+        {options?.type === 'series' && seriesContinuity?.seriesCompletenessBand ? (
+          <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-100">
+            {describeSeriesCompletenessBand(seriesContinuity.seriesCompletenessBand)}
+          </div>
+        ) : null}
         {variants.map((variant) => {
           const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
           const isSeries = options?.type === 'series';
@@ -546,6 +646,12 @@ export function MediaLibrary({
                 </div>
                 <p className="mt-4 text-sm leading-7 text-slate-300">{featuredMovie.plot || featuredMovie.tagline || 'Select a movie card to inspect its richer provider metadata.'}</p>
                 <p className="mt-3 text-sm text-slate-400">{featuredMovie.director ? `Directed by ${featuredMovie.director}` : ''}{featuredMovie.cast ? `${featuredMovie.director ? ' · ' : ''}${featuredMovie.cast}` : ''}</p>
+                {movieContinuity ? (
+                  <div className="mt-5 rounded-[1.2rem] border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-100">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Provider continuity</p>
+                    <p className="mt-2 leading-6">{movieContinuity.summary}</p>
+                  </div>
+                ) : null}
                 {activeProviderNeedsRecovery && activeRecoveryMessage ? (
                   <div className="mt-5 rounded-[1.2rem] border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
                     <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Active provider warning</p>
@@ -711,6 +817,22 @@ export function MediaLibrary({
               </div>
               <p className="mt-3 text-sm leading-7 text-slate-300">{selectedSeries.plot || 'Select a mock series to load the real season and episode payload.'}</p>
               <p className="mt-3 text-sm text-slate-400">{selectedSeries.tagline || ''}{selectedSeries.cast ? `${selectedSeries.tagline ? ' · ' : ''}${selectedSeries.cast}` : ''}</p>
+              {seriesContinuity ? (
+                <div className="mt-4 rounded-[1.2rem] border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-100">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Series continuity</p>
+                  <p className="mt-2 leading-6">{seriesContinuity.summary}</p>
+                  {seriesContinuity.seriesCompletenessBand ? (
+                    <p className="mt-2 text-xs text-sky-50/80">{describeSeriesCompletenessBand(seriesContinuity.seriesCompletenessBand)}</p>
+                  ) : null}
+                  {seriesContinuity.canonicalEpisodeMapping?.preferredSeasonNumber && seriesContinuity.canonicalEpisodeMapping?.preferredEpisodeNumber ? (
+                    <p className="mt-2 text-xs text-sky-50/80">
+                      Resume hook is pinned to S{seriesContinuity.canonicalEpisodeMapping.preferredSeasonNumber}E{seriesContinuity.canonicalEpisodeMapping.preferredEpisodeNumber} before provider handoff.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-xs text-sky-50/80">Canonical episode mapping still runs through `get_series_info` before rescue playback is claimed as exact.</p>
+                  )}
+                </div>
+              ) : null}
               {selectedSeriesResume ? (
                 <p className="mt-3 text-xs uppercase tracking-[0.22em] text-violet-200">
                   Resume available · {formatPercent(selectedSeriesResume.progress)}

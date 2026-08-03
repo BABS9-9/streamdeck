@@ -233,7 +233,7 @@ export function LiveBrowser() {
                     Play in dock
                   </button>
                   <button
-                    onClick={() => toggleFavorite(activeConnection.id, getContentId(selectedStream))}
+                    onClick={() => toggleFavorite(activeConnection.id, getContentId(selectedStream), selectedStream)}
                     className="rounded-full border border-white/10 px-5 py-3 text-sm text-slate-200 transition hover:bg-white/5"
                   >
                     {favorites.includes(getContentId(selectedStream)) ? 'Remove favorite' : 'Add favorite'}

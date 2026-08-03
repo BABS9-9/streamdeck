@@ -50,15 +50,22 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   dockMode: 'compact',
   hydrate: () => {
     const history = storage.getHistory().map((item) => {
-      if (item.kind !== 'live' || item.categoryName || !item.providerId) return item;
+      if (!item.providerId) return item;
       const catalog = getCachedSearchCatalog(item.providerId, Number.MAX_SAFE_INTEGER);
-      const liveMatch = catalog?.live.find((entry) => getContentId(entry) === item.streamId);
-      if (!liveMatch) return item;
+      const match = item.kind === 'live'
+        ? catalog?.live.find((entry) => getContentId(entry) === item.streamId)
+        : item.kind === 'series'
+          ? catalog?.series.find((entry) => getContentId(entry) === item.seriesId || getContentId(entry) === item.streamId)
+          : catalog?.vod.find((entry) => getContentId(entry) === item.streamId);
+      if (!match) return item;
       return {
         ...item,
-        categoryName: liveMatch.channel_group,
-        categoryId: liveMatch.category_id || item.categoryId,
-        artwork: item.artwork || getArtwork(liveMatch),
+        categoryName: item.categoryName || match.channel_group,
+        categoryId: match.category_id || item.categoryId,
+        artwork: item.artwork || getArtwork(match),
+        year: item.year || match.year,
+        title: item.title || match.name,
+        seriesTitle: item.seriesTitle || (item.kind === 'series' ? match.name : item.seriesTitle),
       };
     });
 
@@ -77,9 +84,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       artwork: getArtwork(stream),
       categoryId: stream.category_id,
       categoryName: stream.channel_group,
+      year: stream.year,
       playbackUrl,
       seriesId: meta?.seriesId ?? existing?.seriesId,
-      seriesTitle: meta?.seriesTitle ?? existing?.seriesTitle,
+      seriesTitle: meta?.seriesTitle ?? existing?.seriesTitle ?? (stream.stream_type === 'series' ? stream.name : undefined),
       seasonNumber: meta?.seasonNumber ?? existing?.seasonNumber,
       episodeNumber: meta?.episodeNumber ?? existing?.episodeNumber,
       progress: existing?.progress ?? (stream.stream_type === 'live' ? 1 : 0.02),
@@ -130,9 +138,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       artwork: getArtwork(currentStream),
       categoryId: currentStream.category_id,
       categoryName: existing?.categoryName ?? currentStream.channel_group,
+      year: existing?.year ?? currentStream.year,
       playbackUrl: playbackUrl ?? existing?.playbackUrl,
       seriesId: existing?.seriesId,
-      seriesTitle: existing?.seriesTitle,
+      seriesTitle: existing?.seriesTitle ?? (currentStream.stream_type === 'series' ? currentStream.name : undefined),
       seasonNumber: existing?.seasonNumber,
       episodeNumber: existing?.episodeNumber,
       progress,

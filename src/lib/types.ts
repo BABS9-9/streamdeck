@@ -130,6 +130,7 @@ export type WatchHistoryItem = {
   artwork?: string;
   categoryId?: string;
   categoryName?: string;
+  year?: string;
   playbackUrl?: string;
   seriesId?: number;
   seriesTitle?: string;
@@ -138,6 +139,22 @@ export type WatchHistoryItem = {
   progress: number;
   positionSeconds?: number;
   durationSeconds?: number;
+  updatedAt: number;
+};
+
+export type FavoriteEntry = {
+  providerId: string;
+  streamId: number;
+  kind: 'live' | 'movie' | 'series';
+  title: string;
+  artwork?: string;
+  plot?: string;
+  genre?: string;
+  categoryId?: string;
+  categoryName?: string;
+  year?: string;
+  seriesId?: number;
+  addedAt: number;
   updatedAt: number;
 };
 
@@ -165,6 +182,13 @@ export type ProviderCatalog = {
   vod: XtreamStream[];
   series: XtreamStream[];
   updatedAt: number;
+};
+
+export type ProviderCatalogSyncState = {
+  status: 'idle' | 'refreshing' | 'ready' | 'error';
+  source: 'none' | 'cache' | 'network';
+  updatedAt: number | null;
+  error: string | null;
 };
 
 export type ProviderHomeSnapshot = {

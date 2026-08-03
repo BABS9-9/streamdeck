@@ -4,202 +4,17 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
-import { buildProviderVariant, getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay, rankProviderVariants } from '@/lib/provider-recovery';
-import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getCachedSearchCatalog, getContentId, refreshSearchCatalog } from '@/lib/xtream-api';
+import { buildGroupedSearchResults, describeSeriesCompletenessBand, GroupedSearchResult } from '@/lib/search-continuity';
+import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
+import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId } from '@/lib/xtream-api';
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
+import { useLibraryStore } from '@/stores/library-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
 import { ProviderTrustStack } from './provider-trust-stack';
-
-type SearchResultVariant = ReturnType<typeof rankProviderVariants>[number] & {
-  provider: SavedConnection;
-  item: XtreamStream;
-};
-
-type SearchResult = {
-  provider: SavedConnection;
-  item: XtreamStream;
-  kind: 'live' | 'movie' | 'series';
-  score: number;
-  matchReason: string;
-  duplicateCount: number;
-  providerCount: number;
-  variants: SearchResultVariant[];
-};
-
-const SEARCH_ALIASES: Record<string, string[]> = {
-  sports: ['sport', 'sports', 'fight', 'goal', 'match', 'arena'],
-  news: ['news', 'headline', 'report', 'desk', 'wire'],
-  movie: ['movie', 'movies', 'cinema', 'film', 'premiere'],
-  kids: ['kids', 'kid', 'cartoon', 'family', 'junior'],
-};
-
-const normalizeSearchText = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
-const getSearchTerms = (query: string) => {
-  const normalized = normalizeSearchText(query);
-  const tokens = normalized.split(/\s+/).filter(Boolean);
-  const expanded = new Set(tokens);
-  tokens.forEach((token) => {
-    SEARCH_ALIASES[token]?.forEach((alias) => expanded.add(alias));
-  });
-  return { normalized, tokens, expandedTokens: [...expanded] };
-};
-
-const buildSearchKey = (item: XtreamStream, kind: SearchResult['kind']) => {
-  const normalizedName = normalizeSearchText(item.name);
-  const year = item.year || item.releasedate?.slice(0, 4) || '';
-  return `${kind}:${normalizedName}:${year}`;
-};
-
-const scoreResult = (query: ReturnType<typeof getSearchTerms>, item: XtreamStream, kind: SearchResult['kind']) => {
-  const normalizedName = normalizeSearchText(item.name);
-  const haystack = normalizeSearchText(`${item.name} ${item.genre || ''} ${item.plot || ''} ${item.channel_group || ''} ${item.tagline || ''}`);
-  if (!haystack) return null;
-
-  let score = 0;
-  let matchedTerms = 0;
-
-  if (normalizedName === query.normalized) score += 140;
-  else if (normalizedName.startsWith(query.normalized)) score += 90;
-
-  query.expandedTokens.forEach((term) => {
-    if (!haystack.includes(term)) return;
-    matchedTerms += 1;
-    const nameIndex = normalizedName.indexOf(term);
-    if (nameIndex === 0) score += 28;
-    else if (nameIndex > 0) score += Math.max(10, 24 - nameIndex);
-    else if ((item.genre || '').toLowerCase().includes(term)) score += 14;
-    else if ((item.channel_group || '').toLowerCase().includes(term)) score += 12;
-    else score += 8;
-  });
-
-  if (matchedTerms === 0) return null;
-
-  score += matchedTerms * 6;
-  if (kind === 'live') score += 12;
-  if (kind === 'movie') score += 6;
-  if (query.tokens.length > 1 && matchedTerms >= query.tokens.length) score += 18;
-  if (item.rating) score += Number(item.rating);
-
-  const matchReason = normalizedName === query.normalized
-    ? 'Exact title match'
-    : normalizedName.startsWith(query.normalized)
-      ? 'Title starts with your search'
-      : matchedTerms >= Math.max(2, query.tokens.length)
-        ? `Matched ${matchedTerms} search signals`
-        : (item.genre || '').toLowerCase().includes(query.tokens[0] || '')
-          ? `Genre match in ${item.genre}`
-          : kind === 'live'
-            ? 'Strong live-channel match'
-            : 'Relevant catalog match';
-
-  return { score, matchReason };
-};
-
-const rankResults = (
-  providerCatalogs: Array<{ provider: SavedConnection; catalog: Pick<ProviderCatalog, 'live' | 'vod' | 'series'> }>,
-  trimmed: string,
-  connectionStatus: Record<string, ConnectionStatus>
-) => {
-  const query = getSearchTerms(trimmed);
-  const deduped = new Map<string, SearchResult>();
-
-  providerCatalogs.forEach(({ provider, catalog }) => {
-    const buckets: Array<[SearchResult['kind'], XtreamStream[]]> = [
-      ['live', catalog.live],
-      ['movie', catalog.vod],
-      ['series', catalog.series],
-    ];
-
-    buckets.forEach(([kind, items]) => {
-      items.forEach((item) => {
-        const scored = scoreResult(query, item, kind);
-        if (!scored) return;
-
-        const key = buildSearchKey(item, kind);
-        const existing = deduped.get(key);
-        const candidateVariant = {
-          ...buildProviderVariant({
-            connection: provider,
-            status: connectionStatus[provider.id],
-            item,
-            kind,
-          }),
-          provider,
-          item,
-        } satisfies Omit<SearchResultVariant, 'compositeScore' | 'isPrimary'>;
-        const candidateCompositeScore = scored.score + candidateVariant.trustScore;
-
-        if (!existing) {
-          deduped.set(key, {
-            provider,
-            item,
-            kind,
-            score: candidateCompositeScore,
-            matchReason: scored.matchReason,
-            duplicateCount: 0,
-            providerCount: 1,
-            variants: [{
-              ...candidateVariant,
-              compositeScore: candidateCompositeScore,
-              isPrimary: true,
-            }],
-          });
-          return;
-        }
-
-        const variantLookup = new Map<string, SearchResultVariant>();
-        [...existing.variants, {
-          ...candidateVariant,
-          compositeScore: candidateCompositeScore,
-          isPrimary: false,
-        }].forEach((variant) => {
-          variantLookup.set(`${variant.providerId}-${variant.streamId}`, variant);
-        });
-
-        const rankedVariants = rankProviderVariants(
-          [...variantLookup.values()].map((variant) => variant),
-          Object.fromEntries(
-            [...variantLookup.values()].map((variant) => [
-              variant.providerId,
-              variant.providerId === candidateVariant.providerId ? scored.score : Math.max(0, Math.round(variant.compositeScore - variant.trustScore)),
-            ])
-          )
-        ).map((variant) => {
-          const matched = variantLookup.get(`${variant.providerId}-${variant.streamId}`)!;
-          return {
-            ...variant,
-            provider: matched.provider,
-            item: matched.item,
-          } satisfies SearchResultVariant;
-        });
-
-        const primaryVariant = rankedVariants[0];
-
-        deduped.set(key, {
-          provider: primaryVariant.provider,
-          item: primaryVariant.item,
-          kind,
-          score: primaryVariant.compositeScore,
-          matchReason: primaryVariant.providerId === candidateVariant.providerId
-            ? `${scored.matchReason} • healthiest ranked provider copy`
-            : `${existing.matchReason} • also found on ${existing.providerCount + 1} providers`,
-          duplicateCount: existing.duplicateCount + 1,
-          providerCount: existing.providerCount + 1,
-          variants: rankedVariants,
-        });
-      });
-    });
-  });
-
-  return [...deduped.values()]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 48);
-};
 
 const scenarioLabels: Record<MockProviderScenario, string> = {
   healthy: 'Healthy',
@@ -220,7 +35,7 @@ const getProviderRecoveryWarning = (summary?: { status?: string | null; activeCo
   return getProviderLinePressure(summary, 'Search can still work while playback becomes risky.');
 };
 
-const getVariantActionLabel = (kind: SearchResult['kind']) => {
+const getVariantActionLabel = (kind: GroupedSearchResult['kind']) => {
   if (kind === 'live') return 'Play live';
   if (kind === 'movie') return 'Play movie';
   return 'Browse series';
@@ -232,9 +47,13 @@ export function SearchBrowser() {
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const validateConnection = useAuthStore((state) => state.validateConnection);
+  const getCatalogSnapshot = useLibraryStore((state) => state.getCatalogSnapshot);
+  const markCatalogFromCache = useLibraryStore((state) => state.markCatalogFromCache);
+  const refreshProviderCatalogs = useLibraryStore((state) => state.refreshProviderCatalogs);
   const playStream = usePlayerStore((state) => state.playStream);
+  const watchHistory = usePlayerStore((state) => state.watchHistory);
 
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<GroupedSearchResult[]>([]);
   const [query, setQuery] = useState('sports');
   const [loading, setLoading] = useState(false);
   const [loadingLabel, setLoadingLabel] = useState('Searching all providers...');
@@ -287,11 +106,21 @@ export function SearchBrowser() {
 
     const timer = setTimeout(async () => {
       const cachedCatalogs = connections
-        .map((provider) => ({ provider, catalog: getCachedSearchCatalog(provider.id) }))
+        .map((provider) => {
+          const catalog = getCatalogSnapshot(provider.id);
+          if (catalog) markCatalogFromCache(provider.id);
+          return { provider, catalog };
+        })
         .filter((entry): entry is { provider: SavedConnection; catalog: ProviderCatalog } => Boolean(entry.catalog));
 
       if (cachedCatalogs.length > 0) {
-        setResults(rankResults(cachedCatalogs, trimmed, connectionStatus));
+        setResults(buildGroupedSearchResults({
+          providerCatalogs: cachedCatalogs,
+          query: trimmed,
+          connectionStatus,
+          activeConnectionId: activeConnection?.id,
+          watchHistory,
+        }));
         setUsingCache(true);
         setLoading(true);
         setLoadingLabel(scenarioRefreshing ? `Applying ${scenarioLabels[scenario].toLowerCase()} rehearsal...` : 'Refreshing cached provider catalogs...');
@@ -305,31 +134,36 @@ export function SearchBrowser() {
       setError(null);
 
       try {
-        const settled = await Promise.allSettled(
-          connections.map(async (provider) => ({
-            provider,
-            catalog: await refreshSearchCatalog(provider),
-          }))
-        );
+        const settled = await refreshProviderCatalogs(connections);
 
         if (cancelled) return;
 
         const successfulCatalogs = settled
-          .filter((result): result is PromiseFulfilledResult<{ provider: SavedConnection; catalog: ProviderCatalog }> => result.status === 'fulfilled')
-          .map((result) => result.value);
+          .filter((result): result is { providerId: string; catalog: ProviderCatalog } => Boolean(result.catalog))
+          .map((result) => ({
+            provider: connections.find((provider) => provider.id === result.providerId),
+            catalog: result.catalog,
+          }))
+          .filter((entry): entry is { provider: SavedConnection; catalog: ProviderCatalog } => Boolean(entry.provider && entry.catalog));
 
         const failedProviders = settled
-          .map((result, index) => ({ result, provider: connections[index] }))
-          .filter((entry): entry is { result: PromiseRejectedResult; provider: SavedConnection } => entry.result.status === 'rejected')
-          .map((entry) => ({
-            provider: entry.provider,
-            message: entry.result.reason instanceof Error ? entry.result.reason.message : 'Catalog refresh failed',
-          }));
+          .filter((result) => !result.catalog)
+          .map((result) => ({
+            provider: connections.find((provider) => provider.id === result.providerId),
+            message: result.error || 'Catalog refresh failed',
+          }))
+          .filter((entry): entry is { provider: SavedConnection; message: string } => Boolean(entry.provider));
 
         setDegradedProviders(failedProviders);
 
         if (successfulCatalogs.length > 0) {
-          setResults(rankResults(successfulCatalogs, trimmed, connectionStatus));
+          setResults(buildGroupedSearchResults({
+            providerCatalogs: successfulCatalogs,
+            query: trimmed,
+            connectionStatus,
+            activeConnectionId: activeConnection?.id,
+            watchHistory,
+          }));
           setUsingCache(cachedCatalogs.length > 0 || failedProviders.length > 0);
           if (failedProviders.length > 0) {
             setError(null);
@@ -354,7 +188,7 @@ export function SearchBrowser() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [connectionStatus, connections, query, scenario, scenarioRefreshing]);
+  }, [activeConnection?.id, connectionStatus, connections, query, scenario, scenarioRefreshing, watchHistory]);
 
   const groupedCounts = useMemo(() => {
     return results.reduce<Record<string, number>>((acc, result) => {
@@ -623,8 +457,31 @@ export function SearchBrowser() {
                   ) : null}
                   {result.providerCount > 1 ? (
                     <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-emerald-100">
-                      Also on {result.providerCount - 1} more provider{result.providerCount - 1 === 1 ? '' : 's'} · best trust-ranked copy shown
+                      Also on {result.providerCount - 1} more provider{result.providerCount - 1 === 1 ? '' : 's'} · {result.continuity.launchOwnerProviderName} owns launch
                     </span>
+                  ) : null}
+                  {result.kind === 'series' && result.continuity.seriesCompletenessBand ? (
+                    <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-2 text-sky-100">
+                      Series continuity · {result.continuity.seriesCompletenessBand}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                  <p className="uppercase tracking-[0.2em] text-slate-500">Continuity contract</p>
+                  <p className="mt-2 leading-5 text-slate-300">{result.continuity.summary}</p>
+                  {result.kind === 'series' && result.continuity.seriesCompletenessBand ? (
+                    <p className="mt-2 text-[11px] leading-5 text-sky-100">
+                      {describeSeriesCompletenessBand(result.continuity.seriesCompletenessBand)}
+                    </p>
+                  ) : null}
+                  {result.continuity.canonicalEpisodeMapping ? (
+                    <p className="mt-2 text-[11px] leading-5 text-slate-400">
+                      Episode mapping hook: `get_series_info` on {result.continuity.canonicalEpisodeMapping.providerIds.length} provider
+                      {result.continuity.canonicalEpisodeMapping.providerIds.length === 1 ? '' : 's'}
+                      {result.continuity.canonicalEpisodeMapping.preferredSeasonNumber && result.continuity.canonicalEpisodeMapping.preferredEpisodeNumber
+                        ? ` using S${result.continuity.canonicalEpisodeMapping.preferredSeasonNumber}E${result.continuity.canonicalEpisodeMapping.preferredEpisodeNumber} as the preferred resume target.`
+                        : ' before claiming an exact resume point.'}
+                    </p>
                   ) : null}
                 </div>
                 {providerRecoveryWarning ? (
@@ -647,7 +504,7 @@ export function SearchBrowser() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="uppercase tracking-[0.2em] text-emerald-200">Provider variants</p>
-                        <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">The healthiest copy won the main card, but alternate provider copies are still launchable from here.</p>
+                        <p className="mt-1 text-[11px] leading-5 text-emerald-100/80">{result.continuity.summary}</p>
                       </div>
                       <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-emerald-100">
                         {result.providerCount} providers
