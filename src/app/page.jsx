@@ -14,6 +14,7 @@ import { SurfaceExplanationBoundary } from '@/components/surface-explanation-bou
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
+import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
@@ -157,6 +158,10 @@ export default function LoginPage() {
   );
   const recoveryWitness = useMemo(
     () => manifest?.surfaceRecoveryWitnesses?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const interruptionBudget = useMemo(
+    () => manifest?.surfaceInterruptionBudgets?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const rescueReceipt = useMemo(
@@ -310,6 +315,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceAutonomyBoundary contract={autonomyBoundary} badge="Autonomy boundary" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceInterruptionBudget contract={interruptionBudget} badge="Interruption budget" />
           </div>
 
           <div className="mt-6">

@@ -15,6 +15,7 @@ import { SurfaceExplanationBoundary } from '@/components/surface-explanation-bou
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
+import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
@@ -255,6 +256,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceRecoveryWitnesses.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const interruptionBudget = useMemo(
+    () => manifest?.surfaceInterruptionBudgets.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const rescueReceipt = useMemo(
     () => manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -390,6 +395,7 @@ export function HomeDashboard() {
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
       <SurfaceAutonomyBoundary contract={autonomyBoundary} badge="Autonomy boundary" />
+      <SurfaceInterruptionBudget contract={interruptionBudget} badge="Interruption budget" />
       <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />

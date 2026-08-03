@@ -14,6 +14,7 @@ import { SurfaceExplanationBoundary } from '@/components/surface-explanation-bou
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
+import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
@@ -175,6 +176,7 @@ export function LiveBrowser() {
   const explanationBoundary = manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === 'live') ?? null;
   const autonomyBoundary = manifest?.surfaceAutonomyBoundaries.find((item) => item.screenId === 'live') ?? null;
   const recoveryWitness = manifest?.surfaceRecoveryWitnesses.find((item) => item.screenId === 'live') ?? null;
+  const interruptionBudget = manifest?.surfaceInterruptionBudgets.find((item) => item.screenId === 'live') ?? null;
   const rescueReceipt = manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'live') ?? null;
   const fallbackCost = manifest?.surfaceFallbackCosts.find((item) => item.screenId === 'live') ?? null;
   const identityAnchor = manifest?.surfaceIdentityAnchors.find((item) => item.screenId === 'live') ?? null;
@@ -198,6 +200,7 @@ export function LiveBrowser() {
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
       <SurfaceAutonomyBoundary contract={autonomyBoundary} badge="Autonomy boundary" />
+      <SurfaceInterruptionBudget contract={interruptionBudget} badge="Interruption budget" />
       <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
