@@ -20,6 +20,7 @@ import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
+import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
@@ -123,6 +124,10 @@ export default function LoginPage() {
   );
   const providerChoice = useMemo(
     () => manifest?.surfaceProviderChoiceContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const providerSwitchContract = useMemo(
+    () => manifest?.surfaceProviderSwitchContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const recoveryPlan = useMemo(
@@ -288,6 +293,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
           </div>
 
           <div className="mt-6">

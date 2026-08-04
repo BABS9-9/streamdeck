@@ -21,6 +21,7 @@ import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
+import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
@@ -221,6 +222,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const providerSwitchContract = useMemo(
+    () => manifest?.surfaceProviderSwitchContracts.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const recoveryPlan = useMemo(
     () => manifest?.surfaceRecoveryPlans.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -392,6 +397,7 @@ export function HomeDashboard() {
       <SurfaceContinuityWindow contract={continuityWindow} badge="Browse continuity" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
+      <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
