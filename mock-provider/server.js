@@ -375,6 +375,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Provider-switch truth on login',
+    detail: 'The adapter now publishes when the current provider has honestly lost the next Home launch, what setup context a switch must preserve, and what proof lets Login keep the current provider in control.',
+    surface: 'login',
+  },
+  {
     title: 'Retry honesty on login',
     detail: 'The adapter now publishes when retrying the same provider is still preserving setup intent, what context retry keeps alive, and what trigger means recovery should replace reconnect.',
     surface: 'login',
@@ -460,6 +465,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Provider-switch truth on Home',
+    detail: 'The adapter now publishes when the current provider has honestly lost featured-browse ownership, what discovery context a switch must preserve, and what proof lets Home keep the current provider controlling the hero.',
+    surface: 'home',
+  },
+  {
     title: 'Retry honesty on Home',
     detail: 'The adapter now publishes when retrying the current featured refresh is still preserving the same browse story, what discovery context retry keeps alive, and what trigger means recovery should outrank patience.',
     surface: 'home',
@@ -542,6 +552,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Autonomy boundary on Live',
     detail: 'The adapter now publishes what surf continuity Live can keep automatic, what playback or provider switch still belongs to the user, and what trigger forces an explicit handoff before preview motion outruns trust.',
+    surface: 'live',
+  },
+  {
+    title: 'Provider-switch truth on Live',
+    detail: 'The adapter now publishes when the current provider has honestly lost surf ownership, what selected-card context a switch must preserve, and what proof lets Live keep the current provider owning Play.',
     surface: 'live',
   },
   {
@@ -3904,13 +3919,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, intent locks, explanation boundaries, autonomy limits, interruption budgets, retry contracts, recovery witnesses, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, intent lock, explanation boundary, autonomy boundary, interruption budget, retry contract, recovery witness, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, intent locks, explanation boundaries, autonomy limits, interruption budgets, retry contracts, provider-switch truth, recovery witnesses, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, intent lock, explanation boundary, autonomy boundary, interruption budget, retry contract, provider-switch truth, recovery witness, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -3937,6 +3952,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Login autonomy boundary stays visible before recovery feels like hidden automation instead of a user-owned setup choice',
         'Login interruption budget stays visible before validation delay turns into silent spinner theater',
         'Login retry contract stays visible before reconnect suggestions keep spinning after a healthier recovery path already owns the next move',
+        'Login provider-switch truth stays visible before a saved-provider handoff quietly changes who owns the next Home launch',
         'Login recovery witness stays visible before fallback asks the user to trust a provider switch on mood alone',
         'Connect action gate stays visible before the loudest CTA outruns current trust',
         'Login fallback cost stays visible before degraded recovery pretends convenience stayed fully intact',
@@ -3962,6 +3978,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Hero explanation boundary stays visible before cached or rescue-owned browse keeps sounding fully live',
         'Hero interruption budget stays visible before refresh delay pretends the same browse story is still fully current',
         'Hero retry contract stays visible before Home keeps asking for patience after recovery already tells the safer browse story',
+        'Hero provider-switch truth stays visible before featured browse ownership quietly changes providers under the same cinematic shell',
         'Hero autonomy boundary stays visible before Home quietly chooses around the user and calls it premium rescue',
         'Hero recovery witness stays visible before fallback asks the user to trust the featured launch without proof of what survived',
         'Hero action gate stays visible before cinematic browse CTA outruns current trust',
@@ -3988,6 +4005,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Selected-card explanation boundary stays visible before preview mood outruns launch truth',
         'Selected-card interruption budget stays visible before preview or guide delay pretends the same Play confidence is still intact',
         'Selected-card retry contract stays visible before Live keeps nudging Play again after rescue already owns the safer launch',
+        'Selected-card provider-switch truth stays visible before Play silently changes providers under the same surf card',
         'Selected-card autonomy boundary stays visible before Live quietly changes launch ownership and hides the choice from the user',
         'Selected-card recovery witness stays visible before fallback asks the user to trust rescue without proof of what survived on-card',
         'Selected-card action gate stays visible before Play outruns current launch proof',
