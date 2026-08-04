@@ -201,6 +201,28 @@ export type ProviderHomeSnapshot = {
   updatedAt: number;
 };
 
+export type ProviderSearchSnapshot = {
+  providerId: string;
+  query: string;
+  resultCount: number;
+  duplicateGroups: number;
+  updatedAt: number;
+  selectedTitle?: string | null;
+  selectedKind?: 'live' | 'movie' | 'series' | null;
+};
+
+export type ProviderSwitchContext = {
+  fromProviderId: string | null;
+  toProviderId: string;
+  switchedAt: number;
+  preservedQuery?: string | null;
+  preservedResultCount?: number | null;
+  preservedDuplicateGroups?: number | null;
+  preservedTitle?: string | null;
+  sourceSurface?: 'login' | 'home' | 'live' | 'movies' | 'series' | 'search' | 'favorites' | 'settings' | 'player' | 'collections' | 'system' | null;
+  reason?: 'manual' | 'launch' | 'recovery' | 'variant' | 'validation' | 'remove-connection' | 'auto' | null;
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;

@@ -11,6 +11,7 @@ import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCat
 import { useAuthStore } from '@/stores/auth-store';
 import { useLibraryStore } from '@/stores/library-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { useSearchStore } from '@/stores/search-store';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
@@ -79,9 +80,11 @@ export function SearchBrowser() {
   const refreshProviderCatalogs = useLibraryStore((state) => state.refreshProviderCatalogs);
   const playStream = usePlayerStore((state) => state.playStream);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
+  const getSearchSnapshot = useSearchStore((state) => state.getSnapshot);
+  const saveSearchSnapshot = useSearchStore((state) => state.saveSnapshot);
 
   const [results, setResults] = useState<GroupedSearchResult[]>([]);
-  const [query, setQuery] = useState('sports');
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingLabel, setLoadingLabel] = useState('Searching all providers...');
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +98,12 @@ export function SearchBrowser() {
     setScenario(getSelectedMockProviderScenario());
     return subscribeToMockProviderScenario(setScenario);
   }, []);
+
+  useEffect(() => {
+    if (!activeConnection) return;
+    const snapshot = getSearchSnapshot(activeConnection.id);
+    setQuery(snapshot?.query || 'sports');
+  }, [activeConnection?.id, getSearchSnapshot]);
 
   useEffect(() => {
     let cancelled = false;
@@ -249,6 +258,17 @@ export function SearchBrowser() {
     setSelectedMockProviderScenario(nextScenario);
   };
 
+  useEffect(() => {
+    if (!activeConnection) return;
+    saveSearchSnapshot(activeConnection.id, {
+      query,
+      resultCount: results.length,
+      duplicateGroups,
+      selectedTitle: results[0]?.item.name ?? null,
+      selectedKind: results[0]?.kind ?? null,
+    });
+  }, [activeConnection, duplicateGroups, query, results, saveSearchSnapshot]);
+
   if (connections.length === 0) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No saved providers yet. Connect on the login screen first.</div>;
   }
@@ -363,7 +383,13 @@ export function SearchBrowser() {
                 actions={healthiestConnection ? [{
                   label: 'Switch to healthiest saved provider',
                   meta: healthiestConnection.name,
-                  onClick: () => setActiveConnection(healthiestConnection.id),
+                  onClick: () => setActiveConnection(healthiestConnection.id, {
+                    sourceSurface: 'search',
+                    reason: 'recovery',
+                    preservedQuery: query,
+                    preservedResultCount: results.length,
+                    preservedDuplicateGroups: duplicateGroups,
+                  }),
                 }] : []}
               />
             </div>
@@ -373,7 +399,13 @@ export function SearchBrowser() {
               <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">{mockHealth.surfaceRecoveryPlans.search.title}</p>
               <p className="mt-2 text-sm text-slate-100">{mockHealth.surfaceRecoveryPlans.search.detail}</p>
               <button
-                onClick={() => setActiveConnection(healthiestConnection.id)}
+                onClick={() => setActiveConnection(healthiestConnection.id, {
+                  sourceSurface: 'search',
+                  reason: 'recovery',
+                  preservedQuery: query,
+                  preservedResultCount: results.length,
+                  preservedDuplicateGroups: duplicateGroups,
+                })}
                 className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-400/20 px-3 py-2 text-xs font-medium uppercase tracking-[0.22em] text-sky-50 hover:bg-sky-400/30"
               >
                 <span>{mockHealth.surfaceRecoveryPlans.search.cta}</span>
@@ -468,7 +500,14 @@ export function SearchBrowser() {
                     <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500">{result.kind} · {result.provider.name}</p>
                   </div>
                   <button
-                    onClick={() => setActiveConnection(result.provider.id)}
+                    onClick={() => setActiveConnection(result.provider.id, {
+                      sourceSurface: 'search',
+                      reason: 'variant',
+                      preservedQuery: query,
+                      preservedResultCount: results.length,
+                      preservedDuplicateGroups: duplicateGroups,
+                      preservedTitle: result.item.name,
+                    })}
                     className={`rounded-full px-3 py-1 text-xs ${activeConnection?.id === result.provider.id ? 'bg-violet-500/20 text-violet-200' : 'bg-black/20 text-slate-300 hover:bg-white/5'}`}
                   >
                     {activeConnection?.id === result.provider.id ? 'Active' : 'Switch'}
@@ -521,7 +560,14 @@ export function SearchBrowser() {
                       actions={healthiestAlternateConnection ? [{
                         label: 'Switch to healthiest saved provider',
                         meta: healthiestAlternateConnection.name,
-                        onClick: () => setActiveConnection(healthiestAlternateConnection.id),
+                        onClick: () => setActiveConnection(healthiestAlternateConnection.id, {
+                          sourceSurface: 'search',
+                          reason: 'recovery',
+                          preservedQuery: query,
+                          preservedResultCount: results.length,
+                          preservedDuplicateGroups: duplicateGroups,
+                          preservedTitle: result.item.name,
+                        }),
                       }] : []}
                     />
                   </div>
@@ -557,7 +603,14 @@ export function SearchBrowser() {
                               {result.kind === 'series' ? (
                                 <Link
                                   href={buildSeriesVariantHref(result, variant)}
-                                  onClick={() => setActiveConnection(variant.provider.id)}
+                                  onClick={() => setActiveConnection(variant.provider.id, {
+                                    sourceSurface: 'search',
+                                    reason: 'variant',
+                                    preservedQuery: query,
+                                    preservedResultCount: results.length,
+                                    preservedDuplicateGroups: duplicateGroups,
+                                    preservedTitle: variant.item.name,
+                                  })}
                                   className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
                                 >
                                   {variantLabel}
@@ -565,7 +618,14 @@ export function SearchBrowser() {
                               ) : (
                                 <button
                                   onClick={() => {
-                                    setActiveConnection(variant.provider.id);
+                                    setActiveConnection(variant.provider.id, {
+                                      sourceSurface: 'search',
+                                      reason: 'launch',
+                                      preservedQuery: query,
+                                      preservedResultCount: results.length,
+                                      preservedDuplicateGroups: duplicateGroups,
+                                      preservedTitle: variant.item.name,
+                                    });
                                     const url = result.kind === 'live' ? buildLiveStreamUrl(variant.provider, variant.item) : buildVodStreamUrl(variant.provider, variant.item);
                                     playStream(variant.item, url, variant.provider.id);
                                   }}
@@ -575,7 +635,14 @@ export function SearchBrowser() {
                                 </button>
                               )}
                               <button
-                                onClick={() => setActiveConnection(variant.provider.id)}
+                                onClick={() => setActiveConnection(variant.provider.id, {
+                                  sourceSurface: 'search',
+                                  reason: 'manual',
+                                  preservedQuery: query,
+                                  preservedResultCount: results.length,
+                                  preservedDuplicateGroups: duplicateGroups,
+                                  preservedTitle: variant.item.name,
+                                })}
                                 className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
                               >
                                 Switch only
@@ -591,7 +658,14 @@ export function SearchBrowser() {
                   {isPlayable ? (
                     <button
                       onClick={() => {
-                        setActiveConnection(result.provider.id);
+                        setActiveConnection(result.provider.id, {
+                          sourceSurface: 'search',
+                          reason: 'launch',
+                          preservedQuery: query,
+                          preservedResultCount: results.length,
+                          preservedDuplicateGroups: duplicateGroups,
+                          preservedTitle: result.item.name,
+                        });
                         const url = result.kind === 'live' ? buildLiveStreamUrl(result.provider, result.item) : buildVodStreamUrl(result.provider, result.item);
                         playStream(result.item, url, result.provider.id);
                       }}
@@ -602,7 +676,14 @@ export function SearchBrowser() {
                   ) : (
                     <Link
                       href={buildSeriesResultHref(result)}
-                      onClick={() => setActiveConnection(result.provider.id)}
+                      onClick={() => setActiveConnection(result.provider.id, {
+                        sourceSurface: 'search',
+                        reason: 'variant',
+                        preservedQuery: query,
+                        preservedResultCount: results.length,
+                        preservedDuplicateGroups: duplicateGroups,
+                        preservedTitle: result.item.name,
+                      })}
                       className="flex-1 rounded-2xl border border-white/10 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/5"
                     >
                       Browse series

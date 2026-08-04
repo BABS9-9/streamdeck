@@ -1,5 +1,14 @@
 import { canonicalizeSavedConnection, getProviderIdentityCandidates } from './provider-identity';
-import { FavoriteEntry, LibraryCollection, ProviderCatalog, ProviderHomeSnapshot, SavedConnection, WatchHistoryItem } from './types';
+import {
+  FavoriteEntry,
+  LibraryCollection,
+  ProviderCatalog,
+  ProviderHomeSnapshot,
+  ProviderSearchSnapshot,
+  ProviderSwitchContext,
+  SavedConnection,
+  WatchHistoryItem,
+} from './types';
 
 const KEYS = {
   connections: 'streamdeck.connections',
@@ -8,6 +17,8 @@ const KEYS = {
   history: 'streamdeck.history',
   catalogs: 'streamdeck.catalogs',
   homeSnapshots: 'streamdeck.home-snapshots',
+  searchSnapshots: 'streamdeck.search-snapshots',
+  providerSwitchContext: 'streamdeck.provider-switch-context',
   collections: 'streamdeck.collections',
   playerDockMode: 'streamdeck.player-dock-mode',
   mockScenario: 'streamdeck.mock-scenario',
@@ -153,6 +164,39 @@ const remapFavoriteEntries = (favorites: Record<string, FavoriteEntry[]>, aliasM
     return acc;
   }, {});
 
+const normalizeWatchHistoryBuckets = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.reduce<Record<string, WatchHistoryItem[]>>((acc, item) => {
+      if (!item || typeof item !== 'object' || !('providerId' in item)) return acc;
+      const providerId = String((item as WatchHistoryItem).providerId || '');
+      if (!providerId) return acc;
+      acc[providerId] = [...(acc[providerId] || []), item as WatchHistoryItem];
+      return acc;
+    }, {});
+  }
+
+  if (!value || typeof value !== 'object') return {} as Record<string, WatchHistoryItem[]>;
+
+  return Object.entries(value as Record<string, unknown>).reduce<Record<string, WatchHistoryItem[]>>((acc, [providerId, entries]) => {
+    if (!Array.isArray(entries)) return acc;
+    acc[providerId] = entries
+      .filter((entry): entry is WatchHistoryItem => Boolean(entry && typeof entry === 'object' && 'streamId' in (entry as WatchHistoryItem)))
+      .map((entry) => ({
+        ...(entry as WatchHistoryItem),
+        providerId,
+      }))
+      .sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0))
+      .slice(0, 12);
+    return acc;
+  }, {});
+};
+
+const flattenHistoryBuckets = (buckets: Record<string, WatchHistoryItem[]>) =>
+  Object.values(buckets)
+    .flat()
+    .sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0))
+    .slice(0, 36);
+
 export const storage = {
   getConnections(): SavedConnection[] {
     if (!isBrowser()) return [];
@@ -211,13 +255,49 @@ export const storage = {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.favorites, JSON.stringify(favorites));
   },
+  removeProviderFavoriteEntries(providerId: string) {
+    if (!isBrowser()) return;
+    const favorites = storage.getProviderFavoriteEntries();
+    delete favorites[providerId];
+    storage.saveProviderFavoriteEntries(favorites);
+  },
   getHistory(): WatchHistoryItem[] {
     if (!isBrowser()) return [];
-    return safeJsonParse(localStorage.getItem(KEYS.history), []);
+    return flattenHistoryBuckets(storage.getProviderHistoryBuckets());
   },
   saveHistory(history: WatchHistoryItem[]) {
     if (!isBrowser()) return;
-    localStorage.setItem(KEYS.history, JSON.stringify(history));
+    const buckets = history.reduce<Record<string, WatchHistoryItem[]>>((acc, item) => {
+      acc[item.providerId] = [...(acc[item.providerId] || []), item];
+      return acc;
+    }, {});
+    storage.saveProviderHistoryBuckets(buckets);
+  },
+  getProviderHistoryBuckets(): Record<string, WatchHistoryItem[]> {
+    if (!isBrowser()) return {};
+    return normalizeWatchHistoryBuckets(safeJsonParse<unknown>(localStorage.getItem(KEYS.history), {}));
+  },
+  saveProviderHistoryBuckets(historyByProvider: Record<string, WatchHistoryItem[]>) {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.history, JSON.stringify(historyByProvider));
+  },
+  getProviderHistory(providerId: string) {
+    return storage.getProviderHistoryBuckets()[providerId] ?? [];
+  },
+  saveProviderHistory(providerId: string, history: WatchHistoryItem[]) {
+    if (!isBrowser()) return;
+    const buckets = storage.getProviderHistoryBuckets();
+    buckets[providerId] = history
+      .map((item) => ({ ...item, providerId }))
+      .sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0))
+      .slice(0, 12);
+    storage.saveProviderHistoryBuckets(buckets);
+  },
+  removeProviderHistory(providerId: string) {
+    if (!isBrowser()) return;
+    const buckets = storage.getProviderHistoryBuckets();
+    delete buckets[providerId];
+    storage.saveProviderHistoryBuckets(buckets);
   },
   getCollections(): LibraryCollection[] {
     if (!isBrowser()) return [];
@@ -226,6 +306,14 @@ export const storage = {
   saveCollections(collections: LibraryCollection[]) {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.collections, JSON.stringify(collections));
+  },
+  removeProviderCollections(providerId: string) {
+    if (!isBrowser()) return;
+    const collections = storage.getCollections().map((collection) => ({
+      ...collection,
+      items: collection.items.filter((item) => item.providerId !== providerId),
+    }));
+    storage.saveCollections(collections);
   },
   getPlayerDockMode(): 'expanded' | 'compact' {
     if (!isBrowser()) return 'compact';
@@ -283,6 +371,33 @@ export const storage = {
     delete snapshots[providerId];
     localStorage.setItem(KEYS.homeSnapshots, JSON.stringify(snapshots));
   },
+  getSearchSnapshots(): Record<string, ProviderSearchSnapshot> {
+    if (!isBrowser()) return {};
+    return safeJsonParse(localStorage.getItem(KEYS.searchSnapshots), {});
+  },
+  getProviderSearchSnapshot(providerId: string): ProviderSearchSnapshot | null {
+    return storage.getSearchSnapshots()[providerId] ?? null;
+  },
+  saveProviderSearchSnapshot(providerId: string, snapshot: ProviderSearchSnapshot) {
+    if (!isBrowser()) return;
+    const snapshots = storage.getSearchSnapshots();
+    snapshots[providerId] = { ...snapshot, providerId };
+    localStorage.setItem(KEYS.searchSnapshots, JSON.stringify(snapshots));
+  },
+  removeProviderSearchSnapshot(providerId: string) {
+    if (!isBrowser()) return;
+    const snapshots = storage.getSearchSnapshots();
+    delete snapshots[providerId];
+    localStorage.setItem(KEYS.searchSnapshots, JSON.stringify(snapshots));
+  },
+  getProviderSwitchContext(): ProviderSwitchContext | null {
+    if (!isBrowser()) return null;
+    return safeJsonParse(localStorage.getItem(KEYS.providerSwitchContext), null);
+  },
+  saveProviderSwitchContext(context: ProviderSwitchContext) {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.providerSwitchContext, JSON.stringify(context));
+  },
   hydrateCanonicalProviderState(): { connections: SavedConnection[]; activeConnectionId: string | null } {
     if (!isBrowser()) return { connections: [], activeConnectionId: null };
 
@@ -313,8 +428,23 @@ export const storage = {
     const homeSnapshots = remapProviderMap(storage.getHomeSnapshots(), aliasMap, (current, incoming) =>
       (incoming.updatedAt || 0) >= (current.updatedAt || 0) ? incoming : current
     );
-    const history = remapHistory(storage.getHistory(), aliasMap).sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0)).slice(0, 12);
+    const historyBuckets = Object.entries(storage.getProviderHistoryBuckets()).reduce<Record<string, WatchHistoryItem[]>>((acc, [providerId, items]) => {
+      const canonicalProviderId = aliasMap[providerId] || providerId;
+      const remapped = remapHistory(items, aliasMap).filter((item) => item.providerId === canonicalProviderId);
+      acc[canonicalProviderId] = [...(acc[canonicalProviderId] || []), ...remapped]
+        .sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0))
+        .slice(0, 12);
+      return acc;
+    }, {});
     const collections = remapCollections(storage.getCollections(), aliasMap);
+    const searchSnapshots = Object.entries(storage.getSearchSnapshots()).reduce<Record<string, ProviderSearchSnapshot>>((acc, [providerId, snapshot]) => {
+      const canonicalProviderId = aliasMap[providerId] || providerId;
+      const existing = acc[canonicalProviderId];
+      if (!existing || (snapshot.updatedAt || 0) >= (existing.updatedAt || 0)) {
+        acc[canonicalProviderId] = { ...snapshot, providerId: canonicalProviderId };
+      }
+      return acc;
+    }, {});
 
     localStorage.setItem(KEYS.connections, JSON.stringify(connections));
     if (nextActiveConnectionId) localStorage.setItem(KEYS.activeConnection, nextActiveConnectionId);
@@ -322,7 +452,8 @@ export const storage = {
     localStorage.setItem(KEYS.favorites, JSON.stringify(providerFavoriteEntries));
     localStorage.setItem(KEYS.catalogs, JSON.stringify(catalogs));
     localStorage.setItem(KEYS.homeSnapshots, JSON.stringify(homeSnapshots));
-    localStorage.setItem(KEYS.history, JSON.stringify(history));
+    localStorage.setItem(KEYS.history, JSON.stringify(historyBuckets));
+    localStorage.setItem(KEYS.searchSnapshots, JSON.stringify(searchSnapshots));
     localStorage.setItem(KEYS.collections, JSON.stringify(collections));
 
     return { connections, activeConnectionId: nextActiveConnectionId };

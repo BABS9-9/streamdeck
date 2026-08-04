@@ -40,6 +40,15 @@ const defaultStreamHealth: StreamHealth = {
   message: null,
 };
 
+const mergeProviderHistory = (
+  providerId: string,
+  providerHistory: WatchHistoryItem[],
+  allHistory: WatchHistoryItem[]
+) => [
+  ...providerHistory,
+  ...allHistory.filter((item) => item.providerId !== providerId),
+].sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0)).slice(0, 36);
+
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentStream: null,
   playbackUrl: null,
@@ -95,11 +104,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       durationSeconds: existing?.durationSeconds ?? undefined,
       updatedAt: Date.now(),
     };
-    const nextHistory: WatchHistoryItem[] = [
+    const nextProviderHistory: WatchHistoryItem[] = [
       nextEntry,
-      ...get().watchHistory.filter((item) => item.id != `${providerId}-${contentId}`),
+      ...storage.getProviderHistory(providerId).filter((item) => item.id !== `${providerId}-${contentId}`),
     ].slice(0, 12);
-    storage.saveHistory(nextHistory);
+    storage.saveProviderHistory(providerId, nextProviderHistory);
+    const nextHistory = mergeProviderHistory(providerId, nextProviderHistory, get().watchHistory);
     set({
       currentStream: stream,
       playbackUrl,
@@ -150,8 +160,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       updatedAt: Date.now(),
     };
 
-    const nextHistory = [updatedEntry, ...watchHistory.filter((item) => item.id !== historyId)].slice(0, 12);
-    storage.saveHistory(nextHistory);
+    const nextProviderHistory = [updatedEntry, ...storage.getProviderHistory(currentProviderId).filter((item) => item.id !== historyId)].slice(0, 12);
+    storage.saveProviderHistory(currentProviderId, nextProviderHistory);
+    const nextHistory = mergeProviderHistory(currentProviderId, nextProviderHistory, watchHistory);
     set({ watchHistory: nextHistory, resumeFromSeconds: isLive ? 0 : updatedEntry.positionSeconds ?? 0 });
   },
   updateStreamHealth: (health) => set((state) => ({

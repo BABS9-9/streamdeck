@@ -5,7 +5,9 @@ import { isMockProviderServer } from '@/lib/mock-provider';
 import { buildCanonicalProviderId, canonicalizeSavedConnection } from '@/lib/provider-identity';
 import { authenticate } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
-import { ConnectionStatus, ProviderAuthSummary, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
+import { ConnectionStatus, ProviderAuthSummary, ProviderSwitchContext, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
+
+type SwitchConnectionOptions = Omit<ProviderSwitchContext, 'fromProviderId' | 'toProviderId' | 'switchedAt'>;
 
 type AuthState = {
   connections: SavedConnection[];
@@ -15,9 +17,10 @@ type AuthState = {
   error: string | null;
   initialized: boolean;
   connectionStatus: Record<string, ConnectionStatus>;
+  lastSwitchContext: ProviderSwitchContext | null;
   hydrate: () => void;
   connect: (credentials: XtreamCredentials) => Promise<boolean>;
-  setActiveConnection: (id: string) => void;
+  setActiveConnection: (id: string, options?: SwitchConnectionOptions) => void;
   renameConnection: (id: string, name: string) => void;
   removeConnection: (id: string) => void;
   validateConnection: (id: string) => Promise<boolean>;
@@ -69,11 +72,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
   initialized: false,
   connectionStatus: {},
+  lastSwitchContext: null,
   hydrate: () => {
     if (get().initialized) return;
     const { connections, activeConnectionId: activeId } = storage.hydrateCanonicalProviderState();
     const activeConnection = connections.find((item) => item.id === activeId) ?? connections[0] ?? null;
-    set({ connections, activeConnection, initialized: true });
+    set({
+      connections,
+      activeConnection,
+      initialized: true,
+      lastSwitchContext: storage.getProviderSwitchContext(),
+    });
   },
   connect: async (credentials) => {
     set({ loading: true, error: null });
@@ -100,12 +109,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const connections = [connection, ...existing];
       storage.saveConnections(connections);
       storage.setActiveConnectionId(connection.id);
+      const switchContext: ProviderSwitchContext = {
+        fromProviderId: get().activeConnection?.id ?? null,
+        toProviderId: connection.id,
+        switchedAt: Date.now(),
+        reason: 'launch',
+        sourceSurface: 'login',
+      };
+      storage.saveProviderSwitchContext(switchContext);
       set((state) => ({
         connections,
         activeConnection: connection,
         session,
         loading: false,
         error: null,
+        lastSwitchContext: switchContext,
         connectionStatus: {
           ...state.connectionStatus,
           [connection.id]: buildHealthyStatus(session),
@@ -125,11 +143,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return false;
     }
   },
-  setActiveConnection: (id) => {
+  setActiveConnection: (id, options) => {
+    const currentActiveConnection = get().activeConnection;
     const activeConnection = get().connections.find((item) => item.id === id) ?? null;
     if (!activeConnection) return;
+    if (currentActiveConnection?.id === id && !options) return;
     storage.setActiveConnectionId(id);
-    set({ activeConnection });
+    const switchContext: ProviderSwitchContext = {
+      fromProviderId: currentActiveConnection?.id ?? null,
+      toProviderId: id,
+      switchedAt: Date.now(),
+      preservedQuery: options?.preservedQuery ?? null,
+      preservedResultCount: options?.preservedResultCount ?? null,
+      preservedDuplicateGroups: options?.preservedDuplicateGroups ?? null,
+      preservedTitle: options?.preservedTitle ?? null,
+      sourceSurface: options?.sourceSurface ?? 'settings',
+      reason: options?.reason ?? 'manual',
+    };
+    storage.saveProviderSwitchContext(switchContext);
+    set({ activeConnection, lastSwitchContext: switchContext });
   },
   renameConnection: (id, name) => {
     const trimmedName = name.trim();
@@ -143,17 +175,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const connections = get().connections.filter((item) => item.id !== id);
     const nextActive = get().activeConnection?.id === id ? connections[0] ?? null : connections.find((item) => item.id === get().activeConnection?.id) ?? null;
     storage.saveConnections(connections);
+    storage.removeProviderFavoriteEntries(id);
+    storage.removeProviderHistory(id);
     storage.removeProviderCatalog(id);
     storage.removeProviderHomeSnapshot(id);
+    storage.removeProviderSearchSnapshot(id);
+    storage.removeProviderCollections(id);
     if (nextActive) {
       storage.setActiveConnectionId(nextActive.id);
+      storage.saveProviderSwitchContext({
+        fromProviderId: id,
+        toProviderId: nextActive.id,
+        switchedAt: Date.now(),
+        sourceSurface: 'settings',
+        reason: 'remove-connection',
+      });
     } else {
       storage.clearActiveConnectionId();
     }
     set((state) => {
       const nextStatus = { ...state.connectionStatus };
       delete nextStatus[id];
-      return { connections, activeConnection: nextActive, session: nextActive ? get().session : null, connectionStatus: nextStatus };
+      return {
+        connections,
+        activeConnection: nextActive,
+        session: nextActive ? get().session : null,
+        connectionStatus: nextStatus,
+        lastSwitchContext: nextActive
+          ? {
+              fromProviderId: id,
+              toProviderId: nextActive.id,
+              switchedAt: Date.now(),
+              sourceSurface: 'settings',
+              reason: 'remove-connection',
+            }
+          : null,
+      };
     });
   },
   validateConnection: async (id) => {

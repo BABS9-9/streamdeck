@@ -8,6 +8,7 @@ import { useCollectionsStore } from '@/stores/collections-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { useLibraryStore } from '@/stores/library-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { useSearchStore } from '@/stores/search-store';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const hydrateAuth = useAuthStore((state) => state.hydrate);
@@ -17,6 +18,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const hydrateFavorites = useFavoritesStore((state) => state.hydrate);
   const hydrateLibrary = useLibraryStore((state) => state.hydrate);
   const hydratePlayer = usePlayerStore((state) => state.hydrate);
+  const hydrateSearch = useSearchStore((state) => state.hydrate);
 
   useEffect(() => {
     hydrateAuth();
@@ -24,7 +26,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     hydrateFavorites();
     hydrateLibrary();
     hydratePlayer();
-  }, [hydrateAuth, hydrateCollections, hydrateFavorites, hydrateLibrary, hydratePlayer]);
+    hydrateSearch();
+  }, [hydrateAuth, hydrateCollections, hydrateFavorites, hydrateLibrary, hydratePlayer, hydrateSearch]);
 
   useEffect(() => {
     if (!initialized) return;

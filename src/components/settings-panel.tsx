@@ -11,6 +11,7 @@ import { ProviderTrustStack } from './provider-trust-stack';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { useSearchStore } from '@/stores/search-store';
 
 const scenarioLabels: Record<MockProviderScenario, string> = {
   healthy: 'Healthy',
@@ -33,9 +34,10 @@ const getProviderRecoveryWarning = (summary?: { status?: string | null; activeCo
 
 
 export function SettingsPanel() {
-  const { connections, activeConnection, setActiveConnection, renameConnection, removeConnection, validateConnection, validateAllConnections, connectionStatus } = useAuthStore();
+  const { connections, activeConnection, setActiveConnection, renameConnection, removeConnection, validateConnection, validateAllConnections, connectionStatus, lastSwitchContext } = useAuthStore();
   const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
+  const getSearchSnapshot = useSearchStore((state) => state.getSnapshot);
   const [draftNames, setDraftNames] = useState<Record<string, string>>({});
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
   const [scenario, setScenario] = useState<MockProviderScenario>(getSelectedMockProviderScenario());
@@ -120,6 +122,7 @@ export function SettingsPanel() {
               const draftName = draftNames[connection.id] ?? connection.name;
               const isActive = activeConnection?.id === connection.id;
               const recentItems = watchHistory.filter((item) => item.providerId === connection.id).length;
+              const searchSnapshot = getSearchSnapshot(connection.id);
               const status = connectionStatus[connection.id];
               return (
                 <div
@@ -200,6 +203,8 @@ export function SettingsPanel() {
                     <span>•</span>
                     <span>{recentItems} recent items</span>
                     <span>•</span>
+                    <span>Search: {searchSnapshot?.query ? `"${searchSnapshot.query}"` : 'none yet'}</span>
+                    <span>•</span>
                     <span>Saved {new Date(connection.connectedAt).toLocaleString()}</span>
                   </div>
                 </div>
@@ -212,6 +217,20 @@ export function SettingsPanel() {
           <p className="mt-2 text-sm leading-7 text-slate-300">
             Settings should be the operator surface for trust, recovery, and rehearsal state, not just a rename screen.
           </p>
+          {lastSwitchContext ? (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-300">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Last switch continuity</p>
+              <p className="mt-2">
+                {lastSwitchContext.fromProviderId ? 'Switched providers' : 'Activated provider'} via {lastSwitchContext.sourceSurface || 'system'} at{' '}
+                {new Date(lastSwitchContext.switchedAt).toLocaleTimeString()}.
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                Reason: {lastSwitchContext.reason || 'manual'}
+                {lastSwitchContext.preservedQuery ? ` · carried query "${lastSwitchContext.preservedQuery}"` : ''}
+                {lastSwitchContext.preservedResultCount ? ` · ${lastSwitchContext.preservedResultCount} result${lastSwitchContext.preservedResultCount === 1 ? '' : 's'}` : ''}
+              </p>
+            </div>
+          ) : null}
           {mockHealth ? (
             <>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.6rem] border border-violet-400/20 bg-violet-500/10 p-4">
