@@ -1,4 +1,4 @@
-import { buildProviderVariant, getProviderSummaryWarning, rankProviderVariants, RankedProviderVariant } from './provider-recovery';
+import { buildProviderVariant, buildProviderVariantLookupKeys, getProviderSummaryWarning, normalizeVariantYear, rankProviderVariants, RankedProviderVariant } from './provider-recovery';
 import { ConnectionStatus, ProviderCatalog, SavedConnection, WatchHistoryItem, XtreamStream } from './types';
 
 export type SearchContinuityMode = 'single-source' | 'provider-choice' | 'series-resume' | 'episode-map-required';
@@ -70,10 +70,17 @@ const getSearchTerms = (query: string) => {
   return { normalized, tokens, expandedTokens: [...expanded] };
 };
 
-const buildSearchKey = (item: XtreamStream, kind: GroupedSearchResult['kind']) => {
-  const normalizedName = normalizeSearchText(item.name);
-  const year = item.year || item.releasedate?.slice(0, 4) || '';
-  return `${kind}:${normalizedName}:${year}`;
+const buildSearchKey = (title: string, kind: GroupedSearchResult['kind'], year?: string) => {
+  const normalizedName = normalizeSearchText(title);
+  return `${kind}:${normalizedName}:${normalizeVariantYear(year)}`;
+};
+
+const buildSearchLookupKeys = (item: XtreamStream, kind: GroupedSearchResult['kind']) => {
+  return buildProviderVariantLookupKeys({
+    title: item.name,
+    kind,
+    year: item.year || item.releasedate?.slice(0, 4) || '',
+  });
 };
 
 const scoreResult = (query: ReturnType<typeof getSearchTerms>, item: XtreamStream, kind: GroupedSearchResult['kind']) => {
@@ -157,10 +164,11 @@ export const buildVariantContinuityPayload = ({
   if (variants.length === 0) return null;
 
   const primary = variants[0];
+  const primaryYear = normalizeVariantYear(primary.item.year || primary.item.releasedate?.slice(0, 4) || '');
   const historyMatch = history?.find((item) => (
     item.kind === kind
     && normalizeSearchText(item.seriesTitle || item.title) === normalizeSearchText(title)
-    && (!item.year || !primary.item.year || item.year === primary.item.year)
+    && (!normalizeVariantYear(item.year) || !primaryYear || normalizeVariantYear(item.year) === primaryYear)
   ));
   const reasonCodes = new Set<SearchContinuityReasonCode>();
   let mode: SearchContinuityMode = variants.length > 1 ? 'provider-choice' : 'single-source';
@@ -178,7 +186,7 @@ export const buildVariantContinuityPayload = ({
   if (kind === 'series') {
     const completenessBand = getSeriesCompletenessBand({ variants, historyMatch });
     const canonicalEpisodeMapping = {
-      canonicalSeriesKey: `${normalizeSearchText(title)}:${primary.item.year || ''}`,
+      canonicalSeriesKey: `${normalizeSearchText(title)}:${primaryYear}`,
       preferredSeasonNumber: historyMatch?.seasonNumber ?? null,
       preferredEpisodeNumber: historyMatch?.episodeNumber ?? null,
       resolver: 'series-info' as const,
@@ -237,6 +245,7 @@ export const buildGroupedSearchResults = ({
 }) => {
   const searchTerms = getSearchTerms(query);
   const deduped = new Map<string, GroupedSearchResult>();
+  const aliasToCanonicalKey = new Map<string, string>();
 
   providerCatalogs.forEach(({ provider, catalog }) => {
     const buckets: Array<[GroupedSearchResult['kind'], XtreamStream[]]> = [
@@ -250,7 +259,11 @@ export const buildGroupedSearchResults = ({
         const scored = scoreResult(searchTerms, item, kind);
         if (!scored) return;
 
-        const key = buildSearchKey(item, kind);
+        const lookupKeys = buildSearchLookupKeys(item, kind);
+        const matchedAlias = lookupKeys.find((candidate) => aliasToCanonicalKey.has(candidate));
+        const key = matchedAlias
+          ? aliasToCanonicalKey.get(matchedAlias)!
+          : buildSearchKey(item.name, kind, item.year || item.releasedate?.slice(0, 4) || '');
         const existing = deduped.get(key);
         const candidateVariantBase = buildProviderVariant({
           connection: provider,
@@ -289,6 +302,7 @@ export const buildGroupedSearchResults = ({
             variants: [candidateVariant],
             continuity,
           });
+          lookupKeys.forEach((aliasKey) => aliasToCanonicalKey.set(aliasKey, key));
           return;
         }
 
@@ -337,6 +351,7 @@ export const buildGroupedSearchResults = ({
           variants: rankedVariants,
           continuity,
         });
+        lookupKeys.forEach((aliasKey) => aliasToCanonicalKey.set(aliasKey, key));
       });
     });
   });

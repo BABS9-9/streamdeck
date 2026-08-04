@@ -44,10 +44,28 @@ export type RankedProviderVariant = ProviderVariant & {
 };
 
 export const normalizeRecoveryKey = (value?: string | null) => (value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+export const normalizeVariantYear = (value?: string | null) => (value || '').trim();
 
 export const buildProviderVariantKey = (title: string, kind: ProviderVariantKind, year?: string, seriesTitle?: string) => {
   const name = normalizeRecoveryKey(seriesTitle || title);
-  return `${kind}:${name}:${year || ''}`;
+  return `${kind}:${name}:${normalizeVariantYear(year)}`;
+};
+
+export const buildProviderVariantLookupKeys = ({
+  title,
+  kind,
+  year,
+  seriesTitle,
+}: {
+  title: string;
+  kind: ProviderVariantKind;
+  year?: string;
+  seriesTitle?: string;
+}) => {
+  const normalizedYear = normalizeVariantYear(year);
+  const exactKey = buildProviderVariantKey(title, kind, normalizedYear, seriesTitle);
+  if (!normalizedYear || kind === 'live') return [exactKey];
+  return [exactKey, buildProviderVariantKey(title, kind, '', seriesTitle)];
 };
 
 export const getProviderSummaryWarning = (summary?: ProviderAuthSummary | null) => {
@@ -184,20 +202,27 @@ export const buildProviderVariantsIndex = ({
       if (allowedKinds && !allowedKinds.has(kind)) return;
 
       items.forEach((item) => {
-        const key = buildProviderVariantKey(item.name, kind, item.year);
-        const variants = acc[key] || [];
-        const streamId = getContentId(item);
+        const variant = buildProviderVariant({
+          connection,
+          status: connectionStatus[connection.id],
+          item,
+          kind,
+        });
+        const lookupKeys = buildProviderVariantLookupKeys({
+          title: item.name,
+          kind,
+          year: item.year,
+        });
 
-        if (!variants.some((variant) => variant.providerId === connection.id && variant.streamId === streamId)) {
-          variants.push(buildProviderVariant({
-            connection,
-            status: connectionStatus[connection.id],
-            item,
-            kind,
-          }));
-        }
+        lookupKeys.forEach((key) => {
+          const variants = acc[key] || [];
 
-        acc[key] = variants.sort((left, right) => right.trustScore - left.trustScore || left.providerName.localeCompare(right.providerName));
+          if (!variants.some((entry) => entry.providerId === variant.providerId && entry.streamId === variant.streamId)) {
+            variants.push(variant);
+          }
+
+          acc[key] = variants.sort((left, right) => right.trustScore - left.trustScore || left.providerName.localeCompare(right.providerName));
+        });
       });
     });
 
@@ -220,8 +245,20 @@ export const getAlternateProviderVariants = ({
   year?: string;
   seriesTitle?: string;
 }) => {
-  const key = buildProviderVariantKey(title, kind, year, seriesTitle);
-  return (providerVariants[key] || []).filter((variant) => variant.providerId !== activeConnectionId);
+  const variants = buildProviderVariantLookupKeys({
+    title,
+    kind,
+    year,
+    seriesTitle,
+  }).flatMap((key) => providerVariants[key] || []);
+
+  const deduped = new Map<string, ProviderVariant>();
+  variants.forEach((variant) => {
+    if (variant.providerId === activeConnectionId) return;
+    deduped.set(`${variant.providerId}-${variant.streamId}-${variant.kind}`, variant);
+  });
+
+  return [...deduped.values()].sort((left, right) => right.trustScore - left.trustScore || left.providerName.localeCompare(right.providerName));
 };
 
 export const getLiveProviderVariants = ({
