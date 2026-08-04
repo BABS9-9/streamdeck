@@ -20,6 +20,8 @@ import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
+import { SurfaceProviderReturnContract } from '@/components/surface-provider-return-contract';
+import { SurfaceProviderStabilityContract } from '@/components/surface-provider-stability-contract';
 import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
@@ -170,6 +172,8 @@ export function LiveBrowser() {
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
   const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
   const providerSwitchContract = manifest?.surfaceProviderSwitchContracts.find((item) => item.screenId === 'live') ?? null;
+  const providerReturnContract = manifest?.surfaceProviderReturnContracts.find((item) => item.screenId === 'live') ?? null;
+  const providerStabilityContract = manifest?.surfaceProviderStabilityContracts.find((item) => item.screenId === 'live') ?? null;
   const recoveryPlan = manifest?.surfaceRecoveryPlans.find((item) => item.screenId === 'live') ?? null;
   const freshnessBoard = manifest?.surfaceFreshnessBoards.find((item) => item.screenId === 'live') ?? null;
   const proofDebt = manifest?.surfaceProofDebts.find((item) => item.screenId === 'live') ?? null;
@@ -197,6 +201,8 @@ export function LiveBrowser() {
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
       <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
+      <SurfaceProviderReturnContract contract={providerReturnContract} badge="Return truth" />
+      <SurfaceProviderStabilityContract contract={providerStabilityContract} badge="Stability truth" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
