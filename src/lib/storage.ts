@@ -1,5 +1,6 @@
 import { canonicalizeSavedConnection, getProviderIdentityCandidates } from './provider-identity';
 import {
+  CachedProviderSession,
   FavoriteEntry,
   LibraryCollection,
   ProviderCatalog,
@@ -8,6 +9,7 @@ import {
   ProviderSwitchContext,
   SavedConnection,
   WatchHistoryItem,
+  XtreamAuthResponse,
 } from './types';
 
 const KEYS = {
@@ -22,6 +24,7 @@ const KEYS = {
   collections: 'streamdeck.collections',
   playerDockMode: 'streamdeck.player-dock-mode',
   mockScenario: 'streamdeck.mock-scenario',
+  providerSessions: 'streamdeck.provider-sessions',
 };
 
 const safeJsonParse = <T,>(value: string | null, fallback: T): T => {
@@ -390,6 +393,25 @@ export const storage = {
     delete snapshots[providerId];
     localStorage.setItem(KEYS.searchSnapshots, JSON.stringify(snapshots));
   },
+  getProviderSessions(): Record<string, CachedProviderSession> {
+    if (!isBrowser()) return {};
+    return safeJsonParse(localStorage.getItem(KEYS.providerSessions), {});
+  },
+  getProviderSession(providerId: string): XtreamAuthResponse | null {
+    return storage.getProviderSessions()[providerId]?.session ?? null;
+  },
+  saveProviderSession(providerId: string, session: XtreamAuthResponse, updatedAt = Date.now()) {
+    if (!isBrowser()) return;
+    const sessions = storage.getProviderSessions();
+    sessions[providerId] = { providerId, session, updatedAt };
+    localStorage.setItem(KEYS.providerSessions, JSON.stringify(sessions));
+  },
+  removeProviderSession(providerId: string) {
+    if (!isBrowser()) return;
+    const sessions = storage.getProviderSessions();
+    delete sessions[providerId];
+    localStorage.setItem(KEYS.providerSessions, JSON.stringify(sessions));
+  },
   getProviderSwitchContext(): ProviderSwitchContext | null {
     if (!isBrowser()) return null;
     return safeJsonParse(localStorage.getItem(KEYS.providerSwitchContext), null);
@@ -445,6 +467,19 @@ export const storage = {
       }
       return acc;
     }, {});
+    const providerSessions = Object.entries(storage.getProviderSessions()).reduce<Record<string, CachedProviderSession>>((acc, [providerId, cachedSession]) => {
+      if (!cachedSession?.session) return acc;
+      const canonicalProviderId = aliasMap[providerId] || providerId;
+      const existing = acc[canonicalProviderId];
+      if (!existing || (cachedSession.updatedAt || 0) >= (existing.updatedAt || 0)) {
+        acc[canonicalProviderId] = {
+          providerId: canonicalProviderId,
+          session: cachedSession.session,
+          updatedAt: cachedSession.updatedAt || 0,
+        };
+      }
+      return acc;
+    }, {});
 
     localStorage.setItem(KEYS.connections, JSON.stringify(connections));
     if (nextActiveConnectionId) localStorage.setItem(KEYS.activeConnection, nextActiveConnectionId);
@@ -455,6 +490,7 @@ export const storage = {
     localStorage.setItem(KEYS.history, JSON.stringify(historyBuckets));
     localStorage.setItem(KEYS.searchSnapshots, JSON.stringify(searchSnapshots));
     localStorage.setItem(KEYS.collections, JSON.stringify(collections));
+    localStorage.setItem(KEYS.providerSessions, JSON.stringify(providerSessions));
 
     return { connections, activeConnectionId: nextActiveConnectionId };
   },

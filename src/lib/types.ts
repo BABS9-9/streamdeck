@@ -45,6 +45,12 @@ export type XtreamAuthResponse = {
   };
 };
 
+export type CachedProviderSession = {
+  providerId: string;
+  session: XtreamAuthResponse;
+  updatedAt: number;
+};
+
 export type XtreamCategory = {
   category_id: string;
   category_name: string;
@@ -219,6 +225,9 @@ export type ProviderSwitchContext = {
   preservedResultCount?: number | null;
   preservedDuplicateGroups?: number | null;
   preservedTitle?: string | null;
+  preservedFavoriteCount?: number | null;
+  preservedRecentItemsCount?: number | null;
+  preservedCollectionsCount?: number | null;
   sourceSurface?: 'login' | 'home' | 'live' | 'movies' | 'series' | 'search' | 'favorites' | 'settings' | 'player' | 'collections' | 'system' | null;
   reason?: 'manual' | 'launch' | 'recovery' | 'variant' | 'validation' | 'remove-connection' | 'auto' | null;
 };

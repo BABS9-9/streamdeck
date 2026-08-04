@@ -228,6 +228,9 @@ export function SettingsPanel() {
                 Reason: {lastSwitchContext.reason || 'manual'}
                 {lastSwitchContext.preservedQuery ? ` · carried query "${lastSwitchContext.preservedQuery}"` : ''}
                 {lastSwitchContext.preservedResultCount ? ` · ${lastSwitchContext.preservedResultCount} result${lastSwitchContext.preservedResultCount === 1 ? '' : 's'}` : ''}
+                {typeof lastSwitchContext.preservedFavoriteCount === 'number' ? ` · ${lastSwitchContext.preservedFavoriteCount} favorite${lastSwitchContext.preservedFavoriteCount === 1 ? '' : 's'}` : ''}
+                {typeof lastSwitchContext.preservedRecentItemsCount === 'number' ? ` · ${lastSwitchContext.preservedRecentItemsCount} recent item${lastSwitchContext.preservedRecentItemsCount === 1 ? '' : 's'}` : ''}
+                {typeof lastSwitchContext.preservedCollectionsCount === 'number' ? ` · ${lastSwitchContext.preservedCollectionsCount} collection${lastSwitchContext.preservedCollectionsCount === 1 ? '' : 's'}` : ''}
               </p>
             </div>
           ) : null}

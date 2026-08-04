@@ -64,6 +64,32 @@ const buildAuthSummary = (session: XtreamAuthResponse): ProviderAuthSummary => (
   serverTime: session.server_info.time_now || null,
 });
 
+const buildProviderSwitchContext = (
+  toProviderId: string,
+  currentActiveConnectionId: string | null,
+  options?: SwitchConnectionOptions
+): ProviderSwitchContext => {
+  const searchSnapshot = storage.getProviderSearchSnapshot(toProviderId);
+  const favoriteEntries = storage.getProviderFavoriteEntries()[toProviderId] ?? [];
+  const recentItems = storage.getProviderHistory(toProviderId);
+  const collections = storage.getCollections().filter((collection) => collection.items.some((item) => item.providerId === toProviderId));
+
+  return {
+    fromProviderId: currentActiveConnectionId,
+    toProviderId,
+    switchedAt: Date.now(),
+    preservedQuery: options?.preservedQuery ?? searchSnapshot?.query ?? null,
+    preservedResultCount: options?.preservedResultCount ?? searchSnapshot?.resultCount ?? null,
+    preservedDuplicateGroups: options?.preservedDuplicateGroups ?? searchSnapshot?.duplicateGroups ?? null,
+    preservedTitle: options?.preservedTitle ?? searchSnapshot?.selectedTitle ?? null,
+    preservedFavoriteCount: favoriteEntries.length,
+    preservedRecentItemsCount: recentItems.length,
+    preservedCollectionsCount: collections.length,
+    sourceSurface: options?.sourceSurface ?? 'settings',
+    reason: options?.reason ?? 'manual',
+  };
+};
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   connections: [],
   activeConnection: null,
@@ -80,6 +106,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({
       connections,
       activeConnection,
+      session: activeConnection ? storage.getProviderSession(activeConnection.id) : null,
       initialized: true,
       lastSwitchContext: storage.getProviderSwitchContext(),
     });
@@ -116,6 +143,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         reason: 'launch',
         sourceSurface: 'login',
       };
+      storage.saveProviderSession(connection.id, session);
       storage.saveProviderSwitchContext(switchContext);
       set((state) => ({
         connections,
@@ -149,19 +177,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!activeConnection) return;
     if (currentActiveConnection?.id === id && !options) return;
     storage.setActiveConnectionId(id);
-    const switchContext: ProviderSwitchContext = {
-      fromProviderId: currentActiveConnection?.id ?? null,
-      toProviderId: id,
-      switchedAt: Date.now(),
-      preservedQuery: options?.preservedQuery ?? null,
-      preservedResultCount: options?.preservedResultCount ?? null,
-      preservedDuplicateGroups: options?.preservedDuplicateGroups ?? null,
-      preservedTitle: options?.preservedTitle ?? null,
-      sourceSurface: options?.sourceSurface ?? 'settings',
-      reason: options?.reason ?? 'manual',
-    };
+    const switchContext = buildProviderSwitchContext(id, currentActiveConnection?.id ?? null, options);
     storage.saveProviderSwitchContext(switchContext);
-    set({ activeConnection, lastSwitchContext: switchContext });
+    set({
+      activeConnection,
+      session: storage.getProviderSession(id),
+      lastSwitchContext: switchContext,
+    });
   },
   renameConnection: (id, name) => {
     const trimmedName = name.trim();
@@ -181,15 +203,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     storage.removeProviderHomeSnapshot(id);
     storage.removeProviderSearchSnapshot(id);
     storage.removeProviderCollections(id);
+    storage.removeProviderSession(id);
     if (nextActive) {
       storage.setActiveConnectionId(nextActive.id);
-      storage.saveProviderSwitchContext({
-        fromProviderId: id,
-        toProviderId: nextActive.id,
-        switchedAt: Date.now(),
+      storage.saveProviderSwitchContext(buildProviderSwitchContext(nextActive.id, id, {
         sourceSurface: 'settings',
         reason: 'remove-connection',
-      });
+      }));
     } else {
       storage.clearActiveConnectionId();
     }
@@ -199,16 +219,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return {
         connections,
         activeConnection: nextActive,
-        session: nextActive ? get().session : null,
+        session: nextActive ? storage.getProviderSession(nextActive.id) : null,
         connectionStatus: nextStatus,
         lastSwitchContext: nextActive
-          ? {
-              fromProviderId: id,
-              toProviderId: nextActive.id,
-              switchedAt: Date.now(),
+          ? buildProviderSwitchContext(nextActive.id, id, {
               sourceSurface: 'settings',
               reason: 'remove-connection',
-            }
+            })
           : null,
       };
     });
@@ -219,6 +236,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set((state) => ({ connectionStatus: { ...state.connectionStatus, [id]: checkingStatus } }));
     try {
       const session = await authenticate(connection);
+      storage.saveProviderSession(id, session);
       const nextConnections = get().connections.map((item) => item.id === id
         ? canonicalizeSavedConnection({ ...item, lastAuthSummary: buildAuthSummary(session) })
         : item);
