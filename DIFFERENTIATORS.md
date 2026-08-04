@@ -151,6 +151,11 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish what delay is still acceptable, what continuity layer keeps the surface intact during that delay, and what trigger forces recovery to take over before the shell keeps pretending nothing important changed.
 - StreamDeck should feel calm under brief interruptions because the product knows its tolerance budget and names the moment that budget runs out.
 
+### 30. Surface retry honesty
+- Premium surfaces should say when retrying the same move is still genuinely preserving the user's path and when it has degraded into spinner theater.
+- Login, Home, and Live should each publish what retry window is still honest, what context that retry is allowed to preserve, and what trigger means recovery or provider-switch guidance must replace retry.
+- StreamDeck should feel calm under transient failure because retry remains a named contract, not a vague hope button.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -181,6 +186,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish what visible recovery witness must remain on-screen, what context that witness proves survived, and what missing proof means fallback has turned into a disguised restart.
 - Login, Home, and Live also publish what trust, browse, or surf work StreamDeck may keep maintaining automatically, what provider or launch choice still belongs to the user, and what trigger forces an explicit handoff.
 - Login, Home, and Live also publish how much interruption they can absorb before premium posture becomes delay theater, what continuity layer is carrying the surface during that delay, and what trigger forces recovery to take over.
+- Login, Home, and Live also publish when retrying is still honest, what exact context retry preserves, and what event forces the shell to stop nudging retry and lead with recovery instead.
 - Login, Home, and Live can be re-run against healthy, degraded, saturated, unstable, and expired mock-provider modes without leaving the product shell.
 
 ## Immediate Implementation Focus
@@ -209,6 +215,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Saved-provider shortcuts should also leave a visible recovery witness that proves which provider survived, why it is still safe, and what missing proof would force Login to stop selling fallback as trustworthy.
 - Saved-provider shortcuts should also tell the user what trust or recovery work Login can maintain automatically, what provider choice or credential change still belongs to them, and what event forces an explicit handoff back to the user.
 - Saved-provider shortcuts should also tell the user how much validation delay Login can absorb while still feeling like the same setup move, what continuity layer keeps the shortcut trustworthy during that delay, and what trigger forces recovery to replace retry.
+- Saved-provider shortcuts should also tell the user when retrying the same provider is still honest, what setup context that retry preserves, and what trigger means Login has to stop selling retry before it turns into delay theater.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -234,6 +241,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Hero and quick rails should also leave a visible recovery witness that proves which browse path survived, what launch owner still makes it safe, and what missing proof means the cinematic story has become confidence theater.
 - Hero and quick rails should also tell the user what browse maintenance Home can keep automatic, what launch or provider decision still belongs to them, and what trigger forces the hero to hand choice back explicitly.
 - Hero and quick rails should also tell the user how much refresh delay Home can absorb while still feeling like the same browse story, what continuity layer keeps that story intact during the delay, and what trigger forces recovery to outrank waiting.
+- Hero and quick rails should also tell the user when retrying the current featured refresh is still honest, what discovery context that retry preserves, and what trigger means Home has to stop asking for patience and lead with recovery instead.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -258,6 +266,7 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - The selected card should also tell the user what surf or channel intent is still locked, what guide or rescue drift can happen without losing that target, and what break truly ends the current path.
 - The selected card should also tell the user what launch or guide risk Live must now state explicitly, what surf momentum can stay ambient, and what trigger forces plain recovery language before preview seduction outruns launch truth.
 - The selected card should also leave a visible recovery witness that proves what survived the degraded moment, who now owns the next launch, and what missing proof means rescue has become a disguised channel restart.
+- The selected card should also tell the user when retrying preview, guide, or launch authority is still honest, what surf context that retry preserves, and what trigger means Live has to stop nudging retry and hand launch ownership to recovery.
 - The selected card should also tell the user what surf continuity Live can keep automatic, what playback or provider switch still belongs to them, and what trigger forces the card to hand launch choice back explicitly.
 - The selected card should also tell the user how much preview or guide delay Live can absorb while still feeling like the same surf path, what continuity layer keeps the card believable during that delay, and what trigger forces recovery to replace waiting.
 
