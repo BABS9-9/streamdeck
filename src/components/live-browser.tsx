@@ -23,6 +23,7 @@ import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
+import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
@@ -177,6 +178,7 @@ export function LiveBrowser() {
   const autonomyBoundary = manifest?.surfaceAutonomyBoundaries.find((item) => item.screenId === 'live') ?? null;
   const recoveryWitness = manifest?.surfaceRecoveryWitnesses.find((item) => item.screenId === 'live') ?? null;
   const interruptionBudget = manifest?.surfaceInterruptionBudgets.find((item) => item.screenId === 'live') ?? null;
+  const retryContract = manifest?.surfaceRetryContracts.find((item) => item.screenId === 'live') ?? null;
   const rescueReceipt = manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'live') ?? null;
   const fallbackCost = manifest?.surfaceFallbackCosts.find((item) => item.screenId === 'live') ?? null;
   const identityAnchor = manifest?.surfaceIdentityAnchors.find((item) => item.screenId === 'live') ?? null;
@@ -201,6 +203,7 @@ export function LiveBrowser() {
       <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
       <SurfaceAutonomyBoundary contract={autonomyBoundary} badge="Autonomy boundary" />
       <SurfaceInterruptionBudget contract={interruptionBudget} badge="Interruption budget" />
+      <SurfaceRetryContract contract={retryContract} badge="Retry honesty" />
       <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />

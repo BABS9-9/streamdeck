@@ -23,6 +23,7 @@ import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
+import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -162,6 +163,10 @@ export default function LoginPage() {
   );
   const interruptionBudget = useMemo(
     () => manifest?.surfaceInterruptionBudgets?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const retryContract = useMemo(
+    () => manifest?.surfaceRetryContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const rescueReceipt = useMemo(
@@ -319,6 +324,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceInterruptionBudget contract={interruptionBudget} badge="Interruption budget" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceRetryContract contract={retryContract} badge="Retry honesty" />
           </div>
 
           <div className="mt-6">

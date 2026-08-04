@@ -24,6 +24,7 @@ import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
+import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, NormalizedEpg, XtreamStream } from '@/lib/types';
@@ -260,6 +261,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceInterruptionBudgets.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const retryContract = useMemo(
+    () => manifest?.surfaceRetryContracts.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const rescueReceipt = useMemo(
     () => manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -396,6 +401,7 @@ export function HomeDashboard() {
       <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
       <SurfaceAutonomyBoundary contract={autonomyBoundary} badge="Autonomy boundary" />
       <SurfaceInterruptionBudget contract={interruptionBudget} badge="Interruption budget" />
+      <SurfaceRetryContract contract={retryContract} badge="Retry honesty" />
       <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
