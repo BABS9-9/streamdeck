@@ -161,6 +161,16 @@ StreamDeck is not trying to be another IPTV admin panel with a prettier skin. It
 - Login, Home, and Live should each publish what proof forces a provider switch, what user context the switch must preserve, and what evidence lets the current provider keep control.
 - StreamDeck should feel smart because provider switching is visibly earned, not because silent rescue hides the ownership change.
 
+### 32. Surface provider-return truth
+- Premium fallback should say exactly when the original provider has honestly recovered enough to take the surface back instead of trapping the user on rescue longer than necessary.
+- Login, Home, and Live should each publish what proof earns a return, what user context must survive that return, and what instability means rescue should stay primary.
+- StreamDeck should feel deliberate because provider returns are visibly re-earned, not because the shell quietly snaps back to the old source.
+
+### 33. Surface provider-stability truth
+- Premium fallback should say when the current provider has been stable long enough to keep owning the next move instead of reacting to every wobble like a permanent recovery event.
+- Login, Home, and Live should each publish the stability threshold that keeps the current provider primary, the volatility they can tolerate, and what instability means rescue must remain in control.
+- StreamDeck should feel calm because stability is measured and named, not because the product hides ownership churn behind polish.
+
 ## Phase 1 Product Bar
 
 For the Phase 1 prototype to feel differentiated, Login, Home, and Live must already prove the following:
@@ -193,6 +203,8 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Login, Home, and Live also publish how much interruption they can absorb before premium posture becomes delay theater, what continuity layer is carrying the surface during that delay, and what trigger forces recovery to take over.
 - Login, Home, and Live also publish when retrying is still honest, what exact context retry preserves, and what event forces the shell to stop nudging retry and lead with recovery instead.
 - Login, Home, and Live also publish when the current provider has honestly lost surface ownership, what context a switch must preserve, and what proof lets the current provider stay in control.
+- Login, Home, and Live also publish when a rescue provider should hand control back to the original source, what context that return must preserve, and what instability means rescue stays primary.
+- Login, Home, and Live also publish the stability threshold that keeps the current provider in charge, the volatility the shell can safely absorb, and what instability means rescue must remain the owner.
 - Login, Home, and Live can be re-run against healthy, degraded, saturated, unstable, and expired mock-provider modes without leaving the product shell.
 
 ## Immediate Implementation Focus
@@ -223,6 +235,8 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Saved-provider shortcuts should also tell the user how much validation delay Login can absorb while still feeling like the same setup move, what continuity layer keeps the shortcut trustworthy during that delay, and what trigger forces recovery to replace retry.
 - Saved-provider shortcuts should also tell the user when retrying the same provider is still honest, what setup context that retry preserves, and what trigger means Login has to stop selling retry before it turns into delay theater.
 - Saved-provider shortcuts should also tell the user when the current provider has honestly lost the next Home launch, what setup context a provider switch must preserve, and what proof keeps the current provider in control.
+- Saved-provider shortcuts should also tell the user when the original provider has honestly re-earned the next Home launch, what setup context must survive returning from rescue, and what instability keeps rescue primary.
+- Saved-provider shortcuts should also tell the user what provider stability threshold keeps the current owner safe, what validation jitter Login can tolerate, and what instability means rescue should stay in charge.
 
 ### Home
 - Strong hero, useful summary counts, quick launch rows, and continue-watching context.
@@ -250,6 +264,8 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - Hero and quick rails should also tell the user how much refresh delay Home can absorb while still feeling like the same browse story, what continuity layer keeps that story intact during the delay, and what trigger forces recovery to outrank waiting.
 - Hero and quick rails should also tell the user when retrying the current featured refresh is still honest, what discovery context that retry preserves, and what trigger means Home has to stop asking for patience and lead with recovery instead.
 - Hero and quick rails should also tell the user when the current provider has honestly lost featured-browse ownership, what discovery context a provider switch must preserve, and what proof keeps the current provider controlling the hero.
+- Hero and quick rails should also tell the user when the original provider has honestly re-earned featured-browse ownership, what discovery context must survive the return from rescue, and what instability means fallback should keep the hero.
+- Hero and quick rails should also tell the user what browse-stability threshold keeps the current provider primary, what hero or rail volatility Home can tolerate, and what instability means rescue should stay in charge.
 
 ### Live
 - Category rail, search, fast preview, guide snippets, favorites, and one-click playback.
@@ -258,6 +274,8 @@ For the Phase 1 prototype to feel differentiated, Login, Home, and Live must alr
 - When the selected channel falls back to another provider, Live should state whether the rescue is exact-channel, same-category, or a fresh restart.
 - Play should never look equally trustworthy across healthy preview, guide drift, and line-pressure scenarios; the selected card needs explicit launch-readiness truth.
 - The selected card should also state how long exact-channel continuity is still being preserved before Live has to collapse down to same-category rescue or a fresh channel pick.
+- The selected card should also tell the user when the original provider has honestly re-earned exact-channel ownership, what surf context must survive that return from rescue, and what instability means fallback should keep Play ownership.
+- The selected card should also tell the user what surf-stability threshold keeps the current provider primary, what preview or guide volatility Live can tolerate, and what instability means rescue must stay in control.
 - The selected card should also show the downgrade ladder from exact-channel surf, to same-category rescue, to a fresh channel restart.
 - The selected card should also say when StreamDeck can auto-pick the healthier source because the watch target is still the same, and when rescue is ambiguous enough that the user must choose.
 - The selected card should also show the fastest safe recovery route when exact-channel launch is no longer honest but same-category surf can still survive.
