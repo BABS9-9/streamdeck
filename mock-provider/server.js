@@ -575,13 +575,28 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Provider risk strip on Login',
+    detail: 'The adapter now publishes one compact provider-risk story on Login so auth pressure, expiry, and unstable trust are visible before Connect implies the current source still safely owns Home.',
+    surface: 'login',
+  },
+  {
     title: 'Scenario-switched rehearsal',
     detail: 'Home can refresh against healthy, degraded, saturated, and expired provider states in place so browse continuity is demoable instead of theoretical.',
     surface: 'home',
   },
   {
+    title: 'Provider risk strip on Home',
+    detail: 'The adapter now publishes the same provider-risk strip on Home so hero browse, quick rails, and the next safe launch all inherit one honest trust story.',
+    surface: 'home',
+  },
+  {
     title: 'Scenario-switched rehearsal',
     detail: 'Live can re-run its category and guide flow against changing provider conditions while staying on the same surface, proving surf resilience instead of describing it.',
+    surface: 'live',
+  },
+  {
+    title: 'Provider risk strip on Live',
+    detail: 'The adapter now publishes the same provider-risk strip on Live so auth pressure, line saturation, and unstable trust are visible before users blame the selected channel.',
     surface: 'live',
   },
 ]);
@@ -649,6 +664,15 @@ const buildCompetitiveDifferentiators = () => ([
     buildPhase: 'Phase 2',
     architectureNotes: 'Maintain per-provider catalogs, group duplicates, rank exact versus rescue copies, and keep result provenance visible after switches.',
     surfaces: ['login', 'home'],
+  },
+  {
+    slug: 'provider-risk-strip',
+    feature: 'Provider risk strip',
+    pitch: 'Keep one compact cross-surface strip that says when the current provider is healthy, pressured, expired, or unstable before users blame the wrong layer.',
+    competitiveGap: 'Most IPTV players bury provider risk in settings or only reveal it after playback and search already failed.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one provider-health model with operator headline, trust signals, and an explicit recovery CTA so risk language stays aligned while the user moves through the shell.',
+    surfaces: ['login', 'home', 'live'],
   },
   {
     slug: 'watch-party-sync-viewing',
@@ -4012,13 +4036,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so launch ownership, proof provenance, intent locks, explanation boundaries, autonomy limits, interruption budgets, retry contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery witnesses, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same launch owner, proof source, intent lock, explanation boundary, autonomy boundary, interruption budget, retry contract, provider-switch truth, provider-return truth, provider-stability truth, recovery witness, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so provider-risk strips, launch ownership, proof provenance, intent locks, explanation boundaries, autonomy limits, interruption budgets, retry contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery witnesses, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same provider-risk strip, launch owner, proof source, intent lock, explanation boundary, autonomy boundary, interruption budget, retry contract, provider-switch truth, provider-return truth, provider-stability truth, recovery witness, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -4034,10 +4058,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       id: 'login',
       title: 'Login shell',
       status: 'ready',
-      detail: 'Supports sample credentials, saved-connection switching, scenario rehearsal, and trust-led recovery into Home.',
+      detail: 'Supports sample credentials, saved-connection switching, scenario rehearsal, provider-risk strips, and trust-led recovery into Home.',
       proof: [
         'Connect with the local mock credentials',
         'Switch scenarios without leaving the screen',
+        'Provider risk strip updates before Connect overclaims launch safety',
         'Jump to the healthiest saved provider when trust degrades',
         'Launch ownership stays visible before Connect implies the current provider still owns Home',
         'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
@@ -4063,9 +4088,10 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       id: 'home',
       title: 'Home dashboard',
       status: 'ready',
-      detail: 'Shows featured live browse, provider trust cockpit, quick-launch rails, and mock-provider recovery guidance.',
+      detail: 'Shows featured live browse, provider trust cockpit, provider-risk strip, quick-launch rails, and mock-provider recovery guidance.',
       proof: [
         'Featured live card launches playback directly',
+        'Provider risk strip stays aligned with hero trust and the next safe launch',
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
         'Hero launch ownership stays visible before fallback silently takes the featured CTA',
@@ -4092,9 +4118,10 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       id: 'live',
       title: 'Live browser',
       status: 'rehearsal-friendly',
-      detail: 'Delivers category browse, inline guide, preview fallback, favorites, and healthier-provider recovery from each channel card.',
+      detail: 'Delivers category browse, provider-risk strip, inline guide, preview fallback, favorites, and healthier-provider recovery from each channel card.',
       proof: [
         'Filter by category and search without leaving the page',
+        'Provider risk strip warns about auth, expiry, or line pressure before Play gets blamed',
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
         'Selected-card launch ownership stays visible before Play silently changes hands',
