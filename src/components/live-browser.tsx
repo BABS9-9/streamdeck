@@ -7,6 +7,7 @@ import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary'
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
+import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -43,6 +44,7 @@ export function LiveBrowser() {
   const favorites = useFavoritesStore((state) => activeConnection ? state.getFavoritesForProvider(activeConnection.id) : []);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const playStream = usePlayerStore((state) => state.playStream);
+  const streamHealth = usePlayerStore((state) => state.streamHealth);
 
   const [categories, setCategories] = useState<XtreamCategory[]>([]);
   const [streams, setStreams] = useState<XtreamStream[]>([]);
@@ -50,6 +52,7 @@ export function LiveBrowser() {
   const [selectedStream, setSelectedStream] = useState<XtreamStream | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [guide, setGuide] = useState<NormalizedEpg | null>(null);
+  const [cardGuides, setCardGuides] = useState<Record<number, NormalizedEpg>>({});
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -154,6 +157,41 @@ export function LiveBrowser() {
     });
   }, [search, selectedCategory, streams]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!activeConnection || filteredStreams.length === 0) {
+      setCardGuides({});
+      return;
+    }
+
+    const visibleStreams = filteredStreams.slice(0, 8);
+
+    Promise.all(visibleStreams.map(async (stream) => {
+      try {
+        const epg = await getShortEpg(activeConnection, getContentId(stream));
+        return [getContentId(stream), epg] as const;
+      } catch {
+        return null;
+      }
+    })).then((entries) => {
+      if (cancelled) return;
+      setCardGuides(
+        Object.fromEntries(entries.filter((entry): entry is readonly [number, NormalizedEpg] => Boolean(entry)))
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConnection, filteredStreams]);
+
+  const selectStream = (stream: XtreamStream) => {
+    if (!activeConnection) return;
+    setSelectedStream(stream);
+    setPreviewUrl(buildLiveStreamUrl(activeConnection, stream));
+  };
+
   if (!activeConnection) {
     return (
       <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 text-slate-300">
@@ -195,6 +233,7 @@ export function LiveBrowser() {
     <div className="space-y-6">
       {isMockConnection ? <MockScenarioControl /> : null}
       {isMockConnection ? <MockDemoBoard health={health} manifest={manifest} screenId="live" /> : null}
+      {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="live" /> : null}
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Play confidence" />
       <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
       <SurfaceContinuityWindow contract={continuityWindow} badge="Surf continuity" />
@@ -264,6 +303,13 @@ export function LiveBrowser() {
               <InfoCard label="Provider" value={activeConnection.name} detail={activeConnection.username} />
               <InfoCard label="Status" value={providerStatus?.state || 'idle'} detail={providerStatus?.message || 'Validation pending'} />
               <InfoCard label="Favorites" value={String(favorites.length)} detail="Saved live channels on this provider" />
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-4">
+              <InfoCard label="Health" value={streamHealth.status} detail={streamHealth.message || 'Live telemetry will update during preview and playback'} />
+              <InfoCard label="Buffer" value={streamHealth.bufferSeconds !== null ? `${streamHealth.bufferSeconds}s` : '--'} detail="Available preview buffer" />
+              <InfoCard label="Bitrate" value={streamHealth.bitrateKbps !== null ? `${streamHealth.bitrateKbps} kbps` : '--'} detail={streamHealth.codec || 'Codec pending'} />
+              <InfoCard label="Resolution" value={streamHealth.resolution || '--'} detail={streamHealth.droppedFrames !== null ? `${streamHealth.droppedFrames} dropped frames` : 'Frame telemetry pending'} />
             </div>
 
             <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-black/20 p-5">
@@ -351,10 +397,9 @@ export function LiveBrowser() {
               return (
                 <button
                   key={contentId}
-                  onClick={() => {
-                    setSelectedStream(stream);
-                    setPreviewUrl(buildLiveStreamUrl(activeConnection, stream));
-                  }}
+                  onClick={() => selectStream(stream)}
+                  onMouseEnter={() => selectStream(stream)}
+                  onFocus={() => selectStream(stream)}
                   className={`flex w-full items-center gap-4 rounded-[1.4rem] border px-4 py-3 text-left transition ${isSelected ? 'border-sky-400/30 bg-sky-500/10' : 'border-white/10 bg-black/20 hover:bg-black/30'}`}
                 >
                   <div
@@ -364,6 +409,14 @@ export function LiveBrowser() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-white">{stream.name}</p>
                     <p className="mt-1 truncate text-xs text-slate-400">{stream.channel_group || 'Live'} · {favorites.includes(contentId) ? 'Favorited' : 'Ready to play'}</p>
+                    {cardGuides[contentId]?.now ? (
+                      <div className="mt-2 space-y-1">
+                        <p className="truncate text-[11px] uppercase tracking-[0.2em] text-sky-200">Now: {cardGuides[contentId].now?.title}</p>
+                        {cardGuides[contentId].next?.title ? (
+                          <p className="truncate text-[11px] uppercase tracking-[0.2em] text-slate-400">Next: {cardGuides[contentId].next?.title}</p>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </button>
               );

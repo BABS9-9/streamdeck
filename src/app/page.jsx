@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { MockDemoBoard } from '@/components/mock-demo-board';
+import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
@@ -256,6 +257,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <MockDemoBoard health={health} manifest={manifest} screenId="login" />
+          </div>
+
+          <div className="mt-6">
+            <DifferentiatorSpotlight manifest={manifest} screenId="login" />
           </div>
 
           {fallbackEquivalence ? (
