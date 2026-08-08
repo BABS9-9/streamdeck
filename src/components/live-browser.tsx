@@ -9,11 +9,13 @@ import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
+import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
 import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equivalence';
+import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
@@ -180,6 +182,8 @@ export function LiveBrowser() {
   const providerStatus = connectionStatus[activeConnection.id];
   const isMockConnection = isMockProviderServer(activeConnection.server);
   const canPlaySelected = Boolean(selectedStream && previewUrl);
+  const canonicalProviderIdentity = manifest?.surfaceCanonicalProviderIdentityContracts.find((item) => item.screenId === 'live') ?? null;
+  const fallbackRanking = manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === 'live') ?? null;
   const fallbackEquivalence = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'live') ?? null;
   const launchReadiness = manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'live') ?? null;
   const launchOwnership = manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'live') ?? null;
@@ -233,6 +237,8 @@ export function LiveBrowser() {
         />
       ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="live" /> : null}
+      <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
+      <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
       <SurfaceFallbackEquivalence contract={fallbackEquivalence} badge="Fallback equivalence" />
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Play confidence" />
       <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />

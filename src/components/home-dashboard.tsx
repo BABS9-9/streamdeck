@@ -10,11 +10,13 @@ import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
+import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
 import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equivalence';
+import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
@@ -215,6 +217,14 @@ export function HomeDashboard() {
     () => manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const canonicalProviderIdentity = useMemo(
+    () => manifest?.surfaceCanonicalProviderIdentityContracts.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
+  const fallbackRanking = useMemo(
+    () => manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const launchReadiness = useMemo(
     () => manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -347,6 +357,8 @@ export function HomeDashboard() {
         />
       ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="home" /> : null}
+      <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
+      <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
 
       <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04]">
         <div

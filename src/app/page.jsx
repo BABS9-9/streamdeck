@@ -9,11 +9,13 @@ import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
+import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
 import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equivalence';
+import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
@@ -144,6 +146,14 @@ export default function LoginPage() {
   );
   const fallbackEquivalence = useMemo(
     () => manifest?.surfaceFallbackEquivalenceContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const canonicalProviderIdentity = useMemo(
+    () => manifest?.surfaceCanonicalProviderIdentityContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const fallbackRanking = useMemo(
+    () => manifest?.surfaceFallbackRankingContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const launchReadiness = useMemo(
@@ -361,6 +371,14 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <DifferentiatorSpotlight manifest={manifest} screenId="login" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
           </div>
 
           <div className="mt-6">
