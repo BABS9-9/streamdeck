@@ -30,6 +30,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
+import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { useAuthStore } from '@/stores/auth-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -206,6 +207,15 @@ export default function LoginPage() {
     () => manifest?.surfaceConfidenceFloors?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
+  const savedProviderBoard = useMemo(
+    () => buildSavedProviderHealthBoard({
+      connections,
+      connectionStatus,
+      activeConnectionId: activeConnection?.id,
+      surface: 'login',
+    }),
+    [activeConnection?.id, connectionStatus, connections]
+  );
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -266,6 +276,8 @@ export default function LoginPage() {
               screenId="login"
               providerLabel={activeConnection?.name || manifest?.providerName || 'Mock provider'}
               providerDetail={activeConnection ? `${activeConnection.username} · ${activeConnection.server}` : `Scenario: ${scenario}`}
+              savedProviderBoard={savedProviderBoard}
+              onSelectProvider={(providerId) => setActiveConnection(providerId)}
             />
           </div>
 
@@ -487,6 +499,7 @@ export default function LoginPage() {
                 {connections.map((connection) => {
                   const status = connectionStatus[connection.id];
                   const isActive = activeConnection?.id === connection.id;
+                  const healthEntry = savedProviderBoard.byProviderId[connection.id];
                   return (
                     <div key={connection.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -496,6 +509,12 @@ export default function LoginPage() {
                           <p className={`mt-2 text-xs uppercase tracking-[0.22em] ${status ? statusTone[status.state] : 'text-slate-500'}`}>
                             {status?.state || 'idle'}
                           </p>
+                          {healthEntry ? (
+                            <p className="mt-2 text-xs text-slate-400">
+                              {healthEntry.trustLabel}
+                              {healthEntry.warning ? ` · ${healthEntry.warning}` : ' · Saved-provider trust looks healthy enough for quick reuse.'}
+                            </p>
+                          ) : null}
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <button

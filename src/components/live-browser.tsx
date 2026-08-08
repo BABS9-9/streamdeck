@@ -30,6 +30,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
+import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -41,7 +42,9 @@ const MOCK_SERVER = 'http://localhost:3579';
 
 export function LiveBrowser() {
   const activeConnection = useAuthStore((state) => state.activeConnection);
+  const connections = useAuthStore((state) => state.connections);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
   const favorites = useFavoritesStore((state) => activeConnection ? state.getFavoritesForProvider(activeConnection.id) : []);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const playStream = usePlayerStore((state) => state.playStream);
@@ -229,6 +232,15 @@ export function LiveBrowser() {
   const identityAnchor = manifest?.surfaceIdentityAnchors.find((item) => item.screenId === 'live') ?? null;
   const claimCeiling = manifest?.surfaceClaimCeilings.find((item) => item.screenId === 'live') ?? null;
   const confidenceFloor = manifest?.surfaceConfidenceFloors.find((item) => item.screenId === 'live') ?? null;
+  const savedProviderBoard = useMemo(
+    () => buildSavedProviderHealthBoard({
+      connections,
+      connectionStatus,
+      activeConnectionId: activeConnection?.id,
+      surface: 'live',
+    }),
+    [activeConnection?.id, connectionStatus, connections]
+  );
 
   return (
     <div className="space-y-6">
@@ -240,6 +252,8 @@ export function LiveBrowser() {
           screenId="live"
           providerLabel={activeConnection.name}
           providerDetail={`${activeConnection.username} · ${providerStatus?.state || 'idle'}`}
+          savedProviderBoard={savedProviderBoard}
+          onSelectProvider={(providerId) => setActiveConnection(providerId)}
         />
       ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="live" /> : null}

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { connectionStatusTone, getProviderAccountPressure } from '@/lib/provider-signals';
-import { getHealthiestSavedProvider, getProviderSummaryWarning } from '@/lib/provider-recovery';
+import { getProviderSummaryWarning } from '@/lib/provider-recovery';
+import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { MockProviderHealth, MockProviderScenario, ProviderAuthSummary } from '@/lib/types';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
@@ -75,11 +76,16 @@ export function SettingsPanel() {
 
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const mockRecoveryWarning = getProviderRecoveryWarning(mockHealth?.accountProfile);
-  const healthiestConnection = getHealthiestSavedProvider({
-    connections,
-    connectionStatus,
-    activeConnectionId: activeConnection?.id,
-  });
+  const savedProviderBoard = useMemo(
+    () => buildSavedProviderHealthBoard({
+      connections,
+      connectionStatus,
+      activeConnectionId: activeConnection?.id,
+      surface: 'settings',
+    }),
+    [activeConnection?.id, connectionStatus, connections]
+  );
+  const healthiestConnection = savedProviderBoard.recommendedProvider;
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
@@ -124,6 +130,7 @@ export function SettingsPanel() {
               const recentItems = watchHistory.filter((item) => item.providerId === connection.id).length;
               const searchSnapshot = getSearchSnapshot(connection.id);
               const status = connectionStatus[connection.id];
+              const healthEntry = savedProviderBoard.byProviderId[connection.id];
               return (
                 <div
                   key={connection.id}
@@ -141,6 +148,7 @@ export function SettingsPanel() {
                       </div>
                       <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">{connection.username} · {connection.server}</p>
                       {status?.message ? <p className="mt-2 text-xs text-slate-400">{status.message}</p> : null}
+                      {healthEntry ? <p className="mt-2 text-xs text-slate-400">{healthEntry.trustLabel}{healthEntry.warning ? ` · ${healthEntry.warning}` : ''}</p> : null}
                     </div>
                     <button
                       onClick={() => setActiveConnection(connection.id)}
@@ -164,8 +172,8 @@ export function SettingsPanel() {
                         tone="amber"
                         actions={isActive && healthiestConnection ? [{
                           label: 'Switch to healthiest saved provider',
-                          meta: healthiestConnection.name,
-                          onClick: () => setActiveConnection(healthiestConnection.id),
+                          meta: healthiestConnection.providerName,
+                          onClick: () => setActiveConnection(healthiestConnection.providerId),
                         }] : []}
                       />
                     </div>
@@ -268,8 +276,8 @@ export function SettingsPanel() {
                     tone="amber"
                     actions={healthiestConnection ? [{
                       label: 'Switch to healthiest saved provider',
-                      meta: healthiestConnection.name,
-                      onClick: () => setActiveConnection(healthiestConnection.id),
+                      meta: healthiestConnection.providerName,
+                      onClick: () => setActiveConnection(healthiestConnection.providerId),
                     }] : []}
                   />
                 </div>
@@ -284,8 +292,8 @@ export function SettingsPanel() {
                     tone="sky"
                     actions={[{
                       label: mockHealth.surfaceRecoveryPlans.settings.cta,
-                      meta: healthiestConnection.name,
-                      onClick: () => setActiveConnection(healthiestConnection.id),
+                      meta: healthiestConnection.providerName,
+                      onClick: () => setActiveConnection(healthiestConnection.providerId),
                     }]}
                   />
                 </div>

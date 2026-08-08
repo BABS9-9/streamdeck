@@ -232,6 +232,51 @@ export type ProviderSwitchContext = {
   reason?: 'manual' | 'launch' | 'recovery' | 'variant' | 'validation' | 'remove-connection' | 'auto' | null;
 };
 
+export type SavedProviderHealthTone = 'healthy' | 'warning';
+
+export type SavedProviderHealthSignal = {
+  id: string;
+  label: string;
+  detail: string;
+  tone: SavedProviderHealthTone;
+};
+
+export type SavedProviderHealthEntry = {
+  providerId: string;
+  providerName: string;
+  isActive: boolean;
+  trustScore: number;
+  trustLabel: string;
+  warning: string | null;
+  status: ConnectionStatus['state'];
+  statusMessage: string | null;
+  activeConnections: number | null;
+  maxConnections: number | null;
+  expiresAt: string | null;
+  checkedAt: number | null;
+};
+
+export type SavedProviderHealthBoard = {
+  providers: SavedProviderHealthEntry[];
+  byProviderId: Record<string, SavedProviderHealthEntry>;
+  activeProvider: SavedProviderHealthEntry | null;
+  recommendedProvider: SavedProviderHealthEntry | null;
+  warningCount: number;
+  healthyCount: number;
+  headline: {
+    tone: SavedProviderHealthTone;
+    title: string;
+    detail: string;
+  } | null;
+  trustSignals: SavedProviderHealthSignal[];
+  recoveryRoute: {
+    providerId: string | null;
+    title: string;
+    detail: string;
+    cta: string;
+  } | null;
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;

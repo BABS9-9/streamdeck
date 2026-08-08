@@ -1,6 +1,6 @@
 'use client';
 
-import { MockProviderHealth } from '@/lib/types';
+import { MockProviderHealth, SavedProviderHealthBoard } from '@/lib/types';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustStack } from './provider-trust-stack';
 
@@ -32,20 +32,33 @@ export function ProviderRiskStrip({
   screenId,
   providerLabel,
   providerDetail,
+  savedProviderBoard,
+  onSelectProvider,
 }: {
   health: MockProviderHealth | null;
   screenId: ScreenId;
   providerLabel?: string | null;
   providerDetail?: string | null;
+  savedProviderBoard?: SavedProviderHealthBoard | null;
+  onSelectProvider?: ((providerId: string) => void) | null;
 }) {
-  if (!health) return null;
+  if (!health && !savedProviderBoard) return null;
 
   const copy = surfaceCopy[screenId];
-  const recoveryPlan = health.surfaceRecoveryPlans?.[screenId];
-  const riskCount = health.trustSignals?.filter((signal) => signal.tone === 'warning').length ?? 0;
+  const recoveryPlan = health?.surfaceRecoveryPlans?.[screenId];
+  const mergedSignals = [
+    ...(savedProviderBoard?.trustSignals || []),
+    ...(health?.trustSignals || []),
+  ];
+  const riskCount = mergedSignals.filter((signal) => signal.tone === 'warning').length;
   const headlineMeta = providerLabel
     ? `${providerLabel}${providerDetail ? ` · ${providerDetail}` : ''}`
     : providerDetail || null;
+  const headline = savedProviderBoard?.headline || (health?.operatorHeadline ? {
+    ...health.operatorHeadline,
+    detail: headlineMeta ? `${health.operatorHeadline.detail} ${headlineMeta}` : health.operatorHeadline.detail,
+  } : null);
+  const recoveryRoute = savedProviderBoard?.recoveryRoute;
 
   return (
     <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.035] p-5">
@@ -63,13 +76,24 @@ export function ProviderRiskStrip({
       <ProviderTrustStack
         className="mt-5"
         title="Cross-surface provider health"
-        headline={health.operatorHeadline ? {
-          ...health.operatorHeadline,
-          detail: headlineMeta ? `${health.operatorHeadline.detail} ${headlineMeta}` : health.operatorHeadline.detail,
-        } : null}
-        signals={health.trustSignals || []}
+        headline={headline}
+        signals={mergedSignals}
         columnsClassName="grid gap-3 lg:grid-cols-3"
       />
+
+      {recoveryRoute ? (
+        <ProviderRecoveryRail
+          eyebrow="Saved-provider recovery"
+          title={recoveryRoute.title}
+          detail={recoveryRoute.detail}
+          tone={copy.tone}
+          actions={recoveryRoute.providerId && onSelectProvider ? [{
+            label: recoveryRoute.cta,
+            tone: 'secondary',
+            onClick: () => onSelectProvider(recoveryRoute.providerId as string),
+          }] : []}
+        />
+      ) : null}
 
       {recoveryPlan ? (
         <ProviderRecoveryRail
