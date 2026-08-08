@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { getContentId } from '@/lib/xtream-api';
 import { getLiveCategoryRecovery, getLiveProviderVariants } from '@/lib/provider-recovery';
 import { useAuthStore } from '@/stores/auth-store';
+import { getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { VideoPlayer } from './video-player';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderFactGrid } from './provider-fact-grid';
@@ -31,13 +32,18 @@ export function PlayerDock() {
   const connections = useAuthStore((state) => state.connections);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
+  const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
+  const refreshGuideEntry = useLiveGuideStore((state) => state.refreshGuideEntry);
+  const syncByGuideKey = useLiveGuideStore((state) => state.syncByGuideKey);
 
-  if (!currentStream || !playbackUrl || !currentProviderId) return null;
-
-  const contentId = currentStream.stream_id ?? currentStream.series_id ?? 0;
-  const historyItem = watchHistory.find((item) => item.id === `${currentProviderId}-${contentId}`);
+  const contentId = currentStream ? (currentStream.stream_id ?? currentStream.series_id ?? 0) : 0;
+  const historyItem = currentProviderId ? watchHistory.find((item) => item.id === `${currentProviderId}-${contentId}`) : undefined;
   const currentProvider = connections.find((connection) => connection.id === currentProviderId) ?? null;
   const isExpanded = dockMode === 'expanded';
+  const currentGuideEntry = currentProviderId ? lookupStreamGuide(currentProviderId, currentStream, Number.MAX_SAFE_INTEGER) : null;
+  const currentGuide = getGuidePayload(currentGuideEntry);
+  const currentGuideState = currentProviderId ? syncByGuideKey[`${currentProviderId}:${contentId}`] : null;
   const statusTone = streamHealth.status === 'healthy'
     ? 'bg-emerald-400/15 text-emerald-200'
     : streamHealth.status === 'buffering'
@@ -47,7 +53,7 @@ export function PlayerDock() {
         : 'bg-white/10 text-slate-300';
 
   const liveRecovery = useMemo(() => {
-    if (currentStream.stream_type !== 'live' || !currentProviderId) return { topVariant: null, categoryFallback: null };
+    if (!currentStream || currentStream.stream_type !== 'live' || !currentProviderId) return { topVariant: null, categoryFallback: null };
 
     const variants = getLiveProviderVariants({
       title: currentStream.name,
@@ -72,6 +78,14 @@ export function PlayerDock() {
       }),
     };
   }, [connectionStatus, connections, currentProviderId, currentStream, historyItem?.categoryName]);
+
+  useEffect(() => {
+    if (!currentProvider || !currentStream || currentStream.stream_type !== 'live' || !contentId) return;
+    markGuideFromCache(currentProvider.id, [contentId]);
+    refreshGuideEntry(currentProvider, contentId).catch(() => {});
+  }, [contentId, currentProvider, currentStream?.stream_type, markGuideFromCache, refreshGuideEntry]);
+
+  if (!currentStream || !playbackUrl || !currentProviderId) return null;
 
   return (
     <div className="fixed inset-x-3 bottom-3 z-50 sm:inset-x-4 lg:left-auto lg:right-4 lg:w-[420px] lg:max-w-[calc(100vw-2rem)]">
@@ -156,6 +170,30 @@ export function PlayerDock() {
                   <p className="mt-1 text-sm font-medium text-white">{streamHealth.resolution ?? streamHealth.codec ?? 'Detecting'}</p>
                 </div>
               </div>
+
+              {currentStream.stream_type === 'live' ? (
+                <div className="rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Player now / next</p>
+                  {currentGuide?.now ? (
+                    <>
+                      <p className="mt-3 text-base font-medium text-white">{currentGuide.now.title}</p>
+                      {currentGuide.now.description ? <p className="mt-2 text-sm leading-7 text-slate-300">{currentGuide.now.description}</p> : null}
+                      {currentGuide.next?.title ? <p className="mt-3 text-sm text-slate-400">Next: {currentGuide.next.title}</p> : null}
+                      <p className="mt-3 text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                        {currentGuideState?.source === 'cache' ? 'Saved provider guide' : 'Live provider guide'}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-3 text-sm text-slate-400">
+                      {currentGuideState?.status === 'refreshing'
+                        ? 'Refreshing player guide...'
+                        : currentGuideState?.error
+                          ? `Player guide refresh failed: ${currentGuideState.error}`
+                          : 'Guide data is unavailable for this channel right now.'}
+                    </p>
+                  )}
+                </div>
+              ) : null}
 
               {currentProvider?.lastAuthSummary ? (
                 <div className="rounded-[1.2rem] border border-white/10 bg-white/5 p-4">

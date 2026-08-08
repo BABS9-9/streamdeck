@@ -2,6 +2,8 @@ import {
   EpgListing,
   NormalizedEpg,
   ProviderCatalog,
+  ProviderEpgSnapshot,
+  ProviderEpgSnapshotEntry,
   ProviderHomeSnapshot,
   XtreamAuthResponse,
   XtreamCategory,
@@ -39,6 +41,7 @@ const buildProxyUrl = (url: string) => `/api/iptv?url=${encodeURIComponent(url)}
 const buildStreamProxyUrl = (url: string) => `/api/stream?url=${encodeURIComponent(url)}`;
 const SEARCH_CACHE_MAX_AGE_MS = 1000 * 60 * 20;
 const HOME_CACHE_MAX_AGE_MS = 1000 * 60 * 15;
+const EPG_CACHE_MAX_AGE_MS = 1000 * 60 * 10;
 
 const decodeBase64 = (value?: string | null) => {
   if (!value) return '';
@@ -139,6 +142,52 @@ export async function getShortEpg(credentials: XtreamCredentials, streamId: numb
     description: decodeBase64(listing.description),
   }));
   return normalizeEpg(listings);
+}
+
+export function getCachedEpgSnapshot(providerId: string, maxAgeMs = EPG_CACHE_MAX_AGE_MS) {
+  const cached = storage.getProviderEpgSnapshot(providerId);
+  if (!cached) return null;
+  if (Date.now() - cached.updatedAt > maxAgeMs) return null;
+  return cached;
+}
+
+export function getCachedEpgEntry(providerId: string, streamId: number, maxAgeMs = EPG_CACHE_MAX_AGE_MS) {
+  const snapshot = getCachedEpgSnapshot(providerId, maxAgeMs);
+  if (!snapshot) return null;
+  const entry = snapshot.entries[streamId];
+  if (!entry) return null;
+  if (Date.now() - entry.updatedAt > maxAgeMs) return null;
+  return entry;
+}
+
+export function saveProviderEpgSnapshot(providerId: string, snapshot: ProviderEpgSnapshot) {
+  storage.saveProviderEpgSnapshot(providerId, snapshot);
+}
+
+export function mergeProviderEpgEntry(
+  providerId: string,
+  streamId: number,
+  epg: NormalizedEpg | null,
+  options?: { updatedAt?: number; error?: string | null }
+) {
+  const updatedAt = options?.updatedAt ?? Date.now();
+  const current = storage.getProviderEpgSnapshot(providerId);
+  const nextEntry: ProviderEpgSnapshotEntry = {
+    streamId,
+    epg,
+    updatedAt,
+    error: options?.error ?? null,
+  };
+  const snapshot: ProviderEpgSnapshot = {
+    providerId,
+    entries: {
+      ...(current?.entries || {}),
+      [streamId]: nextEntry,
+    },
+    updatedAt,
+  };
+  storage.saveProviderEpgSnapshot(providerId, snapshot);
+  return nextEntry;
 }
 
 export function normalizeEpg(listings: EpgListing[]): NormalizedEpg {

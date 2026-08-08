@@ -32,7 +32,9 @@ import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
+import { getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
 
@@ -55,6 +57,10 @@ export default function LoginPage() {
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const loading = useAuthStore((state) => state.loading);
   const error = useAuthStore((state) => state.error);
+  const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
+  const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
+  const prefetchStreams = useLiveGuideStore((state) => state.prefetchStreams);
+  const syncByGuideKey = useLiveGuideStore((state) => state.syncByGuideKey);
 
   const [server, setServer] = useState(MOCK_SERVER);
   const [username, setUsername] = useState('demo');
@@ -62,6 +68,7 @@ export default function LoginPage() {
   const [manifest, setManifest] = useState(null);
   const [health, setHealth] = useState(null);
   const [scenario, setScenario] = useState('healthy');
+  const [loginGuideStreams, setLoginGuideStreams] = useState([]);
 
   useEffect(() => {
     hydrate();
@@ -97,6 +104,33 @@ export default function LoginPage() {
       cancelled = true;
     };
   }, [scenario]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!activeConnection) {
+      setLoginGuideStreams([]);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    getLiveStreams(activeConnection)
+      .then(async (streams) => {
+        if (cancelled) return;
+        const nextStreams = streams.slice(0, 2);
+        setLoginGuideStreams(nextStreams);
+        markGuideFromCache(activeConnection.id, nextStreams.map((stream) => getContentId(stream)));
+        await prefetchStreams(activeConnection, nextStreams, 2).catch(() => {});
+      })
+      .catch(() => {
+        if (!cancelled) setLoginGuideStreams([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConnection, markGuideFromCache, prefetchStreams]);
 
   const handleConnect = async (event) => {
     event.preventDefault();
@@ -217,6 +251,16 @@ export default function LoginPage() {
     }),
     [activeConnection?.id, connectionStatus, connections]
   );
+  const loginGuideCards = useMemo(
+    () => activeConnection
+      ? loginGuideStreams.map((stream) => ({
+          stream,
+          guide: getGuidePayload(lookupStreamGuide(activeConnection.id, stream, Number.MAX_SAFE_INTEGER)),
+          sync: syncByGuideKey[`${activeConnection.id}:${getContentId(stream)}`] ?? null,
+        }))
+      : [],
+    [activeConnection, loginGuideStreams, lookupStreamGuide, syncByGuideKey]
+  );
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -266,6 +310,39 @@ export default function LoginPage() {
               </div>
             ) : null}
           </div>
+
+          {activeConnection ? (
+            <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-black/20 p-6">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Saved provider now / next</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {loginGuideCards.map(({ stream, guide, sync }) => (
+                  <div key={getContentId(stream)} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <p className="text-sm font-medium text-white">{stream.name}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">{stream.channel_group || 'Live'}</p>
+                    {guide?.now ? (
+                      <>
+                        <p className="mt-3 text-sm text-sky-100">Now: {guide.now.title}</p>
+                        {guide.next?.title ? <p className="mt-1 text-sm text-slate-300">Next: {guide.next.title}</p> : null}
+                      </>
+                    ) : (
+                      <p className="mt-3 text-sm text-slate-400">
+                        {sync?.status === 'refreshing'
+                          ? 'Refreshing guide...'
+                          : sync?.error
+                            ? `Guide unavailable: ${sync.error}`
+                            : 'Guide data is unavailable for this channel right now.'}
+                      </p>
+                    )}
+                  </div>
+                ))}
+                {loginGuideCards.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+                    Connect or reuse a provider to load a shared now / next guide snapshot here before entering Home.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           <div className="mt-6">
             <MockDemoBoard health={health} manifest={manifest} screenId="login" />

@@ -33,10 +33,11 @@ import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
-import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, getShortEpg, saveHomeSnapshot } from '@/lib/xtream-api';
-import { MockProviderHealth, MockProviderManifest, NormalizedEpg, XtreamStream } from '@/lib/types';
+import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
+import { MockProviderHealth, MockProviderManifest, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
+import { getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { usePlayerStore } from '@/stores/player-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -70,9 +71,11 @@ export function HomeDashboard() {
   const favorites = useFavoritesStore((state) => activeConnection ? state.getFavoritesForProvider(activeConnection.id) : []);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const playStream = usePlayerStore((state) => state.playStream);
+  const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
+  const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
+  const prefetchStreams = useLiveGuideStore((state) => state.prefetchStreams);
 
   const [home, setHome] = useState<HomeState>(emptyHome);
-  const [heroGuide, setHeroGuide] = useState<NormalizedEpg | null>(null);
   const [guideMessage, setGuideMessage] = useState<string | null>(null);
   const [cacheMessage, setCacheMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -135,13 +138,15 @@ export function HomeDashboard() {
         spotlight: cached.spotlight,
         summary: cached.summary,
       });
-      setHeroGuide(cached.heroEpg);
+      markGuideFromCache(activeConnection.id, cached.quickLive.map((stream) => getContentId(stream)));
+      if (cached.featured?.stream_type === 'live') {
+        markGuideFromCache(activeConnection.id, [getContentId(cached.featured)]);
+      }
       const ageMinutes = Math.max(1, Math.round((Date.now() - cached.updatedAt) / 60000));
       setCacheMessage(`Loaded saved provider data from ${ageMinutes} minute${ageMinutes === 1 ? '' : 's'} ago while refreshing.`);
     } else {
       setCacheMessage(null);
       setHome(emptyHome);
-      setHeroGuide(null);
     }
 
     setLoading(true);
@@ -158,14 +163,15 @@ export function HomeDashboard() {
           series: data.series.length,
         };
 
-        let nextHeroGuide = null;
-        if (featured?.stream_type === 'live') {
-          try {
-            nextHeroGuide = await getShortEpg(activeConnection, getContentId(featured));
-          } catch {
-            nextHeroGuide = null;
-          }
-        }
+        const guideTargets = featured?.stream_type === 'live'
+          ? [featured, ...quickLive.filter((item) => getContentId(item) !== getContentId(featured))]
+          : quickLive;
+        const guideResults = await prefetchStreams(activeConnection, guideTargets, 6);
+        const liveNow = guideResults.reduce<Record<number, NonNullable<(typeof guideResults)[number]['entry']>>>((acc, result) => {
+          if (result.entry) acc[result.streamId] = result.entry;
+          return acc;
+        }, {});
+        const nextHeroGuide = featured?.stream_type === 'live' ? liveNow[getContentId(featured)]?.epg ?? null : null;
 
         const snapshot = {
           featured,
@@ -173,13 +179,12 @@ export function HomeDashboard() {
           spotlight,
           summary,
           heroEpg: nextHeroGuide,
-          liveNow: {},
+          liveNow,
           updatedAt: Date.now(),
         };
 
         saveHomeSnapshot(activeConnection.id, snapshot);
         setHome({ featured, quickLive, spotlight, summary });
-        setHeroGuide(nextHeroGuide);
         setGuideMessage(nextHeroGuide ? null : 'Guide data is unavailable right now, but browse and playback are still live.');
         setCacheMessage(cached ? 'Provider refreshed successfully.' : null);
       })
@@ -196,7 +201,7 @@ export function HomeDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [activeConnection, scenario]);
+  }, [activeConnection, markGuideFromCache, prefetchStreams, scenario]);
 
   const providerStatus = activeConnection ? connectionStatus[activeConnection.id] : null;
   const isMockConnection = activeConnection ? isMockProviderServer(activeConnection.server) : false;
@@ -315,6 +320,9 @@ export function HomeDashboard() {
     }),
     [activeConnection?.id, connectionStatus, connections]
   );
+  const heroGuide = activeConnection && featuredLive
+    ? getGuidePayload(lookupStreamGuide(activeConnection.id, featuredLive, Number.MAX_SAFE_INTEGER))
+    : null;
 
   if (!activeConnection) {
     return (
@@ -450,6 +458,16 @@ export function HomeDashboard() {
               <div className="p-4">
                 <p className="text-base font-medium text-white">{stream.name}</p>
                 <p className="mt-1 text-sm text-slate-400">{stream.channel_group || 'Live'} channel</p>
+                {(() => {
+                  const guide = getGuidePayload(lookupStreamGuide(activeConnection.id, stream, Number.MAX_SAFE_INTEGER));
+                  if (!guide?.now) return null;
+                  return (
+                    <div className="mt-3 space-y-1">
+                      <p className="truncate text-[11px] uppercase tracking-[0.2em] text-sky-200">Now: {guide.now.title}</p>
+                      {guide.next?.title ? <p className="truncate text-[11px] uppercase tracking-[0.2em] text-slate-400">Next: {guide.next.title}</p> : null}
+                    </div>
+                  );
+                })()}
               </div>
             </button>
           ))}

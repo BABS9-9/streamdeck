@@ -6,6 +6,7 @@ import { buildCanonicalProviderId, canonicalizeSavedConnection } from '@/lib/pro
 import { authenticate } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
 import { ConnectionStatus, ProviderAuthSummary, ProviderSwitchContext, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
+import { useLiveGuideStore } from '@/stores/live-guide-store';
 
 type SwitchConnectionOptions = Omit<ProviderSwitchContext, 'fromProviderId' | 'toProviderId' | 'switchedAt'>;
 
@@ -200,10 +201,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     storage.removeProviderFavoriteEntries(id);
     storage.removeProviderHistory(id);
     storage.removeProviderCatalog(id);
+    storage.removeProviderEpgSnapshot(id);
     storage.removeProviderHomeSnapshot(id);
     storage.removeProviderSearchSnapshot(id);
     storage.removeProviderCollections(id);
     storage.removeProviderSession(id);
+    useLiveGuideStore.getState().clearProvider(id);
     if (nextActive) {
       storage.setActiveConnectionId(nextActive.id);
       storage.saveProviderSwitchContext(buildProviderSwitchContext(nextActive.id, id, {

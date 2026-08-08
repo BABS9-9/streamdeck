@@ -127,6 +127,27 @@ export type NormalizedEpg = {
   listings: EpgListing[];
 };
 
+export type ProviderEpgSnapshotEntry = {
+  streamId: number;
+  epg: NormalizedEpg | null;
+  updatedAt: number;
+  error: string | null;
+};
+
+export type ProviderEpgSnapshot = {
+  providerId: string;
+  entries: Record<number, ProviderEpgSnapshotEntry>;
+  updatedAt: number;
+};
+
+export type ProviderEpgSyncState = {
+  status: 'idle' | 'refreshing' | 'ready' | 'error';
+  source: 'none' | 'cache' | 'network';
+  updatedAt: number | null;
+  error: string | null;
+  streamId: number | null;
+};
+
 export type WatchHistoryItem = {
   id: string;
   kind: 'live' | 'movie' | 'series';
@@ -203,7 +224,7 @@ export type ProviderHomeSnapshot = {
   quickLive: XtreamStream[];
   summary: { live: number; vod: number; series: number };
   heroEpg: NormalizedEpg | null;
-  liveNow: Record<number, NormalizedEpg>;
+  liveNow: Record<number, ProviderEpgSnapshotEntry>;
   updatedAt: number;
 };
 

@@ -32,10 +32,11 @@ import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
-import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams, getShortEpg } from '@/lib/xtream-api';
-import { MockProviderHealth, MockProviderManifest, NormalizedEpg, XtreamCategory, XtreamStream } from '@/lib/types';
+import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
+import { MockProviderHealth, MockProviderManifest, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
+import { getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { VideoPlayer } from './video-player';
 
@@ -50,14 +51,17 @@ export function LiveBrowser() {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const playStream = usePlayerStore((state) => state.playStream);
   const streamHealth = usePlayerStore((state) => state.streamHealth);
+  const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
+  const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
+  const prefetchStreams = useLiveGuideStore((state) => state.prefetchStreams);
+  const refreshGuideEntry = useLiveGuideStore((state) => state.refreshGuideEntry);
+  const syncByGuideKey = useLiveGuideStore((state) => state.syncByGuideKey);
 
   const [categories, setCategories] = useState<XtreamCategory[]>([]);
   const [streams, setStreams] = useState<XtreamStream[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStream, setSelectedStream] = useState<XtreamStream | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [guide, setGuide] = useState<NormalizedEpg | null>(null);
-  const [cardGuides, setCardGuides] = useState<Record<number, NormalizedEpg>>({});
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,25 +138,15 @@ export function LiveBrowser() {
   }, [activeConnection, scenario]);
 
   useEffect(() => {
-    let cancelled = false;
-
     if (!activeConnection || !selectedStream) {
-      setGuide(null);
       return;
     }
 
-    getShortEpg(activeConnection, getContentId(selectedStream))
-      .then((data) => {
-        if (!cancelled) setGuide(data);
-      })
-      .catch(() => {
-        if (!cancelled) setGuide(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeConnection, selectedStream]);
+    const streamId = getContentId(selectedStream);
+    if (!streamId) return;
+    markGuideFromCache(activeConnection.id, [streamId]);
+    refreshGuideEntry(activeConnection, streamId).catch(() => {});
+  }, [activeConnection, markGuideFromCache, refreshGuideEntry, selectedStream]);
 
   const filteredStreams = useMemo(() => {
     return streams.filter((stream) => {
@@ -163,33 +157,11 @@ export function LiveBrowser() {
   }, [search, selectedCategory, streams]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    if (!activeConnection || filteredStreams.length === 0) {
-      setCardGuides({});
-      return;
-    }
-
+    if (!activeConnection || filteredStreams.length === 0) return;
     const visibleStreams = filteredStreams.slice(0, 8);
-
-    Promise.all(visibleStreams.map(async (stream) => {
-      try {
-        const epg = await getShortEpg(activeConnection, getContentId(stream));
-        return [getContentId(stream), epg] as const;
-      } catch {
-        return null;
-      }
-    })).then((entries) => {
-      if (cancelled) return;
-      setCardGuides(
-        Object.fromEntries(entries.filter((entry): entry is readonly [number, NormalizedEpg] => Boolean(entry)))
-      );
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeConnection, filteredStreams]);
+    markGuideFromCache(activeConnection.id, visibleStreams.map((stream) => getContentId(stream)));
+    prefetchStreams(activeConnection, visibleStreams, 8).catch(() => {});
+  }, [activeConnection, filteredStreams, markGuideFromCache, prefetchStreams]);
 
   const selectStream = (stream: XtreamStream) => {
     if (!activeConnection) return;
@@ -242,6 +214,9 @@ export function LiveBrowser() {
     }),
     [activeConnection?.id, connectionStatus, connections]
   );
+  const selectedGuideEntry = selectedStream ? lookupStreamGuide(activeConnection.id, selectedStream, Number.MAX_SAFE_INTEGER) : null;
+  const selectedGuide = getGuidePayload(selectedGuideEntry);
+  const selectedGuideState = selectedStream ? syncByGuideKey[`${activeConnection.id}:${getContentId(selectedStream)}`] : null;
 
   return (
     <div className="space-y-6">
@@ -339,14 +314,23 @@ export function LiveBrowser() {
 
             <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-black/20 p-5">
               <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Now / Next</p>
-              {guide?.now ? (
+              {selectedGuide?.now ? (
                 <>
-                  <p className="mt-3 text-lg font-medium text-white">{guide.now.title}</p>
-                  {guide.now.description ? <p className="mt-2 text-sm leading-7 text-slate-300">{guide.now.description}</p> : null}
-                  {guide.next?.title ? <p className="mt-4 text-sm text-slate-400">Next: {guide.next.title}</p> : null}
+                  <p className="mt-3 text-lg font-medium text-white">{selectedGuide.now.title}</p>
+                  {selectedGuide.now.description ? <p className="mt-2 text-sm leading-7 text-slate-300">{selectedGuide.now.description}</p> : null}
+                  {selectedGuide.next?.title ? <p className="mt-4 text-sm text-slate-400">Next: {selectedGuide.next.title}</p> : null}
+                  <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                    {selectedGuideState?.source === 'cache' ? 'Saved guide snapshot' : 'Live provider guide'}
+                  </p>
                 </>
               ) : (
-                <p className="mt-3 text-sm text-slate-400">Guide data is unavailable for this channel right now.</p>
+                <p className="mt-3 text-sm text-slate-400">
+                  {selectedGuideState?.status === 'refreshing'
+                    ? 'Refreshing guide data for this channel...'
+                    : selectedGuideState?.error
+                      ? `Guide refresh failed: ${selectedGuideState.error}`
+                      : 'Guide data is unavailable for this channel right now.'}
+                </p>
               )}
             </div>
 
@@ -393,6 +377,7 @@ export function LiveBrowser() {
             {filteredStreams.map((stream) => {
               const contentId = getContentId(stream);
               const isSelected = selectedStream && getContentId(selectedStream) === contentId;
+              const cardGuide = lookupStreamGuide(activeConnection.id, stream, Number.MAX_SAFE_INTEGER);
               return (
                 <button
                   key={contentId}
@@ -408,11 +393,11 @@ export function LiveBrowser() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-white">{stream.name}</p>
                     <p className="mt-1 truncate text-xs text-slate-400">{stream.channel_group || 'Live'} · {favorites.includes(contentId) ? 'Favorited' : 'Ready to play'}</p>
-                    {cardGuides[contentId]?.now ? (
+                    {cardGuide?.epg?.now ? (
                       <div className="mt-2 space-y-1">
-                        <p className="truncate text-[11px] uppercase tracking-[0.2em] text-sky-200">Now: {cardGuides[contentId].now?.title}</p>
-                        {cardGuides[contentId].next?.title ? (
-                          <p className="truncate text-[11px] uppercase tracking-[0.2em] text-slate-400">Next: {cardGuides[contentId].next?.title}</p>
+                        <p className="truncate text-[11px] uppercase tracking-[0.2em] text-sky-200">Now: {cardGuide.epg.now?.title}</p>
+                        {cardGuide.epg.next?.title ? (
+                          <p className="truncate text-[11px] uppercase tracking-[0.2em] text-slate-400">Next: {cardGuide.epg.next?.title}</p>
                         ) : null}
                       </div>
                     ) : null}

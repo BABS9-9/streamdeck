@@ -4,6 +4,7 @@ import {
   FavoriteEntry,
   LibraryCollection,
   ProviderCatalog,
+  ProviderEpgSnapshot,
   ProviderHomeSnapshot,
   ProviderSearchSnapshot,
   ProviderSwitchContext,
@@ -18,6 +19,7 @@ const KEYS = {
   favorites: 'streamdeck.favorites',
   history: 'streamdeck.history',
   catalogs: 'streamdeck.catalogs',
+  epgSnapshots: 'streamdeck.epg-snapshots',
   homeSnapshots: 'streamdeck.home-snapshots',
   searchSnapshots: 'streamdeck.search-snapshots',
   providerSwitchContext: 'streamdeck.provider-switch-context',
@@ -355,6 +357,25 @@ export const storage = {
     delete catalogs[providerId];
     localStorage.setItem(KEYS.catalogs, JSON.stringify(catalogs));
   },
+  getEpgSnapshots(): Record<string, ProviderEpgSnapshot> {
+    if (!isBrowser()) return {};
+    return safeJsonParse(localStorage.getItem(KEYS.epgSnapshots), {});
+  },
+  getProviderEpgSnapshot(providerId: string): ProviderEpgSnapshot | null {
+    return storage.getEpgSnapshots()[providerId] ?? null;
+  },
+  saveProviderEpgSnapshot(providerId: string, snapshot: ProviderEpgSnapshot) {
+    if (!isBrowser()) return;
+    const snapshots = storage.getEpgSnapshots();
+    snapshots[providerId] = { ...snapshot, providerId };
+    localStorage.setItem(KEYS.epgSnapshots, JSON.stringify(snapshots));
+  },
+  removeProviderEpgSnapshot(providerId: string) {
+    if (!isBrowser()) return;
+    const snapshots = storage.getEpgSnapshots();
+    delete snapshots[providerId];
+    localStorage.setItem(KEYS.epgSnapshots, JSON.stringify(snapshots));
+  },
   getHomeSnapshots(): Record<string, ProviderHomeSnapshot> {
     if (!isBrowser()) return {};
     return safeJsonParse(localStorage.getItem(KEYS.homeSnapshots), {});
@@ -447,6 +468,9 @@ export const storage = {
     const catalogs = remapProviderMap(storage.getCatalogs(), aliasMap, (current, incoming) =>
       (incoming.updatedAt || 0) >= (current.updatedAt || 0) ? incoming : current
     );
+    const epgSnapshots = remapProviderMap(storage.getEpgSnapshots(), aliasMap, (current, incoming) =>
+      (incoming.updatedAt || 0) >= (current.updatedAt || 0) ? incoming : current
+    );
     const homeSnapshots = remapProviderMap(storage.getHomeSnapshots(), aliasMap, (current, incoming) =>
       (incoming.updatedAt || 0) >= (current.updatedAt || 0) ? incoming : current
     );
@@ -486,6 +510,7 @@ export const storage = {
     else localStorage.removeItem(KEYS.activeConnection);
     localStorage.setItem(KEYS.favorites, JSON.stringify(providerFavoriteEntries));
     localStorage.setItem(KEYS.catalogs, JSON.stringify(catalogs));
+    localStorage.setItem(KEYS.epgSnapshots, JSON.stringify(epgSnapshots));
     localStorage.setItem(KEYS.homeSnapshots, JSON.stringify(homeSnapshots));
     localStorage.setItem(KEYS.history, JSON.stringify(historyBuckets));
     localStorage.setItem(KEYS.searchSnapshots, JSON.stringify(searchSnapshots));
