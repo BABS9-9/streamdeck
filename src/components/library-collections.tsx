@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { buildMergedFavoriteGroups, buildMergedHistoryGroups, buildProviderNameMap } from '@/lib/merged-library';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustDisplay, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
-import { MockProviderHealth, MockProviderScenario, XtreamStream } from '@/lib/types';
+import { FavoriteEntry, MockProviderHealth, MockProviderScenario, WatchHistoryItem, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { useLibraryStore } from '@/stores/library-store';
@@ -116,6 +117,11 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     () => (activeConnection ? getFavoriteEntriesForProvider(activeConnection.id) : []),
     [activeConnection, getFavoriteEntriesForProvider]
   );
+  const favoriteEntriesByProvider = useMemo(
+    () => Object.fromEntries(connections.map((connection) => [connection.id, getFavoriteEntriesForProvider(connection.id)])),
+    [connections, getFavoriteEntriesForProvider]
+  );
+  const providerNameMap = useMemo(() => buildProviderNameMap(connections), [connections]);
 
   const favoriteItems = useMemo(
     () => favoriteEntries.map((entry) => {
@@ -144,6 +150,20 @@ export function LibraryCollections({ mode }: CollectionsProps) {
   const continueItems = useMemo(
     () => (activeConnection ? watchHistory.filter((item) => item.providerId === activeConnection.id) : []),
     [activeConnection, watchHistory]
+  );
+  const mergedFavoriteGroups = useMemo(
+    () => buildMergedFavoriteGroups({
+      favoriteEntriesByProvider,
+      activeConnectionId: activeConnection?.id,
+    }),
+    [activeConnection?.id, favoriteEntriesByProvider]
+  );
+  const mergedContinueGroups = useMemo(
+    () => buildMergedHistoryGroups({
+      watchHistory,
+      activeConnectionId: activeConnection?.id,
+    }),
+    [activeConnection?.id, watchHistory]
   );
 
   const seriesResumeLookup = useMemo(() => {
@@ -212,6 +232,12 @@ export function LibraryCollections({ mode }: CollectionsProps) {
 
   const surfaceRecoveryPlan = mode === 'favorites' ? mockHealth?.surfaceRecoveryPlans?.favorites : mockHealth?.surfaceRecoveryPlans?.continue;
   const healthiestSavedVariant = Object.values(variantSummary).flat()[0] ?? null;
+  const mergedVisibleCount = mode === 'favorites' ? mergedFavoriteGroups.length : mergedContinueGroups.length;
+  const duplicateVisibleCount = (mode === 'favorites' ? mergedFavoriteGroups : mergedContinueGroups)
+    .filter((group) => group.duplicateProviderCount > 1)
+    .length;
+  const providerCopyCount = (mode === 'favorites' ? mergedFavoriteGroups : mergedContinueGroups)
+    .reduce((total, group) => total + group.providerEntries.length, 0);
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
@@ -278,6 +304,82 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     } finally {
       setSeriesRecoveryKey((current) => (current === recoveryKey ? null : current));
     }
+  };
+
+  const renderProviderIdentity = (
+    entries: Array<Pick<FavoriteEntry, 'providerId'> | Pick<WatchHistoryItem, 'providerId'>>,
+    activeProviderId?: string | null
+  ) => (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {entries.map((entry) => {
+        const isActiveProvider = entry.providerId === activeProviderId;
+        return (
+          <span
+            key={`${entry.providerId}-${isActiveProvider ? 'active' : 'saved'}`}
+            className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${
+              isActiveProvider
+                ? 'border-violet-300/30 bg-violet-500/15 text-violet-100'
+                : 'border-white/10 bg-black/20 text-slate-300'
+            }`}
+          >
+            {providerNameMap[entry.providerId] || entry.providerId}
+            {isActiveProvider ? ' · active' : ''}
+          </span>
+        );
+      })}
+    </div>
+  );
+
+  const playFavoriteCopy = (entry: FavoriteEntry) => {
+    const provider = connections.find((connection) => connection.id === entry.providerId);
+    if (!provider) return;
+
+    const stream: XtreamStream = {
+      name: entry.title || 'Saved favorite',
+      stream_type: entry.kind,
+      stream_id: entry.kind === 'series' ? undefined : entry.streamId,
+      series_id: entry.kind === 'series' ? entry.seriesId ?? entry.streamId : undefined,
+      category_id: entry.categoryId || 'saved',
+      channel_group: entry.categoryName,
+      stream_icon: entry.artwork,
+      cover: entry.artwork,
+      plot: entry.plot,
+      genre: entry.genre,
+      year: entry.year,
+    };
+
+    setActiveConnection(entry.providerId, {
+      sourceSurface: 'favorites',
+      reason: entry.providerId === activeConnection?.id ? 'manual' : 'variant',
+      preservedTitle: entry.title,
+    });
+
+    if (entry.kind === 'series') return;
+    const playbackUrl = entry.kind === 'live' ? buildLiveStreamUrl(provider, stream) : buildVodStreamUrl(provider, stream);
+    playStream(stream, playbackUrl, entry.providerId);
+  };
+
+  const resumeHistoryCopy = (item: WatchHistoryItem) => {
+    if (!item.playbackUrl) return;
+
+    setActiveConnection(item.providerId, {
+      sourceSurface: 'collections',
+      reason: item.providerId === activeConnection?.id ? 'manual' : 'variant',
+      preservedTitle: item.seriesTitle || item.title,
+    });
+
+    playStream({
+      name: item.title,
+      stream_type: item.kind === 'live' ? 'live' : item.kind,
+      stream_id: item.streamId,
+      category_id: item.categoryId || 'resume',
+      stream_icon: item.artwork,
+    }, item.playbackUrl, item.providerId, {
+      seriesId: item.seriesId,
+      seriesTitle: item.seriesTitle,
+      seasonNumber: item.seasonNumber,
+      episodeNumber: item.episodeNumber,
+    });
   };
 
   const renderProviderVariants = (
@@ -413,8 +515,8 @@ export function LibraryCollections({ mode }: CollectionsProps) {
 
   const title = mode === 'favorites' ? 'Favorites' : 'Continue watching';
   const subtitle = mode === 'favorites'
-    ? 'Provider-aware saves across live TV, movies, and series.'
-    : 'One resume rail for everything you already started on this provider.';
+    ? 'Merged favorites truth across saved providers, without hiding which provider owns each copy.'
+    : 'One merged resume rail for everything you already started, with provider identity preserved on every copy.';
 
   return (
     <div className="space-y-6">
@@ -422,6 +524,11 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         <p className="text-xs uppercase tracking-[0.35em] text-violet-300">{mode === 'favorites' ? 'Saved collection' : 'Unified resume rail'}</p>
         <h2 className="mt-3 text-3xl font-semibold text-white">{title}</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">{subtitle}</p>
+        <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-300">
+          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{mergedVisibleCount} merged titles</span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{providerCopyCount} provider copies</span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{duplicateVisibleCount} multi-provider matches</span>
+        </div>
         {activeRecoveryMessage ? (
           <div className="mt-4 rounded-[1.4rem] border border-amber-400/20 bg-amber-500/10 p-4">
             <ProviderRecoveryRail
@@ -481,27 +588,47 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         <section>
           {loading ? <div className="rounded-3xl border border-white/10 bg-black/20 p-6 text-sm text-slate-400">Refreshing saved items from provider catalog…</div> : null}
           {cacheState === 'cached' ? <div className="mb-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">Loaded favorites from cached provider catalog first, then refreshed in the background.</div> : null}
-          {!loading && favoriteItems.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Save channels or titles from Live, Movies, or Series and they will show up here for {activeConnection.name}.</div> : null}
+          {!loading && mergedFavoriteGroups.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Save channels or titles from Live, Movies, or Series and they will show up here as one merged rail across all saved providers.</div> : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {favoriteItems.map(({ entry, item }) => {
-              const playbackUrl = item.stream_type === 'live'
-                ? buildLiveStreamUrl(activeConnection, item)
-                : item.stream_type === 'series'
-                  ? null
-                  : buildVodStreamUrl(activeConnection, item);
+            {mergedFavoriteGroups.map((group) => {
+              const entry = group.activeEntry ?? group.primaryEntry;
+              const activeCatalogItem = entry.providerId === activeConnection.id
+                ? favoriteItems.find((item) => item.entry.providerId === entry.providerId && item.entry.streamId === entry.streamId)?.item
+                : null;
+              const item = activeCatalogItem || {
+                name: entry.title || 'Saved favorite',
+                stream_type: entry.kind,
+                stream_id: entry.kind === 'series' ? undefined : entry.streamId,
+                series_id: entry.kind === 'series' ? entry.seriesId ?? entry.streamId : undefined,
+                category_id: entry.categoryId || 'saved',
+                channel_group: entry.categoryName,
+                stream_icon: entry.artwork,
+                cover: entry.artwork,
+                plot: entry.plot,
+                genre: entry.genre,
+                year: entry.year,
+              } as XtreamStream;
               const contentId = entry.streamId;
               const seriesResume = item.stream_type === 'series' ? seriesResumeLookup[normalizeLibraryKey(item.name)] : null;
               return (
-                <article key={`${item.stream_type}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
+                <article key={group.key} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                   <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${getArtwork(item)})` }} />
                   <div className="mt-4 flex items-start justify-between gap-3">
                     <div>
                       <p className="text-lg font-semibold text-white">{item.name}</p>
                       <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{item.stream_type}</p>
                     </div>
-                    <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">{contentId}</span>
+                    <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">
+                      {group.duplicateProviderCount > 1 ? `${group.duplicateProviderCount} copies` : contentId}
+                    </span>
                   </div>
                   <p className="mt-3 line-clamp-3 text-sm text-slate-400">{item.plot || item.genre || 'Saved from your StreamDeck library.'}</p>
+                  {renderProviderIdentity(group.providerEntries, activeConnection.id)}
+                  {group.duplicateProviderCount > 1 ? (
+                    <p className="mt-3 text-xs leading-5 text-sky-200">
+                      Same title saved under multiple providers. StreamDeck keeps each copy visible so favorites never pretend one provider owns the whole merged row.
+                    </p>
+                  ) : null}
                   {item.stream_type === 'series' && seriesResume ? (
                     <p className="mt-3 text-xs leading-5 text-emerald-200">Resume context found for S{seriesResume.seasonNumber}E{seriesResume.episodeNumber}, so alternate provider copies can jump straight back into the episode.</p>
                   ) : null}
@@ -518,20 +645,18 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                           fallbackCategoryId: item.category_id,
                         }
                       : undefined)}
-                  {playbackUrl ? (
+                  {item.stream_type !== 'series' ? (
                     <button
-                      onClick={() => {
-                        playStream(item, playbackUrl, activeConnection.id);
-                      }}
+                      onClick={() => playFavoriteCopy(entry)}
                       className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"
                     >
-                      Play from favorites
+                      {entry.providerId === activeConnection.id ? 'Play from favorites' : `Play on ${providerNameMap[entry.providerId] || entry.providerId}`}
                     </button>
                   ) : seriesResume ? (
                     <button
                       onClick={() => void launchSeriesVariant({
-                        providerId: activeConnection.id,
-                        providerName: activeConnection.name,
+                        providerId: entry.providerId,
+                        providerName: providerNameMap[entry.providerId] || entry.providerId,
                         title: item.name,
                         streamId: contentId,
                         kind: 'series',
@@ -544,14 +669,14 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                         seasonNumber: seriesResume.seasonNumber,
                         episodeNumber: seriesResume.episodeNumber,
                       })}
-                      disabled={seriesRecoveryKey === `${activeConnection.id}-${item.series_id ?? contentId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}`}
+                      disabled={seriesRecoveryKey === `${entry.providerId}-${item.series_id ?? contentId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}`}
                       className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {seriesRecoveryKey === `${activeConnection.id}-${item.series_id ?? contentId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}` ? 'Starting episode…' : `Resume S${seriesResume.seasonNumber}E${seriesResume.episodeNumber}`}
+                      {seriesRecoveryKey === `${entry.providerId}-${item.series_id ?? contentId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}` ? 'Starting episode…' : `Resume S${seriesResume.seasonNumber}E${seriesResume.episodeNumber}`}
                     </button>
                   ) : (
                     <Link
-                      href={`/series?seriesId=${contentId}`}
+                      href={`/series?seriesId=${group.primaryEntry.seriesId ?? contentId}`}
                       className="mt-4 block w-full rounded-2xl border border-white/10 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/5"
                     >
                       Open episode picker
@@ -564,27 +689,37 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         </section>
       ) : (
         <section>
-          {continueItems.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Start any live stream, movie, or series item and it will land here with provider-aware resume context.</div> : null}
+          {mergedContinueGroups.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Start any live stream, movie, or series item and it will land here with merged provider-aware resume context.</div> : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {continueItems.map((item) => (
-              <article key={item.id} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
+            {mergedContinueGroups.map((group) => {
+              const item = group.activeEntry ?? group.primaryEntry;
+              return (
+              <article key={group.key} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                 <div className="aspect-video rounded-2xl bg-cover bg-center" style={{ backgroundImage: `url(${item.artwork})` }} />
                 <div className="mt-4 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-semibold text-white">{item.title}</p>
                     <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{formatEpisodeLabel(item)}</p>
                   </div>
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">{Math.round(item.progress * 100)}%</span>
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">
+                    {group.duplicateProviderCount > 1 ? `${group.duplicateProviderCount} copies` : `${Math.round(item.progress * 100)}%`}
+                  </span>
                 </div>
                 {item.kind === 'series' && item.seriesTitle ? (
                   <p className="mt-2 text-sm text-slate-400">{item.seriesTitle}</p>
                 ) : null}
+                {renderProviderIdentity(group.providerEntries, activeConnection.id)}
                 <div className="mt-4 h-2 rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-violet-400" style={{ width: `${Math.max(8, item.progress * 100)}%` }} />
+                  <div className="h-full rounded-full bg-violet-400" style={{ width: `${Math.max(8, group.bestProgress * 100)}%` }} />
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{formatResume(item.positionSeconds)}{item.durationSeconds ? ` • ${Math.round(item.progress * 100)}% of ${Math.floor(item.durationSeconds / 60)} min` : ''}</p>
                 {activeProviderNeedsRecovery ? (
                   <p className="mt-2 text-xs leading-5 text-amber-200">If this resume item stalls on the active provider, use an alternate provider copy below instead of losing the spot.</p>
+                ) : null}
+                {group.duplicateProviderCount > 1 ? (
+                  <p className="mt-2 text-xs leading-5 text-sky-200">
+                    Multiple saved providers carry this same resume path. StreamDeck keeps the copies separate so switching providers does not corrupt the last known spot.
+                  </p>
                 ) : null}
                 <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
                 {(() => {
@@ -712,25 +847,11 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 })()}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <button
-                    onClick={() => {
-                      if (!item.playbackUrl) return;
-                      playStream({
-                        name: item.title,
-                        stream_type: item.kind === 'live' ? 'live' : item.kind,
-                        stream_id: item.streamId,
-                        category_id: item.categoryId || 'resume',
-                        stream_icon: item.artwork,
-                      }, item.playbackUrl, activeConnection.id, {
-                        seriesId: item.seriesId,
-                        seriesTitle: item.seriesTitle,
-                        seasonNumber: item.seasonNumber,
-                        episodeNumber: item.episodeNumber,
-                      });
-                    }}
+                    onClick={() => resumeHistoryCopy(item)}
                     disabled={!item.playbackUrl}
                     className="rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
                   >
-                    Resume playback
+                    {item.providerId === activeConnection.id ? 'Resume playback' : `Resume on ${providerNameMap[item.providerId] || item.providerId}`}
                   </button>
                   {item.kind === 'series' && item.seriesId ? (
                     <Link
@@ -742,7 +863,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   ) : null}
                 </div>
               </article>
-            ))}
+            );})}
           </div>
         </section>
       )}
