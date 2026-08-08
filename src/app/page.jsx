@@ -13,6 +13,7 @@ import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
+import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equivalence';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
@@ -285,32 +286,9 @@ export default function LoginPage() {
             <DifferentiatorSpotlight manifest={manifest} screenId="login" />
           </div>
 
-          {fallbackEquivalence ? (
-            <div className="mt-6 rounded-[1.75rem] border border-violet-400/20 bg-violet-500/10 p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-violet-200">{fallbackEquivalence.title}</p>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">{fallbackEquivalence.summary}</p>
-                </div>
-                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
-                  Exact vs approximate
-                </span>
-              </div>
-              <div className="mt-4 grid gap-3">
-                {fallbackEquivalence.equivalence.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <p className="text-sm font-medium text-white">{item.label}</p>
-                    <p className="mt-3 text-xs uppercase tracking-[0.22em] text-violet-200">Equivalent</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-200">{item.equivalentExperience}</p>
-                    <p className="mt-3 text-xs uppercase tracking-[0.22em] text-amber-200">Approximate</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">{item.approximateExperience}</p>
-                    <p className="mt-3 text-xs uppercase tracking-[0.22em] text-rose-200">Restart trigger</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">{item.restartTrigger}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          <div className="mt-6">
+            <SurfaceFallbackEquivalence contract={fallbackEquivalence} badge="Fallback equivalence" />
+          </div>
 
           <div className="mt-6">
             <SurfaceLaunchReadiness contract={launchReadiness} badge="Connect honesty" />
