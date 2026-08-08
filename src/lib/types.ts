@@ -273,6 +273,15 @@ export type MockProviderManifest = {
     detail: string;
     surface: 'login' | 'home' | 'live';
   }>;
+  competitiveDifferentiators: Array<{
+    slug: string;
+    feature: string;
+    pitch: string;
+    competitiveGap: string;
+    buildPhase: string;
+    architectureNotes: string;
+    surfaces: Array<'login' | 'home' | 'live'>;
+  }>;
   supportedScreens: Array<{
     id: 'login' | 'home' | 'live';
     title: string;

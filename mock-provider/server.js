@@ -586,6 +586,99 @@ const buildDifferentiators = () => ([
   },
 ]);
 
+const buildCompetitiveDifferentiators = () => ([
+  {
+    slug: 'multi-connection-switching',
+    feature: 'Multi-connection switching',
+    pitch: 'Save multiple Xtream providers and hot-swap between them without re-entering credentials.',
+    competitiveGap: 'TiviMate, IPTV Smarters Pro, Flix IPTV, and iMPlayer all make provider switching feel heavier than it should.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Persist canonical provider IDs, auth summaries, provider-specific caches, and explicit launch ownership so switching does not corrupt favorites, history, search, or playback context.',
+    surfaces: ['login', 'home'],
+  },
+  {
+    slug: 'smart-epg-overlay',
+    feature: 'Smart EPG overlay',
+    pitch: 'Show NOW and NEXT inline on live cards and preview rails instead of burying guide data in a separate mode.',
+    competitiveGap: 'Most IPTV players either bury guide context or make it feel like a second-class overlay.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Keep short EPG fetches cheap, normalize NOW and NEXT labels, attach guide state to selected and visible live items, and degrade honestly when guide freshness drops.',
+    surfaces: ['home', 'live'],
+  },
+  {
+    slug: 'continue-watching-unified',
+    feature: 'Continue Watching across live and VOD',
+    pitch: 'Keep one resume system for live channels, movies, and series so the next launch always starts from user intent.',
+    competitiveGap: 'Competitors usually split resume behavior by media type or ignore live continuity entirely.',
+    buildPhase: 'Phase 1 -> Phase 2 polish',
+    architectureNotes: 'Store provider-aware watch history with playback URLs, progress, episode context, and last-live-channel recall so recovery can preserve the same mission.',
+    surfaces: ['home', 'live'],
+  },
+  {
+    slug: 'instant-channel-preview',
+    feature: 'Instant channel preview',
+    pitch: 'Hover or focus a live card and see motion immediately without leaving the grid.',
+    competitiveGap: 'Most IPTV apps still force a full channel open before the user gets enough signal to switch.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive preview from selected-card state, update it on hover and focus, and preserve category and search context while preview changes.',
+    surfaces: ['live'],
+  },
+  {
+    slug: 'folder-playlist-organization',
+    feature: 'Folder / playlist organization',
+    pitch: 'Let users build custom groups like Game Day, Kids Bedtime, and Morning News instead of one flat favorites list.',
+    competitiveGap: 'Favorites are standard; meaningful user-owned channel grouping is not.',
+    buildPhase: 'Phase 1 baseline, Phase 2 expansion',
+    architectureNotes: 'Persist provider-aware collection items locally, keep mixed-content groups legal, and surface curated launch rails on Home and Collections.',
+    surfaces: ['home'],
+  },
+  {
+    slug: 'one-click-recording',
+    feature: 'One-click recording',
+    pitch: 'Start recording live TV locally with one obvious action instead of a buried setup flow.',
+    competitiveGap: 'Web IPTV players rarely support useful recording at all.',
+    buildPhase: 'Phase 2+',
+    architectureNotes: 'Needs HLS capture strategy, recording metadata, storage quotas, and UI states that do not block current playback.',
+    surfaces: ['live'],
+  },
+  {
+    slug: 'search-across-all-providers',
+    feature: 'Search across all providers',
+    pitch: 'Search one query across every saved Xtream provider and rank results together.',
+    competitiveGap: 'Competitors typically search only the active provider, which breaks the multi-provider promise.',
+    buildPhase: 'Phase 2',
+    architectureNotes: 'Maintain per-provider catalogs, group duplicates, rank exact versus rescue copies, and keep result provenance visible after switches.',
+    surfaces: ['login', 'home'],
+  },
+  {
+    slug: 'watch-party-sync-viewing',
+    feature: 'Watch party / sync viewing',
+    pitch: 'Share a session link so multiple viewers stay on the same stream position together.',
+    competitiveGap: 'None of the major IPTV players make synchronized viewing a real product feature.',
+    buildPhase: 'Phase 3',
+    architectureNotes: 'Needs shared session state, playback clock sync, provider compatibility checks, and a safe desync fallback.',
+    surfaces: ['home', 'live'],
+  },
+  {
+    slug: 'parental-controls-per-profile',
+    feature: 'Parental controls with per-profile PINs',
+    pitch: 'Lock content by profile and maturity level instead of one blunt adult-content switch.',
+    competitiveGap: 'Existing IPTV players usually stop at a single global content toggle.',
+    buildPhase: 'Phase 2',
+    architectureNotes: 'Introduce profile objects, PIN gates, provider and category restrictions, and gate-aware browse and playback actions.',
+    surfaces: ['login', 'home'],
+  },
+  {
+    slug: 'stream-health-indicator',
+    feature: 'Stream health indicator',
+    pitch: 'Show bitrate, buffer health, codec, resolution, and dropped frames in a subtle HUD that power users can trust.',
+    competitiveGap: 'Debug detail is usually hidden or absent entirely.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Update stream-health metrics from HLS.js or native playback events and tie the UI copy to the same truth model as recovery and retry guidance.',
+    surfaces: ['live'],
+  },
+]);
+
 const buildSurfaceRecoveryPlans = (scenario = 'healthy') => ({
   login: {
     title: scenario === 'healthy' ? 'Fastest recovery route' : 'Fastest safe login recovery',
@@ -3935,6 +4028,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
     password: 'demo',
   },
   differentiators: buildDifferentiators(),
+  competitiveDifferentiators: buildCompetitiveDifferentiators(),
   supportedScreens: [
     {
       id: 'login',
