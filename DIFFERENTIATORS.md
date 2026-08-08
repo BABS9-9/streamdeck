@@ -15,6 +15,7 @@ StreamDeck should feel like a premium streaming product first and an IPTV utilit
 | Folder / playlist organization | Let users build custom channel groups like Game Day, Kids Bedtime, and Morning News, not just flat favorites. | Favorites exist almost everywhere; meaningful user-owned curation does not. | Phase 1 baseline, Phase 2 expansion | Persist collection objects locally, keep provider identity on each saved item, support mixed-content folders, and expose curated launch rails on Home plus collection management screens. |
 | One-click recording | Start recording live TV locally with one obvious action instead of a buried setup flow. | Web IPTV players rarely support useful recording at all. | Phase 2+ | Capture HLS segments or browser-recordable media streams, persist recording metadata, manage storage quotas, and expose recording status without blocking playback UX. |
 | Search across all providers | Search one query across every saved Xtream provider and rank results together. | Competitors usually search only the active provider, which breaks the multi-provider promise. | Phase 2 | Maintain provider catalogs per connection, build cross-provider ranking and duplicate grouping, preserve selected-query context during provider switches, and show result provenance clearly. |
+| Provider risk strip | Keep one compact cross-surface strip that says when the current provider is healthy, pressured, expired, or unstable before users blame the wrong layer. | Most IPTV players hide provider risk in settings or let playback/search errors explain it too late. | Phase 1 | Reuse one provider-health model across Login, Home, and Live with operator headline, trust signals, and explicit recovery CTA so the same risk story survives surface changes. |
 | Watch party / sync viewing | Share a session link so multiple viewers stay on the same stream position together. | None of the major IPTV players make synchronized shared viewing a real feature. | Phase 3 | Needs shareable session state, host/guest playback clock sync, provider compatibility checks, and a safe fallback when streams diverge across providers. |
 | Parental controls with per-profile PINs | Lock content by profile and maturity level instead of one blunt global switch. | Existing IPTV players usually stop at a single adult-content toggle. | Phase 2 | Add profile objects, per-profile PIN gates, provider/category/content restrictions, and a lock-state layer respected by browse, search, and playback actions. |
 | Stream health indicator | Show bitrate, buffer health, resolution, dropped frames, and codec posture in a subtle HUD for power users. | Debug detail is usually hidden or absent entirely. | Phase 1 | Update stream-health metrics from HLS.js or native playback events, surface them in player and preview shells, and degrade copy from premium confidence to recovery guidance when the signal turns bad. |
@@ -31,6 +32,8 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
    Retry, rescue, provider switching, and resume should preserve the same user mission for as long as that is still honest.
 4. Premium shell quality
    The app should feel like a modern streaming product, not a reseller console with posters.
+5. Risk clarity
+   Provider trouble should be explained on the same surface where the user is making the next move, not discovered after a failed launch.
 
 ## Phase 1 Surface Implications
 
@@ -38,19 +41,22 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must make multi-connection switching feel native, saved, and safe.
 - Must expose which provider currently owns the next Home launch.
 - Must make the mock-provider path obvious for demos and local development.
+- Must show provider risk before Connect implies the current source is still a safe Home owner.
 
 ### Home
 - Must show that StreamDeck is a content product, not a credential tool.
 - Must surface collections, continue-watching state, and provider posture together.
 - Must make cross-surface continuity visible before the user opens Live or playback.
+- Must keep provider risk attached to the hero and quick-launch story instead of burying it in Settings.
 
 ### Live
 - Must deliver instant preview, inline NOW/NEXT, favorites, and category surf speed.
 - Must keep the selected-channel context intact during retries, guide degradation, and provider recovery.
 - Must surface stream-health truth without turning the screen into an engineering dashboard.
+- Must publish provider pressure before users misread auth or capacity trouble as a bad stream.
 
 ## Implementation Priorities Right Now
 
-1. Keep Phase 1 strongest on multi-connection switching, smart EPG overlay, continue watching, instant preview, collections, and stream-health HUD.
+1. Keep Phase 1 strongest on multi-connection switching, smart EPG overlay, continue watching, instant preview, collections, provider risk strip, and stream-health HUD.
 2. Treat cross-provider search as the next major product unlock once provider catalogs are stable.
 3. Leave recording, watch party, and per-profile parental controls scaffold-friendly in the architecture, but do not let them dilute the Phase 1 browser, playback, and continuity bar.
