@@ -310,6 +310,16 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Canonical provider identity on login',
+    detail: 'The adapter now publishes which saved labels, reconnect URLs, and recovery shortcuts still resolve to the same provider owner before Login reuses trust, history, or Home shortcuts.',
+    surface: 'login',
+  },
+  {
+    title: 'Fallback ranking on login',
+    detail: 'The adapter now publishes which saved-provider rescue currently ranks first, what evidence keeps it first, and what trigger forces Login to rerank before it auto-picks.',
+    surface: 'login',
+  },
+  {
     title: 'Recovery route on login',
     detail: 'The adapter now publishes the fastest safe handoff once Login stops being the honest owner of the next Home launch.',
     surface: 'login',
@@ -400,6 +410,16 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Canonical provider identity on Home',
+    detail: 'The adapter now publishes which hero, rail, and trust cues still belong to the same provider owner even when saved labels or host variants differ.',
+    surface: 'home',
+  },
+  {
+    title: 'Fallback ranking on Home',
+    detail: 'The adapter now publishes which featured or rail rescue currently ranks first, what proof keeps it there, and what event forces Home to rerank before hero polish outruns truth.',
+    surface: 'home',
+  },
+  {
     title: 'Recovery route on Home',
     detail: 'The adapter now publishes the fastest safe browse-preserving move once the current provider should stop owning featured and quick-launch actions.',
     surface: 'home',
@@ -487,6 +507,16 @@ const buildDifferentiators = () => ([
   {
     title: 'Provider-choice truth on Live',
     detail: 'Selected-card rescue now tells the user when StreamDeck can silently pick the safest equivalent source and when rescue changed enough that the user must choose.',
+    surface: 'live',
+  },
+  {
+    title: 'Canonical provider identity on Live',
+    detail: 'The adapter now publishes which selected card, preview, and Play target still belong to the same provider owner before exact-copy rescue sounds like the same source story.',
+    surface: 'live',
+  },
+  {
+    title: 'Fallback ranking on Live',
+    detail: 'The adapter now publishes which exact-channel or category-level rescue currently ranks first, what evidence keeps it ahead, and what trigger forces Live to rerank before Play changes hands.',
     surface: 'live',
   },
   {
@@ -687,6 +717,24 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Most IPTV players bury provider risk in settings or only reveal it after playback and search already failed.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one provider-health model with operator headline, trust signals, and an explicit recovery CTA so risk language stays aligned while the user moves through the shell.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'canonical-provider-identity',
+    feature: 'Canonical provider identity',
+    pitch: 'Keep retries, saved labels, and rescue paths tied to one canonical provider owner so continuity never silently attaches to the wrong source.',
+    competitiveGap: 'Most IPTV players let alias URLs, relabeled connections, or nearly identical providers blur together until favorites, history, or trust cues feel random.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Normalize provider identity around one canonical key and surface that ownership on Login, Home, and Live before reconnect shortcuts, cached rails, or rescue copy imply the wrong source story.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'fallback-ranking',
+    feature: 'Fallback ranking',
+    pitch: 'Publish which rescue is currently the best exact save, which is only an approximate fallback, and what evidence will rerank the next move.',
+    competitiveGap: 'Competitors usually pick a fallback silently or make users guess whether the fastest rescue is also the truest one.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Use one fallback-ranking contract across Login, Home, and Live so rescue order comes from shared proof instead of ad hoc per-screen heuristics.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -4060,13 +4108,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, fallback-equivalence truth, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, canonical provider identity, fallback ranking, fallback-equivalence truth, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so provider-risk strips, fallback-equivalence contracts, launch ownership, proof provenance, intent locks, explanation boundaries, autonomy limits, interruption budgets, retry contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery witnesses, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same provider-risk strip, fallback-equivalence contract, launch owner, proof source, intent lock, explanation boundary, autonomy boundary, interruption budget, retry contract, provider-switch truth, provider-return truth, provider-stability truth, recovery witness, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell so provider-risk strips, canonical provider identity, fallback ranking, fallback-equivalence contracts, launch ownership, proof provenance, intent locks, explanation boundaries, autonomy limits, interruption budgets, retry contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery witnesses, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same provider-risk strip, canonical provider owner, fallback ranking, fallback-equivalence contract, launch owner, proof source, intent lock, explanation boundary, autonomy boundary, interruption budget, retry contract, provider-switch truth, provider-return truth, provider-stability truth, recovery witness, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -4087,6 +4135,8 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Connect with the local mock credentials',
         'Switch scenarios without leaving the screen',
         'Provider risk strip updates before Connect overclaims launch safety',
+        'Canonical provider identity stays visible before trimmed URLs or relabeled saved providers pretend they are different accounts',
+        'Fallback ranking stays visible before Login silently auto-picks the fastest rescue without proving it is still the best current move',
         'Fallback equivalence stays visible before a saved-provider shortcut pretends every rescue path is the same Home move',
         'Jump to the healthiest saved provider when trust degrades',
         'Launch ownership stays visible before Connect implies the current provider still owns Home',
@@ -4117,6 +4167,8 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       proof: [
         'Featured live card launches playback directly',
         'Provider risk strip stays aligned with hero trust and the next safe launch',
+        'Canonical provider identity stays visible before hero rescue reuses trust under a relabeled or host-variant provider story',
+        'Fallback ranking stays visible before Home lets cinematic hero polish outrun which rescue really owns the safest next launch',
         'Fallback equivalence stays visible before hero rescue pretends every preserved rail is still the same discovery path',
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
@@ -4148,6 +4200,8 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       proof: [
         'Filter by category and search without leaving the page',
         'Provider risk strip warns about auth, expiry, or line pressure before Play gets blamed',
+        'Canonical provider identity stays visible before exact-copy rescue sounds like the same source when the owner actually changed',
+        'Fallback ranking stays visible before Live lets same-category rescue outrank an exact-channel save without saying why',
         'Fallback equivalence stays visible before same-category rescue pretends it preserved the exact selected channel',
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
