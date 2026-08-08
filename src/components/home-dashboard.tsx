@@ -9,6 +9,7 @@ import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
+import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -314,6 +315,14 @@ export function HomeDashboard() {
     <div className="space-y-8">
       {isMockConnection ? <MockScenarioControl /> : null}
       {isMockConnection ? <MockDemoBoard health={health} manifest={manifest} screenId="home" /> : null}
+      {isMockConnection ? (
+        <ProviderRiskStrip
+          health={health}
+          screenId="home"
+          providerLabel={activeConnection.name}
+          providerDetail={`${activeConnection.username} · ${providerStatus?.state || 'idle'}`}
+        />
+      ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="home" /> : null}
 
       <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04]">

@@ -8,6 +8,7 @@ import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
+import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -233,6 +234,14 @@ export function LiveBrowser() {
     <div className="space-y-6">
       {isMockConnection ? <MockScenarioControl /> : null}
       {isMockConnection ? <MockDemoBoard health={health} manifest={manifest} screenId="live" /> : null}
+      {isMockConnection ? (
+        <ProviderRiskStrip
+          health={health}
+          screenId="live"
+          providerLabel={activeConnection.name}
+          providerDetail={`${activeConnection.username} · ${providerStatus?.state || 'idle'}`}
+        />
+      ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="live" /> : null}
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Play confidence" />
       <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
+import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
@@ -257,6 +258,15 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <MockDemoBoard health={health} manifest={manifest} screenId="login" />
+          </div>
+
+          <div className="mt-6">
+            <ProviderRiskStrip
+              health={health}
+              screenId="login"
+              providerLabel={activeConnection?.name || manifest?.providerName || 'Mock provider'}
+              providerDetail={activeConnection ? `${activeConnection.username} · ${activeConnection.server}` : `Scenario: ${scenario}`}
+            />
           </div>
 
           <div className="mt-6">
