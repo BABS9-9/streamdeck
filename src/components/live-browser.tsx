@@ -349,6 +349,8 @@ export function LiveBrowser() {
                 report={liveGuideCoverage}
                 emptyMessage="Live guide coverage will appear after visible channels sync."
                 streamLabels={Object.fromEntries(filteredStreams.slice(0, 8).map((stream) => [getContentId(stream), stream.name]))}
+                savedProviderBoard={savedProviderBoard}
+                ownerLabel={selectedStream?.name || activeConnection.name}
               />
             </div>
 

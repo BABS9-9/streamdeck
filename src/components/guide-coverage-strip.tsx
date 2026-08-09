@@ -1,6 +1,6 @@
 'use client';
 
-import { ProviderGuideCoverageReport } from '@/lib/types';
+import { SavedProviderHealthBoard, ProviderGuideCoverageReport } from '@/lib/types';
 
 const toneClasses: Record<ProviderGuideCoverageReport['status'], string> = {
   fresh: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -29,11 +29,15 @@ export function GuideCoverageStrip({
   report,
   emptyMessage,
   streamLabels,
+  savedProviderBoard,
+  ownerLabel,
 }: {
   title: string;
   report: ProviderGuideCoverageReport | null;
   emptyMessage?: string;
   streamLabels?: Record<number, string>;
+  savedProviderBoard?: SavedProviderHealthBoard | null;
+  ownerLabel?: string;
 }) {
   if (!report || report.requestedCount === 0) {
     return (
@@ -81,6 +85,29 @@ export function GuideCoverageStrip({
           <p className="mt-1 text-sm font-semibold text-white">{report.networkCount}</p>
         </div>
       </div>
+
+      {savedProviderBoard ? (
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Guide owner</p>
+            <p className="mt-1 text-sm font-semibold text-white">
+              {ownerLabel || savedProviderBoard.activeProvider?.providerName || savedProviderBoard.recommendedProvider?.providerName || 'No active owner'}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              {savedProviderBoard.headline?.detail || 'Guide freshness is currently carrying the same provider story as the active browse surface.'}
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Next safe move</p>
+            <p className="mt-1 text-sm font-semibold text-white">
+              {savedProviderBoard.recoveryRoute?.cta || 'Keep the current provider active while guide truth stays fresh.'}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              {savedProviderBoard.recoveryRoute?.detail || 'No recovery takeover is needed yet.'}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {report.items.some((item) => item.status !== 'fresh') ? (
         <div className="mt-4 grid gap-2">

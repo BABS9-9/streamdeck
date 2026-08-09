@@ -359,6 +359,8 @@ export default function LoginPage() {
                   report={loginGuideCoverage}
                   emptyMessage="Connect or reuse a provider to load shared guide coverage before entering Home."
                   streamLabels={Object.fromEntries(loginGuideStreams.map((stream) => [getContentId(stream), stream.name]))}
+                  savedProviderBoard={savedProviderBoard}
+                  ownerLabel={activeConnection?.name || manifest?.providerName || 'Mock provider'}
                 />
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">

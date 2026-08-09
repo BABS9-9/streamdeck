@@ -450,6 +450,8 @@ export function HomeDashboard() {
         report={homeGuideCoverage}
         emptyMessage="Home will publish saved-provider guide coverage after the first live-guide sync."
         streamLabels={Object.fromEntries([...(featuredLive ? [featuredLive] : []), ...home.quickLive].map((stream) => [getContentId(stream), stream.name]))}
+        savedProviderBoard={savedProviderBoard}
+        ownerLabel={activeConnection.name}
       />
       {guideMessage ? (
         <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">{guideMessage}</div>
