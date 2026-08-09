@@ -12,6 +12,7 @@ import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
+import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -20,11 +21,13 @@ import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equiva
 import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
+import { SurfaceHandoffMap } from '@/components/surface-handoff-map';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
 import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
+import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceProviderReturnContract } from '@/components/surface-provider-return-contract';
@@ -236,6 +239,18 @@ export function HomeDashboard() {
     () => manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const launchScorecard = useMemo(
+    () => manifest?.surfaceScorecards.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
+  const exitCriteria = useMemo(
+    () => manifest?.surfaceExitCriteria.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
+  const handoffMap = useMemo(
+    () => manifest?.surfaceHandoffs.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const launchOwnership = useMemo(
     () => manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -437,8 +452,11 @@ export function HomeDashboard() {
       <SurfaceFallbackEquivalence contract={fallbackEquivalence} badge="Fallback equivalence" />
 
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Hero launch safety" />
+      <SurfaceLaunchScorecard scorecard={launchScorecard} badge="Launch scorecard" />
       <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
+      <SurfaceExitCriteria criteria={exitCriteria} badge="Live exit criteria" />
       <SurfaceContinuityWindow contract={continuityWindow} badge="Browse continuity" />
+      <SurfaceHandoffMap handoff={handoffMap} badge="Live handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
       <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />

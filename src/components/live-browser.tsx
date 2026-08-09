@@ -11,6 +11,7 @@ import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
+import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -19,11 +20,13 @@ import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equiva
 import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
+import { SurfaceHandoffMap } from '@/components/surface-handoff-map';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
 import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
+import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceProviderReturnContract } from '@/components/surface-provider-return-contract';
@@ -188,6 +191,9 @@ export function LiveBrowser() {
   const fallbackRanking = manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === 'live') ?? null;
   const fallbackEquivalence = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'live') ?? null;
   const launchReadiness = manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'live') ?? null;
+  const launchScorecard = manifest?.surfaceScorecards.find((item) => item.screenId === 'live') ?? null;
+  const exitCriteria = manifest?.surfaceExitCriteria.find((item) => item.screenId === 'live') ?? null;
+  const handoffMap = manifest?.surfaceHandoffs.find((item) => item.screenId === 'live') ?? null;
   const launchOwnership = manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'live') ?? null;
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
@@ -247,8 +253,11 @@ export function LiveBrowser() {
       <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
       <SurfaceFallbackEquivalence contract={fallbackEquivalence} badge="Fallback equivalence" />
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Play confidence" />
+      <SurfaceLaunchScorecard scorecard={launchScorecard} badge="Launch scorecard" />
       <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
+      <SurfaceExitCriteria criteria={exitCriteria} badge="Playback exit criteria" />
       <SurfaceContinuityWindow contract={continuityWindow} badge="Surf continuity" />
+      <SurfaceHandoffMap handoff={handoffMap} badge="Playback handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
       <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />

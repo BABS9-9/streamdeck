@@ -10,6 +10,7 @@ import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
+import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -18,11 +19,13 @@ import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equiva
 import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
+import { SurfaceHandoffMap } from '@/components/surface-handoff-map';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
 import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
+import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceProviderReturnContract } from '@/components/surface-provider-return-contract';
@@ -160,6 +163,18 @@ export default function LoginPage() {
   );
   const launchReadiness = useMemo(
     () => manifest?.surfaceLaunchReadinessContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const launchScorecard = useMemo(
+    () => manifest?.surfaceScorecards?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const exitCriteria = useMemo(
+    () => manifest?.surfaceExitCriteria?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const handoffMap = useMemo(
+    () => manifest?.surfaceHandoffs?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const launchOwnership = useMemo(
@@ -406,11 +421,23 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
+            <SurfaceLaunchScorecard scorecard={launchScorecard} badge="Launch scorecard" />
+          </div>
+
+          <div className="mt-6">
             <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
           </div>
 
           <div className="mt-6">
+            <SurfaceExitCriteria criteria={exitCriteria} badge="Home exit criteria" />
+          </div>
+
+          <div className="mt-6">
             <SurfaceContinuityWindow contract={continuityWindow} badge="Handoff window" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceHandoffMap handoff={handoffMap} badge="Home handoff map" />
           </div>
 
           <div className="mt-6">
