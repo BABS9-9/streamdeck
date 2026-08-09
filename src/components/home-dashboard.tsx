@@ -441,6 +441,20 @@ export function HomeDashboard() {
                 {heroGuide.next?.title ? <p className="mt-1 text-sm text-slate-300">Next: {heroGuide.next.title}</p> : null}
               </div>
             ) : null}
+            {proofDebt?.debts?.[0] ? (
+              <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.26em] text-amber-200">Borrowed browse confidence</p>
+                    <p className="mt-2 text-base font-medium text-white">{proofDebt.debts[0].label}</p>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                    Proof debt
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-200">{proofDebt.debts[0].borrowedConfidence}</p>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

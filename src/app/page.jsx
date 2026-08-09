@@ -615,6 +615,23 @@ export default function LoginPage() {
             </div>
           </form>
 
+          {proofDebt?.debts?.[0] ? (
+            <div className="mt-6 rounded-[1.5rem] border border-amber-400/20 bg-amber-500/10 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-amber-200">Borrowed confidence</p>
+                  <h3 className="mt-2 text-lg font-semibold text-white">{proofDebt.debts[0].label}</h3>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                  Proof debt
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-7 text-slate-200">{proofDebt.debts[0].borrowedConfidence}</p>
+              <p className="mt-3 text-[11px] uppercase tracking-[0.22em] text-amber-100">Repayment trigger</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{proofDebt.debts[0].repaymentTrigger}</p>
+            </div>
+          ) : null}
+
           {error ? (
             <div className="mt-5 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
               {error}

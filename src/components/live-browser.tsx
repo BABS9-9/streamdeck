@@ -387,10 +387,25 @@ export function LiveBrowser() {
                     ? 'Refreshing guide data for this channel...'
                     : selectedGuideState?.error
                       ? `Guide refresh failed: ${selectedGuideState.error}`
-                      : 'Guide data is unavailable for this channel right now.'}
+                  : 'Guide data is unavailable for this channel right now.'}
                 </p>
               )}
             </div>
+
+            {proofDebt?.debts?.[0] ? (
+              <div className="mt-4 rounded-[1.5rem] border border-amber-400/20 bg-amber-500/10 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.28em] text-amber-200">Borrowed surf confidence</p>
+                    <p className="mt-2 text-base font-medium text-white">{proofDebt.debts[0].label}</p>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                    Proof debt
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-200">{proofDebt.debts[0].borrowedConfidence}</p>
+              </div>
+            ) : null}
 
           </div>
         </div>
