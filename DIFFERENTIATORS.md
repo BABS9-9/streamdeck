@@ -10,6 +10,7 @@ StreamDeck should feel like a premium streaming product first and an IPTV utilit
 | --- | --- | --- | --- | --- |
 | Multi-connection switching | Save multiple Xtream providers and hot-swap between them without re-entering credentials. | TiviMate, IPTV Smarters Pro, Flix IPTV, and iMPlayer all make provider switching feel heavier than it should. | Phase 1 | Canonical provider IDs, persisted provider sessions, saved auth summaries, provider-specific favorites/history/search caches, and visible active-provider ownership across Login, Home, Live, Search, Favorites, Continue Watching, and Player. |
 | Smart EPG overlay | Show NOW and NEXT directly on live channel cards and preview rails instead of burying guide data on a separate screen. | Most players make guide info a separate mode or a low-context overlay. | Phase 1 | Fetch short EPG per selected or visible live stream, normalize NOW/NEXT state, cache lightly, and degrade honestly when guide data is stale or missing. |
+| Guide freshness board | Publish how many tracked channels are fresh, refreshing, stale, missing, or erroring before guide-driven browse and launch claims sound more current than they are. | Competitors usually show guide data as present or absent, with no honest middle state for partial freshness, cache-backed continuity, or operator recovery. | Phase 1 | Reuse one provider-scoped guide coverage report across Login, Home, and Live so freshness counts, stale callouts, recovery ownership, and safest next move stay aligned. |
 | Continue Watching across live + VOD | Keep one resume system for live channels, movies, and series so the next launch always starts from user intent. | Competitors split resume by content type or ignore live continuity entirely. | Phase 1 -> Phase 2 polish | Unified watch-history model with provider-aware entries, playback progress updates, live-channel recall, series episode context, and provider-safe recovery when the original source fails. |
 | Instant channel preview | Hover or focus a live card and see motion immediately without leaving the browser grid. | Most IPTV apps still require a full channel open before the user gets enough confidence to switch. | Phase 1 | Keep selected-channel preview state local to Live, precompute stream URLs, attach preview to hover/focus, and preserve current category/search context during preview changes. |
 | Folder / playlist organization | Let users build custom channel groups like Game Day, Kids Bedtime, and Morning News, not just flat favorites. | Favorites exist almost everywhere; meaningful user-owned curation does not. | Phase 1 baseline, Phase 2 expansion | Persist collection objects locally, keep provider identity on each saved item, support mixed-content folders, and expose curated launch rails on Home plus collection management screens. |
@@ -46,6 +47,8 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
    The shell should explain which rescue is currently the strongest exact save versus an approximate fallback before it silently changes the next move.
 9. Honest rescue equivalence
    The shell should distinguish between the same destination, an acceptable approximation, and a disguised restart before “seamless fallback” turns into fiction.
+10. Guide freshness honesty
+   The shell should show how much guide truth is fresh, cached, stale, or missing before NOW / NEXT copy overclaims what the provider has actually proven.
 
 ## Phase 1 Surface Implications
 
@@ -59,6 +62,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must show which saved-provider rescue currently ranks first, what proof keeps it there, and when Login must rerank before it auto-picks.
 - Must say when a saved-provider shortcut is still the same Home path, when it is only an approximation, and when fallback has turned setup into a fresh start.
 - Must state the hold condition that blocks Home advancement and the exact handoff context that should survive once Login clears the user forward.
+- Must publish how fresh the tracked guide snapshot really is, which channels are already stale or missing, and whether Connect should still lean on the active provider or the recovery owner for the next Home truth.
 
 ### Home
 - Must show that StreamDeck is a content product, not a credential tool.
@@ -70,6 +74,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must show which featured or rail rescue currently ranks first, what evidence keeps it first, and what event forces Home to rerank before hero polish overclaims safety.
 - Must say when hero rescue preserved the same discovery story, when it only preserved rough browse intent, and when the user has actually landed in a new launch path.
 - Must tell the user what Home carries forward into Live and what condition should hold the user in place before a rail or hero CTA advances.
+- Must show whether Home guide continuity is fresh enough to back hero confidence, which tracked rails are already stale or missing, and what recovery owner currently keeps the browse story honest.
 
 ### Live
 - Must deliver instant preview, inline NOW/NEXT, favorites, and category surf speed.
@@ -81,9 +86,10 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must show which exact-channel or category-level rescue currently ranks first, what proof keeps it ahead, and what trigger forces Live to rerank before Play changes hands.
 - Must say when rescue preserved the exact selected channel, when it only preserved category surf momentum, and when the user has effectively restarted the live session.
 - Must tell the user what card/category context survives the Play handoff and what specific condition should keep Live in browse mode instead of pretending playback is fully proven.
+- Must publish how many visible channels still have fresh guide truth, which selected or visible cards are stale or missing, and when Live should promote recovery ownership over confident NOW / NEXT copy.
 
 ## Implementation Priorities Right Now
 
-1. Keep Phase 1 strongest on multi-connection switching, smart EPG overlay, continue watching, instant preview, collections, provider risk strip, launch scorecard, canonical provider identity, fallback ranking, fallback equivalence, and stream-health HUD.
+1. Keep Phase 1 strongest on multi-connection switching, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, launch scorecard, canonical provider identity, fallback ranking, fallback equivalence, and stream-health HUD.
 2. Treat cross-provider search as the next major product unlock once provider catalogs are stable.
 3. Leave recording, watch party, and per-profile parental controls scaffold-friendly in the architecture, but do not let them dilute the Phase 1 browser, playback, and continuity bar.
