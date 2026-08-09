@@ -33,6 +33,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
+import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -62,6 +63,7 @@ export default function LoginPage() {
   const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
   const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
   const prefetchStreams = useLiveGuideStore((state) => state.prefetchStreams);
+  const getCoverageReport = useLiveGuideStore((state) => state.getCoverageReport);
   const syncByGuideKey = useLiveGuideStore((state) => state.syncByGuideKey);
 
   const [server, setServer] = useState(MOCK_SERVER);
@@ -271,6 +273,12 @@ export default function LoginPage() {
       : [],
     [activeConnection, loginGuideStreams, lookupStreamGuide, syncByGuideKey]
   );
+  const loginGuideCoverage = useMemo(
+    () => activeConnection
+      ? getCoverageReport(activeConnection.id, loginGuideStreams.map((stream) => getContentId(stream)), Number.MAX_SAFE_INTEGER)
+      : null,
+    [activeConnection, getCoverageReport, loginGuideStreams]
+  );
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -324,6 +332,14 @@ export default function LoginPage() {
           {activeConnection ? (
             <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-black/20 p-6">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Saved provider now / next</p>
+              <div className="mt-4">
+                <GuideCoverageStrip
+                  title="Login guide continuity"
+                  report={loginGuideCoverage}
+                  emptyMessage="Connect or reuse a provider to load shared guide coverage before entering Home."
+                  streamLabels={Object.fromEntries(loginGuideStreams.map((stream) => [getContentId(stream), stream.name]))}
+                />
+              </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {loginGuideCards.map(({ stream, guide, sync }) => (
                   <div key={getContentId(stream)} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">

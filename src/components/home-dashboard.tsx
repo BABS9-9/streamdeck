@@ -9,6 +9,7 @@ import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
+import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
@@ -76,6 +77,7 @@ export function HomeDashboard() {
   const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
   const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
   const prefetchStreams = useLiveGuideStore((state) => state.prefetchStreams);
+  const getCoverageReport = useLiveGuideStore((state) => state.getCoverageReport);
 
   const [home, setHome] = useState<HomeState>(emptyHome);
   const [guideMessage, setGuideMessage] = useState<string | null>(null);
@@ -209,6 +211,11 @@ export function HomeDashboard() {
   const isMockConnection = activeConnection ? isMockProviderServer(activeConnection.server) : false;
   const featuredArtwork = home.featured ? getArtwork(home.featured) || '' : '';
   const featuredLive = home.featured?.stream_type === 'live' ? home.featured : null;
+  const homeGuideCoverage = useMemo(() => {
+    if (!activeConnection) return null;
+    const guideTargets = [...(featuredLive ? [featuredLive] : []), ...home.quickLive];
+    return getCoverageReport(activeConnection.id, guideTargets.map((stream) => getContentId(stream)), Number.MAX_SAFE_INTEGER);
+  }, [activeConnection, featuredLive, getCoverageReport, home.quickLive]);
   const continueWatching = useMemo(() => {
     if (!activeConnection) return [];
     return watchHistory.filter((item) => item.providerId === activeConnection.id).slice(0, 4);
@@ -417,6 +424,12 @@ export function HomeDashboard() {
       {cacheMessage ? (
         <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">{cacheMessage}</div>
       ) : null}
+      <GuideCoverageStrip
+        title="Home guide continuity"
+        report={homeGuideCoverage}
+        emptyMessage="Home will publish saved-provider guide coverage after the first live-guide sync."
+        streamLabels={Object.fromEntries([...(featuredLive ? [featuredLive] : []), ...home.quickLive].map((stream) => [getContentId(stream), stream.name]))}
+      />
       {guideMessage ? (
         <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">{guideMessage}</div>
       ) : null}

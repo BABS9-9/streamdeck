@@ -8,6 +8,7 @@ import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
+import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
@@ -57,6 +58,7 @@ export function LiveBrowser() {
   const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
   const prefetchStreams = useLiveGuideStore((state) => state.prefetchStreams);
   const refreshGuideEntry = useLiveGuideStore((state) => state.refreshGuideEntry);
+  const getCoverageReport = useLiveGuideStore((state) => state.getCoverageReport);
   const syncByGuideKey = useLiveGuideStore((state) => state.syncByGuideKey);
 
   const [categories, setCategories] = useState<XtreamCategory[]>([]);
@@ -221,6 +223,10 @@ export function LiveBrowser() {
   const selectedGuideEntry = selectedStream ? lookupStreamGuide(activeConnection.id, selectedStream, Number.MAX_SAFE_INTEGER) : null;
   const selectedGuide = getGuidePayload(selectedGuideEntry);
   const selectedGuideState = selectedStream ? syncByGuideKey[`${activeConnection.id}:${getContentId(selectedStream)}`] : null;
+  const liveGuideCoverage = useMemo(
+    () => getCoverageReport(activeConnection.id, filteredStreams.slice(0, 8).map((stream) => getContentId(stream)), Number.MAX_SAFE_INTEGER),
+    [activeConnection.id, filteredStreams, getCoverageReport]
+  );
 
   return (
     <div className="space-y-6">
@@ -309,6 +315,15 @@ export function LiveBrowser() {
               <InfoCard label="Provider" value={activeConnection.name} detail={activeConnection.username} />
               <InfoCard label="Status" value={providerStatus?.state || 'idle'} detail={providerStatus?.message || 'Validation pending'} />
               <InfoCard label="Favorites" value={String(favorites.length)} detail="Saved live channels on this provider" />
+            </div>
+
+            <div className="mt-4">
+              <GuideCoverageStrip
+                title="Live guide continuity"
+                report={liveGuideCoverage}
+                emptyMessage="Live guide coverage will appear after visible channels sync."
+                streamLabels={Object.fromEntries(filteredStreams.slice(0, 8).map((stream) => [getContentId(stream), stream.name]))}
+              />
             </div>
 
             <div className="mt-4 grid gap-4 md:grid-cols-4">

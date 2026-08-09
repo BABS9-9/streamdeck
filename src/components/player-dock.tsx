@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { getContentId } from '@/lib/xtream-api';
 import { getLiveCategoryRecovery, getLiveProviderVariants } from '@/lib/provider-recovery';
 import { useAuthStore } from '@/stores/auth-store';
-import { getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
+import { formatGuideUpdatedAge, getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { VideoPlayer } from './video-player';
 import { usePlayerStore } from '@/stores/player-store';
 import { ProviderFactGrid } from './provider-fact-grid';
@@ -35,6 +35,7 @@ export function PlayerDock() {
   const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
   const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
   const refreshGuideEntry = useLiveGuideStore((state) => state.refreshGuideEntry);
+  const getCoverageReport = useLiveGuideStore((state) => state.getCoverageReport);
   const syncByGuideKey = useLiveGuideStore((state) => state.syncByGuideKey);
 
   const contentId = currentStream ? (currentStream.stream_id ?? currentStream.series_id ?? 0) : 0;
@@ -44,6 +45,10 @@ export function PlayerDock() {
   const currentGuideEntry = currentProviderId ? lookupStreamGuide(currentProviderId, currentStream, Number.MAX_SAFE_INTEGER) : null;
   const currentGuide = getGuidePayload(currentGuideEntry);
   const currentGuideState = currentProviderId ? syncByGuideKey[`${currentProviderId}:${contentId}`] : null;
+  const currentGuideCoverage = useMemo(
+    () => (currentProviderId && contentId ? getCoverageReport(currentProviderId, [contentId], Number.MAX_SAFE_INTEGER) : null),
+    [contentId, currentProviderId, getCoverageReport]
+  );
   const statusTone = streamHealth.status === 'healthy'
     ? 'bg-emerald-400/15 text-emerald-200'
     : streamHealth.status === 'buffering'
@@ -182,6 +187,16 @@ export function PlayerDock() {
                       <p className="mt-3 text-[11px] uppercase tracking-[0.22em] text-slate-500">
                         {currentGuideState?.source === 'cache' ? 'Saved provider guide' : 'Live provider guide'}
                       </p>
+                      {currentGuideCoverage?.freshestUpdatedAt ? (
+                        <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                          Updated {formatGuideUpdatedAge(currentGuideCoverage.freshestUpdatedAt)}
+                        </p>
+                      ) : null}
+                      {currentGuideCoverage?.status && currentGuideCoverage.status !== 'fresh' ? (
+                        <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                          Guide continuity: {currentGuideCoverage.summary}
+                        </p>
+                      ) : null}
                     </>
                   ) : (
                     <p className="mt-3 text-sm text-slate-400">

@@ -3,12 +3,25 @@
 import { create } from 'zustand';
 import { getContentId, getShortEpg, getCachedEpgEntry, getCachedEpgSnapshot, mergeProviderEpgEntry } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
-import { NormalizedEpg, ProviderEpgSnapshot, ProviderEpgSnapshotEntry, ProviderEpgSyncState, SavedConnection, XtreamStream } from '@/lib/types';
+import {
+  NormalizedEpg,
+  ProviderEpgSnapshot,
+  ProviderEpgSnapshotEntry,
+  ProviderEpgSyncState,
+  ProviderGuideCoverageItem,
+  ProviderGuideCoverageReport,
+  SavedConnection,
+  XtreamStream,
+} from '@/lib/types';
 
 const inflightGuideRefreshes = new Map<string, Promise<ProviderEpgSnapshotEntry>>();
 const LIVE_GUIDE_CACHE_MAX_AGE_MS = 1000 * 60 * 10;
 
 const buildGuideKey = (providerId: string, streamId: number) => `${providerId}:${streamId}`;
+const getGuideAgeMinutes = (updatedAt: number | null) => {
+  if (!updatedAt) return null;
+  return Math.max(1, Math.round((Date.now() - updatedAt) / 60000));
+};
 
 const defaultSyncState = (): ProviderEpgSyncState => ({
   status: 'idle',
@@ -33,6 +46,7 @@ type LiveGuideState = {
   syncByGuideKey: Record<string, ProviderEpgSyncState>;
   hydrate: () => void;
   getGuideEntry: (providerId: string, streamId: number, maxAgeMs?: number) => ProviderEpgSnapshotEntry | null;
+  getCoverageReport: (providerId: string, streamIds: number[], maxAgeMs?: number) => ProviderGuideCoverageReport | null;
   markGuideFromCache: (providerId: string, streamIds: number[]) => void;
   refreshGuideEntry: (provider: SavedConnection, streamId: number) => Promise<ProviderEpgSnapshotEntry>;
   refreshGuideEntries: (provider: SavedConnection, streamIds: number[]) => Promise<RefreshGuideResult[]>;
@@ -69,6 +83,86 @@ export const useLiveGuideStore = create<LiveGuideState>((set, get) => ({
     if (!entry) return null;
     if (Date.now() - entry.updatedAt > maxAgeMs) return null;
     return entry;
+  },
+  getCoverageReport: (providerId, streamIds, maxAgeMs = LIVE_GUIDE_CACHE_MAX_AGE_MS) => {
+    const uniqueStreamIds = sortUniqueStreamIds(streamIds);
+    if (uniqueStreamIds.length === 0) return null;
+
+    const snapshot = get().snapshotsByProvider[providerId] ?? storage.getProviderEpgSnapshot(providerId);
+    const items = uniqueStreamIds.map<ProviderGuideCoverageItem>((streamId) => {
+      const entry = snapshot?.entries?.[streamId] ?? null;
+      const sync = get().syncByGuideKey[buildGuideKey(providerId, streamId)] ?? defaultSyncState();
+      const ageMs = entry?.updatedAt ? Date.now() - entry.updatedAt : null;
+      const isFresh = Boolean(entry?.updatedAt && ageMs !== null && ageMs <= maxAgeMs && entry?.epg);
+      const isStale = Boolean(entry?.updatedAt && ageMs !== null && ageMs > maxAgeMs);
+      const status: ProviderGuideCoverageItem['status'] = sync.status === 'refreshing'
+        ? 'refreshing'
+        : sync.error
+          ? 'error'
+          : isFresh
+            ? 'fresh'
+            : isStale
+              ? 'stale'
+              : 'missing';
+
+      return {
+        streamId,
+        status,
+        source: sync.source || (entry ? 'cache' : 'none'),
+        updatedAt: entry?.updatedAt ?? sync.updatedAt ?? null,
+        error: sync.error ?? entry?.error ?? null,
+        nowTitle: entry?.epg?.now?.title ?? null,
+        nextTitle: entry?.epg?.next?.title ?? null,
+        ageMinutes: getGuideAgeMinutes(entry?.updatedAt ?? sync.updatedAt ?? null),
+      };
+    });
+
+    const freshCount = items.filter((item) => item.status === 'fresh').length;
+    const refreshingCount = items.filter((item) => item.status === 'refreshing').length;
+    const staleCount = items.filter((item) => item.status === 'stale').length;
+    const errorCount = items.filter((item) => item.status === 'error').length;
+    const missingCount = items.filter((item) => item.status === 'missing').length;
+    const cacheCount = items.filter((item) => item.source === 'cache').length;
+    const networkCount = items.filter((item) => item.source === 'network').length;
+    const updatedValues = items.map((item) => item.updatedAt).filter((value): value is number => Boolean(value));
+    const freshestUpdatedAt = updatedValues.length ? Math.max(...updatedValues) : null;
+    const stalestUpdatedAt = updatedValues.length ? Math.min(...updatedValues) : null;
+
+    let status: ProviderGuideCoverageReport['status'] = 'empty';
+    let summary = `No guide coverage for ${uniqueStreamIds.length} tracked channel${uniqueStreamIds.length === 1 ? '' : 's'} yet.`;
+    if (freshCount === uniqueStreamIds.length) {
+      status = 'fresh';
+      summary = `Guide is fresh for all ${uniqueStreamIds.length} tracked channel${uniqueStreamIds.length === 1 ? '' : 's'}.`;
+    } else if (freshCount > 0 || refreshingCount > 0) {
+      status = 'partial';
+      summary = `${freshCount}/${uniqueStreamIds.length} channel${uniqueStreamIds.length === 1 ? '' : 's'} have fresh now/next data${refreshingCount ? `, ${refreshingCount} still refreshing` : ''}.`;
+    } else if (staleCount > 0) {
+      status = errorCount > 0 ? 'error' : 'stale';
+      summary = `${staleCount}/${uniqueStreamIds.length} tracked channel${uniqueStreamIds.length === 1 ? ' is' : 's are'} relying on stale guide data.`;
+    } else if (errorCount > 0) {
+      status = 'error';
+      summary = `Guide refresh failed on ${errorCount}/${uniqueStreamIds.length} tracked channel${uniqueStreamIds.length === 1 ? '' : 's'}.`;
+    } else if (missingCount > 0) {
+      status = 'empty';
+      summary = `Guide is still missing for ${missingCount}/${uniqueStreamIds.length} tracked channel${uniqueStreamIds.length === 1 ? '' : 's'}.`;
+    }
+
+    return {
+      providerId,
+      requestedCount: uniqueStreamIds.length,
+      freshCount,
+      staleCount,
+      refreshingCount,
+      errorCount,
+      missingCount,
+      cacheCount,
+      networkCount,
+      freshestUpdatedAt,
+      stalestUpdatedAt,
+      status,
+      summary,
+      items,
+    };
   },
   markGuideFromCache: (providerId, streamIds) => {
     const cachedSnapshot = storage.getProviderEpgSnapshot(providerId);
@@ -221,3 +315,9 @@ export const getGuideNowTitle = (entry?: ProviderEpgSnapshotEntry | null) => ent
 export const getGuideNextTitle = (entry?: ProviderEpgSnapshotEntry | null) => entry?.epg?.next?.title ?? null;
 
 export const getGuidePayload = (entry?: ProviderEpgSnapshotEntry | null): NormalizedEpg | null => entry?.epg ?? null;
+
+export const formatGuideUpdatedAge = (updatedAt?: number | null) => {
+  if (!updatedAt) return 'No guide sync yet';
+  const ageMinutes = Math.max(1, Math.round((Date.now() - updatedAt) / 60000));
+  return `${ageMinutes} minute${ageMinutes === 1 ? '' : 's'} ago`;
+};

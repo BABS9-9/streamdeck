@@ -148,6 +148,34 @@ export type ProviderEpgSyncState = {
   streamId: number | null;
 };
 
+export type ProviderGuideCoverageItem = {
+  streamId: number;
+  status: 'fresh' | 'stale' | 'refreshing' | 'error' | 'missing';
+  source: 'none' | 'cache' | 'network';
+  updatedAt: number | null;
+  error: string | null;
+  nowTitle: string | null;
+  nextTitle: string | null;
+  ageMinutes: number | null;
+};
+
+export type ProviderGuideCoverageReport = {
+  providerId: string;
+  requestedCount: number;
+  freshCount: number;
+  staleCount: number;
+  refreshingCount: number;
+  errorCount: number;
+  missingCount: number;
+  cacheCount: number;
+  networkCount: number;
+  freshestUpdatedAt: number | null;
+  stalestUpdatedAt: number | null;
+  status: 'fresh' | 'partial' | 'stale' | 'error' | 'empty';
+  summary: string;
+  items: ProviderGuideCoverageItem[];
+};
+
 export type WatchHistoryItem = {
   id: string;
   kind: 'live' | 'movie' | 'series';
