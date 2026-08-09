@@ -38,6 +38,7 @@ import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -190,10 +191,6 @@ export function LiveBrowser() {
   const canonicalProviderIdentity = manifest?.surfaceCanonicalProviderIdentityContracts.find((item) => item.screenId === 'live') ?? null;
   const fallbackRanking = manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === 'live') ?? null;
   const fallbackEquivalence = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'live') ?? null;
-  const launchReadiness = manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'live') ?? null;
-  const launchScorecard = manifest?.surfaceScorecards.find((item) => item.screenId === 'live') ?? null;
-  const exitCriteria = manifest?.surfaceExitCriteria.find((item) => item.screenId === 'live') ?? null;
-  const handoffMap = manifest?.surfaceHandoffs.find((item) => item.screenId === 'live') ?? null;
   const launchOwnership = manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'live') ?? null;
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
@@ -233,6 +230,26 @@ export function LiveBrowser() {
     () => getCoverageReport(activeConnection.id, filteredStreams.slice(0, 8).map((stream) => getContentId(stream)), Number.MAX_SAFE_INTEGER),
     [activeConnection.id, filteredStreams, getCoverageReport]
   );
+  const runtimeSurfaceContracts = useMemo(
+    () => buildRuntimeSurfaceContracts({
+      screenId: 'live',
+      providerLabel: activeConnection.name,
+      providerStatusLabel: providerStatus?.state || null,
+      savedProviderBoard,
+      guideCoverage: liveGuideCoverage,
+      selectedLabel: selectedStream?.name || activeConnection.name,
+      currentNowTitle: selectedGuide?.now?.title ?? null,
+      currentNextTitle: selectedGuide?.next?.title ?? null,
+      nextHopHref: '/live',
+      nextHopLabel: 'Keep Live open',
+      streamHealth,
+    }),
+    [activeConnection.name, liveGuideCoverage, providerStatus?.state, savedProviderBoard, selectedGuide, selectedStream?.name, streamHealth]
+  );
+  const launchReadiness = runtimeSurfaceContracts.launchReadiness;
+  const launchScorecard = runtimeSurfaceContracts.launchScorecard;
+  const exitCriteria = runtimeSurfaceContracts.exitCriteria;
+  const handoffMap = runtimeSurfaceContracts.handoffMap;
 
   return (
     <div className="space-y-6">

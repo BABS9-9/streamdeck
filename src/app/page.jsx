@@ -38,6 +38,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
 import { getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
@@ -161,22 +162,6 @@ export default function LoginPage() {
     () => manifest?.surfaceFallbackRankingContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
-  const launchReadiness = useMemo(
-    () => manifest?.surfaceLaunchReadinessContracts?.find((item) => item.screenId === 'login') ?? null,
-    [manifest]
-  );
-  const launchScorecard = useMemo(
-    () => manifest?.surfaceScorecards?.find((item) => item.screenId === 'login') ?? null,
-    [manifest]
-  );
-  const exitCriteria = useMemo(
-    () => manifest?.surfaceExitCriteria?.find((item) => item.screenId === 'login') ?? null,
-    [manifest]
-  );
-  const handoffMap = useMemo(
-    () => manifest?.surfaceHandoffs?.find((item) => item.screenId === 'login') ?? null,
-    [manifest]
-  );
   const launchOwnership = useMemo(
     () => manifest?.surfaceLaunchOwnerships?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
@@ -294,6 +279,27 @@ export default function LoginPage() {
       : null,
     [activeConnection, getCoverageReport, loginGuideStreams]
   );
+  const runtimeSurfaceContracts = useMemo(
+    () => activeConnection
+      ? buildRuntimeSurfaceContracts({
+          screenId: 'login',
+          providerLabel: activeConnection.name,
+          providerStatusLabel: connectionStatus[activeConnection.id]?.state || null,
+          savedProviderBoard,
+          guideCoverage: loginGuideCoverage,
+          selectedLabel: loginGuideStreams[0]?.name || activeConnection.name,
+          currentNowTitle: loginGuideCards.find((item) => item.guide?.now)?.guide?.now?.title ?? null,
+          currentNextTitle: loginGuideCards.find((item) => item.guide?.next)?.guide?.next?.title ?? null,
+          nextHopHref: '/home',
+          nextHopLabel: 'Open Home',
+        })
+      : null,
+    [activeConnection, connectionStatus, loginGuideCards, loginGuideCoverage, loginGuideStreams, savedProviderBoard]
+  );
+  const launchReadiness = runtimeSurfaceContracts?.launchReadiness || manifest?.surfaceLaunchReadinessContracts?.find((item) => item.screenId === 'login') || null;
+  const launchScorecard = runtimeSurfaceContracts?.launchScorecard || manifest?.surfaceScorecards?.find((item) => item.screenId === 'login') || null;
+  const exitCriteria = runtimeSurfaceContracts?.exitCriteria || manifest?.surfaceExitCriteria?.find((item) => item.screenId === 'login') || null;
+  const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs?.find((item) => item.screenId === 'login') || null;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">

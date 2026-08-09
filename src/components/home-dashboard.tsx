@@ -39,6 +39,7 @@ import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -235,22 +236,6 @@ export function HomeDashboard() {
     () => manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
-  const launchReadiness = useMemo(
-    () => manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'home') ?? null,
-    [manifest]
-  );
-  const launchScorecard = useMemo(
-    () => manifest?.surfaceScorecards.find((item) => item.screenId === 'home') ?? null,
-    [manifest]
-  );
-  const exitCriteria = useMemo(
-    () => manifest?.surfaceExitCriteria.find((item) => item.screenId === 'home') ?? null,
-    [manifest]
-  );
-  const handoffMap = useMemo(
-    () => manifest?.surfaceHandoffs.find((item) => item.screenId === 'home') ?? null,
-    [manifest]
-  );
   const launchOwnership = useMemo(
     () => manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -355,6 +340,27 @@ export function HomeDashboard() {
   const heroGuide = activeConnection && featuredLive
     ? getGuidePayload(lookupStreamGuide(activeConnection.id, featuredLive, Number.MAX_SAFE_INTEGER))
     : null;
+  const runtimeSurfaceContracts = useMemo(
+    () => activeConnection
+      ? buildRuntimeSurfaceContracts({
+          screenId: 'home',
+          providerLabel: activeConnection.name,
+          providerStatusLabel: connectionStatus[activeConnection.id]?.state || null,
+          savedProviderBoard,
+          guideCoverage: homeGuideCoverage,
+          selectedLabel: featuredLive?.name || home.featured?.name || activeConnection.name,
+          currentNowTitle: heroGuide?.now?.title ?? null,
+          currentNextTitle: heroGuide?.next?.title ?? null,
+          nextHopHref: '/live',
+          nextHopLabel: 'Open Live',
+        })
+      : null,
+    [activeConnection, connectionStatus, featuredLive, heroGuide, home.featured?.name, homeGuideCoverage, savedProviderBoard]
+  );
+  const launchReadiness = runtimeSurfaceContracts?.launchReadiness || manifest?.surfaceLaunchReadinessContracts.find((item) => item.screenId === 'home') || null;
+  const launchScorecard = runtimeSurfaceContracts?.launchScorecard || manifest?.surfaceScorecards.find((item) => item.screenId === 'home') || null;
+  const exitCriteria = runtimeSurfaceContracts?.exitCriteria || manifest?.surfaceExitCriteria.find((item) => item.screenId === 'home') || null;
+  const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs.find((item) => item.screenId === 'home') || null;
 
   if (!activeConnection) {
     return (
