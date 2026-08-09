@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, guide-freshness truth, launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
+  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
 };
 
 const channelNames = {
@@ -687,6 +687,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Most IPTV players only show guide data as present or absent, which hides partial freshness, cache-backed continuity, and recovery ownership when guide sync is in-between.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one provider-scoped guide coverage report so freshness counts, stale callouts, recovery ownership, and the safest next move stay aligned.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'proof-debt',
+    feature: 'Proof debt',
+    pitch: 'Publish what confidence is still borrowed from cache, saved-provider memory, preview continuity, or rescue logic before premium copy sounds fresher than the proof behind it.',
+    competitiveGap: 'Competitors usually dress cached or rescued states in the same confidence as fresh provider proof, so users cannot tell when polish is floating on borrowed certainty.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one proof-debt contract so borrowed confidence, repayment triggers, and the safest current promise stay aligned across the shell.',
     surfaces: ['login', 'home', 'live'],
   },
   {
