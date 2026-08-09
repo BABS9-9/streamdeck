@@ -37,6 +37,7 @@ import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
+import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
@@ -279,6 +280,15 @@ export default function LoginPage() {
       : null,
     [activeConnection, getCoverageReport, loginGuideStreams]
   );
+  const loginGuideContinuity = useMemo(
+    () => buildProviderGuideContinuity({
+      screenId: 'login',
+      report: loginGuideCoverage,
+      savedProviderBoard,
+      ownerLabel: activeConnection?.name || loginGuideStreams[0]?.name || null,
+    }),
+    [activeConnection?.name, loginGuideCoverage, loginGuideStreams, savedProviderBoard]
+  );
   const runtimeSurfaceContracts = useMemo(
     () => activeConnection
       ? buildRuntimeSurfaceContracts({
@@ -359,8 +369,7 @@ export default function LoginPage() {
                   report={loginGuideCoverage}
                   emptyMessage="Connect or reuse a provider to load shared guide coverage before entering Home."
                   streamLabels={Object.fromEntries(loginGuideStreams.map((stream) => [getContentId(stream), stream.name]))}
-                  savedProviderBoard={savedProviderBoard}
-                  ownerLabel={activeConnection?.name || manifest?.providerName || 'Mock provider'}
+                  continuity={loginGuideContinuity}
                 />
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">

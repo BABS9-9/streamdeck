@@ -37,6 +37,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
+import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
@@ -230,6 +231,15 @@ export function LiveBrowser() {
     () => getCoverageReport(activeConnection.id, filteredStreams.slice(0, 8).map((stream) => getContentId(stream)), Number.MAX_SAFE_INTEGER),
     [activeConnection.id, filteredStreams, getCoverageReport]
   );
+  const liveGuideContinuity = useMemo(
+    () => buildProviderGuideContinuity({
+      screenId: 'live',
+      report: liveGuideCoverage,
+      savedProviderBoard,
+      ownerLabel: selectedStream?.name || activeConnection.name,
+    }),
+    [activeConnection.name, liveGuideCoverage, savedProviderBoard, selectedStream?.name]
+  );
   const runtimeSurfaceContracts = useMemo(
     () => buildRuntimeSurfaceContracts({
       screenId: 'live',
@@ -349,8 +359,7 @@ export function LiveBrowser() {
                 report={liveGuideCoverage}
                 emptyMessage="Live guide coverage will appear after visible channels sync."
                 streamLabels={Object.fromEntries(filteredStreams.slice(0, 8).map((stream) => [getContentId(stream), stream.name]))}
-                savedProviderBoard={savedProviderBoard}
-                ownerLabel={selectedStream?.name || activeConnection.name}
+                continuity={liveGuideContinuity}
               />
             </div>
 

@@ -176,6 +176,22 @@ export type ProviderGuideCoverageReport = {
   items: ProviderGuideCoverageItem[];
 };
 
+export type ProviderGuideContinuityTone = 'healthy' | 'warning';
+
+export type ProviderGuideContinuityContract = {
+  providerId: string;
+  screenId: 'login' | 'home' | 'live' | 'player';
+  ownerLabel: string;
+  ownerDetail: string;
+  ownerTone: ProviderGuideContinuityTone;
+  ownerState: 'fresh' | 'partial' | 'stale' | 'error' | 'empty';
+  nextMoveLabel: string;
+  nextMoveDetail: string;
+  nextMoveTone: ProviderGuideContinuityTone;
+  trustSummary: string;
+  issueSummary: string | null;
+};
+
 export type WatchHistoryItem = {
   id: string;
   kind: 'live' | 'movie' | 'series';

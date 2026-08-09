@@ -1,6 +1,6 @@
 'use client';
 
-import { SavedProviderHealthBoard, ProviderGuideCoverageReport } from '@/lib/types';
+import { ProviderGuideContinuityContract, ProviderGuideCoverageReport } from '@/lib/types';
 
 const toneClasses: Record<ProviderGuideCoverageReport['status'], string> = {
   fresh: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -29,15 +29,13 @@ export function GuideCoverageStrip({
   report,
   emptyMessage,
   streamLabels,
-  savedProviderBoard,
-  ownerLabel,
+  continuity,
 }: {
   title: string;
   report: ProviderGuideCoverageReport | null;
   emptyMessage?: string;
   streamLabels?: Record<number, string>;
-  savedProviderBoard?: SavedProviderHealthBoard | null;
-  ownerLabel?: string;
+  continuity?: ProviderGuideContinuityContract | null;
 }) {
   if (!report || report.requestedCount === 0) {
     return (
@@ -86,26 +84,34 @@ export function GuideCoverageStrip({
         </div>
       </div>
 
-      {savedProviderBoard ? (
+      {continuity ? (
         <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3">
             <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Guide owner</p>
             <p className="mt-1 text-sm font-semibold text-white">
-              {ownerLabel || savedProviderBoard.activeProvider?.providerName || savedProviderBoard.recommendedProvider?.providerName || 'No active owner'}
+              {continuity.ownerLabel}
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              {savedProviderBoard.headline?.detail || 'Guide freshness is currently carrying the same provider story as the active browse surface.'}
+              {continuity.ownerDetail}
             </p>
           </div>
           <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3">
             <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Next safe move</p>
             <p className="mt-1 text-sm font-semibold text-white">
-              {savedProviderBoard.recoveryRoute?.cta || 'Keep the current provider active while guide truth stays fresh.'}
+              {continuity.nextMoveLabel}
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              {savedProviderBoard.recoveryRoute?.detail || 'No recovery takeover is needed yet.'}
+              {continuity.nextMoveDetail}
             </p>
           </div>
+        </div>
+      ) : null}
+
+      {continuity?.issueSummary ? (
+        <div className="mt-4 rounded-xl border border-white/10 bg-black/20 px-3 py-3">
+          <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Guide trust note</p>
+          <p className="mt-1 text-sm font-medium text-white">{continuity.trustSummary}</p>
+          <p className="mt-1 text-xs text-slate-400">{continuity.issueSummary}</p>
         </div>
       ) : null}
 

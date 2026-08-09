@@ -38,6 +38,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
+import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
@@ -340,6 +341,15 @@ export function HomeDashboard() {
   const heroGuide = activeConnection && featuredLive
     ? getGuidePayload(lookupStreamGuide(activeConnection.id, featuredLive, Number.MAX_SAFE_INTEGER))
     : null;
+  const homeGuideContinuity = useMemo(
+    () => buildProviderGuideContinuity({
+      screenId: 'home',
+      report: homeGuideCoverage,
+      savedProviderBoard,
+      ownerLabel: featuredLive?.name || home.featured?.name || activeConnection?.name || null,
+    }),
+    [activeConnection?.name, featuredLive?.name, home.featured?.name, homeGuideCoverage, savedProviderBoard]
+  );
   const runtimeSurfaceContracts = useMemo(
     () => activeConnection
       ? buildRuntimeSurfaceContracts({
@@ -450,8 +460,7 @@ export function HomeDashboard() {
         report={homeGuideCoverage}
         emptyMessage="Home will publish saved-provider guide coverage after the first live-guide sync."
         streamLabels={Object.fromEntries([...(featuredLive ? [featuredLive] : []), ...home.quickLive].map((stream) => [getContentId(stream), stream.name]))}
-        savedProviderBoard={savedProviderBoard}
-        ownerLabel={activeConnection.name}
+        continuity={homeGuideContinuity}
       />
       {guideMessage ? (
         <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">{guideMessage}</div>
