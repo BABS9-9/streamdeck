@@ -6,6 +6,7 @@ import {
   ProviderCatalog,
   ProviderEpgSnapshot,
   ProviderHomeSnapshot,
+  ProviderSearchIndexSnapshot,
   ProviderSearchSnapshot,
   ProviderSwitchContext,
   SavedConnection,
@@ -21,6 +22,7 @@ const KEYS = {
   catalogs: 'streamdeck.catalogs',
   epgSnapshots: 'streamdeck.epg-snapshots',
   homeSnapshots: 'streamdeck.home-snapshots',
+  searchIndexes: 'streamdeck.search-indexes',
   searchSnapshots: 'streamdeck.search-snapshots',
   providerSwitchContext: 'streamdeck.provider-switch-context',
   collections: 'streamdeck.collections',
@@ -399,6 +401,25 @@ export const storage = {
     if (!isBrowser()) return {};
     return safeJsonParse(localStorage.getItem(KEYS.searchSnapshots), {});
   },
+  getSearchIndexes(): Record<string, ProviderSearchIndexSnapshot> {
+    if (!isBrowser()) return {};
+    return safeJsonParse(localStorage.getItem(KEYS.searchIndexes), {});
+  },
+  getProviderSearchIndex(providerId: string): ProviderSearchIndexSnapshot | null {
+    return storage.getSearchIndexes()[providerId] ?? null;
+  },
+  saveProviderSearchIndex(providerId: string, snapshot: ProviderSearchIndexSnapshot) {
+    if (!isBrowser()) return;
+    const snapshots = storage.getSearchIndexes();
+    snapshots[providerId] = { ...snapshot, providerId };
+    localStorage.setItem(KEYS.searchIndexes, JSON.stringify(snapshots));
+  },
+  removeProviderSearchIndex(providerId: string) {
+    if (!isBrowser()) return;
+    const snapshots = storage.getSearchIndexes();
+    delete snapshots[providerId];
+    localStorage.setItem(KEYS.searchIndexes, JSON.stringify(snapshots));
+  },
   getProviderSearchSnapshot(providerId: string): ProviderSearchSnapshot | null {
     return storage.getSearchSnapshots()[providerId] ?? null;
   },
@@ -474,6 +495,19 @@ export const storage = {
     const homeSnapshots = remapProviderMap(storage.getHomeSnapshots(), aliasMap, (current, incoming) =>
       (incoming.updatedAt || 0) >= (current.updatedAt || 0) ? incoming : current
     );
+    const searchIndexes = Object.entries(storage.getSearchIndexes()).reduce<Record<string, ProviderSearchIndexSnapshot>>((acc, [providerId, snapshot]) => {
+      const canonicalProviderId = aliasMap[providerId] || providerId;
+      const existing = acc[canonicalProviderId];
+      const normalizedSnapshot = {
+        ...snapshot,
+        providerId: canonicalProviderId,
+        entries: (snapshot.entries || []).map((entry) => ({ ...entry, providerId: canonicalProviderId })),
+      };
+      if (!existing || (normalizedSnapshot.updatedAt || 0) >= (existing.updatedAt || 0)) {
+        acc[canonicalProviderId] = normalizedSnapshot;
+      }
+      return acc;
+    }, {});
     const historyBuckets = Object.entries(storage.getProviderHistoryBuckets()).reduce<Record<string, WatchHistoryItem[]>>((acc, [providerId, items]) => {
       const canonicalProviderId = aliasMap[providerId] || providerId;
       const remapped = remapHistory(items, aliasMap).filter((item) => item.providerId === canonicalProviderId);
@@ -512,6 +546,7 @@ export const storage = {
     localStorage.setItem(KEYS.catalogs, JSON.stringify(catalogs));
     localStorage.setItem(KEYS.epgSnapshots, JSON.stringify(epgSnapshots));
     localStorage.setItem(KEYS.homeSnapshots, JSON.stringify(homeSnapshots));
+    localStorage.setItem(KEYS.searchIndexes, JSON.stringify(searchIndexes));
     localStorage.setItem(KEYS.history, JSON.stringify(historyBuckets));
     localStorage.setItem(KEYS.searchSnapshots, JSON.stringify(searchSnapshots));
     localStorage.setItem(KEYS.collections, JSON.stringify(collections));

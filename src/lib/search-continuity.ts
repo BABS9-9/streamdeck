@@ -1,4 +1,5 @@
 import { buildProviderVariant, buildProviderVariantLookupKeys, getProviderSummaryWarning, normalizeVariantYear, rankProviderVariants, RankedProviderVariant } from './provider-recovery';
+import { normalizeSearchText, ProviderIndexedSearchHit, queryProviderSearchIndex } from './provider-search-index';
 import { ConnectionStatus, ProviderCatalog, SavedConnection, WatchHistoryItem, XtreamStream } from './types';
 
 export type SearchContinuityMode = 'single-source' | 'provider-choice' | 'series-resume' | 'episode-map-required';
@@ -51,25 +52,6 @@ export type GroupedSearchResult = {
   continuity: SearchContinuityPayload;
 };
 
-const SEARCH_ALIASES: Record<string, string[]> = {
-  sports: ['sport', 'sports', 'fight', 'goal', 'match', 'arena'],
-  news: ['news', 'headline', 'report', 'desk', 'wire'],
-  movie: ['movie', 'movies', 'cinema', 'film', 'premiere'],
-  kids: ['kids', 'kid', 'cartoon', 'family', 'junior'],
-};
-
-const normalizeSearchText = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
-const getSearchTerms = (query: string) => {
-  const normalized = normalizeSearchText(query);
-  const tokens = normalized.split(/\s+/).filter(Boolean);
-  const expanded = new Set(tokens);
-  tokens.forEach((token) => {
-    SEARCH_ALIASES[token]?.forEach((alias) => expanded.add(alias));
-  });
-  return { normalized, tokens, expandedTokens: [...expanded] };
-};
-
 const buildSearchKey = (title: string, kind: GroupedSearchResult['kind'], year?: string) => {
   const normalizedName = normalizeSearchText(title);
   return `${kind}:${normalizedName}:${normalizeVariantYear(year)}`;
@@ -81,51 +63,6 @@ const buildSearchLookupKeys = (item: XtreamStream, kind: GroupedSearchResult['ki
     kind,
     year: item.year || item.releasedate?.slice(0, 4) || '',
   });
-};
-
-const scoreResult = (query: ReturnType<typeof getSearchTerms>, item: XtreamStream, kind: GroupedSearchResult['kind']) => {
-  const normalizedName = normalizeSearchText(item.name);
-  const haystack = normalizeSearchText(`${item.name} ${item.genre || ''} ${item.plot || ''} ${item.channel_group || ''} ${item.tagline || ''}`);
-  if (!haystack) return null;
-
-  let score = 0;
-  let matchedTerms = 0;
-
-  if (normalizedName === query.normalized) score += 140;
-  else if (normalizedName.startsWith(query.normalized)) score += 90;
-
-  query.expandedTokens.forEach((term) => {
-    if (!haystack.includes(term)) return;
-    matchedTerms += 1;
-    const nameIndex = normalizedName.indexOf(term);
-    if (nameIndex === 0) score += 28;
-    else if (nameIndex > 0) score += Math.max(10, 24 - nameIndex);
-    else if ((item.genre || '').toLowerCase().includes(term)) score += 14;
-    else if ((item.channel_group || '').toLowerCase().includes(term)) score += 12;
-    else score += 8;
-  });
-
-  if (matchedTerms === 0) return null;
-
-  score += matchedTerms * 6;
-  if (kind === 'live') score += 12;
-  if (kind === 'movie') score += 6;
-  if (query.tokens.length > 1 && matchedTerms >= query.tokens.length) score += 18;
-  if (item.rating) score += Number(item.rating);
-
-  const matchReason = normalizedName === query.normalized
-    ? 'Exact title match'
-    : normalizedName.startsWith(query.normalized)
-      ? 'Title starts with your search'
-      : matchedTerms >= Math.max(2, query.tokens.length)
-        ? `Matched ${matchedTerms} search signals`
-        : (item.genre || '').toLowerCase().includes(query.tokens[0] || '')
-          ? `Genre match in ${item.genre}`
-          : kind === 'live'
-            ? 'Strong live-channel match'
-            : 'Relevant catalog match';
-
-  return { score, matchReason };
 };
 
 const getSeriesCompletenessBand = ({
@@ -237,123 +174,184 @@ export const buildGroupedSearchResults = ({
   activeConnectionId,
   watchHistory = [],
 }: {
-  providerCatalogs: Array<{ provider: SavedConnection; catalog: Pick<ProviderCatalog, 'live' | 'vod' | 'series'> }>;
+  providerCatalogs: Array<{ provider: SavedConnection; catalog: ProviderCatalog }>;
   query: string;
   connectionStatus: Record<string, ConnectionStatus>;
   activeConnectionId?: string | null;
   watchHistory?: WatchHistoryItem[];
 }) => {
-  const searchTerms = getSearchTerms(query);
+  const indexedHits = providerCatalogs.flatMap(({ provider, catalog }) =>
+    queryProviderSearchIndex({
+      snapshot: {
+        providerId: provider.id,
+        updatedAt: catalog.updatedAt,
+        catalogUpdatedAt: catalog.updatedAt,
+        counts: {
+          live: catalog.live.length,
+          movie: catalog.vod.length,
+          series: catalog.series.length,
+          total: catalog.live.length + catalog.vod.length + catalog.series.length,
+        },
+        entries: [
+          ...catalog.live.map((item) => ({
+            providerId: provider.id,
+            streamId: Number(item.stream_id ?? item.series_id ?? 0),
+            kind: 'live' as const,
+            title: item.name,
+            normalizedTitle: normalizeSearchText(item.name),
+            normalizedSearchText: normalizeSearchText(`${item.name} ${item.genre || ''} ${item.plot || ''} ${item.channel_group || ''} ${item.tagline || ''}`),
+            normalizedGenre: normalizeSearchText(item.genre || ''),
+            normalizedGroup: normalizeSearchText(item.channel_group || ''),
+            year: item.year || item.releasedate?.slice(0, 4) || '',
+            item,
+          })),
+          ...catalog.vod.map((item) => ({
+            providerId: provider.id,
+            streamId: Number(item.stream_id ?? item.series_id ?? 0),
+            kind: 'movie' as const,
+            title: item.name,
+            normalizedTitle: normalizeSearchText(item.name),
+            normalizedSearchText: normalizeSearchText(`${item.name} ${item.genre || ''} ${item.plot || ''} ${item.channel_group || ''} ${item.tagline || ''}`),
+            normalizedGenre: normalizeSearchText(item.genre || ''),
+            normalizedGroup: normalizeSearchText(item.channel_group || ''),
+            year: item.year || item.releasedate?.slice(0, 4) || '',
+            item,
+          })),
+          ...catalog.series.map((item) => ({
+            providerId: provider.id,
+            streamId: Number(item.stream_id ?? item.series_id ?? 0),
+            kind: 'series' as const,
+            title: item.name,
+            normalizedTitle: normalizeSearchText(item.name),
+            normalizedSearchText: normalizeSearchText(`${item.name} ${item.genre || ''} ${item.plot || ''} ${item.channel_group || ''} ${item.tagline || ''}`),
+            normalizedGenre: normalizeSearchText(item.genre || ''),
+            normalizedGroup: normalizeSearchText(item.channel_group || ''),
+            year: item.year || item.releasedate?.slice(0, 4) || '',
+            item,
+          })),
+        ],
+      },
+      query,
+      limit: 80,
+    }).map((hit) => ({ ...hit, provider }))
+  );
+
+  return buildGroupedSearchResultsFromHits({
+    hits: indexedHits,
+    connectionStatus,
+    activeConnectionId,
+    watchHistory,
+  });
+};
+
+export const buildGroupedSearchResultsFromHits = ({
+  hits,
+  connectionStatus,
+  activeConnectionId,
+  watchHistory = [],
+}: {
+  hits: Array<ProviderIndexedSearchHit & { provider: SavedConnection }>;
+  connectionStatus: Record<string, ConnectionStatus>;
+  activeConnectionId?: string | null;
+  watchHistory?: WatchHistoryItem[];
+}) => {
   const deduped = new Map<string, GroupedSearchResult>();
   const aliasToCanonicalKey = new Map<string, string>();
 
-  providerCatalogs.forEach(({ provider, catalog }) => {
-    const buckets: Array<[GroupedSearchResult['kind'], XtreamStream[]]> = [
-      ['live', catalog.live],
-      ['movie', catalog.vod],
-      ['series', catalog.series],
-    ];
-
-    buckets.forEach(([kind, items]) => {
-      items.forEach((item) => {
-        const scored = scoreResult(searchTerms, item, kind);
-        if (!scored) return;
-
-        const lookupKeys = buildSearchLookupKeys(item, kind);
-        const matchedAlias = lookupKeys.find((candidate) => aliasToCanonicalKey.has(candidate));
-        const key = matchedAlias
-          ? aliasToCanonicalKey.get(matchedAlias)!
-          : buildSearchKey(item.name, kind, item.year || item.releasedate?.slice(0, 4) || '');
-        const existing = deduped.get(key);
-        const candidateVariantBase = buildProviderVariant({
-          connection: provider,
-          status: connectionStatus[provider.id],
-          item,
-          kind,
-        });
-        const candidateCompositeScore = scored.score + candidateVariantBase.trustScore;
-        const candidateVariant = {
-          ...candidateVariantBase,
-          provider,
-          item,
-          compositeScore: candidateCompositeScore,
-          isPrimary: true,
-          matchReason: scored.matchReason,
-        } satisfies SearchResultVariantPayload & { matchReason: string };
-
-        if (!existing) {
-          const continuity = buildVariantContinuityPayload({
-            title: item.name,
-            kind,
-            variants: [candidateVariant],
-            activeConnectionId,
-            history: watchHistory,
-          })!;
-
-          deduped.set(key, {
-            canonicalKey: key,
-            provider,
-            item,
-            kind,
-            score: candidateCompositeScore,
-            matchReason: scored.matchReason,
-            duplicateCount: 0,
-            providerCount: 1,
-            variants: [candidateVariant],
-            continuity,
-          });
-          lookupKeys.forEach((aliasKey) => aliasToCanonicalKey.set(aliasKey, key));
-          return;
-        }
-
-        const variantLookup = new Map<string, SearchResultVariantPayload>();
-        [...existing.variants, candidateVariant].forEach((variant) => {
-          variantLookup.set(`${variant.providerId}-${variant.streamId}`, variant);
-        });
-
-        const rankedVariants = rankProviderVariants(
-          [...variantLookup.values()].map((variant) => variant),
-          Object.fromEntries(
-            [...variantLookup.values()].map((variant) => [
-              variant.providerId,
-              variant.providerId === candidateVariant.providerId ? scored.score : Math.max(0, Math.round(variant.compositeScore - variant.trustScore)),
-            ])
-          )
-        ).map((variant) => {
-          const matched = variantLookup.get(`${variant.providerId}-${variant.streamId}`)!;
-          return {
-            ...variant,
-            provider: matched.provider,
-            item: matched.item,
-          } satisfies SearchResultVariantPayload;
-        });
-
-        const primaryVariant = rankedVariants[0];
-        const continuity = buildVariantContinuityPayload({
-          title: primaryVariant.title,
-          kind,
-          variants: rankedVariants,
-          activeConnectionId,
-          history: watchHistory,
-        })!;
-
-        deduped.set(key, {
-          canonicalKey: key,
-          provider: primaryVariant.provider,
-          item: primaryVariant.item,
-          kind,
-          score: primaryVariant.compositeScore,
-          matchReason: primaryVariant.providerId === candidateVariant.providerId
-            ? `${scored.matchReason} • healthiest ranked provider copy`
-            : `${existing.matchReason} • also found on ${existing.providerCount + 1} providers`,
-          duplicateCount: rankedVariants.length - 1,
-          providerCount: rankedVariants.length,
-          variants: rankedVariants,
-          continuity,
-        });
-        lookupKeys.forEach((aliasKey) => aliasToCanonicalKey.set(aliasKey, key));
-      });
+  hits.forEach(({ provider, item, kind, score, matchReason }) => {
+    const lookupKeys = buildSearchLookupKeys(item, kind);
+    const matchedAlias = lookupKeys.find((candidate) => aliasToCanonicalKey.has(candidate));
+    const key = matchedAlias
+      ? aliasToCanonicalKey.get(matchedAlias)!
+      : buildSearchKey(item.name, kind, item.year || item.releasedate?.slice(0, 4) || '');
+    const existing = deduped.get(key);
+    const candidateVariantBase = buildProviderVariant({
+      connection: provider,
+      status: connectionStatus[provider.id],
+      item,
+      kind,
     });
+    const candidateCompositeScore = score + candidateVariantBase.trustScore;
+    const candidateVariant = {
+      ...candidateVariantBase,
+      provider,
+      item,
+      compositeScore: candidateCompositeScore,
+      isPrimary: true,
+      matchReason,
+    } satisfies SearchResultVariantPayload & { matchReason: string };
+
+    if (!existing) {
+      const continuity = buildVariantContinuityPayload({
+        title: item.name,
+        kind,
+        variants: [candidateVariant],
+        activeConnectionId,
+        history: watchHistory,
+      })!;
+
+      deduped.set(key, {
+        canonicalKey: key,
+        provider,
+        item,
+        kind,
+        score: candidateCompositeScore,
+        matchReason,
+        duplicateCount: 0,
+        providerCount: 1,
+        variants: [candidateVariant],
+        continuity,
+      });
+      lookupKeys.forEach((aliasKey) => aliasToCanonicalKey.set(aliasKey, key));
+      return;
+    }
+
+    const variantLookup = new Map<string, SearchResultVariantPayload>();
+    [...existing.variants, candidateVariant].forEach((variant) => {
+      variantLookup.set(`${variant.providerId}-${variant.streamId}`, variant);
+    });
+
+    const rankedVariants = rankProviderVariants(
+      [...variantLookup.values()].map((variant) => variant),
+      Object.fromEntries(
+        [...variantLookup.values()].map((variant) => [
+          variant.providerId,
+          variant.providerId === candidateVariant.providerId ? score : Math.max(0, Math.round(variant.compositeScore - variant.trustScore)),
+        ])
+      )
+    ).map((variant) => {
+      const matched = variantLookup.get(`${variant.providerId}-${variant.streamId}`)!;
+      return {
+        ...variant,
+        provider: matched.provider,
+        item: matched.item,
+      } satisfies SearchResultVariantPayload;
+    });
+
+    const primaryVariant = rankedVariants[0];
+    const continuity = buildVariantContinuityPayload({
+      title: primaryVariant.title,
+      kind,
+      variants: rankedVariants,
+      activeConnectionId,
+      history: watchHistory,
+    })!;
+
+    deduped.set(key, {
+      canonicalKey: key,
+      provider: primaryVariant.provider,
+      item: primaryVariant.item,
+      kind,
+      score: primaryVariant.compositeScore,
+      matchReason: primaryVariant.providerId === candidateVariant.providerId
+        ? `${matchReason} • healthiest ranked provider copy`
+        : `${existing.matchReason} • also found on ${existing.providerCount + 1} providers`,
+      duplicateCount: rankedVariants.length - 1,
+      providerCount: rankedVariants.length,
+      variants: rankedVariants,
+      continuity,
+    });
+    lookupKeys.forEach((aliasKey) => aliasToCanonicalKey.set(aliasKey, key));
   });
 
   return [...deduped.values()]

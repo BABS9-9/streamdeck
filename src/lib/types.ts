@@ -282,6 +282,32 @@ export type ProviderSearchSnapshot = {
   selectedKind?: 'live' | 'movie' | 'series' | null;
 };
 
+export type ProviderSearchIndexEntry = {
+  providerId: string;
+  streamId: number;
+  kind: 'live' | 'movie' | 'series';
+  title: string;
+  normalizedTitle: string;
+  normalizedSearchText: string;
+  normalizedGenre: string;
+  normalizedGroup: string;
+  year: string;
+  item: XtreamStream;
+};
+
+export type ProviderSearchIndexSnapshot = {
+  providerId: string;
+  updatedAt: number;
+  catalogUpdatedAt: number;
+  counts: {
+    live: number;
+    movie: number;
+    series: number;
+    total: number;
+  };
+  entries: ProviderSearchIndexEntry[];
+};
+
 export type ProviderSwitchContext = {
   fromProviderId: string | null;
   toProviderId: string;

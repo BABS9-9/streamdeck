@@ -203,6 +203,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     storage.removeProviderCatalog(id);
     storage.removeProviderEpgSnapshot(id);
     storage.removeProviderHomeSnapshot(id);
+    storage.removeProviderSearchIndex(id);
     storage.removeProviderSearchSnapshot(id);
     storage.removeProviderCollections(id);
     storage.removeProviderSession(id);

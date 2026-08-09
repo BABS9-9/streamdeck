@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
-import { buildGroupedSearchResults, describeSeriesCompletenessBand, GroupedSearchResult, SearchResultVariantPayload } from '@/lib/search-continuity';
+import { describeSeriesCompletenessBand, GroupedSearchResult, SearchResultVariantPayload } from '@/lib/search-continuity';
 import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId } from '@/lib/xtream-api';
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
@@ -80,8 +80,11 @@ export function SearchBrowser() {
   const refreshProviderCatalogs = useLibraryStore((state) => state.refreshProviderCatalogs);
   const playStream = usePlayerStore((state) => state.playStream);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
+  const getIndexSnapshot = useSearchStore((state) => state.getIndexSnapshot);
   const getSearchSnapshot = useSearchStore((state) => state.getSnapshot);
+  const queryGlobalIndex = useSearchStore((state) => state.queryGlobalIndex);
   const saveSearchSnapshot = useSearchStore((state) => state.saveSnapshot);
+  const syncProviderIndexes = useSearchStore((state) => state.syncProviderIndexes);
 
   const [results, setResults] = useState<GroupedSearchResult[]>([]);
   const [query, setQuery] = useState('');
@@ -150,12 +153,25 @@ export function SearchBrowser() {
         .filter((entry): entry is { provider: SavedConnection; catalog: ProviderCatalog } => Boolean(entry.catalog));
 
       if (cachedCatalogs.length > 0) {
-        setResults(buildGroupedSearchResults({
-          providerCatalogs: cachedCatalogs,
+        const missingCachedIndexes = cachedCatalogs
+          .filter(({ provider, catalog }) => {
+            const currentIndex = getIndexSnapshot(provider.id);
+            return !currentIndex || currentIndex.catalogUpdatedAt < catalog.updatedAt;
+          })
+          .map(({ provider, catalog }) => ({ providerId: provider.id, catalog }));
+
+        if (missingCachedIndexes.length > 0) {
+          syncProviderIndexes(missingCachedIndexes);
+        }
+      }
+
+      if (cachedCatalogs.length > 0) {
+        setResults(queryGlobalIndex({
+          connections,
           query: trimmed,
           connectionStatus,
           activeConnectionId: activeConnection?.id,
-          watchHistory,
+          watchHistory: watchHistory,
         }));
         setUsingCache(true);
         setLoading(true);
@@ -193,12 +209,16 @@ export function SearchBrowser() {
         setDegradedProviders(failedProviders);
 
         if (successfulCatalogs.length > 0) {
-          setResults(buildGroupedSearchResults({
-            providerCatalogs: successfulCatalogs,
+          syncProviderIndexes(successfulCatalogs.map(({ provider, catalog }) => ({
+            providerId: provider.id,
+            catalog,
+          })));
+          setResults(queryGlobalIndex({
+            connections,
             query: trimmed,
             connectionStatus,
             activeConnectionId: activeConnection?.id,
-            watchHistory,
+            watchHistory: watchHistory,
           }));
           setUsingCache(cachedCatalogs.length > 0 || failedProviders.length > 0);
           if (failedProviders.length > 0) {
@@ -224,7 +244,21 @@ export function SearchBrowser() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [activeConnection?.id, connectionStatus, connections, query, scenario, scenarioRefreshing, watchHistory]);
+  }, [
+    activeConnection?.id,
+    connectionStatus,
+    connections,
+    getCatalogSnapshot,
+    getIndexSnapshot,
+    markCatalogFromCache,
+    query,
+    queryGlobalIndex,
+    refreshProviderCatalogs,
+    scenario,
+    scenarioRefreshing,
+    syncProviderIndexes,
+    watchHistory,
+  ]);
 
   const groupedCounts = useMemo(() => {
     return results.reduce<Record<string, number>>((acc, result) => {
