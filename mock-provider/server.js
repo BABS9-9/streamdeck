@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
+  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, guide-freshness truth, launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
 };
 
 const channelNames = {
@@ -679,6 +679,15 @@ const buildCompetitiveDifferentiators = () => ([
     buildPhase: 'Phase 1',
     architectureNotes: 'Keep short EPG fetches cheap, normalize NOW and NEXT labels, attach guide state to selected and visible live items, and degrade honestly when guide freshness drops.',
     surfaces: ['home', 'live'],
+  },
+  {
+    slug: 'guide-freshness-board',
+    feature: 'Guide freshness board',
+    pitch: 'Publish how much tracked guide truth is fresh, refreshing, stale, missing, or erroring before browse and launch copy overclaims what the provider proved.',
+    competitiveGap: 'Most IPTV players only show guide data as present or absent, which hides partial freshness, cache-backed continuity, and recovery ownership when guide sync is in-between.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one provider-scoped guide coverage report so freshness counts, stale callouts, recovery ownership, and the safest next move stay aligned.',
+    surfaces: ['login', 'home', 'live'],
   },
   {
     slug: 'launch-scorecard',
@@ -4160,6 +4169,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Switch scenarios without leaving the screen',
         'Provider risk strip updates before Connect overclaims launch safety',
         'Launch scorecard stays visible before Login hides whether Connect is ready, watch-only, or already recovery-led',
+        'Guide freshness truth stays visible before saved-provider familiarity sounds like fully current now / next proof',
         'Canonical provider identity stays visible before trimmed URLs or relabeled saved providers pretend they are different accounts',
         'Fallback ranking stays visible before Login silently auto-picks the fastest rescue without proving it is still the best current move',
         'Fallback equivalence stays visible before a saved-provider shortcut pretends every rescue path is the same Home move',
@@ -4193,6 +4203,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Featured live card launches playback directly',
         'Provider risk strip stays aligned with hero trust and the next safe launch',
         'Launch scorecard stays visible before Home hides whether the hero is launch-ready, cache-borrowed, or already recovery-owned',
+        'Guide freshness truth stays visible before cached rails or partial guide sync sound like fully current hero continuity',
         'Canonical provider identity stays visible before hero rescue reuses trust under a relabeled or host-variant provider story',
         'Fallback ranking stays visible before Home lets cinematic hero polish outrun which rescue really owns the safest next launch',
         'Fallback equivalence stays visible before hero rescue pretends every preserved rail is still the same discovery path',
@@ -4227,6 +4238,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Filter by category and search without leaving the page',
         'Provider risk strip warns about auth, expiry, or line pressure before Play gets blamed',
         'Launch scorecard stays visible before preview motion hides whether Play is exact-channel ready, preview-safe only, or already rescue-led',
+        'Guide freshness truth stays visible before partial guide sync or stale cards sound like fully current NOW / NEXT proof',
         'Canonical provider identity stays visible before exact-copy rescue sounds like the same source when the owner actually changed',
         'Fallback ranking stays visible before Live lets same-category rescue outrank an exact-channel save without saying why',
         'Fallback equivalence stays visible before same-category rescue pretends it preserved the exact selected channel',
