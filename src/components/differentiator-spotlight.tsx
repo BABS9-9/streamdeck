@@ -22,6 +22,12 @@ const surfaceCopy: Record<ScreenId, { eyebrow: string; title: string; detail: st
   },
 };
 
+const spotlightPriority: Record<ScreenId, string[]> = {
+  login: ['claim-ceiling', 'multi-connection-switching', 'launch-scorecard', 'proof-debt', 'provider-risk-strip'],
+  home: ['claim-ceiling', 'guide-freshness-board', 'launch-scorecard', 'proof-debt', 'provider-risk-strip'],
+  live: ['claim-ceiling', 'instant-channel-preview', 'guide-freshness-board', 'launch-scorecard', 'proof-debt'],
+};
+
 export function DifferentiatorSpotlight({
   manifest,
   screenId,
@@ -33,6 +39,14 @@ export function DifferentiatorSpotlight({
 }) {
   const differentiators = manifest?.competitiveDifferentiators
     .filter((item) => item.surfaces.includes(screenId))
+    .sort((a, b) => {
+      const priority = spotlightPriority[screenId];
+      const aIndex = priority.indexOf(a.slug);
+      const bIndex = priority.indexOf(b.slug);
+      const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+      const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+      return normalizedA - normalizedB;
+    })
     .slice(0, limit);
 
   if (!differentiators?.length) return null;

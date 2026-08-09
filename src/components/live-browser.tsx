@@ -406,6 +406,21 @@ export function LiveBrowser() {
                 <p className="mt-3 text-sm leading-6 text-slate-200">{proofDebt.debts[0].borrowedConfidence}</p>
               </div>
             ) : null}
+            {claimCeiling?.ceilings?.[0] ? (
+              <div className="mt-4 rounded-[1.5rem] border border-rose-400/20 bg-rose-500/10 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.28em] text-rose-200">Play claim ceiling</p>
+                    <p className="mt-2 text-base font-medium text-white">{claimCeiling.ceilings[0].label}</p>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                    Copy guardrail
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-200">{claimCeiling.ceilings[0].allowedPromise}</p>
+                <p className="mt-3 text-sm leading-6 text-rose-100">Suppress: {claimCeiling.ceilings[0].forbiddenOverclaim}</p>
+              </div>
+            ) : null}
 
           </div>
         </div>

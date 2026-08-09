@@ -421,6 +421,22 @@ export default function LoginPage() {
             <DifferentiatorSpotlight manifest={manifest} screenId="login" />
           </div>
 
+          {claimCeiling?.ceilings?.[0] ? (
+            <div className="mt-6 rounded-[1.75rem] border border-rose-400/20 bg-rose-500/10 p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.26em] text-rose-200">Claim ceiling</p>
+                  <p className="mt-2 text-base font-medium text-white">{claimCeiling.ceilings[0].label}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                  Copy guardrail
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-200">{claimCeiling.ceilings[0].allowedPromise}</p>
+              <p className="mt-3 text-sm leading-6 text-rose-100">Suppress: {claimCeiling.ceilings[0].forbiddenOverclaim}</p>
+            </div>
+          ) : null}
+
           <div className="mt-6">
             <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
           </div>

@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
+  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
 };
 
 const channelNames = {
@@ -696,6 +696,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually dress cached or rescued states in the same confidence as fresh provider proof, so users cannot tell when polish is floating on borrowed certainty.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one proof-debt contract so borrowed confidence, repayment triggers, and the safest current promise stay aligned across the shell.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'claim-ceiling',
+    feature: 'Claim ceiling',
+    pitch: 'Publish the strongest promise each surface can still make, the overclaim it must suppress, and the proof that earns premium language back.',
+    competitiveGap: 'Competitors usually keep premium connect, browse, or play copy unchanged after provider truth degrades, so users cannot tell when the shell is overselling the next move.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one claim-ceiling contract so premium language stays capped by current proof instead of drifting into confidence theater.',
     surfaces: ['login', 'home', 'live'],
   },
   {
