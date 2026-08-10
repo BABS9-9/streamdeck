@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
+  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, connection-headroom truth, launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
 };
 
 const channelNames = {
@@ -365,6 +365,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Connection headroom on login',
+    detail: 'The adapter now publishes how many provider lines are already occupied, when Connect should stop sounding launch-safe, and when saved-provider switching should outrank retrying the same account.',
+    surface: 'login',
+  },
+  {
     title: 'Identity anchor on login',
     detail: 'The adapter now publishes which provider identity or launch owner must stay visible for Login to keep making sense, what meaning that anchor preserves, and what break ends polished recovery.',
     surface: 'login',
@@ -465,6 +470,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Connection headroom on Home',
+    detail: 'The adapter now publishes when hero polish still has real playback headroom behind it and when line pressure should demote launch confidence before the user blames the featured rail.',
+    surface: 'home',
+  },
+  {
     title: 'Identity anchor on Home',
     detail: 'The adapter now publishes which provider, hero, or fallback owner still anchors the browse story, what meaning that anchor preserves, and what break turns premium rescue into anonymous confidence theater.',
     surface: 'home',
@@ -562,6 +572,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Claim ceiling on Live',
     detail: 'The adapter now publishes the strongest surf promise Live can still make, the playback overclaim it must suppress, and the proof that earns premium play language back.',
+    surface: 'live',
+  },
+  {
+    title: 'Connection headroom on Live',
+    detail: 'The adapter now publishes remaining provider line capacity on the selected channel so motion, preview, and NOW / NEXT do not hide a saturated account behind a smooth surf shell.',
     surface: 'live',
   },
   {
@@ -705,6 +720,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually keep premium connect, browse, or play copy unchanged after provider truth degrades, so users cannot tell when the shell is overselling the next move.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one claim-ceiling contract so premium language stays capped by current proof instead of drifting into confidence theater.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'connection-headroom',
+    feature: 'Connection headroom',
+    pitch: 'Show how many provider lines are already in use, how much playback room is left, and when line pressure should outrank premium launch copy.',
+    competitiveGap: 'Most IPTV players expose active-connection limits only after playback fails, so users blame channels or the app instead of the provider line ceiling.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from auth-summary plus provider-health line counts so Connect, hero launch, and Play all surface remaining provider headroom before a saturated account causes a misleading failure.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -3202,6 +3226,96 @@ const buildSurfaceClaimCeilings = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceConnectionHeadrooms = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login connection headroom',
+    summary: scenario === 'lineSaturated'
+      ? 'Login should stop sounding like a clean launch when the account has no remaining provider lines and the next honest move is a switch or a wait.'
+      : 'Login should show available provider-line headroom before Connect sells a smooth launch path that the account ceiling cannot actually support.',
+    lanes: [
+      {
+        label: 'Connect headroom',
+        currentWindow: scenario === 'lineSaturated'
+          ? 'The account is already full, so Login can only promise visibility plus a safe switch-or-wait decision.'
+          : 'The account still has playback room, so Connect can stay premium as long as line pressure remains visible.',
+        warningTrigger: 'Warn as soon as the account drops to one remaining line or a saved provider has healthier spare capacity.',
+        blockedState: 'Block premium Connect posture once all provider lines are occupied, even if auth still technically succeeds.',
+        recommendedMove: scenario === 'lineSaturated'
+          ? 'Switch to the healthiest saved provider or wait for a line to free up before sending the user into Home.'
+          : 'Keep Connect premium, but surface remaining line capacity beside the CTA.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+      {
+        label: 'Saved-provider fallback',
+        currentWindow: 'Saved-provider shortcuts stay valuable only while they land on an account with enough line capacity to own the next launch.',
+        warningTrigger: 'Warn when the recommended shortcut has less headroom than another saved provider.',
+        blockedState: 'Do not auto-pick a saturated provider just because its auth result is the freshest.',
+        recommendedMove: 'Rerank shortcuts by remaining line capacity before replaying cached confidence.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home connection headroom',
+    summary: scenario === 'lineSaturated'
+      ? 'Home should tell the truth when the hero still looks premium but the account has no remaining playback capacity.'
+      : 'Home should keep line-capacity truth attached to the hero so featured launch copy never outruns the provider account ceiling.',
+    lanes: [
+      {
+        label: 'Hero launch headroom',
+        currentWindow: scenario === 'lineSaturated'
+          ? 'The hero can preserve browse context, but it cannot honestly imply that featured launch is still immediately playback-safe.'
+          : 'The hero can stay cinematic while the provider still has visible room to absorb the next play action.',
+        warningTrigger: 'Warn when launch headroom drops to one remaining line or the provider is already nearing capacity.',
+        blockedState: 'Demote hero launch language once the account is saturated, even if guide and artwork still look fresh.',
+        recommendedMove: scenario === 'lineSaturated'
+          ? 'Keep the browse story, but route launch toward a healthier saved provider or a wait state.'
+          : 'Keep launch copy honest by pairing the hero CTA with current line usage.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+      {
+        label: 'Quick-rail pressure',
+        currentWindow: 'Rails can promise fast navigation only while the provider still has spare line capacity behind the next click.',
+        warningTrigger: 'Warn when line pressure is high enough that rapid channel hopping could hit the account ceiling.',
+        blockedState: 'Do not let featured rails imply every item is equally launch-safe once the account is already full.',
+        recommendedMove: 'Carry line-capacity truth into rail-level launch copy and fallback ranking.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live connection headroom',
+    summary: scenario === 'lineSaturated'
+      ? 'Live should show when motion still works in preview but the account has no safe remaining headroom for a confident Play launch.'
+      : 'Live should keep line-capacity truth beside preview and Play so a saturated account does not masquerade as a channel-quality problem.',
+    lanes: [
+      {
+        label: 'Play headroom',
+        currentWindow: scenario === 'lineSaturated'
+          ? 'The selected card may still preview, but Play must acknowledge that provider-line capacity is already exhausted.'
+          : 'Play can stay premium while preview, guide truth, and remaining provider-line capacity still back the same next move.',
+        warningTrigger: 'Warn when only one provider line remains or line pressure is already the main risk factor on the next Play attempt.',
+        blockedState: 'Treat saturated line capacity as a playback blocker, not a cosmetic warning hidden behind preview motion.',
+        recommendedMove: scenario === 'lineSaturated'
+          ? 'Push the user toward a healthier saved provider or a wait state before blaming the selected channel.'
+          : 'Keep Play paired with visible line usage so the user knows whether the next launch still has headroom.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+      {
+        label: 'Surf continuity pressure',
+        currentWindow: 'Same-category surf momentum is only premium when the provider can still absorb the next exact-channel launch.',
+        warningTrigger: 'Warn when rapid surf behavior risks colliding with the provider account ceiling.',
+        blockedState: 'Do not let smooth preview motion imply account-safe playback once line usage has already maxed out.',
+        recommendedMove: 'Keep fallback ranking and provider switching visible before surf confidence outruns capacity.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceInterruptionBudgets = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -4408,6 +4522,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceProofDebts: buildSurfaceProofDebts(scenario),
   surfaceProofProvenances: buildSurfaceProofProvenances(scenario),
   surfaceClaimCeilings: buildSurfaceClaimCeilings(scenario),
+  surfaceConnectionHeadrooms: buildSurfaceConnectionHeadrooms(scenario),
   surfaceInterruptionBudgets: buildSurfaceInterruptionBudgets(scenario),
   surfaceRetryContracts: buildSurfaceRetryContracts(scenario),
   surfaceProviderSwitchContracts: buildSurfaceProviderSwitchContracts(scenario),

@@ -754,6 +754,19 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceConnectionHeadrooms: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    lanes: Array<{
+      label: string;
+      currentWindow: string;
+      warningTrigger: string;
+      blockedState: string;
+      recommendedMove: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceInterruptionBudgets: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;
