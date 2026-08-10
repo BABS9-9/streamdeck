@@ -25,6 +25,7 @@ import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
 import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
+import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -462,6 +463,14 @@ export default function LoginPage() {
               <p className="mt-3 text-sm leading-6 text-sky-50">Trigger: {autonomyBoundary.boundaries[0].forcedHandoffTrigger}</p>
             </div>
           ) : null}
+
+          <div className="mt-6">
+            <SurfaceLaunchReadinessInline
+              contract={launchReadiness}
+              title="Connect readiness"
+              badge="Launch truth"
+            />
+          </div>
 
           {claimCeiling?.ceilings?.[0] ? (
             <div className="mt-6 rounded-[1.75rem] border border-rose-400/20 bg-rose-500/10 p-6">

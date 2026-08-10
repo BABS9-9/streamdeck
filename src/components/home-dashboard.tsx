@@ -27,6 +27,7 @@ import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
 import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
+import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -514,6 +515,13 @@ export function HomeDashboard() {
                 <p className="mt-3 text-sm leading-6 text-sky-100">User owns: {autonomyBoundary.boundaries[0].userOwns}</p>
               </div>
             ) : null}
+            <div className="mt-4">
+              <SurfaceLaunchReadinessInline
+                contract={launchReadiness}
+                title="Hero launch readiness"
+                badge="Launch truth"
+              />
+            </div>
             <div className="mt-4">
               <SurfaceProviderChoiceInline
                 contract={providerChoice}

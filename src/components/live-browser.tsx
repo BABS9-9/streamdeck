@@ -26,6 +26,7 @@ import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
 import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
+import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -328,6 +329,20 @@ export function LiveBrowser() {
             />
           </div>
           <div className="p-6">
+            <SurfaceLaunchReadinessInline
+              contract={launchReadiness}
+              title="Play readiness"
+              badge="Launch truth"
+            />
+            <div className="mt-4">
+              <SurfaceProviderChoiceInline
+                contract={providerChoice}
+                title="Selected-channel choice"
+                badge="Launch choice"
+              />
+            </div>
+          </div>
+          <div className="px-6 pb-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.28em] text-sky-300">Live preview</p>
