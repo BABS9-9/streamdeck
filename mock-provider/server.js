@@ -750,6 +750,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'launch-readiness',
+    feature: 'Launch readiness',
+    pitch: 'Publish whether Connect, hero launch, or Play is actually ready now, only watch-safe, or already recovery-led before polish implies more certainty than runtime proof owns.',
+    competitiveGap: 'Most IPTV players let cinematic setup, browse, or preview motion imply readiness without saying whether the next move is fully proven versus merely still visible.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one launch-readiness contract so provider owner, guide truth, playback posture, and recovery move stay aligned before the primary CTA outruns proof.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'launch-scorecard',
     feature: 'Launch scorecard',
     pitch: 'Publish a compact go / watch / recover scorecard on each key surface before the user commits to Connect, Browse, or Play.',
