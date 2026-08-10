@@ -496,6 +496,21 @@ export function HomeDashboard() {
                 <p className="mt-3 text-sm leading-6 text-slate-200">{connectionHeadroom.lanes[0].currentWindow}</p>
               </div>
             ) : null}
+            {autonomyBoundary?.boundaries?.[0] ? (
+              <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.26em] text-sky-200">Hero autonomy boundary</p>
+                    <p className="mt-2 text-base font-medium text-white">{autonomyBoundary.boundaries[0].label}</p>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                    User-owned choice
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-200">{autonomyBoundary.boundaries[0].autoMaintains}</p>
+                <p className="mt-3 text-sm leading-6 text-sky-100">User owns: {autonomyBoundary.boundaries[0].userOwns}</p>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
