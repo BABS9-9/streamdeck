@@ -2,15 +2,15 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { buildSeriesContinuityHref } from '@/lib/media-detail-runtime';
+import { buildSearchResultActionKey, GlobalSearchRouteContract } from '@/lib/search-action-contracts';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
-import { GlobalSearchRuntimeContract } from '@/lib/search-runtime-contracts';
 import { describeSeriesCompletenessBand, GroupedSearchResult, SearchResultVariantPayload } from '@/lib/search-continuity';
 import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId } from '@/lib/xtream-api';
 import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
+import { useFavoritesStore } from '@/stores/favorites-store';
 import { useLibraryStore } from '@/stores/library-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { useSearchStore } from '@/stores/search-store';
@@ -38,17 +38,6 @@ const getProviderRecoveryWarning = (summary?: { status?: string | null; activeCo
   return getProviderLinePressure(summary, 'Search can still work while playback becomes risky.');
 };
 
-const getVariantActionLabel = (kind: GroupedSearchResult['kind']) => {
-  if (kind === 'live') return 'Play live';
-  if (kind === 'movie') return 'Play movie';
-  return 'Browse series';
-};
-
-const buildSeriesVariantHref = (
-  result: Pick<GroupedSearchResult, 'continuity'>,
-  variant: Pick<SearchResultVariantPayload, 'item'>
-) => buildSeriesContinuityHref({ item: variant.item, continuity: result.continuity });
-
 export function SearchBrowser() {
   const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
@@ -60,6 +49,8 @@ export function SearchBrowser() {
   const refreshProviderCatalogs = useLibraryStore((state) => state.refreshProviderCatalogs);
   const playStream = usePlayerStore((state) => state.playStream);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
+  const favoriteEntriesByProvider = useFavoritesStore((state) => state.favoriteEntriesByProvider);
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const getIndexSnapshot = useSearchStore((state) => state.getIndexSnapshot);
   const getSearchSnapshot = useSearchStore((state) => state.getSnapshot);
   const queryGlobalIndex = useSearchStore((state) => state.queryGlobalIndex);
@@ -67,7 +58,7 @@ export function SearchBrowser() {
   const syncProviderIndexes = useSearchStore((state) => state.syncProviderIndexes);
 
   const [results, setResults] = useState<GroupedSearchResult[]>([]);
-  const [runtimeContract, setRuntimeContract] = useState<GlobalSearchRuntimeContract | null>(null);
+  const [runtimeContract, setRuntimeContract] = useState<GlobalSearchRouteContract | null>(null);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingLabel, setLoadingLabel] = useState('Searching all providers...');
@@ -155,6 +146,7 @@ export function SearchBrowser() {
           connectionStatus,
           activeConnectionId: activeConnection?.id,
           watchHistory: watchHistory,
+          favoriteEntriesByProvider,
         });
         setRuntimeContract(cachedContract);
         setResults(cachedContract.results);
@@ -204,6 +196,7 @@ export function SearchBrowser() {
             connectionStatus,
             activeConnectionId: activeConnection?.id,
             watchHistory: watchHistory,
+            favoriteEntriesByProvider,
           });
           setRuntimeContract(networkContract);
           setResults(networkContract.results);
@@ -235,6 +228,7 @@ export function SearchBrowser() {
     activeConnection?.id,
     connectionStatus,
     connections,
+    favoriteEntriesByProvider,
     getCatalogSnapshot,
     getIndexSnapshot,
     markCatalogFromCache,
@@ -520,6 +514,11 @@ export function SearchBrowser() {
               activeConnectionId: result.provider.id,
             });
             const alternateVariants = result.variants.filter((variant) => !variant.isPrimary);
+            const actionContract = runtimeContract?.actionsByResultKey[buildSearchResultActionKey(result)];
+            const primaryAction = actionContract?.primaryAction ?? null;
+            const favoriteContract = actionContract?.favorite ?? null;
+            const continueWatching = actionContract?.continueWatching ?? null;
+            const switchIntent = actionContract?.switchIntent ?? null;
             return (
               <article key={`${result.provider.id}-${result.kind}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                 <div className="aspect-video rounded-2xl bg-cover bg-center bg-no-repeat" style={{ backgroundImage: artwork ? `url(${artwork})` : undefined }} />
@@ -563,7 +562,7 @@ export function SearchBrowser() {
                 </div>
                 <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
                   <p className="uppercase tracking-[0.2em] text-slate-500">Continuity contract</p>
-                  <p className="mt-2 leading-5 text-slate-300">{result.continuity.summary}</p>
+                  <p className="mt-2 leading-5 text-slate-300">{actionContract?.summary || result.continuity.summary}</p>
                   {result.kind === 'series' && result.continuity.seriesCompletenessBand ? (
                     <p className="mt-2 text-[11px] leading-5 text-sky-100">
                       {describeSeriesCompletenessBand(result.continuity.seriesCompletenessBand)}
@@ -576,6 +575,21 @@ export function SearchBrowser() {
                       {result.continuity.canonicalEpisodeMapping.preferredSeasonNumber && result.continuity.canonicalEpisodeMapping.preferredEpisodeNumber
                         ? ` using S${result.continuity.canonicalEpisodeMapping.preferredSeasonNumber}E${result.continuity.canonicalEpisodeMapping.preferredEpisodeNumber} as the preferred resume target.`
                         : ' before claiming an exact resume point.'}
+                    </p>
+                  ) : null}
+                  {continueWatching ? (
+                    <p className="mt-2 text-[11px] leading-5 text-slate-400">
+                      Continue watching: {continueWatching.summary}
+                    </p>
+                  ) : null}
+                  {favoriteContract ? (
+                    <p className="mt-2 text-[11px] leading-5 text-slate-400">
+                      Favorite state: {favoriteContract.summary}
+                    </p>
+                  ) : null}
+                  {switchIntent ? (
+                    <p className="mt-2 text-[11px] leading-5 text-slate-400">
+                      Launch intent: {switchIntent.summary}
                     </p>
                   ) : null}
                 </div>
@@ -615,7 +629,9 @@ export function SearchBrowser() {
                     <div className="mt-3 space-y-2">
                       {alternateVariants.slice(0, 3).map((variant) => {
                         const variantContentId = getContentId(variant.item);
-                        const variantLabel = getVariantActionLabel(result.kind);
+                        const variantAction = actionContract?.alternateActions.find(
+                          (entry) => entry.providerId === variant.provider.id && entry.streamId === variantContentId
+                        );
                         const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
                         return (
                           <div key={`${variant.provider.id}-${variantContentId}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
@@ -631,7 +647,7 @@ export function SearchBrowser() {
                             <div className="flex flex-wrap gap-2">
                               {result.kind === 'series' ? (
                                 <Link
-                                  href={buildSeriesVariantHref(result, variant)}
+                                  href={variantAction?.href || '#'}
                                   onClick={() => setActiveConnection(variant.provider.id, {
                                     sourceSurface: 'search',
                                     reason: 'variant',
@@ -642,7 +658,7 @@ export function SearchBrowser() {
                                   })}
                                   className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
                                 >
-                                  {variantLabel}
+                                  {variantAction?.label || 'Browse series'}
                                 </Link>
                               ) : (
                                 <button
@@ -655,12 +671,14 @@ export function SearchBrowser() {
                                       preservedDuplicateGroups: duplicateGroups,
                                       preservedTitle: variant.item.name,
                                     });
-                                    const url = result.kind === 'live' ? buildLiveStreamUrl(variant.provider, variant.item) : buildVodStreamUrl(variant.provider, variant.item);
+                                    const url = variantAction?.playbackUrl || (result.kind === 'live'
+                                      ? buildLiveStreamUrl(variant.provider, variant.item)
+                                      : buildVodStreamUrl(variant.provider, variant.item));
                                     playStream(variant.item, url, variant.provider.id);
                                   }}
                                   className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
                                 >
-                                  {variantLabel}
+                                  {variantAction?.label || 'Play'}
                                 </button>
                               )}
                               <button
@@ -684,10 +702,10 @@ export function SearchBrowser() {
                   </div>
                 ) : null}
                 <div className="mt-4 flex gap-3">
-                  {isPlayable ? (
+                  {isPlayable && primaryAction ? (
                     <button
                       onClick={() => {
-                        setActiveConnection(result.provider.id, {
+                        setActiveConnection(primaryAction.providerId, {
                           sourceSurface: 'search',
                           reason: 'launch',
                           preservedQuery: query,
@@ -695,17 +713,19 @@ export function SearchBrowser() {
                           preservedDuplicateGroups: duplicateGroups,
                           preservedTitle: result.item.name,
                         });
-                        const url = result.kind === 'live' ? buildLiveStreamUrl(result.provider, result.item) : buildVodStreamUrl(result.provider, result.item);
-                        playStream(result.item, url, result.provider.id);
+                        const url = primaryAction.playbackUrl || (result.kind === 'live'
+                          ? buildLiveStreamUrl(result.provider, result.item)
+                          : buildVodStreamUrl(result.provider, result.item));
+                        playStream(result.item, url, primaryAction.providerId);
                       }}
                       className="flex-1 rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"
                     >
-                      Play
+                      {primaryAction.label}
                     </button>
-                  ) : (
+                  ) : primaryAction ? (
                     <Link
-                      href={buildSeriesContinuityHref({ item: result.item, continuity: result.continuity })}
-                      onClick={() => setActiveConnection(result.provider.id, {
+                      href={primaryAction.href || '#'}
+                      onClick={() => setActiveConnection(primaryAction.providerId, {
                         sourceSurface: 'search',
                         reason: 'variant',
                         preservedQuery: query,
@@ -715,9 +735,17 @@ export function SearchBrowser() {
                       })}
                       className="flex-1 rounded-2xl border border-white/10 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/5"
                     >
-                      Browse series
+                      {primaryAction.label}
                     </Link>
-                  )}
+                  ) : null}
+                  {favoriteContract ? (
+                    <button
+                      onClick={() => toggleFavorite(favoriteContract.ownerProviderId, getContentId(result.item), result.item)}
+                      className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-200 hover:bg-white/5"
+                    >
+                      {favoriteContract.ctaLabel}
+                    </button>
+                  ) : null}
                   <div className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-400">
                     Score {Math.round(result.score)}
                   </div>

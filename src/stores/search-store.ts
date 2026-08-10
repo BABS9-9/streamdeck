@@ -3,10 +3,11 @@
 import { create } from 'zustand';
 import { buildProviderSearchIndexSnapshot, queryProviderSearchIndex } from '@/lib/provider-search-index';
 import { buildGlobalSearchRuntimeContract, GlobalSearchRuntimeContract } from '@/lib/search-runtime-contracts';
+import { buildSearchRouteActionContract, GlobalSearchRouteContract } from '@/lib/search-action-contracts';
 import { buildGroupedSearchResultsFromHits } from '@/lib/search-continuity';
 import { buildSearchSnapshotFromResults } from '@/lib/search-snapshot-contracts';
 import { storage } from '@/lib/storage';
-import { ConnectionStatus, ProviderCatalog, ProviderSearchIndexSnapshot, ProviderSearchSnapshot, SavedConnection, WatchHistoryItem } from '@/lib/types';
+import { ConnectionStatus, FavoriteEntry, ProviderCatalog, ProviderSearchIndexSnapshot, ProviderSearchSnapshot, SavedConnection, WatchHistoryItem } from '@/lib/types';
 
 type SearchState = {
   hydrated: boolean;
@@ -24,8 +25,9 @@ type SearchState = {
     connectionStatus: Record<string, ConnectionStatus>;
     activeConnectionId?: string | null;
     watchHistory?: WatchHistoryItem[];
+    favoriteEntriesByProvider?: Record<string, FavoriteEntry[]>;
     maxIndexAgeMs?: number;
-  }) => GlobalSearchRuntimeContract;
+  }) => GlobalSearchRouteContract;
   saveSnapshot: (
     providerId: string,
     payload: Omit<ProviderSearchSnapshot, 'providerId' | 'updatedAt'> & { updatedAt?: number }
@@ -101,7 +103,15 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       return { indexesByProvider };
     });
   },
-  queryGlobalIndex: ({ connections, query, connectionStatus, activeConnectionId, watchHistory = [], maxIndexAgeMs = Number.MAX_SAFE_INTEGER }) => {
+  queryGlobalIndex: ({
+    connections,
+    query,
+    connectionStatus,
+    activeConnectionId,
+    watchHistory = [],
+    favoriteEntriesByProvider = {},
+    maxIndexAgeMs = Number.MAX_SAFE_INTEGER,
+  }) => {
     const providerLookup = Object.fromEntries(connections.map((connection) => [connection.id, connection]));
     const indexSnapshotsByProvider = Object.fromEntries(
       connections.map((provider) => [provider.id, get().indexesByProvider[provider.id] ?? storage.getProviderSearchIndex(provider.id)])
@@ -124,7 +134,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       watchHistory,
     });
 
-    return buildGlobalSearchRuntimeContract({
+    const runtimeContract: GlobalSearchRuntimeContract = buildGlobalSearchRuntimeContract({
       query,
       connections,
       activeConnectionId,
@@ -132,6 +142,14 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       indexSnapshotsByProvider,
       results,
       maxIndexAgeMs,
+    });
+
+    return buildSearchRouteActionContract({
+      runtime: runtimeContract,
+      activeConnectionId,
+      connections,
+      favoriteEntriesByProvider,
+      watchHistory,
     });
   },
   saveSnapshot: (providerId, payload) => {
