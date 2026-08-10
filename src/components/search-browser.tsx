@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
+import { GlobalSearchRuntimeContract } from '@/lib/search-runtime-contracts';
 import { describeSeriesCompletenessBand, GroupedSearchResult, SearchResultVariantPayload } from '@/lib/search-continuity';
 import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId } from '@/lib/xtream-api';
@@ -87,6 +88,7 @@ export function SearchBrowser() {
   const syncProviderIndexes = useSearchStore((state) => state.syncProviderIndexes);
 
   const [results, setResults] = useState<GroupedSearchResult[]>([]);
+  const [runtimeContract, setRuntimeContract] = useState<GlobalSearchRuntimeContract | null>(null);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingLabel, setLoadingLabel] = useState('Searching all providers...');
@@ -129,6 +131,7 @@ export function SearchBrowser() {
 
     if (connections.length === 0) {
       setResults([]);
+      setRuntimeContract(null);
       setLoading(false);
       setScenarioRefreshing(false);
       return;
@@ -137,6 +140,7 @@ export function SearchBrowser() {
     const trimmed = query.trim();
     if (trimmed.length < 2) {
       setResults([]);
+      setRuntimeContract(null);
       setLoading(false);
       setError(null);
       setUsingCache(false);
@@ -166,13 +170,15 @@ export function SearchBrowser() {
       }
 
       if (cachedCatalogs.length > 0) {
-        setResults(queryGlobalIndex({
+        const cachedContract = queryGlobalIndex({
           connections,
           query: trimmed,
           connectionStatus,
           activeConnectionId: activeConnection?.id,
           watchHistory: watchHistory,
-        }));
+        });
+        setRuntimeContract(cachedContract);
+        setResults(cachedContract.results);
         setUsingCache(true);
         setLoading(true);
         setLoadingLabel(scenarioRefreshing ? `Applying ${scenarioLabels[scenario].toLowerCase()} rehearsal...` : 'Refreshing cached provider catalogs...');
@@ -213,13 +219,15 @@ export function SearchBrowser() {
             providerId: provider.id,
             catalog,
           })));
-          setResults(queryGlobalIndex({
+          const networkContract = queryGlobalIndex({
             connections,
             query: trimmed,
             connectionStatus,
             activeConnectionId: activeConnection?.id,
             watchHistory: watchHistory,
-          }));
+          });
+          setRuntimeContract(networkContract);
+          setResults(networkContract.results);
           setUsingCache(cachedCatalogs.length > 0 || failedProviders.length > 0);
           if (failedProviders.length > 0) {
             setError(null);
@@ -261,15 +269,11 @@ export function SearchBrowser() {
   ]);
 
   const groupedCounts = useMemo(() => {
-    return results.reduce<Record<string, number>>((acc, result) => {
-      acc[result.provider.id] = (acc[result.provider.id] || 0) + 1;
-      return acc;
-    }, {});
-  }, [results]);
+    return runtimeContract?.providerHitsById ?? {};
+  }, [runtimeContract]);
 
-  const duplicateGroups = useMemo(() => results.filter((result) => result.duplicateCount > 0).length, [results]);
+  const duplicateGroups = runtimeContract?.duplicateGroups ?? 0;
   const activeScenarioDetails = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
-  const mockLinePressure = getProviderLinePressure(mockHealth?.accountProfile, 'Search can still work while playback becomes risky.');
   const mockRecoveryWarning = getProviderRecoveryWarning(mockHealth?.accountProfile);
   const healthiestConnection = getHealthiestSavedProvider({
     connections,
@@ -344,9 +348,14 @@ export function SearchBrowser() {
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3 text-xs uppercase tracking-[0.22em] text-slate-500">
-          {connections.map((connection) => (
-            <span key={connection.id} className={`rounded-full border px-3 py-2 ${activeConnection?.id === connection.id ? 'border-violet-400/40 bg-violet-500/10 text-violet-200' : providerStateTone(connection.id)}`}>
-              {connection.name} · {groupedCounts[connection.id] || 0} hits · {connectionStatus[connection.id]?.state ?? 'idle'}
+          {(runtimeContract?.providers ?? connections.map((connection) => ({
+            providerId: connection.id,
+            providerName: connection.name,
+            resultCount: groupedCounts[connection.id] || 0,
+            indexState: 'missing',
+          }))).map((provider) => (
+            <span key={provider.providerId} className={`rounded-full border px-3 py-2 ${activeConnection?.id === provider.providerId ? 'border-violet-400/40 bg-violet-500/10 text-violet-200' : providerStateTone(provider.providerId)}`}>
+              {provider.providerName} · {provider.resultCount} hits · {provider.indexState} index
             </span>
           ))}
         </div>
@@ -358,10 +367,18 @@ export function SearchBrowser() {
             <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
               {duplicateGroups} duplicate group{duplicateGroups === 1 ? '' : 's'} collapsed
             </span>
+            {runtimeContract ? (
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+                {runtimeContract.liveCount} live · {runtimeContract.movieCount} movies · {runtimeContract.seriesCount} series
+              </span>
+            ) : null}
             <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
               Best provider version shown first
             </span>
           </div>
+        ) : null}
+        {runtimeContract?.summary ? (
+          <p className="mt-4 text-sm text-slate-400">{runtimeContract.summary}</p>
         ) : null}
       </section>
 

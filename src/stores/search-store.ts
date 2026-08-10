@@ -2,7 +2,8 @@
 
 import { create } from 'zustand';
 import { buildProviderSearchIndexSnapshot, queryProviderSearchIndex } from '@/lib/provider-search-index';
-import { buildGroupedSearchResultsFromHits, GroupedSearchResult } from '@/lib/search-continuity';
+import { buildGlobalSearchRuntimeContract, GlobalSearchRuntimeContract } from '@/lib/search-runtime-contracts';
+import { buildGroupedSearchResultsFromHits } from '@/lib/search-continuity';
 import { storage } from '@/lib/storage';
 import { ConnectionStatus, ProviderCatalog, ProviderSearchIndexSnapshot, ProviderSearchSnapshot, SavedConnection, WatchHistoryItem } from '@/lib/types';
 
@@ -23,7 +24,7 @@ type SearchState = {
     activeConnectionId?: string | null;
     watchHistory?: WatchHistoryItem[];
     maxIndexAgeMs?: number;
-  }) => GroupedSearchResult[];
+  }) => GlobalSearchRuntimeContract;
   saveSnapshot: (
     providerId: string,
     payload: Omit<ProviderSearchSnapshot, 'providerId' | 'updatedAt'> & { updatedAt?: number }
@@ -94,9 +95,13 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   },
   queryGlobalIndex: ({ connections, query, connectionStatus, activeConnectionId, watchHistory = [], maxIndexAgeMs = Number.MAX_SAFE_INTEGER }) => {
     const providerLookup = Object.fromEntries(connections.map((connection) => [connection.id, connection]));
+    const indexSnapshotsByProvider = Object.fromEntries(
+      connections.map((provider) => [provider.id, get().indexesByProvider[provider.id] ?? storage.getProviderSearchIndex(provider.id)])
+    ) as Record<string, ProviderSearchIndexSnapshot | null>;
     const hits = connections.flatMap((provider) => {
-      const snapshot = get().getIndexSnapshot(provider.id, maxIndexAgeMs);
+      const snapshot = indexSnapshotsByProvider[provider.id];
       if (!snapshot) return [];
+      if (Date.now() - snapshot.updatedAt > maxIndexAgeMs) return [];
 
       return queryProviderSearchIndex({ snapshot, query }).map((hit) => ({
         ...hit,
@@ -104,11 +109,21 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       }));
     });
 
-    return buildGroupedSearchResultsFromHits({
+    const results = buildGroupedSearchResultsFromHits({
       hits: hits.filter((hit) => providerLookup[hit.provider.id]),
       connectionStatus,
       activeConnectionId,
       watchHistory,
+    });
+
+    return buildGlobalSearchRuntimeContract({
+      query,
+      connections,
+      activeConnectionId,
+      connectionStatus,
+      indexSnapshotsByProvider,
+      results,
+      maxIndexAgeMs,
     });
   },
   saveSnapshot: (providerId, payload) => {
