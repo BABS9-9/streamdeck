@@ -36,6 +36,7 @@ import { SurfaceProviderStabilityContract } from '@/components/surface-provider-
 import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
+import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
@@ -513,6 +514,13 @@ export function HomeDashboard() {
                 <p className="mt-3 text-sm leading-6 text-sky-100">User owns: {autonomyBoundary.boundaries[0].userOwns}</p>
               </div>
             ) : null}
+            <div className="mt-4">
+              <SurfaceProviderChoiceInline
+                contract={providerChoice}
+                title="Hero provider choice"
+                badge="Launch choice"
+              />
+            </div>
           </div>
         </div>
       </section>

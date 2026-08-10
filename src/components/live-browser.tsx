@@ -35,6 +35,7 @@ import { SurfaceProviderStabilityContract } from '@/components/surface-provider-
 import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
+import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
@@ -361,6 +362,14 @@ export function LiveBrowser() {
               <InfoCard label="Provider" value={activeConnection.name} detail={activeConnection.username} />
               <InfoCard label="Status" value={providerStatus?.state || 'idle'} detail={providerStatus?.message || 'Validation pending'} />
               <InfoCard label="Favorites" value={String(favorites.length)} detail="Saved live channels on this provider" />
+            </div>
+
+            <div className="mt-4">
+              <SurfaceProviderChoiceInline
+                contract={providerChoice}
+                title="Playback provider choice"
+                badge="Play choice"
+              />
             </div>
 
             <div className="mt-4">
