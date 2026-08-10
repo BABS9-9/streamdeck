@@ -9,6 +9,7 @@ import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
+import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
@@ -251,6 +252,10 @@ export default function LoginPage() {
     () => manifest?.surfaceClaimCeilings?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
+  const connectionHeadroom = useMemo(
+    () => manifest?.surfaceConnectionHeadrooms?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
   const confidenceFloor = useMemo(
     () => manifest?.surfaceConfidenceFloors?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
@@ -421,6 +426,23 @@ export default function LoginPage() {
             <DifferentiatorSpotlight manifest={manifest} screenId="login" />
           </div>
 
+          {connectionHeadroom?.lanes?.[0] ? (
+            <div className="mt-6 rounded-[1.75rem] border border-amber-400/20 bg-amber-500/10 p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.26em] text-amber-200">Connection headroom</p>
+                  <p className="mt-2 text-base font-medium text-white">{connectionHeadroom.lanes[0].label}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                  {activeConnection?.lastAuthSummary?.activeConnections ?? health?.accountProfile?.activeConnections ?? '--'}/
+                  {activeConnection?.lastAuthSummary?.maxConnections ?? health?.accountProfile?.maxConnections ?? '--'} lines used
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-200">{connectionHeadroom.lanes[0].currentWindow}</p>
+              <p className="mt-3 text-sm leading-6 text-amber-100">Next move: {connectionHeadroom.lanes[0].recommendedMove}</p>
+            </div>
+          ) : null}
+
           {claimCeiling?.ceilings?.[0] ? (
             <div className="mt-6 rounded-[1.75rem] border border-rose-400/20 bg-rose-500/10 p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -436,6 +458,15 @@ export default function LoginPage() {
               <p className="mt-3 text-sm leading-6 text-rose-100">Suppress: {claimCeiling.ceilings[0].forbiddenOverclaim}</p>
             </div>
           ) : null}
+
+          <div className="mt-6">
+            <SurfaceConnectionHeadroom
+              contract={connectionHeadroom}
+              authSummary={activeConnection?.lastAuthSummary ?? null}
+              health={health}
+              badge="Connection headroom"
+            />
+          </div>
 
           <div className="mt-6">
             <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />

@@ -12,6 +12,7 @@ import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
+import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
@@ -325,6 +326,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceClaimCeilings.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const connectionHeadroom = useMemo(
+    () => manifest?.surfaceConnectionHeadrooms.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const confidenceFloor = useMemo(
     () => manifest?.surfaceConfidenceFloors.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -395,6 +400,12 @@ export function HomeDashboard() {
         />
       ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="home" /> : null}
+      <SurfaceConnectionHeadroom
+        contract={connectionHeadroom}
+        authSummary={activeConnection.lastAuthSummary ?? null}
+        health={health}
+        badge="Connection headroom"
+      />
       <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
       <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
 
@@ -468,6 +479,21 @@ export function HomeDashboard() {
                 </div>
                 <p className="mt-3 text-sm leading-6 text-slate-200">{claimCeiling.ceilings[0].allowedPromise}</p>
                 <p className="mt-3 text-sm leading-6 text-rose-100">Suppress: {claimCeiling.ceilings[0].forbiddenOverclaim}</p>
+              </div>
+            ) : null}
+            {connectionHeadroom?.lanes?.[0] ? (
+              <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.26em] text-amber-200">Hero connection headroom</p>
+                    <p className="mt-2 text-base font-medium text-white">{connectionHeadroom.lanes[0].label}</p>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                    {activeConnection.lastAuthSummary?.activeConnections ?? health?.accountProfile?.activeConnections ?? '--'}/
+                    {activeConnection.lastAuthSummary?.maxConnections ?? health?.accountProfile?.maxConnections ?? '--'} lines used
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-200">{connectionHeadroom.lanes[0].currentWindow}</p>
               </div>
             ) : null}
           </div>
