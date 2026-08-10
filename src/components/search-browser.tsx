@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { buildSeriesContinuityHref } from '@/lib/media-detail-runtime';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
 import { GlobalSearchRuntimeContract } from '@/lib/search-runtime-contracts';
@@ -43,32 +44,10 @@ const getVariantActionLabel = (kind: GroupedSearchResult['kind']) => {
   return 'Browse series';
 };
 
-const buildSeriesResultHref = (result: Pick<GroupedSearchResult, 'item' | 'continuity'>) => {
-  const contentId = getContentId(result.item);
-  const season = result.continuity.canonicalEpisodeMapping?.preferredSeasonNumber;
-  const episode = result.continuity.canonicalEpisodeMapping?.preferredEpisodeNumber;
-  const params = new URLSearchParams({ seriesId: String(result.item.series_id ?? contentId) });
-
-  if (season) params.set('season', String(season));
-  if (episode) params.set('episode', String(episode));
-
-  return `/series?${params.toString()}`;
-};
-
 const buildSeriesVariantHref = (
   result: Pick<GroupedSearchResult, 'continuity'>,
   variant: Pick<SearchResultVariantPayload, 'item'>
-) => {
-  const variantContentId = getContentId(variant.item);
-  const season = result.continuity.canonicalEpisodeMapping?.preferredSeasonNumber;
-  const episode = result.continuity.canonicalEpisodeMapping?.preferredEpisodeNumber;
-  const params = new URLSearchParams({ seriesId: String(variant.item.series_id ?? variantContentId) });
-
-  if (season) params.set('season', String(season));
-  if (episode) params.set('episode', String(episode));
-
-  return `/series?${params.toString()}`;
-};
+) => buildSeriesContinuityHref({ item: variant.item, continuity: result.continuity });
 
 export function SearchBrowser() {
   const connections = useAuthStore((state) => state.connections);
@@ -84,7 +63,7 @@ export function SearchBrowser() {
   const getIndexSnapshot = useSearchStore((state) => state.getIndexSnapshot);
   const getSearchSnapshot = useSearchStore((state) => state.getSnapshot);
   const queryGlobalIndex = useSearchStore((state) => state.queryGlobalIndex);
-  const saveSearchSnapshot = useSearchStore((state) => state.saveSnapshot);
+  const saveResultsSnapshot = useSearchStore((state) => state.saveResultsSnapshot);
   const syncProviderIndexes = useSearchStore((state) => state.syncProviderIndexes);
 
   const [results, setResults] = useState<GroupedSearchResult[]>([]);
@@ -298,14 +277,13 @@ export function SearchBrowser() {
 
   useEffect(() => {
     if (!activeConnection) return;
-    saveSearchSnapshot(activeConnection.id, {
+    saveResultsSnapshot({
+      providerId: activeConnection.id,
       query,
-      resultCount: results.length,
+      results,
       duplicateGroups,
-      selectedTitle: results[0]?.item.name ?? null,
-      selectedKind: results[0]?.kind ?? null,
     });
-  }, [activeConnection, duplicateGroups, query, results, saveSearchSnapshot]);
+  }, [activeConnection, duplicateGroups, query, results, saveResultsSnapshot]);
 
   if (connections.length === 0) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No saved providers yet. Connect on the login screen first.</div>;
@@ -726,7 +704,7 @@ export function SearchBrowser() {
                     </button>
                   ) : (
                     <Link
-                      href={buildSeriesResultHref(result)}
+                      href={buildSeriesContinuityHref({ item: result.item, continuity: result.continuity })}
                       onClick={() => setActiveConnection(result.provider.id, {
                         sourceSurface: 'search',
                         reason: 'variant',

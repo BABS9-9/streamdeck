@@ -280,6 +280,11 @@ export type ProviderSearchSnapshot = {
   updatedAt: number;
   selectedTitle?: string | null;
   selectedKind?: 'live' | 'movie' | 'series' | null;
+  selectedProviderCount?: number | null;
+  continuityMode?: 'single-source' | 'provider-choice' | 'series-resume' | 'episode-map-required' | null;
+  selectedSeriesId?: number | null;
+  preferredSeasonNumber?: number | null;
+  preferredEpisodeNumber?: number | null;
 };
 
 export type ProviderSearchIndexEntry = {

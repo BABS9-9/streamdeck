@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { buildProviderSearchIndexSnapshot, queryProviderSearchIndex } from '@/lib/provider-search-index';
 import { buildGlobalSearchRuntimeContract, GlobalSearchRuntimeContract } from '@/lib/search-runtime-contracts';
 import { buildGroupedSearchResultsFromHits } from '@/lib/search-continuity';
+import { buildSearchSnapshotFromResults } from '@/lib/search-snapshot-contracts';
 import { storage } from '@/lib/storage';
 import { ConnectionStatus, ProviderCatalog, ProviderSearchIndexSnapshot, ProviderSearchSnapshot, SavedConnection, WatchHistoryItem } from '@/lib/types';
 
@@ -29,6 +30,13 @@ type SearchState = {
     providerId: string,
     payload: Omit<ProviderSearchSnapshot, 'providerId' | 'updatedAt'> & { updatedAt?: number }
   ) => void;
+  saveResultsSnapshot: (payload: {
+    providerId: string;
+    query: string;
+    results: ReturnType<typeof buildGroupedSearchResultsFromHits>;
+    duplicateGroups: number;
+    updatedAt?: number;
+  }) => void;
   removeSnapshot: (providerId: string) => void;
 };
 
@@ -136,6 +144,22 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       selectedKind: payload.selectedKind ?? null,
       updatedAt: payload.updatedAt ?? Date.now(),
     };
+    storage.saveProviderSearchSnapshot(providerId, snapshot);
+    set((state) => ({
+      snapshotsByProvider: {
+        ...state.snapshotsByProvider,
+        [providerId]: snapshot,
+      },
+    }));
+  },
+  saveResultsSnapshot: ({ providerId, query, results, duplicateGroups, updatedAt }) => {
+    const snapshot = buildSearchSnapshotFromResults({
+      providerId,
+      query,
+      results,
+      duplicateGroups,
+      updatedAt,
+    });
     storage.saveProviderSearchSnapshot(providerId, snapshot);
     set((state) => ({
       snapshotsByProvider: {
