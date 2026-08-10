@@ -732,6 +732,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'provider-choice-truth',
+    feature: 'Provider choice truth',
+    pitch: 'Tell users when StreamDeck can safely auto-pick the healthiest equivalent provider, when equivalence is only partial, and when the next move must come back to the user explicitly.',
+    competitiveGap: 'Competitors usually blur silent provider rescue and real user choice together, so cross-provider recovery feels convenient until it quietly changes the destination or trade-off.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one provider-choice contract so auto-pick triggers, equivalence proof, and forced user-choice triggers stay aligned before recovery copy overclaims sameness.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'autonomy-boundary',
     feature: 'Autonomy boundary',
     pitch: 'Publish what StreamDeck may safely keep automatic, what provider or playback choice still belongs to the user, and what trigger forces an explicit handoff before rescue feels sneaky.',
