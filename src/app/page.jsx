@@ -220,7 +220,7 @@ export default function LoginPage() {
     () => manifest?.surfaceExplanationBoundaries?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
-  const autonomyBoundary = useMemo(
+  const manifestAutonomyBoundary = useMemo(
     () => manifest?.surfaceAutonomyBoundaries?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
@@ -252,7 +252,7 @@ export default function LoginPage() {
     () => manifest?.surfaceClaimCeilings?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
-  const connectionHeadroom = useMemo(
+  const manifestConnectionHeadroom = useMemo(
     () => manifest?.surfaceConnectionHeadrooms?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
@@ -315,6 +315,8 @@ export default function LoginPage() {
   const launchScorecard = runtimeSurfaceContracts?.launchScorecard || manifest?.surfaceScorecards?.find((item) => item.screenId === 'login') || null;
   const exitCriteria = runtimeSurfaceContracts?.exitCriteria || manifest?.surfaceExitCriteria?.find((item) => item.screenId === 'login') || null;
   const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs?.find((item) => item.screenId === 'login') || null;
+  const autonomyBoundary = runtimeSurfaceContracts?.autonomyBoundary || manifestAutonomyBoundary;
+  const connectionHeadroom = runtimeSurfaceContracts?.connectionHeadroom || manifestConnectionHeadroom;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">

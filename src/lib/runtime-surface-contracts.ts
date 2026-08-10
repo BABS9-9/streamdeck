@@ -13,6 +13,8 @@ type RuntimeSurfaceContracts = {
   launchScorecard: MockProviderManifest['surfaceScorecards'][number];
   exitCriteria: MockProviderManifest['surfaceExitCriteria'][number];
   handoffMap: MockProviderManifest['surfaceHandoffs'][number];
+  autonomyBoundary: MockProviderManifest['surfaceAutonomyBoundaries'][number];
+  connectionHeadroom: MockProviderManifest['surfaceConnectionHeadrooms'][number];
 };
 
 type BuildRuntimeSurfaceContractsInput = {
@@ -80,6 +82,32 @@ const getRecoveryOwner = (board: SavedProviderHealthBoard, providerLabel: string
   if (board.recoveryRoute?.title) return board.recoveryRoute.title;
   if (board.recommendedProvider?.providerName) return board.recommendedProvider.providerName;
   return providerLabel;
+};
+
+const getConnectionUsage = (board: SavedProviderHealthBoard) => {
+  const owner = board.activeProvider || board.recommendedProvider;
+  const activeConnections = owner?.activeConnections ?? null;
+  const maxConnections = owner?.maxConnections ?? null;
+  const remainingConnections = activeConnections !== null && maxConnections !== null
+    ? Math.max(maxConnections - activeConnections, 0)
+    : null;
+
+  return {
+    owner,
+    activeConnections,
+    maxConnections,
+    remainingConnections,
+  };
+};
+
+const getHeadroomTone = (board: SavedProviderHealthBoard): Tone => {
+  const { remainingConnections } = getConnectionUsage(board);
+  if (remainingConnections === null) {
+    return board.activeProvider?.warning ? 'recover' : 'watch';
+  }
+  if (remainingConnections === 0) return 'recover';
+  if (remainingConnections === 1) return 'watch';
+  return board.activeProvider?.warning ? 'watch' : 'ready';
 };
 
 const getRecoveryMove = ({
@@ -349,6 +377,181 @@ const buildHandoffMap = ({
   };
 };
 
+const buildAutonomyBoundary = ({
+  screenId,
+  providerLabel,
+  board,
+  report,
+  selectedLabel,
+  currentNowTitle,
+  currentNextTitle,
+  streamHealth,
+}: {
+  screenId: ScreenId;
+  providerLabel: string;
+  board: SavedProviderHealthBoard;
+  report: ProviderGuideCoverageReport | null;
+  selectedLabel?: string | null;
+  currentNowTitle?: string | null;
+  currentNextTitle?: string | null;
+  streamHealth?: StreamHealth | null;
+}): MockProviderManifest['surfaceAutonomyBoundaries'][number] => {
+  const providerTone = getProviderTone(board);
+  const guideTone = getGuideTone(report);
+  const playbackTone = getPlaybackTone(screenId, streamHealth);
+  const recoveryMove = getRecoveryMove({ screenId, board, report, selectedLabel });
+  const guideSummary = guideStatusLabel(report);
+  const selectedGuideLabel = currentNowTitle
+    ? `${currentNowTitle}${currentNextTitle ? ` -> ${currentNextTitle}` : ''}`
+    : 'No verified now/next listing yet';
+  const lineUsage = getConnectionUsage(board);
+  const headroomLabel = lineUsage.activeConnections !== null && lineUsage.maxConnections !== null
+    ? `${lineUsage.activeConnections}/${lineUsage.maxConnections} provider lines are currently in use`
+    : 'Fresh line-capacity proof is still pending';
+
+  const providerBoundary = {
+    label: screenId === 'login' ? 'Saved-provider re-entry' : screenId === 'home' ? 'Featured provider carry-forward' : 'Playback provider carry-forward',
+    autoMaintains: `${providerLabel} stays visible as the current owner while StreamDeck keeps recovery context and saved-provider ranking attached to the surface.`,
+    userOwns: screenId === 'login'
+      ? 'Choosing a different saved provider or reconnecting from scratch when the current owner no longer looks trustworthy.'
+      : screenId === 'home'
+        ? 'Approving a provider switch before the featured launch changes who owns the next browse or playback move.'
+        : 'Approving a provider transfer before playback changes ownership away from the currently selected live source.',
+    forcedHandoffTrigger: board.activeProvider?.warning
+      || `${headroomLabel}. ${recoveryMove}`,
+    tone: providerTone,
+  };
+
+  const guideBoundary = {
+    label: screenId === 'login' ? 'Guide preview honesty' : screenId === 'home' ? 'Hero guide honesty' : 'Selected-channel guide honesty',
+    autoMaintains: report?.status === 'fresh'
+      ? `StreamDeck may keep ${selectedGuideLabel} attached to ${selectedLabel || providerLabel} without reopening the same guide proof on every render.`
+      : `StreamDeck may keep ${selectedLabel || providerLabel} visible while downgrading copy to match ${guideSummary.toLowerCase()}.`,
+    userOwns: screenId === 'live'
+      ? 'Deciding whether guide gaps are still acceptable for this channel before trusting the next Play move.'
+      : 'Deciding whether downgraded guide continuity is still good enough to keep moving without pretending the proof is fresher than it is.',
+    forcedHandoffTrigger: report?.status === 'fresh'
+      ? 'A provider warning, stale guide window, or explicit provider switch request can still force a visible handoff.'
+      : `Guide continuity is no longer fresh enough to hide recovery. ${recoveryMove}`,
+    tone: guideTone,
+  };
+
+  const actionBoundary = {
+    label: screenId === 'login' ? 'Connect action boundary' : screenId === 'home' ? 'Hero launch boundary' : 'Play action boundary',
+    autoMaintains: screenId === 'login'
+      ? 'StreamDeck may preserve saved credentials, provider ranking, and preview guide proof before sending the user into Home.'
+      : screenId === 'home'
+        ? 'StreamDeck may preserve featured context, favorites, and recovery posture while the user decides whether to open Live or play the featured source.'
+        : 'StreamDeck may preserve selected-channel context, preview telemetry, and guide continuity while playback health remains honest.',
+    userOwns: screenId === 'login'
+      ? 'The final decision to reuse this provider and move into Home.'
+      : screenId === 'home'
+        ? 'The final decision to turn the featured card into a real launch.'
+        : 'The final decision to start or keep playback when telemetry, guide continuity, and line headroom are still visible.',
+    forcedHandoffTrigger: screenId === 'live'
+      ? streamHealth?.message || 'Playback proof has degraded enough that the next Play move must pause for a visible recovery choice.'
+      : getDominantTone([providerTone, guideTone, playbackTone]) === 'ready'
+        ? 'If provider ownership or shared guide proof slips before the next tap, StreamDeck must stop auto-carrying the same launch story.'
+        : `The next move would outrun current proof. ${recoveryMove}`,
+    tone: getDominantTone([providerTone, guideTone, playbackTone]),
+  };
+
+  return {
+    screenId,
+    title: `${screenLabels[screenId]} autonomy boundary`,
+    summary: `This boundary is generated from provider ownership, guide continuity, ${screenId === 'live' ? 'playback telemetry, ' : ''}and saved-provider recovery posture so automatic continuity stops where user-owned choice begins.`,
+    boundaries: [providerBoundary, guideBoundary, actionBoundary],
+  };
+};
+
+const buildConnectionHeadroom = ({
+  screenId,
+  providerLabel,
+  board,
+  report,
+  selectedLabel,
+  streamHealth,
+}: {
+  screenId: ScreenId;
+  providerLabel: string;
+  board: SavedProviderHealthBoard;
+  report: ProviderGuideCoverageReport | null;
+  selectedLabel?: string | null;
+  streamHealth?: StreamHealth | null;
+}): MockProviderManifest['surfaceConnectionHeadrooms'][number] => {
+  const { owner, activeConnections, maxConnections, remainingConnections } = getConnectionUsage(board);
+  const ownerLabel = owner?.providerName || providerLabel;
+  const usageLabel = activeConnections !== null && maxConnections !== null
+    ? `${activeConnections}/${maxConnections} provider lines are currently in use`
+    : 'Fresh provider line-capacity proof is still pending';
+  const recoveryMove = getRecoveryMove({ screenId, board, report, selectedLabel });
+  const playbackWarning = streamHealth?.status === 'error' || streamHealth?.status === 'degraded'
+    ? streamHealth.message || 'Playback telemetry is already degraded while line headroom is under pressure.'
+    : null;
+  const headroomTone = getHeadroomTone(board);
+
+  return {
+    screenId,
+    title: `${screenLabels[screenId]} connection headroom`,
+    summary: `This contract reads current provider line usage from the saved-provider board so line pressure can downgrade Connect, browse, or Play before the user blames the wrong thing.`,
+    lanes: [
+      {
+        label: `${ownerLabel} line posture`,
+        currentWindow: remainingConnections === null
+          ? `${usageLabel}. Keep the surface in a watch-safe posture until the provider proves how much playback headroom is really left.`
+          : remainingConnections === 0
+            ? `${usageLabel}. No safe playback headroom remains on the current owner.`
+            : remainingConnections === 1
+              ? `${usageLabel}. One extra line remains, so the next move is still possible but no longer carefree.`
+              : `${usageLabel}. ${remainingConnections} spare line${remainingConnections === 1 ? '' : 's'} remain behind the current owner.`,
+        warningTrigger: remainingConnections === null
+          ? 'Missing auth-summary proof keeps line capacity in a watch-safe state.'
+          : remainingConnections <= 1
+            ? 'One or fewer spare provider lines remain for the current owner.'
+            : owner?.warning || 'Provider warning, expiry drift, or playback degradation can still reduce honest headroom.',
+        blockedState: remainingConnections === 0
+          ? `${ownerLabel} is already saturated, so StreamDeck must not pretend the next launch is still low-risk.`
+          : owner?.warning
+            ? owner.warning
+            : 'Line capacity still exists, but provider or guide drift can downgrade the next move before playback starts.',
+        recommendedMove: remainingConnections === 0
+          ? recoveryMove
+          : remainingConnections === 1
+            ? `Keep ${selectedLabel || providerLabel} visible, but warn that the next launch spends the last safe provider line.`
+            : `Keep ${ownerLabel} as the current owner while preserving ${selectedLabel || providerLabel} continuity.`,
+        tone: headroomTone,
+      },
+      {
+        label: screenId === 'login' ? 'Connect warning threshold' : screenId === 'home' ? 'Browse warning threshold' : 'Playback warning threshold',
+        currentWindow: remainingConnections === null
+          ? 'Treat missing line proof like a soft warning until auth summary refreshes.'
+          : remainingConnections <= 1
+            ? 'The surface is one launch away from saturation, so premium copy has to acknowledge the shrinking safety margin.'
+            : 'The surface still has enough provider headroom to stay launch-safe if guide and provider proof remain honest.',
+        warningTrigger: screenId === 'live'
+          ? playbackWarning || 'Playback buffering, provider warnings, or last-line usage can all force a visible warning before the next play decision.'
+          : 'A provider warning, stale guide proof, or last-line posture must downgrade the next move before premium copy overclaims safety.',
+        blockedState: remainingConnections === 0
+          ? 'No more provider lines remain for the current owner.'
+          : 'The surface must visibly downgrade before it silently spends the last remaining safe line.',
+        recommendedMove: remainingConnections === null || remainingConnections <= 1
+          ? recoveryMove
+          : `Keep ${ownerLabel} primary, but pre-stage ${getRecoveryOwner(board, providerLabel)} as the next visible fallback.`,
+        tone: remainingConnections === null ? 'watch' : remainingConnections <= 1 ? 'recover' : 'watch',
+      },
+      {
+        label: screenId === 'login' ? 'Recovery line policy' : screenId === 'home' ? 'Featured launch line policy' : 'Selected playback line policy',
+        currentWindow: `${ownerLabel} remains the first choice only while provider ownership, guide proof, and line capacity still agree with each other.`,
+        warningTrigger: owner?.warning || guideStatusLabel(report),
+        blockedState: playbackWarning
+          || 'If provider ownership, guide proof, and line headroom disagree at the same time, StreamDeck must stop auto-carrying the same story.',
+        recommendedMove: recoveryMove,
+        tone: getDominantTone([headroomTone, getProviderTone(board), getGuideTone(report)]),
+      },
+    ],
+  };
+};
+
 export const buildRuntimeSurfaceContracts = ({
   screenId,
   providerLabel,
@@ -401,5 +604,23 @@ export const buildRuntimeSurfaceContracts = ({
     selectedLabel,
     currentNowTitle,
     currentNextTitle,
+  }),
+  autonomyBoundary: buildAutonomyBoundary({
+    screenId,
+    providerLabel,
+    board: savedProviderBoard,
+    report: guideCoverage,
+    selectedLabel,
+    currentNowTitle,
+    currentNextTitle,
+    streamHealth,
+  }),
+  connectionHeadroom: buildConnectionHeadroom({
+    screenId,
+    providerLabel,
+    board: savedProviderBoard,
+    report: guideCoverage,
+    selectedLabel,
+    streamHealth,
   }),
 });

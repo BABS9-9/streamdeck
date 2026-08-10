@@ -294,7 +294,7 @@ export function HomeDashboard() {
     () => manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
-  const autonomyBoundary = useMemo(
+  const manifestAutonomyBoundary = useMemo(
     () => manifest?.surfaceAutonomyBoundaries.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
@@ -326,7 +326,7 @@ export function HomeDashboard() {
     () => manifest?.surfaceClaimCeilings.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
-  const connectionHeadroom = useMemo(
+  const manifestConnectionHeadroom = useMemo(
     () => manifest?.surfaceConnectionHeadrooms.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
@@ -376,6 +376,8 @@ export function HomeDashboard() {
   const launchScorecard = runtimeSurfaceContracts?.launchScorecard || manifest?.surfaceScorecards.find((item) => item.screenId === 'home') || null;
   const exitCriteria = runtimeSurfaceContracts?.exitCriteria || manifest?.surfaceExitCriteria.find((item) => item.screenId === 'home') || null;
   const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs.find((item) => item.screenId === 'home') || null;
+  const autonomyBoundary = runtimeSurfaceContracts?.autonomyBoundary || manifestAutonomyBoundary;
+  const connectionHeadroom = runtimeSurfaceContracts?.connectionHeadroom || manifestConnectionHeadroom;
 
   if (!activeConnection) {
     return (

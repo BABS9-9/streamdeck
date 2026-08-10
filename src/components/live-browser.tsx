@@ -207,7 +207,7 @@ export function LiveBrowser() {
   const intentLock = manifest?.surfaceIntentLocks.find((item) => item.screenId === 'live') ?? null;
   const actionGate = manifest?.surfaceActionGates.find((item) => item.screenId === 'live') ?? null;
   const explanationBoundary = manifest?.surfaceExplanationBoundaries.find((item) => item.screenId === 'live') ?? null;
-  const autonomyBoundary = manifest?.surfaceAutonomyBoundaries.find((item) => item.screenId === 'live') ?? null;
+  const manifestAutonomyBoundary = manifest?.surfaceAutonomyBoundaries.find((item) => item.screenId === 'live') ?? null;
   const recoveryWitness = manifest?.surfaceRecoveryWitnesses.find((item) => item.screenId === 'live') ?? null;
   const interruptionBudget = manifest?.surfaceInterruptionBudgets.find((item) => item.screenId === 'live') ?? null;
   const retryContract = manifest?.surfaceRetryContracts.find((item) => item.screenId === 'live') ?? null;
@@ -215,7 +215,7 @@ export function LiveBrowser() {
   const fallbackCost = manifest?.surfaceFallbackCosts.find((item) => item.screenId === 'live') ?? null;
   const identityAnchor = manifest?.surfaceIdentityAnchors.find((item) => item.screenId === 'live') ?? null;
   const claimCeiling = manifest?.surfaceClaimCeilings.find((item) => item.screenId === 'live') ?? null;
-  const connectionHeadroom = manifest?.surfaceConnectionHeadrooms.find((item) => item.screenId === 'live') ?? null;
+  const manifestConnectionHeadroom = manifest?.surfaceConnectionHeadrooms.find((item) => item.screenId === 'live') ?? null;
   const confidenceFloor = manifest?.surfaceConfidenceFloors.find((item) => item.screenId === 'live') ?? null;
   const savedProviderBoard = useMemo(
     () => buildSavedProviderHealthBoard({
@@ -262,6 +262,8 @@ export function LiveBrowser() {
   const launchScorecard = runtimeSurfaceContracts.launchScorecard;
   const exitCriteria = runtimeSurfaceContracts.exitCriteria;
   const handoffMap = runtimeSurfaceContracts.handoffMap;
+  const autonomyBoundary = runtimeSurfaceContracts.autonomyBoundary || manifestAutonomyBoundary;
+  const connectionHeadroom = runtimeSurfaceContracts.connectionHeadroom || manifestConnectionHeadroom;
 
   return (
     <div className="space-y-6">
