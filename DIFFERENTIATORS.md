@@ -20,6 +20,7 @@ StreamDeck should feel like a premium streaming product first and an IPTV utilit
 | Proof debt | Publish what confidence is still borrowed from cache, saved-provider memory, preview continuity, or rescue logic before premium copy sounds fresher than the proof behind it. | Competitors usually present cached or rescued states with the same confidence as fresh provider proof, so users cannot tell when polish is floating on borrowed certainty. | Phase 1 | Keep one surface-specific proof-debt contract across Login, Home, and Live so borrowed confidence, repayment triggers, and the safest current promise stay aligned. |
 | Claim ceiling | Publish the strongest promise each surface can still make, the overclaim it must suppress, and the proof that earns premium language back. | Competitors usually keep cinematic or premium copy unchanged even after provider truth has degraded, so users cannot tell when the shell is overselling the next move. | Phase 1 | Keep one surface-specific claim-ceiling contract across Login, Home, and Live so premium language is capped by current proof instead of drifting into confidence theater. |
 | Connection headroom | Show how many provider lines are already in use, how much playback room is left, and when line pressure should outrank premium launch copy. | Most IPTV players expose active-connection limits only after playback fails, so users blame channels or the app instead of the provider line ceiling. | Phase 1 | Reuse auth-summary and provider-health line counts across Login, Home, and Live so Connect, hero launch, and Play all surface remaining provider headroom before a saturated account causes a misleading failure. |
+| Provider choice truth | Tell users when StreamDeck can safely auto-pick the healthiest equivalent provider, when equivalence is only partial, and when the next move must come back to the user explicitly. | Competitors usually blur silent provider rescue and real user choice together, so cross-provider recovery feels convenient until it quietly changes the destination or trade-off. | Phase 1 | Keep one surface-specific provider-choice contract across Login, Home, and Live so auto-pick triggers, equivalence proof, and forced user-choice triggers stay aligned before recovery copy overclaims sameness. |
 | Autonomy boundary | Publish what StreamDeck may safely keep automatic, what provider or playback choice still belongs to the user, and what trigger forces an explicit handoff before rescue feels sneaky. | Competitors often blur auto-retry, silent provider switching, and recovery logic together, so users cannot tell when the app acted for them versus around them. | Phase 1 | Keep one surface-specific autonomy-boundary contract across Login, Home, and Live so trust maintenance, user-owned choice, and forced-handoff triggers stay aligned before premium automation overclaims safety. |
 | Launch scorecard | Publish a compact go / watch / recover scorecard on each key surface so users know how safe the next move really is before they connect, browse, or play. | Competitors usually imply launch confidence through polish alone, leaving users to guess whether a CTA is fully proven, partially cached, or already owned by recovery logic. | Phase 1 | Drive Login, Home, and Live from one shared scorecard + exit-criteria + handoff contract so readiness, hold conditions, and next-hop truth stay aligned across the shell. |
 | Canonical provider identity | Keep saved providers, retries, and rescue paths tied to one canonical provider owner so alias URLs or relabeled connections do not quietly corrupt continuity. | Competitors often treat minor URL or label differences like separate providers, which makes recovery feel random and pollutes favorites, history, and trust cues. | Phase 1 | Normalize provider identity around a canonical provider key and surface that ownership on Login, Home, and Live before shortcuts, cached rails, or rescue copy imply the wrong source story. |
@@ -49,17 +50,19 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
    The shell should cap premium language at what current proof really earns before browse, connect, or play copy outruns runtime truth.
 8. Connection headroom honesty
    The shell should surface remaining provider line capacity before Connect, hero launch, or Play gets blamed for a saturated account.
-9. Autonomy-boundary honesty
+9. Provider-choice honesty
+   The shell should say when it is still safe to auto-pick the healthiest equivalent provider, when equivalence has weakened, and when the user must take ownership of the next move explicitly.
+10. Autonomy-boundary honesty
    The shell should say what trust work can stay automatic, what provider or playback decision still belongs to the user, and what event forces an explicit handoff before recovery turns into hidden automation.
-10. Launch readiness honesty
+11. Launch readiness honesty
    The shell should show whether the next move is genuinely ready, only watch-safe, or already recovery-owned before cinematic polish outruns proof.
-11. Canonical ownership continuity
+12. Canonical ownership continuity
    Saved-provider aliases, reconnect variants, and rescue paths should still resolve to one clear provider owner before the app reuses trust, history, or favorites.
-12. Honest fallback ranking
+13. Honest fallback ranking
    The shell should explain which rescue is currently the strongest exact save versus an approximate fallback before it silently changes the next move.
-13. Honest rescue equivalence
+14. Honest rescue equivalence
    The shell should distinguish between the same destination, an acceptable approximation, and a disguised restart before “seamless fallback” turns into fiction.
-14. Guide freshness honesty
+15. Guide freshness honesty
    The shell should show how much guide truth is fresh, cached, stale, or missing before NOW / NEXT copy overclaims what the provider has actually proven.
 
 ## Phase 1 Surface Implications
@@ -72,6 +75,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must say what setup confidence is still borrowed from saved-provider memory or rescue posture and what fresh auth proof repays that debt before Connect sounds fully current.
 - Must cap premium setup copy at the strongest promise current auth, saved-provider continuity, and recovery posture actually earn before Connect language outruns proof.
 - Must show how many provider lines are already occupied and when line pressure should demote Connect from a premium launch into a watch-or-switch decision.
+- Must say when Login may still auto-pick the healthiest equivalent saved provider, what proof keeps that move equivalent enough to stay silent, and what trade-off forces the user back into the choice.
 - Must say what trust work Login may keep automatic, what provider and credential choice still belongs to the user, and what trigger forces a visible handoff before recovery feels hidden.
 - Must publish whether Connect is launch-ready, watch-only, or already recovery-led before premium setup polish outruns proof.
 - Must keep reconnect variants, saved labels, and rescue shortcuts tied to one canonical provider owner before Login reuses trust or history cues.
@@ -88,6 +92,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must say when hero confidence is still borrowed from cached browse state or rescue ownership and what fresh provider proof repays that debt before Home sounds fully live again.
 - Must cap cinematic hero copy at the strongest browse promise current provider, rail, and guide proof actually earn before Home sells a fresher story than it has proven.
 - Must surface provider line headroom near the hero so launch polish does not hide when the account is nearly full or already saturated.
+- Must say when Home may still auto-pick the healthiest equivalent provider behind the hero, what discovery proof keeps that rescue honest, and what loss of equivalence forces the user back into the launch decision.
 - Must say what browse maintenance Home may keep automatic, what launch or provider choice still belongs to the user, and what trigger forces a visible handoff before the hero starts lying.
 - Must publish whether the hero and rails are truly launch-ready, only cache-borrowed, or already recovery-owned before Home overclaims premium confidence.
 - Must keep hero trust, counts, and rescue copy attached to one canonical provider owner even when saved labels or host variants differ.
@@ -104,6 +109,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must say when surf confidence is still borrowed from preview continuity, same-category rescue, or cached guide posture and what proof repays that debt before Play sounds exact again.
 - Must cap playback language at the strongest launch promise current preview, guide, and provider proof actually earn before Play sounds safer than the selected card can prove.
 - Must show remaining provider line headroom before preview motion makes a saturated account look like a channel-quality problem.
+- Must say when Live may still auto-pick the healthiest equivalent provider or same-category rescue, what proof keeps that move honest, and what break forces playback choice back to the user explicitly.
 - Must say what surf continuity Live may keep automatic, what playback or provider-switch decision still belongs to the user, and what trigger forces a visible handoff before preview motion hides the choice.
 - Must publish whether Play is exact-channel ready, only safe to preview, or already leaning on rescue logic before motion implies more certainty than current proof.
 - Must keep the selected card, preview, and Play CTA tied to one canonical provider owner before exact-copy rescue sounds like the same source story.
@@ -114,6 +120,6 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 
 ## Implementation Priorities Right Now
 
-1. Keep Phase 1 strongest on multi-connection switching, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, claim ceiling, connection headroom, autonomy boundary, launch scorecard, canonical provider identity, fallback ranking, fallback equivalence, and stream-health HUD.
+1. Keep Phase 1 strongest on multi-connection switching, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, claim ceiling, connection headroom, provider choice truth, autonomy boundary, launch scorecard, canonical provider identity, fallback ranking, fallback equivalence, and stream-health HUD.
 2. Treat cross-provider search as the next major product unlock once provider catalogs are stable.
 3. Leave recording, watch party, and per-profile parental controls scaffold-friendly in the architecture, but do not let them dilute the Phase 1 browser, playback, and continuity bar.
