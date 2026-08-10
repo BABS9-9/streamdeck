@@ -732,6 +732,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'autonomy-boundary',
+    feature: 'Autonomy boundary',
+    pitch: 'Publish what StreamDeck may safely keep automatic, what provider or playback choice still belongs to the user, and what trigger forces an explicit handoff before rescue feels sneaky.',
+    competitiveGap: 'Competitors often blur auto-retry, silent provider switching, and recovery logic together, so users cannot tell when the app acted for them versus around them.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one autonomy-boundary contract so trust maintenance, user-owned choice, and forced-handoff triggers stay aligned before premium automation overclaims safety.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'launch-scorecard',
     feature: 'Launch scorecard',
     pitch: 'Publish a compact go / watch / recover scorecard on each key surface before the user commits to Connect, Browse, or Play.',
