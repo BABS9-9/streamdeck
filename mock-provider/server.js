@@ -831,6 +831,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'recovery-witness',
+    feature: 'Recovery witness',
+    pitch: 'Tell users what exact evidence proves rescue preserved the same destination, what context still carries forward, and what contradiction breaks that trust immediately.',
+    competitiveGap: 'Competitors usually ask users to trust fallback on vibes alone, so rescue feels magical until the destination, provider, or launch meaning quietly drifts.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one recovery-witness contract so required evidence, preserved context, and trust-break triggers stay aligned beside the CTA.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'handoff-clarity',
     feature: 'Handoff clarity',
     pitch: 'Publish what context the next screen keeps, what exact condition should hold the current surface in place, and what fallback lane takes over before a CTA quietly changes the mission.',
