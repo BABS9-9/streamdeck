@@ -27,6 +27,7 @@ import { SurfaceInterruptionBudget } from '@/components/surface-interruption-bud
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
+import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarity-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -334,6 +335,14 @@ export function LiveBrowser() {
               title="Play readiness"
               badge="Launch truth"
             />
+            <div className="mt-4">
+              <SurfaceHandoffClarityInline
+                criteria={exitCriteria}
+                handoff={handoffMap}
+                title="Play handoff clarity"
+                badge="Next-screen truth"
+              />
+            </div>
             <div className="mt-4">
               <SurfaceProviderChoiceInline
                 contract={providerChoice}

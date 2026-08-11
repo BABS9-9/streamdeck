@@ -28,6 +28,7 @@ import { SurfaceInterruptionBudget } from '@/components/surface-interruption-bud
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
+import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarity-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -520,6 +521,14 @@ export function HomeDashboard() {
                 contract={launchReadiness}
                 title="Hero launch readiness"
                 badge="Launch truth"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceHandoffClarityInline
+                criteria={exitCriteria}
+                handoff={handoffMap}
+                title="Hero handoff clarity"
+                badge="Next-screen truth"
               />
             </div>
             <div className="mt-4">
