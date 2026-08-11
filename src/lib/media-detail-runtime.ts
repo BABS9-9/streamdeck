@@ -2,11 +2,85 @@ import { buildProviderVariant, ProviderVariant, rankProviderVariants } from './p
 import { buildVariantContinuityPayload, SearchContinuityPayload, SearchResultVariantPayload } from './search-continuity';
 import { ConnectionStatus, SavedConnection, WatchHistoryItem, XtreamStream } from './types';
 
+export type MediaDetailContractTone = 'ready' | 'watch' | 'recover';
+
+export type MediaDetailReadinessCard = {
+  label: string;
+  safeWhen: string;
+  blockedWhen: string;
+  recoveryMove: string;
+  tone: MediaDetailContractTone;
+};
+
+export type MediaDetailProviderChoice = {
+  title: string;
+  summary: string;
+  autoChoice: string;
+  userChoice: string;
+  forcedHandoffTrigger: string;
+  tone: MediaDetailContractTone;
+};
+
+export type MediaDetailClaimCeiling = {
+  title: string;
+  strongestPromise: string;
+  suppressedPromise: string;
+  reason: string;
+  tone: MediaDetailContractTone;
+};
+
+export type MediaDetailProofDebt = {
+  title: string;
+  summary: string;
+  debtSource: string;
+  repaymentMove: string;
+  tone: MediaDetailContractTone;
+};
+
+export type MediaDetailContinuityBoundary = {
+  title: string;
+  summary: string;
+  portableContext: string;
+  userOwns: string;
+  forcedHandoffTrigger: string;
+  tone: MediaDetailContractTone;
+};
+
+export type MediaDetailConnectionHeadroom = {
+  title: string;
+  summary: string;
+  currentWindow: string;
+  warningTrigger: string;
+  blockedState: string;
+  recommendedMove: string;
+  tone: MediaDetailContractTone;
+};
+
+export type MediaDetailRecoveryPlan = {
+  title: string;
+  summary: string;
+  recommendedProviderId: string;
+  recommendedProviderName: string;
+  recommendedReason: string;
+  tone: MediaDetailContractTone;
+};
+
+export type MediaDetailTrustContract = {
+  launchReadiness: MediaDetailReadinessCard[];
+  providerChoice: MediaDetailProviderChoice;
+  claimCeiling: MediaDetailClaimCeiling;
+  proofDebt: MediaDetailProofDebt;
+  continuityBoundary: MediaDetailContinuityBoundary;
+  connectionHeadroom: MediaDetailConnectionHeadroom;
+};
+
 export type MediaDetailRuntimeContract = {
   variants: SearchResultVariantPayload[];
   continuity: SearchContinuityPayload | null;
   providerCount: number;
   alternateProviderCount: number;
+  trust: MediaDetailTrustContract | null;
+  recoveryPlan: MediaDetailRecoveryPlan | null;
 };
 
 const toSearchVariantPayload = ({
@@ -57,6 +131,210 @@ export const buildSeriesContinuityHref = ({
   return `/series?${params.toString()}`;
 };
 
+const getHeadroomSummary = (connection?: SavedConnection | null) => {
+  const summary = connection?.lastAuthSummary;
+  if (!summary || typeof summary.maxConnections !== 'number') {
+    return {
+      currentWindow: 'Connection headroom has not been proven yet.',
+      warningTrigger: 'Any provider warning or validation failure should downgrade exact-play claims immediately.',
+      blockedState: 'If no healthy saved copy exists, detail browsing may continue but exact playback promises should stop.',
+      recommendedMove: 'Refresh provider status before selling this title as playback-safe.',
+      tone: 'watch' as const,
+    };
+  }
+
+  const activeConnections = summary.activeConnections ?? 0;
+  const remaining = Math.max(0, summary.maxConnections - activeConnections);
+
+  if (remaining <= 0) {
+    return {
+      currentWindow: `${connection?.name || 'This provider'} is at ${activeConnections}/${summary.maxConnections} lines in use.`,
+      warningTrigger: 'Line pressure is already saturated.',
+      blockedState: 'Do not promise immediate playback on the active provider while every line is occupied.',
+      recommendedMove: 'Route the user toward a healthier saved provider copy or wait for a free line.',
+      tone: 'recover' as const,
+    };
+  }
+
+  if (remaining === 1) {
+    return {
+      currentWindow: `${connection?.name || 'This provider'} has one line of headroom left (${activeConnections}/${summary.maxConnections} in use).`,
+      warningTrigger: 'One more concurrent stream forces a visible handoff.',
+      blockedState: 'If that last line disappears, exact same-provider playback cannot be promised.',
+      recommendedMove: 'Keep the active provider visible, but preserve an alternate launch path.',
+      tone: 'watch' as const,
+    };
+  }
+
+  return {
+    currentWindow: `${connection?.name || 'This provider'} still has ${remaining} open line${remaining === 1 ? '' : 's'} (${activeConnections}/${summary.maxConnections} in use).`,
+    warningTrigger: 'The warning threshold starts once only one free line remains.',
+    blockedState: 'If capacity saturates, the active provider loses launch ownership until headroom returns.',
+    recommendedMove: 'Keep alternate-provider continuity ready, but exact playback can stay inline for now.',
+    tone: 'ready' as const,
+  };
+};
+
+const buildMediaDetailTrustContract = ({
+  kind,
+  variants,
+  continuity,
+  activeConnection,
+  activeVariant,
+}: {
+  kind: 'movie' | 'series';
+  variants: SearchResultVariantPayload[];
+  continuity: SearchContinuityPayload | null;
+  activeConnection: SavedConnection;
+  activeVariant: SearchResultVariantPayload;
+}): MediaDetailTrustContract => {
+  const launchOwner = variants[0] ?? activeVariant;
+  const activeSummary = activeConnection.lastAuthSummary;
+  const activeWarning = activeVariant.warning || null;
+  const activeStatus = activeSummary?.status || 'unknown';
+  const sameProviderOwner = launchOwner.providerId === activeConnection.id;
+  const hasAlternates = variants.length > 1;
+  const hasResumeHook = Boolean(
+    continuity?.canonicalEpisodeMapping?.preferredSeasonNumber
+    && continuity?.canonicalEpisodeMapping?.preferredEpisodeNumber
+  );
+  const claimTone: MediaDetailContractTone = activeWarning
+    ? 'recover'
+    : hasAlternates || kind === 'series'
+      ? 'watch'
+      : 'ready';
+  const proofTone: MediaDetailContractTone = kind === 'series' && !hasResumeHook
+    ? 'watch'
+    : activeWarning
+      ? 'recover'
+      : 'ready';
+  const headroom = getHeadroomSummary(activeConnection);
+  const readinessTone: MediaDetailContractTone = !sameProviderOwner || activeWarning || headroom.tone === 'recover'
+    ? 'recover'
+    : headroom.tone === 'watch'
+      ? 'watch'
+      : 'ready';
+
+  const primaryReadiness: MediaDetailReadinessCard = {
+    label: kind === 'series' ? 'Episode-safe launch' : 'Playback-safe launch',
+    safeWhen: sameProviderOwner && !activeWarning
+      ? `${activeConnection.name} still owns launch and the current detail rail is speaking from a healthy saved-provider copy.`
+      : `${launchOwner.providerName} is the healthiest visible launch owner for this title right now.`,
+    blockedWhen: activeWarning
+      ? `${activeConnection.name} is currently degraded (${activeWarning.toLowerCase()}), so the active detail rail should stop promising exact same-provider playback.`
+      : headroom.blockedState,
+    recoveryMove: sameProviderOwner && !activeWarning
+      ? 'Keep inline play visible, but leave the alternate-provider rescue path one tap away.'
+      : `Hand launch ownership to ${launchOwner.providerName} before turning recovery language back into exact-play language.`,
+    tone: readinessTone,
+  };
+
+  const secondaryReadiness: MediaDetailReadinessCard = {
+    label: kind === 'series' ? 'Continuity-safe browse' : 'Detail-safe browse',
+    safeWhen: continuity
+      ? continuity.summary
+      : `${activeConnection.name} still holds enough detail truth to keep browsing contextual.`,
+    blockedWhen: kind === 'series' && !hasResumeHook
+      ? 'Series rescue is still waiting on canonical episode proof before it can claim exact resume continuity.'
+      : 'Once provider health or line headroom collapses, detail browsing can stay alive but playback promises must downgrade.',
+    recoveryMove: kind === 'series'
+      ? hasResumeHook
+        ? 'Carry the saved season/episode hint across provider changes, then verify the exact episode through series info.'
+        : 'Resolve the canonical episode target through series info before claiming exact rescue playback.'
+      : 'Keep title context, favorites, and artwork visible while the launch owner changes.',
+    tone: proofTone,
+  };
+
+  return {
+    launchReadiness: [primaryReadiness, secondaryReadiness],
+    providerChoice: {
+      title: 'Provider choice',
+      summary: sameProviderOwner && !hasAlternates
+        ? `${activeConnection.name} is the only saved provider copy for this title right now.`
+        : sameProviderOwner
+          ? `${activeConnection.name} still owns the first tap, but alternate saved copies are already visible.`
+          : `${launchOwner.providerName} should own the next tap even though ${activeConnection.name} is still the active detail shell.`,
+      autoChoice: sameProviderOwner
+        ? 'StreamDeck may keep the current provider active while the visible proof still supports it.'
+        : `StreamDeck may keep title context and drill-down state, but it should explicitly re-home launch ownership to ${launchOwner.providerName}.`,
+      userChoice: hasAlternates
+        ? 'The user still owns the final provider choice once alternate copies are visible.'
+        : 'No meaningful provider choice exists until another saved copy appears.',
+      forcedHandoffTrigger: activeWarning
+        ? `${activeConnection.name} stops owning launch the moment its warning becomes user-visible.`
+        : headroom.warningTrigger,
+      tone: sameProviderOwner && !activeWarning ? (hasAlternates ? 'watch' : 'ready') : 'recover',
+    },
+    claimCeiling: {
+      title: 'Claim ceiling',
+      strongestPromise: kind === 'series'
+        ? hasResumeHook
+          ? 'Promise portable resume continuity, not magical same-episode certainty on every provider copy.'
+          : 'Promise portable series continuity, not exact episode continuity yet.'
+        : sameProviderOwner && !activeWarning
+          ? 'Promise immediate playback from the current detail rail.'
+          : `Promise recovery toward ${launchOwner.providerName}, not exact same-provider playback from ${activeConnection.name}.`,
+      suppressedPromise: kind === 'series'
+        ? 'Do not promise that every provider copy maps to the exact same episode before drill-down proof exists.'
+        : 'Do not imply that the active provider still owns playback when trust, status, or line headroom says otherwise.',
+      reason: activeWarning
+        ? `${activeConnection.name} is already carrying a visible warning (${activeStatus}), so the detail rail must cap its confidence.`
+        : kind === 'series' && !hasResumeHook
+          ? 'Series rescue still depends on a canonical episode check before exact continuity becomes honest.'
+          : 'Multiple provider copies exist, so detail context can stay exact even when launch ownership changes.',
+      tone: claimTone,
+    },
+    proofDebt: {
+      title: 'Proof debt',
+      summary: kind === 'series'
+        ? hasResumeHook
+          ? 'Resume proof exists, but the destination episode still needs provider-specific validation during drill-down.'
+          : 'The detail rail can only promise series-level continuity until episode proof is refreshed.'
+        : activeWarning
+          ? 'Provider trust debt is visible, so the active shell should speak recovery first.'
+          : 'Movie detail proof is mostly settled, but capacity and provider health still gate exact launch claims.',
+      debtSource: kind === 'series'
+        ? hasResumeHook
+          ? 'Canonical season/episode hints must still survive provider-specific episode numbering.'
+          : 'No exact resume hint is available yet for the current saved-provider set.'
+        : activeWarning || 'Line pressure and provider validation remain the remaining proof debt.',
+      repaymentMove: kind === 'series'
+        ? 'Use series info to resolve the playable episode before presenting rescue playback as exact.'
+        : `Re-run provider validation and headroom checks before letting ${activeConnection.name} reclaim exact-play copy.`,
+      tone: proofTone,
+    },
+    continuityBoundary: {
+      title: kind === 'series' ? 'Series continuity boundary' : 'Detail continuity boundary',
+      summary: continuity
+        ? continuity.summary
+        : `${activeConnection.name} may keep the detail surface populated, but it should stop where provider ownership becomes a visible user-facing choice.`,
+      portableContext: kind === 'series'
+        ? 'Series title, saved season/episode intent, and alternate-provider ranking may carry forward automatically.'
+        : 'Title metadata, artwork, favorites, and the ranked alternate-provider list may carry forward automatically.',
+      userOwns: hasAlternates
+        ? 'The user owns the final decision to stay on the active provider or jump to a healthier copy.'
+        : 'There is no alternate-provider handoff yet, so the user mostly owns whether to keep trying the current source.',
+      forcedHandoffTrigger: kind === 'series'
+        ? hasResumeHook
+          ? 'If episode resolution fails on the target provider, continuity drops back to series-level guidance.'
+          : 'Exact resume claims stay blocked until series info proves the destination episode.'
+        : activeWarning
+          ? 'Any new playback attempt must downgrade to recovery language while the active warning remains visible.'
+          : headroom.warningTrigger,
+      tone: claimTone,
+    },
+    connectionHeadroom: {
+      title: 'Connection headroom',
+      summary: headroom.currentWindow,
+      currentWindow: headroom.currentWindow,
+      warningTrigger: headroom.warningTrigger,
+      blockedState: headroom.blockedState,
+      recommendedMove: headroom.recommendedMove,
+      tone: headroom.tone,
+    },
+  };
+};
+
 export const buildMediaDetailRuntimeContract = ({
   item,
   kind,
@@ -80,10 +358,12 @@ export const buildMediaDetailRuntimeContract = ({
       continuity: null,
       providerCount: 0,
       alternateProviderCount: 0,
+      trust: null,
+      recoveryPlan: null,
     };
   }
 
-  const activeVariant = buildProviderVariant({
+  const baseActiveVariant = buildProviderVariant({
     connection: activeConnection,
     status: connectionStatus[activeConnection.id],
     item,
@@ -103,7 +383,7 @@ export const buildMediaDetailRuntimeContract = ({
     }));
   };
 
-  registerVariant(activeVariant, activeConnection, item);
+  registerVariant(baseActiveVariant, activeConnection, item);
 
   alternateVariants.forEach((variant) => {
     const provider = connections.find((connection) => connection.id === variant.providerId);
@@ -121,16 +401,48 @@ export const buildMediaDetailRuntimeContract = ({
     } satisfies SearchResultVariantPayload;
   }).filter(Boolean) as SearchResultVariantPayload[];
 
+  const continuity = buildVariantContinuityPayload({
+    title: item.name,
+    kind,
+    variants,
+    activeConnectionId: activeConnection.id,
+    history: watchHistory,
+  });
+  const activeVariant = variants.find((variant) => variant.providerId === activeConnection.id) ?? variants[0] ?? null;
+  const launchOwner = variants[0] ?? activeVariant;
+
   return {
     variants,
-    continuity: buildVariantContinuityPayload({
-      title: item.name,
-      kind,
-      variants,
-      activeConnectionId: activeConnection.id,
-      history: watchHistory,
-    }),
+    continuity,
     providerCount: variants.length,
     alternateProviderCount: Math.max(0, variants.length - 1),
+    trust: activeVariant && continuity
+      ? buildMediaDetailTrustContract({
+        kind,
+        variants,
+        continuity,
+        activeConnection,
+        activeVariant,
+      })
+      : null,
+    recoveryPlan: launchOwner && launchOwner.providerId !== activeConnection.id
+      ? {
+        title: kind === 'series' ? 'Healthier series owner is ready.' : 'Healthier playback owner is ready.',
+        summary: `${launchOwner.providerName} currently ranks above ${activeConnection.name} for this ${kind === 'series' ? 'series flow' : 'title'}${launchOwner.warning ? ` because ${launchOwner.warning.toLowerCase()}` : ' based on saved-provider trust and continuity posture'}.`,
+        recommendedProviderId: launchOwner.providerId,
+        recommendedProviderName: launchOwner.providerName,
+        recommendedReason: launchOwner.warning || 'Highest ranked saved-provider copy',
+        tone: launchOwner.warning ? 'watch' : 'recover',
+      }
+      : activeVariant?.warning
+        ? {
+          title: kind === 'series' ? 'Active series owner needs recovery.' : 'Active playback owner needs recovery.',
+          summary: `${activeConnection.name} is still the visible detail shell, but ${activeVariant.warning.toLowerCase()} means the next exact-play claim should stay guarded until provider health improves.`,
+          recommendedProviderId: activeVariant.providerId,
+          recommendedProviderName: activeVariant.providerName,
+          recommendedReason: activeVariant.warning,
+          tone: 'recover',
+        }
+        : null,
   };
 };

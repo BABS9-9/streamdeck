@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { buildMediaDetailRuntimeContract } from '@/lib/media-detail-runtime';
+import { buildMediaDetailRuntimeContract, MediaDetailContractTone, MediaDetailRuntimeContract } from '@/lib/media-detail-runtime';
 import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getProviderTrustDisplay, getProviderTrustLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { describeSeriesCompletenessBand } from '@/lib/search-continuity';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
@@ -25,6 +25,12 @@ const scenarioLabels: Record<MockProviderScenario, string> = {
   lineSaturated: 'Lines maxed',
   expiredAccount: 'Expired account',
   authUnstable: 'Auth unstable',
+};
+
+const trustToneClasses: Record<MediaDetailContractTone, string> = {
+  ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
+  watch: 'border-sky-400/20 bg-sky-500/10 text-sky-100',
+  recover: 'border-amber-400/30 bg-amber-500/10 text-amber-100',
 };
 
 export function MediaLibrary({
@@ -310,6 +316,74 @@ export function MediaLibrary({
         : null;
   const healthiestSelectedVariant = (kind === 'movies' ? movieVariants[0] : selectedSeriesVariants[0]) || null;
 
+  const renderDetailTrustCards = (runtime: MediaDetailRuntimeContract | null) => {
+    if (!runtime?.trust) return null;
+
+    const cards = [
+      {
+        key: 'provider-choice',
+        eyebrow: runtime.trust.providerChoice.title,
+        title: runtime.trust.providerChoice.summary,
+        detail: `${runtime.trust.providerChoice.autoChoice} ${runtime.trust.providerChoice.userChoice}`,
+        footnote: runtime.trust.providerChoice.forcedHandoffTrigger,
+        tone: runtime.trust.providerChoice.tone,
+      },
+      {
+        key: 'claim-ceiling',
+        eyebrow: runtime.trust.claimCeiling.title,
+        title: runtime.trust.claimCeiling.strongestPromise,
+        detail: runtime.trust.claimCeiling.reason,
+        footnote: runtime.trust.claimCeiling.suppressedPromise,
+        tone: runtime.trust.claimCeiling.tone,
+      },
+      {
+        key: 'proof-debt',
+        eyebrow: runtime.trust.proofDebt.title,
+        title: runtime.trust.proofDebt.summary,
+        detail: runtime.trust.proofDebt.debtSource,
+        footnote: runtime.trust.proofDebt.repaymentMove,
+        tone: runtime.trust.proofDebt.tone,
+      },
+      {
+        key: 'continuity-boundary',
+        eyebrow: runtime.trust.continuityBoundary.title,
+        title: runtime.trust.continuityBoundary.summary,
+        detail: `${runtime.trust.continuityBoundary.portableContext} ${runtime.trust.continuityBoundary.userOwns}`,
+        footnote: runtime.trust.continuityBoundary.forcedHandoffTrigger,
+        tone: runtime.trust.continuityBoundary.tone,
+      },
+      {
+        key: 'headroom',
+        eyebrow: runtime.trust.connectionHeadroom.title,
+        title: runtime.trust.connectionHeadroom.summary,
+        detail: runtime.trust.connectionHeadroom.warningTrigger,
+        footnote: runtime.trust.connectionHeadroom.recommendedMove,
+        tone: runtime.trust.connectionHeadroom.tone,
+      },
+    ];
+
+    return (
+      <div className="mt-5 grid gap-3 lg:grid-cols-2">
+        {runtime.trust.launchReadiness.map((item) => (
+          <div key={item.label} className={`rounded-[1.2rem] border p-4 ${trustToneClasses[item.tone]}`}>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{item.label}</p>
+            <p className="mt-2 text-sm font-medium text-white">{item.safeWhen}</p>
+            <p className="mt-2 text-sm text-white/85">{item.blockedWhen}</p>
+            <p className="mt-3 text-xs text-white/70">{item.recoveryMove}</p>
+          </div>
+        ))}
+        {cards.map((card) => (
+          <div key={card.key} className={`rounded-[1.2rem] border p-4 ${trustToneClasses[card.tone]}`}>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{card.eyebrow}</p>
+            <p className="mt-2 text-sm font-medium text-white">{card.title}</p>
+            <p className="mt-2 text-sm text-white/85">{card.detail}</p>
+            <p className="mt-3 text-xs text-white/70">{card.footnote}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
     setScenarioRefreshing(true);
@@ -402,7 +476,10 @@ export function MediaLibrary({
     ];
   };
 
-  const renderProviderVariants = (variants: ProviderVariant[], options?: { type: 'movie' | 'series'; resumeLabel?: string | null }) => {
+  const renderProviderVariants = (
+    variants: ProviderVariant[],
+    options?: { type: 'movie' | 'series'; resumeLabel?: string | null; runtime?: MediaDetailRuntimeContract | null }
+  ) => {
     if (variants.length === 0) return null;
 
     return (
@@ -410,10 +487,10 @@ export function MediaLibrary({
         <ProviderRecoveryRail
           tone={activeProviderNeedsRecovery ? 'amber' : 'emerald'}
           eyebrow="Provider variants"
-          title={options?.type === 'series' ? 'Series continuity is portable across saved providers.' : 'This title also exists on healthier saved providers.'}
-          detail={options?.type === 'series'
+          title={options?.runtime?.recoveryPlan?.title || (options?.type === 'series' ? 'Series continuity is portable across saved providers.' : 'This title also exists on healthier saved providers.')}
+          detail={options?.runtime?.recoveryPlan?.summary || (options?.type === 'series'
             ? seriesContinuity?.summary || 'Canonical episode mapping still protects series rescue before playback switches providers.'
-            : movieContinuity?.summary || 'Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first.'}
+            : movieContinuity?.summary || 'Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first.')}
         />
         {options?.type === 'series' && seriesContinuity?.seriesCompletenessBand ? (
           <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-100">
@@ -587,6 +664,13 @@ export function MediaLibrary({
                     <p className="mt-2 leading-6">{movieContinuity.summary}</p>
                   </div>
                 ) : null}
+                {movieRuntime.recoveryPlan ? (
+                  <div className={`mt-5 rounded-[1.2rem] border p-4 ${trustToneClasses[movieRuntime.recoveryPlan.tone]}`}>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{movieRuntime.recoveryPlan.title}</p>
+                    <p className="mt-2 text-sm leading-6 text-white">{movieRuntime.recoveryPlan.summary}</p>
+                    <p className="mt-2 text-xs text-white/70">Recommended owner: {movieRuntime.recoveryPlan.recommendedProviderName} · {movieRuntime.recoveryPlan.recommendedReason}</p>
+                  </div>
+                ) : null}
                 {activeProviderNeedsRecovery && activeRecoveryMessage ? (
                   <div className="mt-5 rounded-[1.2rem] border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
                     <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Active provider warning</p>
@@ -604,7 +688,9 @@ export function MediaLibrary({
                   <button onClick={() => setSelectedMovieId(filteredItems[0] ? getContentId(filteredItems[0]) : null)} className="rounded-2xl border border-white/10 px-5 py-3 text-sm text-slate-200 hover:bg-white/5">Reset selection</button>
                 </div>
 
-                {renderProviderVariants(movieVariants, { type: 'movie' })}
+                {renderDetailTrustCards(featuredMovie ? movieRuntime : null)}
+
+                {renderProviderVariants(movieVariants, { type: 'movie', runtime: movieRuntime })}
 
                 {recentItems.length > 0 ? (
                   <div className="mt-8 rounded-[1.3rem] border border-white/10 bg-white/5 p-4">
@@ -768,6 +854,13 @@ export function MediaLibrary({
                   )}
                 </div>
               ) : null}
+              {seriesRuntime.recoveryPlan ? (
+                <div className={`mt-5 rounded-[1.2rem] border p-4 ${trustToneClasses[seriesRuntime.recoveryPlan.tone]}`}>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{seriesRuntime.recoveryPlan.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-white">{seriesRuntime.recoveryPlan.summary}</p>
+                  <p className="mt-2 text-xs text-white/70">Recommended owner: {seriesRuntime.recoveryPlan.recommendedProviderName} · {seriesRuntime.recoveryPlan.recommendedReason}</p>
+                </div>
+              ) : null}
               {selectedSeriesResume ? (
                 <p className="mt-3 text-xs uppercase tracking-[0.22em] text-violet-200">
                   Resume available · {formatPercent(selectedSeriesResume.progress)}
@@ -807,6 +900,7 @@ export function MediaLibrary({
                   : highlightedEpisodeId
                     ? 'Resume highlighted episode'
                     : 'Open healthiest provider copy',
+                runtime: seriesRuntime,
               })}
 
               <ProviderTrustStack
@@ -815,6 +909,8 @@ export function MediaLibrary({
                 className="mt-4"
                 columnsClassName="grid gap-3 lg:grid-cols-2"
               />
+
+              {renderDetailTrustCards(selectedSeries ? seriesRuntime : null)}
 
               <div className="mt-6 space-y-3">
                 {selectedEpisodes.length > 0 ? selectedEpisodes.map((episode) => {
