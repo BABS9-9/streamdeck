@@ -29,6 +29,7 @@ import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
 import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarity-inline';
 import { SurfaceProviderStabilityInline } from '@/components/surface-provider-stability-inline';
+import { SurfaceReturnCooldownInline } from '@/components/surface-return-cooldown-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -204,6 +205,7 @@ export function LiveBrowser() {
   const providerSwitchContract = manifest?.surfaceProviderSwitchContracts.find((item) => item.screenId === 'live') ?? null;
   const providerReturnContract = manifest?.surfaceProviderReturnContracts.find((item) => item.screenId === 'live') ?? null;
   const providerStabilityContract = manifest?.surfaceProviderStabilityContracts.find((item) => item.screenId === 'live') ?? null;
+  const returnCooldownContract = manifest?.surfaceReturnCooldownContracts.find((item) => item.screenId === 'live') ?? null;
   const recoveryPlan = manifest?.surfaceRecoveryPlans.find((item) => item.screenId === 'live') ?? null;
   const freshnessBoard = manifest?.surfaceFreshnessBoards.find((item) => item.screenId === 'live') ?? null;
   const proofDebt = manifest?.surfaceProofDebts.find((item) => item.screenId === 'live') ?? null;
@@ -341,6 +343,13 @@ export function LiveBrowser() {
                 contract={providerStabilityContract}
                 title="Play provider stability"
                 badge="Stability truth"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceReturnCooldownInline
+                contract={returnCooldownContract}
+                title="Play return cooldown"
+                badge="Return runway"
               />
             </div>
             <div className="mt-4">

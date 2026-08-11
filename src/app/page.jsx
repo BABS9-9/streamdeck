@@ -28,6 +28,7 @@ import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
 import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarity-inline';
 import { SurfaceProviderStabilityInline } from '@/components/surface-provider-stability-inline';
+import { SurfaceReturnCooldownInline } from '@/components/surface-return-cooldown-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -194,6 +195,10 @@ export default function LoginPage() {
   );
   const providerStabilityContract = useMemo(
     () => manifest?.surfaceProviderStabilityContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const returnCooldownContract = useMemo(
+    () => manifest?.surfaceReturnCooldownContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const recoveryPlan = useMemo(
@@ -479,6 +484,14 @@ export default function LoginPage() {
               contract={providerStabilityContract}
               title="Connect provider stability"
               badge="Stability truth"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceReturnCooldownInline
+              contract={returnCooldownContract}
+              title="Connect return cooldown"
+              badge="Return runway"
             />
           </div>
 
