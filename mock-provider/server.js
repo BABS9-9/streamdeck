@@ -630,6 +630,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Handoff clarity on Login',
+    detail: 'The adapter now publishes what Connect carries into Home, what exact condition should hold the user on Login, and what fallback lane takes over before setup quietly changes the destination story.',
+    surface: 'login',
+  },
+  {
     title: 'Scenario-switched rehearsal',
     detail: 'Home can refresh against healthy, degraded, saturated, and expired provider states in place so browse continuity is demoable instead of theoretical.',
     surface: 'home',
@@ -645,6 +650,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Handoff clarity on Home',
+    detail: 'The adapter now publishes what the hero carries into Live, what exact condition should hold the user in browse, and what fallback lane takes over before launch polish quietly changes the story.',
+    surface: 'home',
+  },
+  {
     title: 'Scenario-switched rehearsal',
     detail: 'Live can re-run its category and guide flow against changing provider conditions while staying on the same surface, proving surf resilience instead of describing it.',
     surface: 'live',
@@ -657,6 +667,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Launch scorecard on Live',
     detail: 'The adapter now publishes whether Play is exact-channel ready, only safe to preview, or already leaning on rescue logic before motion implies more confidence than current proof.',
+    surface: 'live',
+  },
+  {
+    title: 'Handoff clarity on Live',
+    detail: 'The adapter now publishes what Play carries into the dock, what exact condition should hold the user in browse, and what fallback lane takes over before preview polish quietly changes the channel story.',
     surface: 'live',
   },
   {
@@ -765,6 +780,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Most IPTV players imply readiness through UI polish and leave users guessing whether the next CTA is fully proven, cache-backed, or already recovery-owned.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one scorecard, exit-criteria, and handoff contract so readiness, hold conditions, and next-hop truth stay synchronized.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'handoff-clarity',
+    feature: 'Handoff clarity',
+    pitch: 'Publish what context the next screen keeps, what exact condition should hold the current surface in place, and what fallback lane takes over before a CTA quietly changes the mission.',
+    competitiveGap: 'Most IPTV players hide handoff rules inside navigation, so users only discover that launch context changed after a jarring jump, reset, or disguised fallback.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one exit-criteria plus handoff-map contract so go-signals, hold-signals, carried-forward context, and fallback lane stay aligned beside the primary CTA.',
     surfaces: ['login', 'home', 'live'],
   },
   {
