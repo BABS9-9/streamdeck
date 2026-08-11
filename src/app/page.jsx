@@ -37,6 +37,7 @@ import { SurfaceProviderReturnContract } from '@/components/surface-provider-ret
 import { SurfaceProviderStabilityContract } from '@/components/surface-provider-stability-contract';
 import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
+import { SurfaceRecoveryWitnessInline } from '@/components/surface-recovery-witness-inline';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
@@ -492,6 +493,14 @@ export default function LoginPage() {
               contract={returnCooldownContract}
               title="Connect return cooldown"
               badge="Return runway"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceRecoveryWitnessInline
+              contract={recoveryWitness}
+              title="Connect recovery witness"
+              badge="Recovery proof"
             />
           </div>
 

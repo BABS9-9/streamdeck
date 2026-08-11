@@ -38,6 +38,7 @@ import { SurfaceProviderReturnContract } from '@/components/surface-provider-ret
 import { SurfaceProviderStabilityContract } from '@/components/surface-provider-stability-contract';
 import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
 import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
+import { SurfaceRecoveryWitnessInline } from '@/components/surface-recovery-witness-inline';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
@@ -350,6 +351,13 @@ export function LiveBrowser() {
                 contract={returnCooldownContract}
                 title="Play return cooldown"
                 badge="Return runway"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceRecoveryWitnessInline
+                contract={recoveryWitness}
+                title="Play recovery witness"
+                badge="Recovery proof"
               />
             </div>
             <div className="mt-4">
