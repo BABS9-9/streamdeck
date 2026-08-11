@@ -630,6 +630,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Provider stability on Login',
+    detail: 'The adapter now publishes when the current provider is stable enough to keep owning fresh Home launches, what auth or line jitter is still tolerable, and what instability keeps rescue primary.',
+    surface: 'login',
+  },
+  {
     title: 'Handoff clarity on Login',
     detail: 'The adapter now publishes what Connect carries into Home, what exact condition should hold the user on Login, and what fallback lane takes over before setup quietly changes the destination story.',
     surface: 'login',
@@ -650,6 +655,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Provider stability on Home',
+    detail: 'The adapter now publishes when the hero is stable enough to move ownership back onto the current provider, what browse volatility can stay boring, and what instability keeps rescue primary.',
+    surface: 'home',
+  },
+  {
     title: 'Handoff clarity on Home',
     detail: 'The adapter now publishes what the hero carries into Live, what exact condition should hold the user in browse, and what fallback lane takes over before launch polish quietly changes the story.',
     surface: 'home',
@@ -667,6 +677,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Launch scorecard on Live',
     detail: 'The adapter now publishes whether Play is exact-channel ready, only safe to preview, or already leaning on rescue logic before motion implies more confidence than current proof.',
+    surface: 'live',
+  },
+  {
+    title: 'Provider stability on Live',
+    detail: 'The adapter now publishes when the selected card is stable enough to put the original provider back in charge, what preview or guide jitter is still acceptable, and what instability keeps rescue primary.',
     surface: 'live',
   },
   {
@@ -780,6 +795,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Most IPTV players imply readiness through UI polish and leave users guessing whether the next CTA is fully proven, cache-backed, or already recovery-owned.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one scorecard, exit-criteria, and handoff contract so readiness, hold conditions, and next-hop truth stay synchronized.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'provider-stability-truth',
+    feature: 'Provider stability truth',
+    pitch: 'Tell users when the current provider is genuinely stable enough to own the next move again, what volatility is still normal, and what instability keeps rescue primary.',
+    competitiveGap: 'Competitors usually treat one lucky refresh or a brief calm spell like full recovery, so users get pushed back onto a shaky provider before the trust story is actually boring again.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one provider-stability contract so stability thresholds, tolerated jitter, and rescue-primary triggers stay aligned beside the CTA.',
     surfaces: ['login', 'home', 'live'],
   },
   {
