@@ -645,6 +645,13 @@ export function SearchBrowser() {
                         <p className="mt-2 leading-5">{trustContract.connectionHeadroom.currentWindow}</p>
                         <p className="mt-2 leading-5 text-slate-400">{trustContract.connectionHeadroom.warningTrigger}</p>
                       </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.providerStability.title}</p>
+                        <p className="mt-2 leading-5 text-slate-200">{trustContract.providerStability.summary}</p>
+                        <p className="mt-2 leading-5">Stable when: {trustContract.providerStability.stabilityThreshold}</p>
+                        <p className="mt-2 leading-5">Normal volatility: {trustContract.providerStability.toleratedVolatility}</p>
+                        <p className="mt-2 leading-5 text-slate-400">Keep rescue primary when: {trustContract.providerStability.keepRescuePrimaryTrigger}</p>
+                      </div>
                     </div>
                   </div>
                 ) : null}

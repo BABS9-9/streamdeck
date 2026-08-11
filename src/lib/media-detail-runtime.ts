@@ -56,6 +56,15 @@ export type MediaDetailConnectionHeadroom = {
   tone: MediaDetailContractTone;
 };
 
+export type MediaDetailProviderStability = {
+  title: string;
+  summary: string;
+  stabilityThreshold: string;
+  toleratedVolatility: string;
+  keepRescuePrimaryTrigger: string;
+  tone: MediaDetailContractTone;
+};
+
 export type MediaDetailRecoveryPlan = {
   title: string;
   summary: string;
@@ -72,6 +81,7 @@ export type MediaDetailTrustContract = {
   proofDebt: MediaDetailProofDebt;
   continuityBoundary: MediaDetailContinuityBoundary;
   connectionHeadroom: MediaDetailConnectionHeadroom;
+  providerStability: MediaDetailProviderStability;
 };
 
 export type MediaDetailRuntimeContract = {
@@ -175,6 +185,30 @@ const getHeadroomSummary = (connection?: SavedConnection | null) => {
   };
 };
 
+const getProviderStabilityTone = ({
+  activeWarning,
+  sameProviderOwner,
+  headroomTone,
+  hasAlternates,
+  hasResumeHook,
+  kind,
+}: {
+  activeWarning: string | null;
+  sameProviderOwner: boolean;
+  headroomTone: MediaDetailContractTone;
+  hasAlternates: boolean;
+  hasResumeHook: boolean;
+  kind: 'movie' | 'series';
+}): MediaDetailContractTone => {
+  if (activeWarning) return 'recover';
+  if (!sameProviderOwner) return 'recover';
+  if (headroomTone === 'recover') return 'recover';
+  if (headroomTone === 'watch') return 'watch';
+  if (kind === 'series' && !hasResumeHook) return 'watch';
+  if (hasAlternates) return 'watch';
+  return 'ready';
+};
+
 const buildMediaDetailTrustContract = ({
   kind,
   variants,
@@ -209,6 +243,14 @@ const buildMediaDetailTrustContract = ({
       ? 'recover'
       : 'ready';
   const headroom = getHeadroomSummary(activeConnection);
+  const stabilityTone = getProviderStabilityTone({
+    activeWarning,
+    sameProviderOwner,
+    headroomTone: headroom.tone,
+    hasAlternates,
+    hasResumeHook,
+    kind,
+  });
   const readinessTone: MediaDetailContractTone = !sameProviderOwner || activeWarning || headroom.tone === 'recover'
     ? 'recover'
     : headroom.tone === 'watch'
@@ -331,6 +373,38 @@ const buildMediaDetailTrustContract = ({
       blockedState: headroom.blockedState,
       recommendedMove: headroom.recommendedMove,
       tone: headroom.tone,
+    },
+    providerStability: {
+      title: 'Provider stability truth',
+      summary: stabilityTone === 'ready'
+        ? `${activeConnection.name} is currently stable enough to keep owning fresh ${kind === 'series' ? 'series drill-downs' : 'detail launches'} from this rail.`
+        : stabilityTone === 'watch'
+          ? `${activeConnection.name} can stay visible, but this detail rail should describe the next move as stability-watched rather than fully settled.`
+          : `${activeConnection.name} has not re-earned boring ${kind === 'series' ? 'series ownership' : 'playback ownership'} yet, so rescue language should stay primary.`,
+      stabilityThreshold: stabilityTone === 'ready'
+        ? `${activeConnection.name} keeps ownership only while provider health stays boring, exact launch ownership does not need to move, and the current headroom posture remains repeatably safe.`
+        : stabilityTone === 'watch'
+          ? `${activeConnection.name} may remain the visible detail owner while minor volatility stays explainable, but alternate-provider availability or thin headroom still keeps the next move under observation.`
+          : `${activeConnection.name} must prove repeated healthy checks, safe headroom, and exact launch ownership before this rail upgrades recovery language back into ordinary confidence.`,
+      toleratedVolatility: stabilityTone === 'ready'
+        ? 'Small metadata refreshes or harmless browse jitter are acceptable while the same provider keeps the exact next move intact.'
+        : stabilityTone === 'watch'
+          ? kind === 'series'
+            ? 'The rail may tolerate series-level continuity without exact episode proof, or one spare line of headroom, as long as provider choice stays explicit.'
+            : 'The rail may tolerate alternate copies being visible or one spare line of headroom while the current provider still owns the next move.'
+          : 'The rail should not treat provider warnings, launch-owner mismatch, or saturated lines as normal volatility.',
+      keepRescuePrimaryTrigger: activeWarning
+        ? `${activeConnection.name} is already carrying ${activeWarning.toLowerCase()}, so rescue should stay primary immediately.`
+        : !sameProviderOwner
+          ? `${launchOwner.providerName} already owns the next move, so the active detail shell must keep recovery ownership visible.`
+          : headroom.tone !== 'ready'
+            ? headroom.warningTrigger
+            : kind === 'series' && !hasResumeHook
+              ? 'Keep rescue primary until exact resume proof survives series-info verification.'
+              : hasAlternates
+                ? 'Keep rescue primary once a healthier saved copy starts looking equally or more repeatable than the active provider.'
+                : 'If provider health, ownership, or line posture slips, rescue should retake the next move before the rail quietly overclaims stability.',
+      tone: stabilityTone,
     },
   };
 };

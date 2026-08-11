@@ -360,6 +360,14 @@ export function MediaLibrary({
         footnote: runtime.trust.connectionHeadroom.recommendedMove,
         tone: runtime.trust.connectionHeadroom.tone,
       },
+      {
+        key: 'provider-stability',
+        eyebrow: runtime.trust.providerStability.title,
+        title: runtime.trust.providerStability.summary,
+        detail: `${runtime.trust.providerStability.stabilityThreshold} ${runtime.trust.providerStability.toleratedVolatility}`,
+        footnote: runtime.trust.providerStability.keepRescuePrimaryTrigger,
+        tone: runtime.trust.providerStability.tone,
+      },
     ];
 
     return (

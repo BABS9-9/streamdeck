@@ -131,6 +131,15 @@ export type SearchTrustConnectionHeadroom = {
   tone: SearchContractTone;
 };
 
+export type SearchTrustProviderStability = {
+  title: string;
+  summary: string;
+  stabilityThreshold: string;
+  toleratedVolatility: string;
+  keepRescuePrimaryTrigger: string;
+  tone: SearchContractTone;
+};
+
 export type SearchResultTrustContract = {
   launchReadiness: SearchTrustReadinessCard[];
   providerChoice: SearchTrustProviderChoice;
@@ -138,6 +147,7 @@ export type SearchResultTrustContract = {
   proofDebt: SearchTrustProofDebt;
   autonomyBoundary: SearchTrustAutonomyBoundary;
   connectionHeadroom: SearchTrustConnectionHeadroom;
+  providerStability: SearchTrustProviderStability;
 };
 
 export type GlobalSearchRouteContract = {
@@ -430,6 +440,29 @@ const getHeadroomTone = (summary?: SavedConnection['lastAuthSummary'] | null): S
   return 'ready';
 };
 
+const getProviderStabilityTone = ({
+  providerWarning,
+  connectionTone,
+  indexTone,
+  headroomTone,
+  primaryActionRequiresSwitch,
+  healthiestAlternateVariant,
+}: {
+  providerWarning: string | null;
+  connectionTone: SearchContractTone;
+  indexTone: SearchContractTone;
+  headroomTone: SearchContractTone;
+  primaryActionRequiresSwitch: boolean;
+  healthiestAlternateVariant: SearchResultVariantPayload | null;
+}): SearchContractTone => {
+  if (providerWarning) return 'recover';
+  if (connectionTone === 'recover' || indexTone === 'recover' || headroomTone === 'recover') return 'recover';
+  if (primaryActionRequiresSwitch) return 'watch';
+  if (healthiestAlternateVariant && healthiestAlternateVariant.compositeScore >= 90) return 'watch';
+  if (connectionTone === 'watch' || indexTone === 'watch' || headroomTone === 'watch') return 'watch';
+  return 'ready';
+};
+
 const getResultRecoveryMove = ({
   result,
   launchVariant,
@@ -526,6 +559,14 @@ const buildTrustContract = ({
       ? 'watch'
       : 'ready';
   const claimCeilingTone = getDominantTone([connectionTone, indexTone]);
+  const providerStabilityTone = getProviderStabilityTone({
+    providerWarning,
+    connectionTone,
+    indexTone,
+    headroomTone,
+    primaryActionRequiresSwitch: primaryAction.requiresSwitch,
+    healthiestAlternateVariant,
+  });
   const claimReason = runtimeProvider?.indexState === 'stale'
     ? `${launchVariant.provider.name} produced a ranked hit, but the index is stale enough that Search should not oversell freshness.`
     : runtimeProvider?.indexState === 'missing'
@@ -647,6 +688,34 @@ const buildTrustContract = ({
         : providerWarning || 'Search still needs to keep line pressure visible before playback gets blamed for account limits.',
       recommendedMove: recoveryMove,
       tone: headroomTone,
+    },
+    providerStability: {
+      title: 'Provider stability truth',
+      summary: providerStabilityTone === 'ready'
+        ? `${launchVariant.provider.name} is currently boring enough to keep owning fresh Search launches for this result.`
+        : providerStabilityTone === 'watch'
+          ? `${launchVariant.provider.name} can stay visible, but Search should describe the next move as stability-watched rather than fully settled.`
+          : `${launchVariant.provider.name} has not re-earned boring launch ownership for this result yet, so rescue language should stay primary.`,
+      stabilityThreshold: providerStabilityTone === 'ready'
+        ? `${launchVariant.provider.name} keeps launch ownership only while provider health, index freshness, and line headroom all remain repeatably healthy for the same ranked result packet.`
+        : providerStabilityTone === 'watch'
+          ? `${launchVariant.provider.name} may stay on top while minor search or account jitter remains explainable, but a single result snapshot is not enough to call the provider stable again.`
+          : `${launchVariant.provider.name} must prove repeated healthy checks with fresh index proof and safe line posture before Search upgrades rescue copy back into ordinary launch confidence.`,
+      toleratedVolatility: providerStabilityTone === 'ready'
+        ? 'Small result-count drift or harmless catalog refresh timing is acceptable while the same provider keeps the cleanest repeatable launch path.'
+        : providerStabilityTone === 'watch'
+          ? 'Search may tolerate mild index age, one spare line of headroom, or an active-shell mismatch as long as the handoff stays visible.'
+          : 'Search should not tolerate provider warnings, saturated lines, missing index proof, or a healthier alternate tying the same result without exposing rescue first.',
+      keepRescuePrimaryTrigger: providerWarning
+        ? `${launchVariant.provider.name} still shows ${providerWarning.toLowerCase()}, so rescue should stay primary immediately.`
+        : healthiestAlternateVariant && healthiestAlternateVariant.compositeScore >= launchVariant.compositeScore
+          ? `${healthiestAlternateVariant.provider.name} now ranks at least as safely as ${launchVariant.provider.name}, so Search must keep rescue and provider choice visible.`
+          : primaryAction.requiresSwitch
+            ? `A fresh result launch still needs a provider handoff from ${activeShellLabel} to ${launchVariant.provider.name}, so stability cannot be treated as invisible yet.`
+            : headroomTone !== 'ready'
+              ? `Keep rescue primary once line posture stops making a repeatable next ${result.kind === 'series' ? 'browse move' : 'playback move'} feel boring.`
+              : `If index freshness, provider health, or line posture degrades, Search must put rescue back in charge before the next move quietly changes owners.`,
+      tone: providerStabilityTone,
     },
   };
 };
