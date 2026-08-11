@@ -652,6 +652,13 @@ export function SearchBrowser() {
                         <p className="mt-2 leading-5">Normal volatility: {trustContract.providerStability.toleratedVolatility}</p>
                         <p className="mt-2 leading-5 text-slate-400">Keep rescue primary when: {trustContract.providerStability.keepRescuePrimaryTrigger}</p>
                       </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.returnCooldown.title}</p>
+                        <p className="mt-2 leading-5 text-slate-200">{trustContract.returnCooldown.summary}</p>
+                        <p className="mt-2 leading-5">Cooldown window: {trustContract.returnCooldown.cooldownWindow}</p>
+                        <p className="mt-2 leading-5">Cooldown shrinks when: {trustContract.returnCooldown.shrinkingProof}</p>
+                        <p className="mt-2 leading-5 text-slate-400">Restart cooldown when: {trustContract.returnCooldown.resetTrigger}</p>
+                      </div>
                     </div>
                   </div>
                 ) : null}

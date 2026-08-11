@@ -368,6 +368,14 @@ export function MediaLibrary({
         footnote: runtime.trust.providerStability.keepRescuePrimaryTrigger,
         tone: runtime.trust.providerStability.tone,
       },
+      {
+        key: 'return-cooldown',
+        eyebrow: runtime.trust.returnCooldown.title,
+        title: runtime.trust.returnCooldown.summary,
+        detail: `${runtime.trust.returnCooldown.cooldownWindow} ${runtime.trust.returnCooldown.shrinkingProof}`,
+        footnote: runtime.trust.returnCooldown.resetTrigger,
+        tone: runtime.trust.returnCooldown.tone,
+      },
     ];
 
     return (

@@ -65,6 +65,15 @@ export type MediaDetailProviderStability = {
   tone: MediaDetailContractTone;
 };
 
+export type MediaDetailReturnCooldown = {
+  title: string;
+  summary: string;
+  cooldownWindow: string;
+  shrinkingProof: string;
+  resetTrigger: string;
+  tone: MediaDetailContractTone;
+};
+
 export type MediaDetailRecoveryPlan = {
   title: string;
   summary: string;
@@ -82,6 +91,7 @@ export type MediaDetailTrustContract = {
   continuityBoundary: MediaDetailContinuityBoundary;
   connectionHeadroom: MediaDetailConnectionHeadroom;
   providerStability: MediaDetailProviderStability;
+  returnCooldown: MediaDetailReturnCooldown;
 };
 
 export type MediaDetailRuntimeContract = {
@@ -209,6 +219,22 @@ const getProviderStabilityTone = ({
   return 'ready';
 };
 
+const getReturnCooldownTone = ({
+  stabilityTone,
+  sameProviderOwner,
+  hasAlternates,
+}: {
+  stabilityTone: MediaDetailContractTone;
+  sameProviderOwner: boolean;
+  hasAlternates: boolean;
+}): MediaDetailContractTone => {
+  if (stabilityTone === 'recover') return 'recover';
+  if (!sameProviderOwner) return 'recover';
+  if (stabilityTone === 'watch') return 'watch';
+  if (hasAlternates) return 'watch';
+  return 'ready';
+};
+
 const buildMediaDetailTrustContract = ({
   kind,
   variants,
@@ -250,6 +276,11 @@ const buildMediaDetailTrustContract = ({
     hasAlternates,
     hasResumeHook,
     kind,
+  });
+  const returnCooldownTone = getReturnCooldownTone({
+    stabilityTone,
+    sameProviderOwner,
+    hasAlternates,
   });
   const readinessTone: MediaDetailContractTone = !sameProviderOwner || activeWarning || headroom.tone === 'recover'
     ? 'recover'
@@ -405,6 +436,38 @@ const buildMediaDetailTrustContract = ({
                 ? 'Keep rescue primary once a healthier saved copy starts looking equally or more repeatable than the active provider.'
                 : 'If provider health, ownership, or line posture slips, rescue should retake the next move before the rail quietly overclaims stability.',
       tone: stabilityTone,
+    },
+    returnCooldown: {
+      title: 'Return cooldown truth',
+      summary: returnCooldownTone === 'ready'
+        ? `${activeConnection.name} has effectively waited out its detail cooldown, so this rail may treat the next move as ordinary while the same proof holds.`
+        : returnCooldownTone === 'watch'
+          ? `${activeConnection.name} is shortening its detail cooldown, but the rail should keep countdown language visible until ownership stays calm again.`
+          : `${activeConnection.name} is still on cooldown for this ${kind === 'series' ? 'series flow' : 'title'}, so rescue language should stay primary around the next move.`,
+      cooldownWindow: returnCooldownTone === 'ready'
+        ? `${activeConnection.name} may keep ${kind === 'series' ? 'series drill-down' : 'playback'} ownership only while provider health, headroom, and exact launch ownership stay calm across repeated visits to this rail.`
+        : returnCooldownTone === 'watch'
+          ? sameProviderOwner
+            ? `Keep ${activeConnection.name} on a shrinking cooldown until the same detail rail survives repeated launches without new warnings, thin headroom surprises, or a healthier alternate copy pressing into parity.`
+            : `Keep ${activeConnection.name} on cooldown until the active detail shell and the healthiest launch owner stop disagreeing about who should own the next move.`
+          : !sameProviderOwner
+            ? `Keep ${activeConnection.name} on cooldown until it can repeatedly outrank ${launchOwner.providerName} without needing recovery framing.`
+            : `Keep ${activeConnection.name} on cooldown until this rail no longer needs rescue-first language to explain playback safety.`,
+      shrinkingProof: kind === 'series' && !hasResumeHook
+        ? 'Each repeated drill-down where episode mapping stays intact and provider ownership stops wobbling shortens the cooldown back toward exact resume confidence.'
+        : sameProviderOwner
+          ? `Each repeated healthy validation pass, steady line posture, and unchanged launch-owner explanation shortens the cooldown for ${activeConnection.name}.`
+          : `Each repeated visit where ${activeConnection.name} retakes exact launch ownership without warnings shortens the cooldown back toward the active rail.`,
+      resetTrigger: activeWarning
+        ? `Restart the cooldown immediately if ${activeConnection.name} keeps showing ${activeWarning.toLowerCase()} or adds a new visible warning.`
+        : !sameProviderOwner
+          ? `Restart the cooldown whenever ${launchOwner.providerName} keeps owning the safer next move or the detail rail needs a fresh provider handoff explanation.`
+          : headroom.tone !== 'ready'
+            ? 'Restart the cooldown whenever line pressure turns the same next move back into a watched or blocked launch.'
+            : kind === 'series' && !hasResumeHook
+              ? 'Restart the cooldown whenever exact resume proof falls back to series-level guidance again.'
+              : 'Restart the cooldown whenever provider health, launch ownership, or continuity proof changes the detail story again.',
+      tone: returnCooldownTone,
     },
   };
 };

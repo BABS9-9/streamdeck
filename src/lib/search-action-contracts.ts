@@ -140,6 +140,15 @@ export type SearchTrustProviderStability = {
   tone: SearchContractTone;
 };
 
+export type SearchTrustReturnCooldown = {
+  title: string;
+  summary: string;
+  cooldownWindow: string;
+  shrinkingProof: string;
+  resetTrigger: string;
+  tone: SearchContractTone;
+};
+
 export type SearchResultTrustContract = {
   launchReadiness: SearchTrustReadinessCard[];
   providerChoice: SearchTrustProviderChoice;
@@ -148,6 +157,7 @@ export type SearchResultTrustContract = {
   autonomyBoundary: SearchTrustAutonomyBoundary;
   connectionHeadroom: SearchTrustConnectionHeadroom;
   providerStability: SearchTrustProviderStability;
+  returnCooldown: SearchTrustReturnCooldown;
 };
 
 export type GlobalSearchRouteContract = {
@@ -463,6 +473,27 @@ const getProviderStabilityTone = ({
   return 'ready';
 };
 
+const getReturnCooldownTone = ({
+  providerStabilityTone,
+  primaryActionRequiresSwitch,
+  activeConnectionId,
+  launchProviderId,
+  healthiestAlternateVariant,
+}: {
+  providerStabilityTone: SearchContractTone;
+  primaryActionRequiresSwitch: boolean;
+  activeConnectionId?: string | null;
+  launchProviderId: string;
+  healthiestAlternateVariant: SearchResultVariantPayload | null;
+}): SearchContractTone => {
+  if (providerStabilityTone === 'recover') return 'recover';
+  if (primaryActionRequiresSwitch) return 'recover';
+  if (activeConnectionId && activeConnectionId !== launchProviderId) return 'watch';
+  if (healthiestAlternateVariant && healthiestAlternateVariant.compositeScore >= 90) return 'watch';
+  if (providerStabilityTone === 'watch') return 'watch';
+  return 'ready';
+};
+
 const getResultRecoveryMove = ({
   result,
   launchVariant,
@@ -565,6 +596,13 @@ const buildTrustContract = ({
     indexTone,
     headroomTone,
     primaryActionRequiresSwitch: primaryAction.requiresSwitch,
+    healthiestAlternateVariant,
+  });
+  const returnCooldownTone = getReturnCooldownTone({
+    providerStabilityTone,
+    primaryActionRequiresSwitch: primaryAction.requiresSwitch,
+    activeConnectionId,
+    launchProviderId: launchVariant.provider.id,
     healthiestAlternateVariant,
   });
   const claimReason = runtimeProvider?.indexState === 'stale'
@@ -716,6 +754,38 @@ const buildTrustContract = ({
               ? `Keep rescue primary once line posture stops making a repeatable next ${result.kind === 'series' ? 'browse move' : 'playback move'} feel boring.`
               : `If index freshness, provider health, or line posture degrades, Search must put rescue back in charge before the next move quietly changes owners.`,
       tone: providerStabilityTone,
+    },
+    returnCooldown: {
+      title: 'Return cooldown truth',
+      summary: returnCooldownTone === 'ready'
+        ? `${launchVariant.provider.name} has earned ordinary Search ownership back, so the next move no longer needs cooldown language while this result stays calm.`
+        : returnCooldownTone === 'watch'
+          ? `${launchVariant.provider.name} is shrinking its Search cooldown, but rescue phrasing should stay visible until the same ownership story repeats cleanly again.`
+          : `${launchVariant.provider.name} is still on cooldown for this Search result, so rescue or alternate-owner framing should stay attached to the next move.`,
+      cooldownWindow: returnCooldownTone === 'ready'
+        ? `${launchVariant.provider.name} may keep the next ${result.kind === 'series' ? 'series drill-down' : 'launch'} only while provider health, index freshness, and line posture stay calm across repeat searches for this title.`
+        : returnCooldownTone === 'watch'
+          ? primaryAction.requiresSwitch
+            ? `Keep ${launchVariant.provider.name} on cooldown until the active Search shell and the ranked launch owner stop disagreeing about who owns the next move.`
+            : `Keep ${launchVariant.provider.name} on a shrinking cooldown until the same ranked result survives fresh queries without new warnings, stale proof, or nearly equivalent rescue pressure.`
+          : healthiestAlternateVariant && healthiestAlternateVariant.provider.id !== launchVariant.provider.id
+            ? `Keep ${launchVariant.provider.name} on cooldown until it can repeatedly outrank ${healthiestAlternateVariant.provider.name} without caveats about safety, freshness, or headroom.`
+            : `Keep ${launchVariant.provider.name} on cooldown until the result no longer needs rescue framing to explain why it is still safe enough to launch.`,
+      shrinkingProof: primaryAction.requiresSwitch
+        ? `Each repeated query where ${launchVariant.provider.name} keeps the same title meaning, same launch owner, and same trust posture shortens the cooldown back toward invisible Search ownership.`
+        : continueWatching.hasResume && continueWatching.providerId && continueWatching.providerId !== launchVariant.provider.id
+          ? 'Each repeated result where provider ownership and resume continuity stop disagreeing shortens the cooldown on exact-play promises.'
+          : `Each consecutive fresh index pass, stable line posture, and unchanged launch-owner explanation shortens the cooldown for ${launchVariant.provider.name}.`,
+      resetTrigger: providerWarning
+        ? `Restart the cooldown immediately if ${launchVariant.provider.name} keeps showing ${providerWarning.toLowerCase()} or adds a new visible warning.`
+        : healthiestAlternateVariant && healthiestAlternateVariant.provider.id !== launchVariant.provider.id
+          ? `Restart the cooldown whenever ${healthiestAlternateVariant.provider.name} becomes the safer next move again or the Search shell needs a new provider explanation.`
+          : runtimeProvider?.indexState === 'stale'
+            ? 'Restart the cooldown whenever stale index proof starts doing the real work behind this result again.'
+            : headroomTone !== 'ready'
+              ? 'Restart the cooldown whenever line pressure turns the same next move back into a watched or blocked launch.'
+              : 'Restart the cooldown whenever provider health, launch ownership, or saved-state continuity changes the Search story again.',
+      tone: returnCooldownTone,
     },
   };
 };
