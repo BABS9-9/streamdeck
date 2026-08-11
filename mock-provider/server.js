@@ -635,6 +635,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Return cooldown on Login',
+    detail: 'The adapter now publishes how much calm runway is still left before the original provider may take Home ownership back, what proof keeps that cooldown shrinking, and what auth wobble restarts the wait.',
+    surface: 'login',
+  },
+  {
     title: 'Handoff clarity on Login',
     detail: 'The adapter now publishes what Connect carries into Home, what exact condition should hold the user on Login, and what fallback lane takes over before setup quietly changes the destination story.',
     surface: 'login',
@@ -660,6 +665,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Return cooldown on Home',
+    detail: 'The adapter now publishes how much calm runway is still left before the hero may move ownership back onto the current provider, what repeated browse proof keeps that cooldown shrinking, and what contradiction restarts the wait.',
+    surface: 'home',
+  },
+  {
     title: 'Handoff clarity on Home',
     detail: 'The adapter now publishes what the hero carries into Live, what exact condition should hold the user in browse, and what fallback lane takes over before launch polish quietly changes the story.',
     surface: 'home',
@@ -682,6 +692,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Provider stability on Live',
     detail: 'The adapter now publishes when the selected card is stable enough to put the original provider back in charge, what preview or guide jitter is still acceptable, and what instability keeps rescue primary.',
+    surface: 'live',
+  },
+  {
+    title: 'Return cooldown on Live',
+    detail: 'The adapter now publishes how much calm runway is still left before the selected card may hand Play ownership back to the original provider, what repeated preview-plus-guide proof keeps that cooldown shrinking, and what instability restarts the wait.',
     surface: 'live',
   },
   {
@@ -804,6 +819,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually treat one lucky refresh or a brief calm spell like full recovery, so users get pushed back onto a shaky provider before the trust story is actually boring again.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one provider-stability contract so stability thresholds, tolerated jitter, and rescue-primary triggers stay aligned beside the CTA.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'return-cooldown-truth',
+    feature: 'Return cooldown truth',
+    pitch: 'Tell users how long the current provider still needs to stay calm before it can take the next move back from rescue, what proof keeps the cooldown shrinking, and what reset restarts that wait.',
+    competitiveGap: 'Competitors usually talk about recovery like an instant yes/no flip, so one good poll or lucky preview makes the original provider look back long before it has earned boring ownership again.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one return-cooldown contract so cooldown runway, countdown reset triggers, and return-owner proof stay aligned beside the CTA.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -3979,6 +4003,90 @@ const buildSurfaceProviderStabilityContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceReturnCooldownContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login return-cooldown contract',
+    summary: scenario === 'healthy'
+      ? 'Login should say how much calm runway is still left before the original provider may take Home ownership back from rescue, not just that stability feels better right now.'
+      : 'Login should publish how long the original provider still needs to stay calm before it may take setup ownership back, what proof keeps that cooldown shrinking, and what auth or line wobble restarts the wait.',
+    cooldowns: [
+      {
+        label: 'Return Home ownership to the original provider',
+        cooldownWindow: scenario === 'healthy'
+          ? 'The original provider can take Home ownership back only after a short run of clean auth checks, steady line posture, and unchanged trust facts.'
+          : 'Keep the original provider on cooldown until fresh auth proof stays clean, line pressure relaxes, and the same Home handoff survives more than one validation cycle.',
+        shrinkingProof: 'Each consecutive healthy auth pass, steady expiry posture, and stable line count shortens the cooldown back toward the original provider.',
+        resetTrigger: scenario === 'healthy'
+          ? 'Restart the cooldown as soon as auth, expiry posture, or line pressure changes the Home story again.'
+          : 'Restart the cooldown whenever auth fails again, line usage spikes back into warning, or the saved-provider story needs fresh caveats.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Return saved-provider shortcut ownership',
+        cooldownWindow: 'A saved shortcut can retake one-tap ownership only after it proves it is repeatably safer than the active rescue path, not just recently luckier.',
+        shrinkingProof: 'Repeated shortcut launches that preserve the same provider identity, same Home destination, and same trust posture shorten this cooldown.',
+        resetTrigger: 'Restart the cooldown once the shortcut needs warning copy, a weaker CTA, or a new provider explanation the rescue path does not.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home return-cooldown contract',
+    summary: scenario === 'healthy'
+      ? 'Home should say how much calm runway is still left before the hero may hand browse ownership back to the original provider, not just that the current refresh looks promising.'
+      : 'Home should publish how long the original provider still needs to stay calm before it may take browse ownership back, what proof keeps that cooldown shrinking, and what contradiction restarts the wait.',
+    cooldowns: [
+      {
+        label: 'Return featured browse ownership',
+        cooldownWindow: scenario === 'healthy'
+          ? 'The hero can return to the original provider only after repeated refreshes keep the same featured story, same trust posture, and same next-safe launch without rescue help.'
+          : 'Keep the original provider on cooldown until live refresh, cached continuity, and trust cues stop contradicting one another across more than one hero cycle.',
+        shrinkingProof: 'Each clean hero refresh, steady quick-rail launch owner, and unchanged trust explanation shortens the cooldown back toward original-provider browse ownership.',
+        resetTrigger: scenario === 'healthy'
+          ? 'Restart the cooldown once the hero changes trust state, launch owner, or fallback posture between refreshes.'
+          : 'Restart the cooldown whenever cached continuity starts doing the real work again or the hero flips between live-owner and rescue-owned truth.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Return rail launch ownership',
+        cooldownWindow: 'A rail can return to the original provider only after repeated launches keep the same title family, same launch promise, and same recovery hierarchy.',
+        shrinkingProof: 'Stable rail launches, unchanged card meaning, and repeatable trust posture shorten this cooldown.',
+        resetTrigger: 'Restart the cooldown once the current provider changes which card is safest or needs per-launch caveats again.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live return-cooldown contract',
+    summary: scenario === 'healthy'
+      ? 'Live should say how much calm runway is still left before the selected card may hand Play ownership back to the original provider, not just that preview looks steady for a moment.'
+      : 'Live should publish how long the original provider still needs to stay calm before it may take Play ownership back, what proof keeps that cooldown shrinking, and what instability restarts the wait.',
+    cooldowns: [
+      {
+        label: 'Return selected-card Play ownership',
+        cooldownWindow: scenario === 'healthy'
+          ? 'The selected card can return to the original provider only after preview, NOW / NEXT, and line posture stay aligned across repeated checks on the same channel.'
+          : 'Keep the original provider on cooldown until preview, guide, and line posture stop wobbling enough that the same selected card can safely own the next Play again.',
+        shrinkingProof: 'Each repeated preview success, stable guide sync, and calm line posture on the same selected card shortens the cooldown back toward original-provider Play ownership.',
+        resetTrigger: scenario === 'healthy'
+          ? 'Restart the cooldown once preview drops, guide confidence flickers, or line posture makes the same card ambiguous again.'
+          : 'Restart the cooldown whenever preview drops, guide confidence flickers, line pressure shadows Play, or rescue becomes safer again on the same card.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Return from category rescue to exact-channel ownership',
+        cooldownWindow: 'Category rescue can give control back only after the exact channel repeatedly proves both the truer identity and the safer launch on the same surf path.',
+        shrinkingProof: 'Stable exact-channel preview, repeatable guide alignment, and unchanged safest-owner truth shorten this cooldown.',
+        resetTrigger: 'Restart the cooldown once the best trust source stops being the best exact-channel match again.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -4604,6 +4712,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceProviderChoiceContracts: buildSurfaceProviderChoiceContracts(scenario),
   surfaceProviderReturnContracts: buildSurfaceProviderReturnContracts(scenario),
   surfaceProviderStabilityContracts: buildSurfaceProviderStabilityContracts(scenario),
+  surfaceReturnCooldownContracts: buildSurfaceReturnCooldownContracts(scenario),
   surfaceRecoveryPlans: buildManifestSurfaceRecoveryPlans(scenario),
   surfaceCanonicalProviderIdentityContracts: buildSurfaceCanonicalProviderIdentityContracts(scenario),
   surfaceFallbackRankingContracts: buildSurfaceFallbackRankingContracts(scenario),

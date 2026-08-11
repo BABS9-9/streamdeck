@@ -844,6 +844,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceReturnCooldownContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    cooldowns: Array<{
+      label: string;
+      cooldownWindow: string;
+      shrinkingProof: string;
+      resetTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceRecoveryPlans: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;
