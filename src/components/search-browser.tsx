@@ -5,10 +5,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildSearchResultActionKey, GlobalSearchRouteContract } from '@/lib/search-action-contracts';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
-import { describeSeriesCompletenessBand, GroupedSearchResult, SearchResultVariantPayload } from '@/lib/search-continuity';
+import { describeSeriesCompletenessBand, GroupedSearchResult } from '@/lib/search-continuity';
 import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
-import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId } from '@/lib/xtream-api';
-import { ConnectionStatus, MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection, XtreamStream } from '@/lib/types';
+import { getArtwork, getContentId } from '@/lib/xtream-api';
+import { MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { useLibraryStore } from '@/stores/library-store';
@@ -506,8 +506,6 @@ export function SearchBrowser() {
             const artwork = getArtwork(result.item);
             const isPlayable = result.kind !== 'series';
             const authSummary = result.provider.lastAuthSummary;
-            const providerLinePressure = getProviderLinePressure(authSummary, 'Search can still work while playback becomes risky.');
-            const providerRecoveryWarning = getProviderRecoveryWarning(authSummary);
             const healthiestAlternateConnection = getHealthiestSavedProvider({
               connections,
               connectionStatus,
@@ -519,6 +517,7 @@ export function SearchBrowser() {
             const favoriteContract = actionContract?.favorite ?? null;
             const continueWatching = actionContract?.continueWatching ?? null;
             const switchIntent = actionContract?.switchIntent ?? null;
+            const trustContract = actionContract?.trust ?? null;
             return (
               <article key={`${result.provider.id}-${result.kind}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                 <div className="aspect-video rounded-2xl bg-cover bg-center bg-no-repeat" style={{ backgroundImage: artwork ? `url(${artwork})` : undefined }} />
@@ -545,7 +544,7 @@ export function SearchBrowser() {
                 <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
                   <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">{result.matchReason}</span>
                   {authSummary ? (
-                    <span className={`rounded-full border px-3 py-2 ${providerLinePressure ? 'border-amber-400/20 bg-amber-500/10 text-amber-100' : 'border-sky-400/20 bg-sky-500/10 text-sky-100'}`}>
+                    <span className={`rounded-full border px-3 py-2 ${trustContract?.connectionHeadroom.tone === 'recover' ? 'border-amber-400/20 bg-amber-500/10 text-amber-100' : 'border-sky-400/20 bg-sky-500/10 text-sky-100'}`}>
                       {authSummary.activeConnections ?? 0}/{authSummary.maxConnections ?? '?'} lines · expires {formatProviderExpiry(authSummary.expiresAt)}
                     </span>
                   ) : null}
@@ -593,12 +592,68 @@ export function SearchBrowser() {
                     </p>
                   ) : null}
                 </div>
-                {providerRecoveryWarning ? (
+                {trustContract ? (
+                  <div className="mt-3 grid gap-3">
+                    <div className="grid gap-2 md:grid-cols-3">
+                      {trustContract.launchReadiness.map((card) => (
+                        <div
+                          key={card.label}
+                          className={`rounded-2xl border p-3 text-xs ${
+                            card.tone === 'ready'
+                              ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+                              : card.tone === 'watch'
+                                ? 'border-amber-400/20 bg-amber-500/10 text-amber-100'
+                                : 'border-rose-400/20 bg-rose-500/10 text-rose-100'
+                          }`}
+                        >
+                          <p className="uppercase tracking-[0.2em] text-white/80">{card.label}</p>
+                          <p className="mt-2 leading-5">{card.safeWhen}</p>
+                          <p className="mt-2 leading-5 text-white/75">{card.blockedWhen}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.providerChoice.title}</p>
+                        <p className="mt-2 leading-5 text-slate-200">{trustContract.providerChoice.summary}</p>
+                        <p className="mt-2 leading-5">Auto choice: {trustContract.providerChoice.autoChoice}</p>
+                        <p className="mt-2 leading-5">User choice: {trustContract.providerChoice.userChoice}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.claimCeiling.title}</p>
+                        <p className="mt-2 leading-5 text-slate-200">Allowed promise: {trustContract.claimCeiling.strongestPromise}</p>
+                        <p className="mt-2 leading-5">Suppress: {trustContract.claimCeiling.suppressedPromise}</p>
+                        <p className="mt-2 leading-5 text-slate-400">{trustContract.claimCeiling.reason}</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-2 md:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.proofDebt.title}</p>
+                        <p className="mt-2 leading-5 text-slate-200">{trustContract.proofDebt.summary}</p>
+                        <p className="mt-2 leading-5">Debt source: {trustContract.proofDebt.debtSource}</p>
+                        <p className="mt-2 leading-5 text-slate-400">{trustContract.proofDebt.repaymentMove}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.autonomyBoundary.title}</p>
+                        <p className="mt-2 leading-5 text-slate-200">{trustContract.autonomyBoundary.summary}</p>
+                        <p className="mt-2 leading-5">Search may keep: {trustContract.autonomyBoundary.autoMaintains}</p>
+                        <p className="mt-2 leading-5">User owns: {trustContract.autonomyBoundary.userOwns}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.connectionHeadroom.title}</p>
+                        <p className="mt-2 leading-5 text-slate-200">{trustContract.connectionHeadroom.summary}</p>
+                        <p className="mt-2 leading-5">{trustContract.connectionHeadroom.currentWindow}</p>
+                        <p className="mt-2 leading-5 text-slate-400">{trustContract.connectionHeadroom.warningTrigger}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+                {trustContract && trustContract.connectionHeadroom.tone === 'recover' ? (
                   <div className="mt-3">
                     <ProviderRecoveryRail
                       eyebrow="Result trust warning"
                       title={`${result.provider.name} is risky for launch right now.`}
-                      detail={providerRecoveryWarning}
+                      detail={trustContract.connectionHeadroom.blockedState}
                       tone="amber"
                       actions={healthiestAlternateConnection ? [{
                         label: 'Switch to healthiest saved provider',
@@ -671,9 +726,8 @@ export function SearchBrowser() {
                                       preservedDuplicateGroups: duplicateGroups,
                                       preservedTitle: variant.item.name,
                                     });
-                                    const url = variantAction?.playbackUrl || (result.kind === 'live'
-                                      ? buildLiveStreamUrl(variant.provider, variant.item)
-                                      : buildVodStreamUrl(variant.provider, variant.item));
+                                    const url = variantAction?.playbackUrl;
+                                    if (!url) return;
                                     playStream(variant.item, url, variant.provider.id);
                                   }}
                                   className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
@@ -713,9 +767,8 @@ export function SearchBrowser() {
                           preservedDuplicateGroups: duplicateGroups,
                           preservedTitle: result.item.name,
                         });
-                        const url = primaryAction.playbackUrl || (result.kind === 'live'
-                          ? buildLiveStreamUrl(result.provider, result.item)
-                          : buildVodStreamUrl(result.provider, result.item));
+                        const url = primaryAction.playbackUrl;
+                        if (!url) return;
                         playStream(result.item, url, primaryAction.providerId);
                       }}
                       className="flex-1 rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"

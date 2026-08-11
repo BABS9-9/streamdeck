@@ -73,7 +73,71 @@ export type SearchResultActionContract = {
   favorite: SearchFavoriteContract;
   continueWatching: SearchResumeContract;
   alternateActions: SearchVariantActionContract[];
+  trust: SearchResultTrustContract;
   summary: string;
+};
+
+export type SearchContractTone = 'ready' | 'watch' | 'recover';
+
+export type SearchTrustReadinessCard = {
+  label: string;
+  safeWhen: string;
+  blockedWhen: string;
+  recoveryMove: string;
+  tone: SearchContractTone;
+};
+
+export type SearchTrustProviderChoice = {
+  title: string;
+  summary: string;
+  autoChoice: string;
+  userChoice: string;
+  forcedHandoffTrigger: string;
+  tone: SearchContractTone;
+};
+
+export type SearchTrustClaimCeiling = {
+  title: string;
+  strongestPromise: string;
+  suppressedPromise: string;
+  reason: string;
+  tone: SearchContractTone;
+};
+
+export type SearchTrustProofDebt = {
+  title: string;
+  summary: string;
+  debtSource: string;
+  repaymentMove: string;
+  tone: SearchContractTone;
+};
+
+export type SearchTrustAutonomyBoundary = {
+  title: string;
+  summary: string;
+  autoMaintains: string;
+  userOwns: string;
+  forcedHandoffTrigger: string;
+  tone: SearchContractTone;
+};
+
+export type SearchTrustConnectionHeadroom = {
+  title: string;
+  summary: string;
+  currentWindow: string;
+  warningTrigger: string;
+  blockedState: string;
+  recommendedMove: string;
+  tone: SearchContractTone;
+};
+
+export type SearchResultTrustContract = {
+  launchReadiness: SearchTrustReadinessCard[];
+  providerChoice: SearchTrustProviderChoice;
+  claimCeiling: SearchTrustClaimCeiling;
+  proofDebt: SearchTrustProofDebt;
+  autonomyBoundary: SearchTrustAutonomyBoundary;
+  connectionHeadroom: SearchTrustConnectionHeadroom;
 };
 
 export type GlobalSearchRouteContract = {
@@ -332,6 +396,261 @@ const buildResultSummary = ({
   return `${result.continuity.summary} ${continueWatching.summary} ${favoriteClause}`;
 };
 
+const getToneWeight = (tone: SearchContractTone) => {
+  if (tone === 'recover') return 3;
+  if (tone === 'watch') return 2;
+  return 1;
+};
+
+const getDominantTone = (tones: SearchContractTone[]): SearchContractTone => {
+  return [...tones].sort((left, right) => getToneWeight(right) - getToneWeight(left))[0] ?? 'ready';
+};
+
+const getConnectionTone = (
+  connectionState: GlobalSearchRouteContract['providers'][number]['connectionState'],
+  providerWarning: string | null
+): SearchContractTone => {
+  if (providerWarning || connectionState === 'error') return 'recover';
+  if (connectionState === 'degraded' || connectionState === 'checking' || connectionState === 'idle') return 'watch';
+  return 'ready';
+};
+
+const getIndexTone = (
+  indexState: GlobalSearchRouteContract['providers'][number]['indexState']
+): SearchContractTone => {
+  if (indexState === 'missing') return 'recover';
+  if (indexState === 'stale') return 'watch';
+  return 'ready';
+};
+
+const getHeadroomTone = (summary?: SavedConnection['lastAuthSummary'] | null): SearchContractTone => {
+  if (!summary || summary.activeConnections === null || summary.maxConnections === null) return 'watch';
+  if (summary.activeConnections >= summary.maxConnections) return 'recover';
+  if (summary.maxConnections - summary.activeConnections <= 1) return 'watch';
+  return 'ready';
+};
+
+const getResultRecoveryMove = ({
+  result,
+  launchVariant,
+  healthiestAlternateVariant,
+  primaryAction,
+  providerWarning,
+}: {
+  result: GroupedSearchResult;
+  launchVariant: SearchResultVariantPayload;
+  healthiestAlternateVariant: SearchResultVariantPayload | null;
+  primaryAction: SearchPrimaryActionContract;
+  providerWarning: string | null;
+}) => {
+  if (healthiestAlternateVariant && healthiestAlternateVariant.provider.id !== launchVariant.provider.id) {
+    return healthiestAlternateVariant.provider.id === launchVariant.provider.id
+      ? `Keep ${launchVariant.provider.name} as the launch owner and preserve the current Search query while the active shell catches up.`
+      : `Preserve the current Search query, then hand launch ownership to ${healthiestAlternateVariant.provider.name} before ${result.kind === 'series' ? 'series drill-down' : 'playback'} outruns provider proof.`;
+  }
+
+  if (primaryAction.requiresSwitch) {
+    return `Preserve the current Search query and switch to ${primaryAction.providerName} before using the primary ${result.kind === 'series' ? 'browse' : 'play'} action.`;
+  }
+
+  if (providerWarning) {
+    return `Keep ${result.item.name} visible, but stop short of silent launch until ${launchVariant.provider.name} clears its provider warning.`;
+  }
+
+  return `Keep ${result.item.name} pinned in Search while ${launchVariant.provider.name} remains the active owner for the next move.`;
+};
+
+const buildTrustContract = ({
+  runtime,
+  result,
+  launchVariant,
+  variants,
+  primaryAction,
+  continueWatching,
+  favorite,
+  activeConnectionId,
+}: {
+  runtime: Omit<GlobalSearchRouteContract, 'actionsByResultKey'>;
+  result: GroupedSearchResult;
+  launchVariant: SearchResultVariantPayload;
+  variants: SearchResultVariantPayload[];
+  primaryAction: SearchPrimaryActionContract;
+  continueWatching: SearchResumeContract;
+  favorite: SearchFavoriteContract;
+  activeConnectionId?: string | null;
+}): SearchResultTrustContract => {
+  const runtimeProvider = runtime.providers.find((provider) => provider.providerId === launchVariant.provider.id)
+    ?? runtime.providers.find((provider) => provider.providerId === result.provider.id)
+    ?? null;
+  const activeProvider = runtime.providers.find((provider) => provider.providerId === activeConnectionId) ?? null;
+  const providerWarning = launchVariant.warning ?? null;
+  const connectionTone = getConnectionTone(runtimeProvider?.connectionState ?? 'idle', providerWarning);
+  const indexTone = getIndexTone(runtimeProvider?.indexState ?? 'missing');
+  const headroomTone = getHeadroomTone(launchVariant.provider.lastAuthSummary);
+  const healthiestAlternateVariant = variants
+    .filter((variant) => variant.provider.id !== launchVariant.provider.id)
+    .sort((left, right) => right.compositeScore - left.compositeScore)[0] ?? null;
+  const recoveryMove = getResultRecoveryMove({
+    result,
+    launchVariant,
+    healthiestAlternateVariant,
+    primaryAction,
+    providerWarning,
+  });
+  const readinessTone = getDominantTone([connectionTone, indexTone, headroomTone]);
+  const lineUsage = launchVariant.provider.lastAuthSummary?.activeConnections !== null
+    && launchVariant.provider.lastAuthSummary?.activeConnections !== undefined
+    && launchVariant.provider.lastAuthSummary?.maxConnections !== null
+    && launchVariant.provider.lastAuthSummary?.maxConnections !== undefined
+    ? `${launchVariant.provider.lastAuthSummary.activeConnections}/${launchVariant.provider.lastAuthSummary.maxConnections} lines in use`
+    : 'Line usage still pending';
+  const activeShellLabel = activeProvider?.providerName || 'the current active shell';
+  const proofDebtSource = runtime.status === 'stale'
+    ? 'one or more provider indexes are stale'
+    : runtime.status === 'partial'
+      ? 'not every saved provider has a ready search index yet'
+      : continueWatching.hasResume && continueWatching.providerId && continueWatching.providerId !== launchVariant.provider.id
+        ? `resume truth is borrowed from ${continueWatching.providerName}`
+        : favorite.savedVariantCount > 0 && !favorite.isFavorite
+          ? 'favorite truth is borrowed from an alternate provider copy'
+          : 'the next move is fully backed by live provider and index proof';
+  const proofDebtTone: SearchContractTone = proofDebtSource === 'the next move is fully backed by live provider and index proof'
+    ? 'ready'
+    : runtime.status === 'stale' || runtime.status === 'partial'
+      ? 'watch'
+      : 'watch';
+  const canAutoChoose = !primaryAction.requiresSwitch || launchVariant.provider.id === result.continuity.launchOwnerProviderId;
+  const providerChoiceTone: SearchContractTone = healthiestAlternateVariant && healthiestAlternateVariant.compositeScore >= launchVariant.compositeScore
+    ? 'recover'
+    : primaryAction.requiresSwitch
+      ? 'watch'
+      : 'ready';
+  const claimCeilingTone = getDominantTone([connectionTone, indexTone]);
+  const claimReason = runtimeProvider?.indexState === 'stale'
+    ? `${launchVariant.provider.name} produced a ranked hit, but the index is stale enough that Search should not oversell freshness.`
+    : runtimeProvider?.indexState === 'missing'
+      ? `${launchVariant.provider.name} is visible in Search, but its index proof is missing.`
+      : providerWarning
+        ? `${launchVariant.provider.name} still owns the result, but provider health warnings cap how strongly Search may promise launch safety.`
+        : continueWatching.hasResume && continueWatching.providerId && continueWatching.providerId !== launchVariant.provider.id
+          ? 'Resume continuity comes from a different provider copy, so Search should promise continuity, not exact same-provider resume.'
+          : 'Provider ownership, index freshness, and saved-state truth all support the visible promise.';
+
+  return {
+    launchReadiness: [
+      {
+        label: 'Launch owner',
+        safeWhen: `${launchVariant.provider.name} still owns the cleanest ${result.kind === 'series' ? 'series drill-down' : 'launch'} path for ${result.item.name}.`,
+        blockedWhen: providerWarning
+          || `${launchVariant.provider.name} is not healthy enough to carry the next move honestly.`,
+        recoveryMove,
+        tone: connectionTone,
+      },
+      {
+        label: 'Search proof',
+        safeWhen: runtimeProvider?.summary
+          || `${launchVariant.provider.name} has a ready search index behind this result.`,
+        blockedWhen: runtimeProvider?.indexState === 'ready'
+          ? 'Search proof is current enough to keep the next move honest.'
+          : runtimeProvider?.indexState === 'stale'
+            ? `${launchVariant.provider.name} still matches, but the supporting index is stale.`
+            : `${launchVariant.provider.name} does not have ready index proof behind this result yet.`,
+        recoveryMove: runtimeProvider?.indexState === 'ready'
+          ? `Keep ${result.item.name} visible and carry the same Search result contract forward.`
+          : recoveryMove,
+        tone: indexTone,
+      },
+      {
+        label: result.kind === 'series' ? 'Series continuity' : 'Playback safety',
+        safeWhen: result.kind === 'series'
+          ? `${result.continuity.summary}`
+          : `${lineUsage}. ${primaryAction.providerName} can still carry the next ${result.kind === 'live' ? 'play' : 'movie launch'} move.`,
+        blockedWhen: result.kind === 'series'
+          ? continueWatching.summary
+          : providerWarning || (headroomTone === 'recover'
+            ? `${launchVariant.provider.name} has no safe playback headroom left.`
+            : headroomTone === 'watch'
+              ? `${launchVariant.provider.name} can still launch, but the remaining provider headroom is thin.`
+              : 'Playback headroom is still healthy.'),
+        recoveryMove,
+        tone: result.kind === 'series' ? getDominantTone([connectionTone, indexTone]) : headroomTone,
+      },
+    ],
+    providerChoice: {
+      title: 'Provider choice truth',
+      summary: primaryAction.requiresSwitch
+        ? `${launchVariant.provider.name} owns the next move, but Search should preserve the current query while visibly transferring provider ownership.`
+        : `${launchVariant.provider.name} already matches ${activeShellLabel}, so Search may keep the next move inside the current shell.`,
+      autoChoice: canAutoChoose
+        ? `Search may keep ${launchVariant.provider.name} as the launch owner while preserving the same ranked result packet.`
+        : `Search may highlight ${launchVariant.provider.name} as the preferred owner, but it should not hide that the next move changes providers.`,
+      userChoice: healthiestAlternateVariant
+        ? `The user still owns the decision to stay on ${launchVariant.provider.name} or use ${healthiestAlternateVariant.provider.name} instead.`
+        : `The user still owns the final decision to ${result.kind === 'series' ? 'open the series' : 'launch playback'} from ${launchVariant.provider.name}.`,
+      forcedHandoffTrigger: healthiestAlternateVariant && healthiestAlternateVariant.compositeScore >= launchVariant.compositeScore
+        ? `${healthiestAlternateVariant.provider.name} now ranks at least as safely as ${launchVariant.provider.name}, so Search must expose the provider choice instead of implying one obvious owner.`
+        : primaryAction.requiresSwitch
+          ? `Cross-provider launch requires a visible handoff from ${activeShellLabel} to ${launchVariant.provider.name}.`
+          : providerWarning || 'Provider ownership still needs to stay visible before the next move.',
+      tone: providerChoiceTone,
+    },
+    claimCeiling: {
+      title: 'Claim ceiling',
+      strongestPromise: claimCeilingTone === 'ready'
+        ? `${launchVariant.provider.name} is currently the safest visible owner for this ${result.kind} result.`
+        : claimCeilingTone === 'watch'
+          ? `${launchVariant.provider.name} still leads this result, but Search should describe the next move as watch-safe, not carefree.`
+          : `${launchVariant.provider.name} can keep the result visible, but Search should stop short of promising a clean launch right now.`,
+      suppressedPromise: result.kind === 'series'
+        ? 'Do not promise exact episode continuity on every provider copy before the drill-down proves it.'
+        : `Do not promise instant ${result.kind === 'live' ? 'playback' : 'movie launch'} across every provider copy when only one owner has the current proof.`,
+      reason: claimReason,
+      tone: claimCeilingTone,
+    },
+    proofDebt: {
+      title: 'Proof debt',
+      summary: proofDebtTone === 'ready'
+        ? `This result is speaking from active provider, index, and saved-state proof.`
+        : `This result is carrying some borrowed confidence that Search should keep visible.`,
+      debtSource: proofDebtSource,
+      repaymentMove: runtime.status === 'ready'
+        ? `Keep using ${launchVariant.provider.name} as the proof owner while the same result packet stays current.`
+        : `Refresh provider catalogs and let ${launchVariant.provider.name} re-earn launch confidence before Search upgrades the promise.`,
+      tone: proofDebtTone,
+    },
+    autonomyBoundary: {
+      title: 'Autonomy boundary',
+      summary: `Search may preserve query continuity, ranked grouping, and the current result packet, but it should stop where provider ownership becomes a real user-visible choice.`,
+      autoMaintains: `Search may keep ${result.item.name}, the current query, and ${launchVariant.provider.name} launch context attached to the result card.`,
+      userOwns: primaryAction.requiresSwitch
+        ? `The user owns the decision to let Search hand off from ${activeShellLabel} to ${launchVariant.provider.name}.`
+        : `The user owns the final decision to ${result.kind === 'series' ? 'browse deeper' : 'launch'} from ${launchVariant.provider.name}.`,
+      forcedHandoffTrigger: providerWarning
+        || (primaryAction.requiresSwitch
+          ? `Provider ownership changes on the next move, so Search must surface the handoff.`
+          : `If index freshness or line headroom drops, Search must stop auto-carrying the same launch story.`),
+      tone: getDominantTone([providerChoiceTone, claimCeilingTone]),
+    },
+    connectionHeadroom: {
+      title: 'Connection headroom',
+      summary: `${launchVariant.provider.name} currently shows ${lineUsage.toLowerCase()} behind this result.`,
+      currentWindow: headroomTone === 'ready'
+        ? `${launchVariant.provider.name} still has enough spare line capacity to keep ${result.item.name} launch-safe.`
+        : headroomTone === 'watch'
+          ? `${launchVariant.provider.name} can still carry the next move, but Search should show shrinking playback headroom.`
+          : `${launchVariant.provider.name} is already at or beyond safe line capacity for the next playback move.`,
+      warningTrigger: launchVariant.provider.lastAuthSummary?.status && launchVariant.provider.lastAuthSummary.status !== 'Active'
+        ? `Provider account status is ${String(launchVariant.provider.lastAuthSummary.status).toLowerCase()}.`
+        : `${lineUsage}.`,
+      blockedState: headroomTone === 'recover'
+        ? `Search must not imply carefree playback while ${launchVariant.provider.name} is saturated or otherwise blocked.`
+        : providerWarning || 'Search still needs to keep line pressure visible before playback gets blamed for account limits.',
+      recommendedMove: recoveryMove,
+      tone: headroomTone,
+    },
+  };
+};
+
 export const buildSearchResultActionKey = (result: Pick<GroupedSearchResult, 'provider' | 'kind' | 'item'>) =>
   `${result.provider.id}-${result.kind}-${getContentId(result.item)}`;
 
@@ -419,6 +738,16 @@ export const buildSearchRouteActionContract = ({
           variant,
           activeConnectionId,
         })),
+      trust: buildTrustContract({
+        runtime,
+        result,
+        launchVariant,
+        variants,
+        primaryAction,
+        continueWatching,
+        favorite,
+        activeConnectionId,
+      }),
       summary: buildResultSummary({
         result,
         favorite,
