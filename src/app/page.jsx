@@ -27,6 +27,7 @@ import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
 import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarity-inline';
+import { SurfaceProviderStabilityInline } from '@/components/surface-provider-stability-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -470,6 +471,14 @@ export default function LoginPage() {
               contract={launchReadiness}
               title="Connect readiness"
               badge="Launch truth"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceProviderStabilityInline
+              contract={providerStabilityContract}
+              title="Connect provider stability"
+              badge="Stability truth"
             />
           </div>
 
