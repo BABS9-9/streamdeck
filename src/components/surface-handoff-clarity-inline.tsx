@@ -48,6 +48,7 @@ export function SurfaceHandoffClarityInline({
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-100">{criteria.summary}</p>
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[tone]}</p>
+      <p className="mt-2 text-sm leading-6 text-white/85">Confidence label: {handoff.confidenceLabel}</p>
       <p className="mt-2 text-sm leading-6 text-white">Advance when: {criteria.goSignal}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Hold when: {criteria.holdSignal}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Carry forward: {handoff.carriesForward[0] || 'Preserve the active launch context.'}</p>
