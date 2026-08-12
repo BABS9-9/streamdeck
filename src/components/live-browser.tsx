@@ -32,6 +32,7 @@ import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarit
 import { SurfaceInterruptionBudgetInline } from '@/components/surface-interruption-budget-inline';
 import { SurfaceProviderStabilityInline } from '@/components/surface-provider-stability-inline';
 import { SurfaceReturnCooldownInline } from '@/components/surface-return-cooldown-inline';
+import { SurfaceRetryHonestyInline } from '@/components/surface-retry-honesty-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
@@ -346,6 +347,13 @@ export function LiveBrowser() {
                 contract={interruptionBudget}
                 title="Play interruption budget"
                 badge="Delay truth"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceRetryHonestyInline
+                contract={retryContract}
+                title="Play retry honesty"
+                badge="Retry truth"
               />
             </div>
             <div className="mt-4">
