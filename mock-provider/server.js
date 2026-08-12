@@ -705,6 +705,21 @@ const buildDifferentiators = () => ([
     surface: 'live',
   },
   {
+    title: 'Fallback cost on Login',
+    detail: 'The adapter now publishes what saved-provider rescue already cost the setup flow in certainty, familiarity, or shortcut comfort before Login still sounds like a free save.',
+    surface: 'login',
+  },
+  {
+    title: 'Fallback cost on Home',
+    detail: 'The adapter now publishes what hero rescue already cost the featured path in exact ownership, browse freshness, or launch comfort before preserved rails still sound fully premium.',
+    surface: 'home',
+  },
+  {
+    title: 'Fallback cost on Live',
+    detail: 'The adapter now publishes what rescue already cost the selected card in exact-channel confidence, preview comfort, or launch precision before surf momentum still sounds seamless.',
+    surface: 'live',
+  },
+  {
     title: 'Fallback equivalence on Login',
     detail: 'The adapter now publishes when a saved-provider shortcut is still the same Home move, when it is only an approximate convenience, and when rescue has turned setup into a true restart.',
     surface: 'login',
@@ -783,6 +798,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually hide delay tolerance inside silent retries or endless spinners, so users cannot tell when patience still preserves continuity versus when the product should escalate openly.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one interruption-budget contract so acceptable delay, continuity layer, and escalation trigger stay aligned beside the primary CTA.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'fallback-cost',
+    feature: 'Fallback cost',
+    pitch: 'Tell users what visible quality, certainty, or convenience a fallback already cost, what value still survived, and when the loss is large enough that rescue must stop pretending it is the same premium move.',
+    competitiveGap: 'Competitors usually describe fallback only in terms of what still works, so users do not see what launch clarity, exactness, or comfort was already traded away to keep momentum alive.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one fallback-cost contract so visible loss, preserved value, and hard-stop threshold stay aligned beside the primary CTA.',
     surfaces: ['login', 'home', 'live'],
   },
   {
