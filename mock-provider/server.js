@@ -798,6 +798,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'confidence-floor',
+    feature: 'Confidence floor',
+    pitch: 'Publish the minimum proof each surface still needs before premium connect, browse, or play posture remains honest, the downgrade mode that takes over when proof slips, and the hard-stop trigger that ends the premium path.',
+    competitiveGap: 'Competitors usually keep the premium CTA posture alive even after the minimum launch proof has collapsed, so users cannot tell when polish is now standing on less than the app itself should accept.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one confidence-floor contract so minimum proof, downgrade mode, and hard-stop trigger stay aligned beside the primary CTA.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'connection-headroom',
     feature: 'Connection headroom',
     pitch: 'Show how many provider lines are already in use, how much playback room is left, and when line pressure should outrank premium launch copy.',
