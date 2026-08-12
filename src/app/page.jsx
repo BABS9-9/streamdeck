@@ -19,6 +19,7 @@ import { SurfaceExplanationBoundary } from '@/components/surface-explanation-bou
 import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equivalence';
 import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
+import { SurfaceFallbackCostInline } from '@/components/surface-fallback-cost-inline';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceHandoffMap } from '@/components/surface-handoff-map';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
@@ -486,6 +487,14 @@ export default function LoginPage() {
               contract={interruptionBudget}
               title="Connect interruption budget"
               badge="Delay truth"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceFallbackCostInline
+              contract={fallbackCost}
+              title="Connect fallback cost"
+              badge="Recovery trade-off"
             />
           </div>
 
