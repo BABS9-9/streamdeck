@@ -377,6 +377,14 @@ export function MediaLibrary({
         tone: runtime.trust.returnCooldown.tone,
       },
       {
+        key: 'action-gate',
+        eyebrow: runtime.trust.actionGate.title,
+        title: runtime.trust.actionGate.summary,
+        detail: `${runtime.trust.actionGate.primaryAction} ${runtime.trust.actionGate.downgradedAction}`,
+        footnote: runtime.trust.actionGate.unlockCondition,
+        tone: runtime.trust.actionGate.tone,
+      },
+      {
         key: 'recovery-witness',
         eyebrow: runtime.trust.recoveryWitness.title,
         title: runtime.trust.recoveryWitness.summary,

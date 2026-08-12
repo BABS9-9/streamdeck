@@ -660,6 +660,13 @@ export function SearchBrowser() {
                         <p className="mt-2 leading-5 text-slate-400">Restart cooldown when: {trustContract.returnCooldown.resetTrigger}</p>
                       </div>
                       <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.actionGate.title}</p>
+                        <p className="mt-2 leading-5 text-slate-200">{trustContract.actionGate.summary}</p>
+                        <p className="mt-2 leading-5">Primary CTA: {trustContract.actionGate.primaryAction}</p>
+                        <p className="mt-2 leading-5">Downgrade to: {trustContract.actionGate.downgradedAction}</p>
+                        <p className="mt-2 leading-5 text-slate-400">Unlock condition: {trustContract.actionGate.unlockCondition}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
                         <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.recoveryWitness.title}</p>
                         <p className="mt-2 leading-5 text-slate-200">{trustContract.recoveryWitness.summary}</p>
                         <p className="mt-2 leading-5">Witness proof: {trustContract.recoveryWitness.evidence}</p>

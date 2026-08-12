@@ -167,6 +167,15 @@ export type SearchTrustInterruptionBudget = {
   tone: SearchContractTone;
 };
 
+export type SearchTrustActionGate = {
+  title: string;
+  summary: string;
+  primaryAction: string;
+  downgradedAction: string;
+  unlockCondition: string;
+  tone: SearchContractTone;
+};
+
 export type SearchResultTrustContract = {
   launchReadiness: SearchTrustReadinessCard[];
   providerChoice: SearchTrustProviderChoice;
@@ -178,6 +187,7 @@ export type SearchResultTrustContract = {
   returnCooldown: SearchTrustReturnCooldown;
   recoveryWitness: SearchTrustRecoveryWitness;
   interruptionBudget: SearchTrustInterruptionBudget;
+  actionGate: SearchTrustActionGate;
 };
 
 export type GlobalSearchRouteContract = {
@@ -872,6 +882,38 @@ const buildTrustContract = ({
               ? 'Escalate once shrinking line headroom means the same playback move is no longer boringly repeatable.'
               : `Escalate once delay stops preserving the same ${result.kind === 'series' ? 'browse' : 'launch'} story and starts requiring a new ownership explanation.`,
       tone: interruptionBudgetTone,
+    },
+    actionGate: {
+      title: 'Action gate',
+      summary: providerWarning
+        ? `Search should downgrade the brightest ${result.kind === 'series' ? 'series' : 'play'} CTA before ${launchVariant.provider.name} talks the user into a worse next move.`
+        : primaryAction.requiresSwitch
+          ? `Search may keep the same result packet premium, but the loudest CTA should still admit when the next move changes provider ownership.`
+          : headroomTone === 'recover'
+            ? `Search should stop selling a direct ${result.kind === 'series' ? 'browse' : 'launch'} CTA once line pressure or trust loss outranks convenience.`
+            : `Search may keep the main ${result.kind === 'series' ? 'browse' : 'launch'} CTA premium while this result's proof stack stays aligned.`,
+      primaryAction: primaryAction.requiresSwitch
+        ? `${getActionLabel(primaryAction.kind)} on ${launchVariant.provider.name} while preserving the current query and visible provider handoff.`
+        : `${getActionLabel(primaryAction.kind)} directly from ${launchVariant.provider.name} while the same ranked proof still backs the card.`,
+      downgradedAction: providerWarning
+        ? healthiestAlternateVariant
+          ? `Promote ${healthiestAlternateVariant.provider.name} as the safer next owner before asking for another blind ${result.kind === 'series' ? 'series open' : 'play'} on ${launchVariant.provider.name}.`
+          : `Downgrade the CTA into watched recovery copy until ${launchVariant.provider.name} stops carrying visible warnings.`
+        : headroomTone === 'recover'
+          ? healthiestAlternateVariant
+            ? `Promote ${healthiestAlternateVariant.provider.name} or keep the result browse-only while ${launchVariant.provider.name} is out of safe playback headroom.`
+            : `Keep the card actionable for browse continuity, but stop presenting direct ${result.kind === 'live' ? 'playback' : result.kind === 'movie' ? 'movie launch' : 'series drill-down'} as premium.`
+          : primaryAction.requiresSwitch
+            ? `Downgrade the CTA into an explicit provider handoff instead of letting the current shell pretend ${launchVariant.provider.name} still owns the next move invisibly.`
+            : `Downgrade the CTA into watched recovery copy once freshness, provider health, or headroom stop agreeing on the same launch owner.`,
+      unlockCondition: providerWarning
+        ? `Restore a premium CTA only after ${launchVariant.provider.name} clears the visible warning and Search no longer needs recovery-first language for this result.`
+        : primaryAction.requiresSwitch
+          ? `Restore invisible premium ownership only after the active shell and ${launchVariant.provider.name} stop disagreeing about who owns the next move.`
+          : headroomTone !== 'ready'
+            ? `Restore the premium CTA after line posture returns to repeatably safe headroom and the same result stays launch-safe across fresh checks.`
+            : `Keep the premium CTA only while provider health, index freshness, and launch ownership keep backing the same ranked result story.`,
+      tone: getDominantTone([providerChoiceTone, claimCeilingTone, interruptionBudgetTone]),
     },
   };
 };

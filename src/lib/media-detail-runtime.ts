@@ -92,6 +92,15 @@ export type MediaDetailInterruptionBudget = {
   tone: MediaDetailContractTone;
 };
 
+export type MediaDetailActionGate = {
+  title: string;
+  summary: string;
+  primaryAction: string;
+  downgradedAction: string;
+  unlockCondition: string;
+  tone: MediaDetailContractTone;
+};
+
 export type MediaDetailRecoveryPlan = {
   title: string;
   summary: string;
@@ -112,6 +121,7 @@ export type MediaDetailTrustContract = {
   returnCooldown: MediaDetailReturnCooldown;
   recoveryWitness: MediaDetailRecoveryWitness;
   interruptionBudget: MediaDetailInterruptionBudget;
+  actionGate: MediaDetailActionGate;
 };
 
 export type MediaDetailRuntimeContract = {
@@ -572,6 +582,46 @@ const buildMediaDetailTrustContract = ({
               ? 'Escalate once delay stops preserving exact resume intent and falls back to series-level guidance.'
               : 'Escalate once delay stops preserving the same launch story and starts requiring a new ownership explanation.',
       tone: interruptionBudgetTone,
+    },
+    actionGate: {
+      title: kind === 'series' ? 'Series action gate' : 'Detail action gate',
+      summary: activeWarning
+        ? `${kind === 'series' ? 'Series drill-down' : 'Playback'} should downgrade before ${activeConnection.name} talks the user into trusting a provider that is already visibly weakened.`
+        : !sameProviderOwner
+          ? `This rail may stay premium-looking, but its loudest CTA should still admit when ${launchOwner.providerName} has taken ownership away from ${activeConnection.name}.`
+          : headroom.tone === 'recover'
+            ? `This rail should stop selling a direct ${kind === 'series' ? 'resume' : 'play'} CTA once line pressure outranks convenience.`
+            : `This rail may keep its brightest CTA premium while provider health, ownership, and continuity proof still agree on the same next move.`,
+      primaryAction: kind === 'series'
+        ? sameProviderOwner
+          ? `Resume or drill deeper on ${activeConnection.name} while the same title, continuity summary, and preferred episode hook stay intact.`
+          : `Resume or drill deeper through ${launchOwner.providerName} while preserving the current series title and saved season or episode intent.`
+        : sameProviderOwner
+          ? `Play now from ${activeConnection.name} while the same title and launch-owner proof stay intact.`
+          : `Play through ${launchOwner.providerName} while keeping the same title context visible during provider handoff.`,
+      downgradedAction: activeWarning
+        ? hasAlternates
+          ? `Promote ${launchOwner.providerName} or an alternate saved copy before asking for another blind ${kind === 'series' ? 'resume' : 'play'} on ${activeConnection.name}.`
+          : `Downgrade the CTA into recovery-first copy until ${activeConnection.name} stops carrying visible warnings.`
+        : headroom.tone === 'recover'
+          ? hasAlternates
+            ? `Promote the healthiest saved copy while ${activeConnection.name} has no safe playback headroom left.`
+            : `Keep the rail useful for browse continuity, but stop presenting direct ${kind === 'series' ? 'resume' : 'playback'} as premium.`
+          : !sameProviderOwner
+            ? `Downgrade the CTA into an explicit provider handoff so the detail shell does not pretend ${activeConnection.name} still owns the next move.`
+            : kind === 'series' && !hasResumeHook
+              ? 'Downgrade the CTA into series-level continuity guidance until exact episode proof survives drill-down.'
+              : 'Downgrade the CTA into watched recovery copy once health, ownership, or continuity proof stop agreeing on the same next move.',
+      unlockCondition: activeWarning
+        ? `Restore a premium CTA only after ${activeConnection.name} clears the visible warning and this rail no longer needs recovery-first language.`
+        : !sameProviderOwner
+          ? `Restore invisible premium ownership only after ${activeConnection.name} retakes the next move without needing a visible handoff from ${launchOwner.providerName}.`
+          : headroom.tone !== 'ready'
+            ? 'Restore the premium CTA after safe headroom returns and repeated visits keep the same launch-owner story intact.'
+            : kind === 'series' && !hasResumeHook
+              ? 'Restore exact resume language only after canonical episode proof survives provider-specific series resolution again.'
+              : `Keep the premium CTA only while ${activeConnection.name} remains the same boringly safe owner for this rail.`,
+      tone: getDominantTone([claimTone, stabilityTone, interruptionBudgetTone]),
     },
   };
 };
