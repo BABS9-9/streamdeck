@@ -13,6 +13,7 @@ import { MultiConnectionGuideRuntime } from '@/components/multi-connection-guide
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
+import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
@@ -380,6 +381,13 @@ export function LiveBrowser() {
               title="Play readiness"
               badge="Launch truth"
             />
+            <div className="mt-4">
+              <SurfaceConfidenceFloorInline
+                contract={confidenceFloor}
+                title="Play confidence floor"
+                badge="Minimum proof"
+              />
+            </div>
             <div className="mt-4">
               <SurfaceInterruptionBudgetInline
                 contract={interruptionBudget}

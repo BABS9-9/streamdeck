@@ -14,6 +14,7 @@ import { MultiConnectionGuideRuntime } from '@/components/multi-connection-guide
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
+import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
@@ -566,6 +567,13 @@ export function HomeDashboard() {
                 contract={launchReadiness}
                 title="Hero launch readiness"
                 badge="Launch truth"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceConfidenceFloorInline
+                contract={confidenceFloor}
+                title="Hero confidence floor"
+                badge="Minimum proof"
               />
             </div>
             <div className="mt-4">

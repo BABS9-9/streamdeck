@@ -10,6 +10,7 @@ import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
+import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
@@ -480,6 +481,14 @@ export default function LoginPage() {
               contract={launchReadiness}
               title="Connect readiness"
               badge="Launch truth"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceConfidenceFloorInline
+              contract={confidenceFloor}
+              title="Connect confidence floor"
+              badge="Minimum proof"
             />
           </div>
 
