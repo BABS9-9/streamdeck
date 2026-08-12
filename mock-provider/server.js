@@ -777,6 +777,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'interruption-budget',
+    feature: 'Interruption budget',
+    pitch: 'Tell users how much delay, buffering, or retry slack each surface can honestly absorb before the shell must stop pretending the same launch is still intact.',
+    competitiveGap: 'Competitors usually hide delay tolerance inside silent retries or endless spinners, so users cannot tell when patience still preserves continuity versus when the product should escalate openly.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one interruption-budget contract so acceptable delay, continuity layer, and escalation trigger stay aligned beside the primary CTA.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'provider-choice-truth',
     feature: 'Provider choice truth',
     pitch: 'Tell users when StreamDeck can safely auto-pick the healthiest equivalent provider, when equivalence is only partial, and when the next move must come back to the user explicitly.',
