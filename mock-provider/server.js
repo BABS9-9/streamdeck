@@ -734,6 +734,21 @@ const buildDifferentiators = () => ([
     detail: 'The adapter now publishes when rescue preserved the exact selected channel, when it only preserved category surf momentum, and when the user has effectively restarted the live session.',
     surface: 'live',
   },
+  {
+    title: 'Retry honesty on Login',
+    detail: 'The adapter now publishes when reconnecting the current provider still preserves the same Home move, what setup context retry may keep, and what trigger means recovery should replace another Connect press.',
+    surface: 'login',
+  },
+  {
+    title: 'Retry honesty on Home',
+    detail: 'The adapter now publishes when retrying the current featured browse story still keeps the same discovery move alive, what hero context survives, and what trigger means recovery should replace another refresh.',
+    surface: 'home',
+  },
+  {
+    title: 'Retry honesty on Live',
+    detail: 'The adapter now publishes when retrying the same selected card still preserves the same watch path, what preview and guide context survives, and what trigger means recovery should replace another Play attempt.',
+    surface: 'live',
+  },
 ]);
 
 const buildCompetitiveDifferentiators = () => ([
@@ -798,6 +813,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually hide delay tolerance inside silent retries or endless spinners, so users cannot tell when patience still preserves continuity versus when the product should escalate openly.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one interruption-budget contract so acceptable delay, continuity layer, and escalation trigger stay aligned beside the primary CTA.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'retry-honesty',
+    feature: 'Retry honesty',
+    pitch: 'Tell users when retrying the same provider still preserves the same move, what context retry is allowed to keep, and what trigger means recovery should replace another button press.',
+    competitiveGap: 'Competitors usually keep nudging retry after provider ownership, guide truth, or preview safety has already weakened, so users cannot tell when “try again” is still honest versus just nicer-looking failure.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one retry contract so honest retry window, preserved context, and give-up trigger stay aligned beside the primary CTA.',
     surfaces: ['login', 'home', 'live'],
   },
   {
