@@ -192,6 +192,40 @@ export type ProviderGuideContinuityContract = {
   issueSummary: string | null;
 };
 
+export type MultiConnectionGuideRuntimeTone = 'ready' | 'watch' | 'recover';
+
+export type MultiConnectionGuideProviderRuntime = {
+  providerId: string;
+  providerName: string;
+  isActive: boolean;
+  isRecommended: boolean;
+  connectionState: ConnectionStatus['state'];
+  guideStatus: ProviderGuideCoverageReport['status'] | 'unknown';
+  guideSummary: string;
+  freshnessWindow: string;
+  shortEpgSummary: string;
+  switchTrigger: string;
+  preservedContext: string;
+  blockedBy: string;
+  tone: MultiConnectionGuideRuntimeTone;
+};
+
+export type MultiConnectionGuideRuntimeContract = {
+  screenId: 'home' | 'live';
+  title: string;
+  summary: string;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  recommendedAction: {
+    title: string;
+    detail: string;
+    ctaLabel: string | null;
+    targetProviderId: string | null;
+    tone: MultiConnectionGuideRuntimeTone;
+  };
+  providers: MultiConnectionGuideProviderRuntime[];
+};
+
 export type WatchHistoryItem = {
   id: string;
   kind: 'live' | 'movie' | 'series';

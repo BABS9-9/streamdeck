@@ -10,6 +10,7 @@ import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
+import { MultiConnectionGuideRuntime } from '@/components/multi-connection-guide-runtime';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
@@ -48,6 +49,7 @@ import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choic
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
+import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
@@ -86,6 +88,7 @@ export function HomeDashboard() {
   const connections = useAuthStore((state) => state.connections);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const lastSwitchContext = useAuthStore((state) => state.lastSwitchContext);
   const favorites = useFavoritesStore((state) => activeConnection ? state.getFavoritesForProvider(activeConnection.id) : []);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const playStream = usePlayerStore((state) => state.playStream);
@@ -368,6 +371,38 @@ export function HomeDashboard() {
     }),
     [activeConnection?.name, featuredLive?.name, home.featured?.name, homeGuideCoverage, savedProviderBoard]
   );
+  const multiConnectionGuideRuntime = useMemo(() => {
+    const coverageByProvider = Object.fromEntries(connections.map((connection) => {
+      const cachedHome = getCachedHomeSnapshot(connection.id, Number.POSITIVE_INFINITY);
+      const guideTargets = [
+        ...(cachedHome?.featured?.stream_type === 'live' && cachedHome?.featured ? [cachedHome.featured] : []),
+        ...(cachedHome?.quickLive || []),
+      ];
+      const report = guideTargets.length
+        ? getCoverageReport(connection.id, guideTargets.map((stream) => getContentId(stream)), Number.MAX_SAFE_INTEGER)
+        : null;
+      return [connection.id, report];
+    }));
+
+    return buildMultiConnectionGuideRuntimeContract({
+      screenId: 'home',
+      connections,
+      connectionStatus,
+      savedProviderBoard,
+      coverageByProvider,
+      selectedLabel: featuredLive?.name || home.featured?.name || activeConnection?.name || null,
+      lastSwitchContext,
+    });
+  }, [
+    activeConnection?.name,
+    connectionStatus,
+    connections,
+    featuredLive?.name,
+    getCoverageReport,
+    home.featured?.name,
+    lastSwitchContext,
+    savedProviderBoard,
+  ]);
   const runtimeSurfaceContracts = useMemo(
     () => activeConnection
       ? buildRuntimeSurfaceContracts({
@@ -610,6 +645,14 @@ export function HomeDashboard() {
         emptyMessage="Home will publish saved-provider guide coverage after the first live-guide sync."
         streamLabels={Object.fromEntries([...(featuredLive ? [featuredLive] : []), ...home.quickLive].map((stream) => [getContentId(stream), stream.name]))}
         continuity={homeGuideContinuity}
+      />
+      <MultiConnectionGuideRuntime
+        contract={multiConnectionGuideRuntime}
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'home',
+          reason: 'manual',
+          preservedTitle: home.featured?.name || featuredLive?.name || null,
+        })}
       />
       {guideMessage ? (
         <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">{guideMessage}</div>

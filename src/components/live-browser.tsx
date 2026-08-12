@@ -9,6 +9,7 @@ import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
+import { MultiConnectionGuideRuntime } from '@/components/multi-connection-guide-runtime';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
@@ -47,6 +48,7 @@ import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choic
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
+import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
@@ -65,6 +67,7 @@ export function LiveBrowser() {
   const connections = useAuthStore((state) => state.connections);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const lastSwitchContext = useAuthStore((state) => state.lastSwitchContext);
   const favorites = useFavoritesStore((state) => activeConnection ? state.getFavoritesForProvider(activeConnection.id) : []);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const playStream = usePlayerStore((state) => state.playStream);
@@ -252,6 +255,33 @@ export function LiveBrowser() {
     }),
     [activeConnection.name, liveGuideCoverage, savedProviderBoard, selectedStream?.name]
   );
+  const multiConnectionGuideRuntime = useMemo(() => {
+    const coverageByProvider = Object.fromEntries(connections.map((connection) => {
+      const report = filteredStreams.length > 0
+        ? getCoverageReport(connection.id, filteredStreams.slice(0, 8).map((stream) => getContentId(stream)), Number.MAX_SAFE_INTEGER)
+        : null;
+      return [connection.id, report];
+    }));
+
+    return buildMultiConnectionGuideRuntimeContract({
+      screenId: 'live',
+      connections,
+      connectionStatus,
+      savedProviderBoard,
+      coverageByProvider,
+      selectedLabel: selectedStream?.name || activeConnection.name,
+      lastSwitchContext,
+    });
+  }, [
+    activeConnection.name,
+    connectionStatus,
+    connections,
+    filteredStreams,
+    getCoverageReport,
+    lastSwitchContext,
+    savedProviderBoard,
+    selectedStream?.name,
+  ]);
   const runtimeSurfaceContracts = useMemo(
     () => buildRuntimeSurfaceContracts({
       screenId: 'live',
@@ -308,6 +338,14 @@ export function LiveBrowser() {
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
       <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
+      <MultiConnectionGuideRuntime
+        contract={multiConnectionGuideRuntime}
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'live',
+          reason: 'manual',
+          preservedTitle: selectedStream?.name || null,
+        })}
+      />
       <SurfaceProviderReturnContract contract={providerReturnContract} badge="Return truth" />
       <SurfaceProviderStabilityContract contract={providerStabilityContract} badge="Stability truth" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
