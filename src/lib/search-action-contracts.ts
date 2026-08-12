@@ -149,6 +149,15 @@ export type SearchTrustReturnCooldown = {
   tone: SearchContractTone;
 };
 
+export type SearchTrustRecoveryWitness = {
+  title: string;
+  summary: string;
+  evidence: string;
+  preservedContext: string;
+  contradictionTrigger: string;
+  tone: SearchContractTone;
+};
+
 export type SearchResultTrustContract = {
   launchReadiness: SearchTrustReadinessCard[];
   providerChoice: SearchTrustProviderChoice;
@@ -158,6 +167,7 @@ export type SearchResultTrustContract = {
   connectionHeadroom: SearchTrustConnectionHeadroom;
   providerStability: SearchTrustProviderStability;
   returnCooldown: SearchTrustReturnCooldown;
+  recoveryWitness: SearchTrustRecoveryWitness;
 };
 
 export type GlobalSearchRouteContract = {
@@ -605,6 +615,11 @@ const buildTrustContract = ({
     launchProviderId: launchVariant.provider.id,
     healthiestAlternateVariant,
   });
+  const recoveryWitnessTone = getDominantTone([
+    providerStabilityTone,
+    returnCooldownTone,
+    proofDebtTone,
+  ]);
   const claimReason = runtimeProvider?.indexState === 'stale'
     ? `${launchVariant.provider.name} produced a ranked hit, but the index is stale enough that Search should not oversell freshness.`
     : runtimeProvider?.indexState === 'missing'
@@ -786,6 +801,34 @@ const buildTrustContract = ({
               ? 'Restart the cooldown whenever line pressure turns the same next move back into a watched or blocked launch.'
               : 'Restart the cooldown whenever provider health, launch ownership, or saved-state continuity changes the Search story again.',
       tone: returnCooldownTone,
+    },
+    recoveryWitness: {
+      title: 'Recovery witness',
+      summary: recoveryWitnessTone === 'ready'
+        ? `${launchVariant.provider.name} still has enough repeated proof to show that rescue preserved the same Search destination.`
+        : recoveryWitnessTone === 'watch'
+          ? `${launchVariant.provider.name} can still present rescue as the same move, but Search should keep the witness evidence visible beside the result.`
+          : `${launchVariant.provider.name} no longer has enough witness proof to let rescue feel invisible for this result.`,
+      evidence: result.kind === 'series'
+        ? primaryAction.requiresSwitch
+          ? `The ranked result still points to the same series title, the same preferred drill-down href, and the same continuity summary even while launch ownership moves to ${launchVariant.provider.name}.`
+          : `The ranked result still points to the same series title, same drill-down destination, and same continuity summary on ${launchVariant.provider.name}.`
+        : continueWatching.hasResume && continueWatching.providerId && continueWatching.providerId !== launchVariant.provider.id
+          ? `Search is preserving the same title meaning plus a borrowed resume witness from ${continueWatching.providerName} while ${launchVariant.provider.name} owns the next launch.`
+          : `Search still has the same title match, same launch-owner explanation, and current provider/index proof behind ${launchVariant.provider.name}.`,
+      preservedContext: result.kind === 'series'
+        ? 'Keep the query, grouped duplicate collapse, preferred season or episode hint, and visible provider ranking attached to the rescue path.'
+        : 'Keep the query, grouped duplicate collapse, favorite state, continue-watching truth, and launch-owner explanation attached to the rescue path.',
+      contradictionTrigger: providerWarning
+        ? `Break the recovery witness immediately if ${launchVariant.provider.name} keeps showing ${providerWarning.toLowerCase()} or adds a new visible warning.`
+        : healthiestAlternateVariant && healthiestAlternateVariant.compositeScore >= launchVariant.compositeScore
+          ? `Break the recovery witness once ${healthiestAlternateVariant.provider.name} becomes equally or more trustworthy for the same result and Search still tries to imply one invisible owner.`
+          : runtimeProvider?.indexState === 'stale'
+            ? 'Break the recovery witness once stale or missing index proof becomes the main reason this result still looks trustworthy.'
+            : primaryAction.requiresSwitch
+              ? `Break the recovery witness if the next move stops preserving the same query context while handing off from ${activeShellLabel} to ${launchVariant.provider.name}.`
+              : 'Break the recovery witness as soon as provider health, launch ownership, or saved-state continuity changes the destination story.',
+      tone: recoveryWitnessTone,
     },
   };
 };

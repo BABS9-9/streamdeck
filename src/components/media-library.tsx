@@ -376,6 +376,14 @@ export function MediaLibrary({
         footnote: runtime.trust.returnCooldown.resetTrigger,
         tone: runtime.trust.returnCooldown.tone,
       },
+      {
+        key: 'recovery-witness',
+        eyebrow: runtime.trust.recoveryWitness.title,
+        title: runtime.trust.recoveryWitness.summary,
+        detail: `${runtime.trust.recoveryWitness.evidence} ${runtime.trust.recoveryWitness.preservedContext}`,
+        footnote: runtime.trust.recoveryWitness.contradictionTrigger,
+        tone: runtime.trust.recoveryWitness.tone,
+      },
     ];
 
     return (

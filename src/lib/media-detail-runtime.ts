@@ -74,6 +74,15 @@ export type MediaDetailReturnCooldown = {
   tone: MediaDetailContractTone;
 };
 
+export type MediaDetailRecoveryWitness = {
+  title: string;
+  summary: string;
+  evidence: string;
+  preservedContext: string;
+  contradictionTrigger: string;
+  tone: MediaDetailContractTone;
+};
+
 export type MediaDetailRecoveryPlan = {
   title: string;
   summary: string;
@@ -92,6 +101,7 @@ export type MediaDetailTrustContract = {
   connectionHeadroom: MediaDetailConnectionHeadroom;
   providerStability: MediaDetailProviderStability;
   returnCooldown: MediaDetailReturnCooldown;
+  recoveryWitness: MediaDetailRecoveryWitness;
 };
 
 export type MediaDetailRuntimeContract = {
@@ -235,6 +245,16 @@ const getReturnCooldownTone = ({
   return 'ready';
 };
 
+const getToneWeight = (tone: MediaDetailContractTone) => {
+  if (tone === 'recover') return 3;
+  if (tone === 'watch') return 2;
+  return 1;
+};
+
+const getDominantTone = (tones: MediaDetailContractTone[]): MediaDetailContractTone => {
+  return [...tones].sort((left, right) => getToneWeight(right) - getToneWeight(left))[0] ?? 'ready';
+};
+
 const buildMediaDetailTrustContract = ({
   kind,
   variants,
@@ -282,6 +302,11 @@ const buildMediaDetailTrustContract = ({
     sameProviderOwner,
     hasAlternates,
   });
+  const recoveryWitnessTone = getDominantTone([
+    stabilityTone,
+    returnCooldownTone,
+    proofTone,
+  ]);
   const readinessTone: MediaDetailContractTone = !sameProviderOwner || activeWarning || headroom.tone === 'recover'
     ? 'recover'
     : headroom.tone === 'watch'
@@ -468,6 +493,34 @@ const buildMediaDetailTrustContract = ({
               ? 'Restart the cooldown whenever exact resume proof falls back to series-level guidance again.'
               : 'Restart the cooldown whenever provider health, launch ownership, or continuity proof changes the detail story again.',
       tone: returnCooldownTone,
+    },
+    recoveryWitness: {
+      title: 'Recovery witness',
+      summary: recoveryWitnessTone === 'ready'
+        ? `${activeConnection.name} still has enough repeated detail proof to show that rescue preserved the same destination.`
+        : recoveryWitnessTone === 'watch'
+          ? `${activeConnection.name} can still sell rescue as the same detail journey, but the witness evidence should stay visible beside the rail.`
+          : `${activeConnection.name} does not currently have enough witness proof to let recovery feel invisible on this detail surface.`,
+      evidence: kind === 'series'
+        ? hasResumeHook
+          ? 'The rail still points to the same series title, the same preferred season and episode hook, and the same ranked alternate-provider recovery path.'
+          : 'The rail still points to the same series title and ranked rescue path, but exact episode proof is still being re-earned through series info.'
+        : sameProviderOwner
+          ? `The rail still points to the same movie title, same launch owner, and same playback-safe detail posture on ${activeConnection.name}.`
+          : `The rail still preserves the same movie title, artwork, and ranked rescue path while launch ownership moves to ${launchOwner.providerName}.`,
+      preservedContext: kind === 'series'
+        ? 'Keep the series title, saved season and episode intent, continuity summary, and alternate-provider order attached to the rescue path.'
+        : 'Keep the title metadata, artwork, favorite and resume truth, and alternate-provider order attached to the rescue path.',
+      contradictionTrigger: activeWarning
+        ? `Break the recovery witness immediately if ${activeConnection.name} keeps showing ${activeWarning.toLowerCase()} or adds a new visible warning.`
+        : !sameProviderOwner
+          ? `Break the recovery witness if ${launchOwner.providerName} keeps owning the next move and the detail rail stops preserving the same destination context during handoff.`
+          : headroom.tone !== 'ready'
+            ? 'Break the recovery witness if line pressure turns the same detail destination back into watched or blocked playback.'
+            : kind === 'series' && !hasResumeHook
+              ? 'Break the recovery witness if exact resume proof falls back to series-level guidance again.'
+              : 'Break the recovery witness as soon as provider health, launch ownership, or continuity proof changes the detail story.',
+      tone: recoveryWitnessTone,
     },
   };
 };
