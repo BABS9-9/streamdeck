@@ -27,6 +27,7 @@ import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
 import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarity-inline';
+import { SurfaceInterruptionBudgetInline } from '@/components/surface-interruption-budget-inline';
 import { SurfaceProviderStabilityInline } from '@/components/surface-provider-stability-inline';
 import { SurfaceReturnCooldownInline } from '@/components/surface-return-cooldown-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
@@ -477,6 +478,14 @@ export default function LoginPage() {
               contract={launchReadiness}
               title="Connect readiness"
               badge="Launch truth"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceInterruptionBudgetInline
+              contract={interruptionBudget}
+              title="Connect interruption budget"
+              badge="Delay truth"
             />
           </div>
 

@@ -28,6 +28,7 @@ import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
 import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarity-inline';
+import { SurfaceInterruptionBudgetInline } from '@/components/surface-interruption-budget-inline';
 import { SurfaceProviderStabilityInline } from '@/components/surface-provider-stability-inline';
 import { SurfaceReturnCooldownInline } from '@/components/surface-return-cooldown-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
@@ -339,6 +340,13 @@ export function LiveBrowser() {
               title="Play readiness"
               badge="Launch truth"
             />
+            <div className="mt-4">
+              <SurfaceInterruptionBudgetInline
+                contract={interruptionBudget}
+                title="Play interruption budget"
+                badge="Delay truth"
+              />
+            </div>
             <div className="mt-4">
               <SurfaceProviderStabilityInline
                 contract={providerStabilityContract}
