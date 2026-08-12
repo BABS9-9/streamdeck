@@ -83,6 +83,15 @@ export type MediaDetailRecoveryWitness = {
   tone: MediaDetailContractTone;
 };
 
+export type MediaDetailInterruptionBudget = {
+  title: string;
+  summary: string;
+  acceptableDelay: string;
+  continuityLayer: string;
+  escalationTrigger: string;
+  tone: MediaDetailContractTone;
+};
+
 export type MediaDetailRecoveryPlan = {
   title: string;
   summary: string;
@@ -102,6 +111,7 @@ export type MediaDetailTrustContract = {
   providerStability: MediaDetailProviderStability;
   returnCooldown: MediaDetailReturnCooldown;
   recoveryWitness: MediaDetailRecoveryWitness;
+  interruptionBudget: MediaDetailInterruptionBudget;
 };
 
 export type MediaDetailRuntimeContract = {
@@ -312,6 +322,11 @@ const buildMediaDetailTrustContract = ({
     : headroom.tone === 'watch'
       ? 'watch'
       : 'ready';
+  const interruptionBudgetTone = getDominantTone([
+    readinessTone,
+    stabilityTone,
+    returnCooldownTone,
+  ]);
 
   const primaryReadiness: MediaDetailReadinessCard = {
     label: kind === 'series' ? 'Episode-safe launch' : 'Playback-safe launch',
@@ -521,6 +536,42 @@ const buildMediaDetailTrustContract = ({
               ? 'Break the recovery witness if exact resume proof falls back to series-level guidance again.'
               : 'Break the recovery witness as soon as provider health, launch ownership, or continuity proof changes the detail story.',
       tone: recoveryWitnessTone,
+    },
+    interruptionBudget: {
+      title: 'Interruption budget',
+      summary: interruptionBudgetTone === 'ready'
+        ? `${sameProviderOwner ? activeConnection.name : launchOwner.providerName} can absorb ordinary detail delay without changing what this rail means.`
+        : interruptionBudgetTone === 'watch'
+          ? 'This detail rail can absorb a short watched delay, but it should keep the delay budget visible before it sells the same next move.'
+          : 'This detail rail no longer has enough delay budget to pretend the same next move is still intact.',
+      acceptableDelay: interruptionBudgetTone === 'ready'
+        ? kind === 'series'
+          ? 'A brief series-info fetch, provider validation pass, or launch-owner recheck is acceptable while the same title, same drill-down intent, and same playback story stay intact.'
+          : 'A brief provider validation pass or playback-safe relaunch check is acceptable while the same movie title and same launch-owner story stay intact.'
+        : interruptionBudgetTone === 'watch'
+          ? kind === 'series'
+            ? 'The rail may spend a short delay rechecking series mapping or provider ownership, but only while the same title and same continuity summary remain true.'
+            : 'The rail may spend a short delay rechecking headroom or provider health, but only while the same title and same launch-owner explanation remain true.'
+          : kind === 'series'
+            ? 'Do not burn time on retries once the rail needs a different provider owner or loses exact continuity proof for the same series destination.'
+            : 'Do not burn time on retries once the rail needs a different launch owner or loses playback-safe proof for the same movie destination.',
+      continuityLayer: kind === 'series'
+        ? hasResumeHook
+          ? 'The budget is being bought by preserving the series title, saved season and episode intent, continuity summary, and ranked alternate-provider path during delay.'
+          : 'The budget is being bought by preserving the same series title, drill-down context, and ranked rescue path while exact episode proof refreshes.'
+        : sameProviderOwner
+          ? 'The budget is being bought by preserving the title metadata, artwork, favorite and resume truth, and same-provider launch context during delay.'
+          : `The budget is being bought by preserving the title metadata, artwork, and recovery path while launch ownership hands off to ${launchOwner.providerName}.`,
+      escalationTrigger: activeWarning
+        ? `Escalate immediately if ${activeConnection.name} keeps showing ${activeWarning.toLowerCase()} instead of letting delay hide it.`
+        : !sameProviderOwner
+          ? `Escalate once ${launchOwner.providerName} keeps owning the safer next move, because waiting no longer preserves one honest owner on this rail.`
+          : headroom.tone !== 'ready'
+            ? 'Escalate once shrinking line headroom means the same next move is no longer boringly repeatable.'
+            : kind === 'series' && !hasResumeHook
+              ? 'Escalate once delay stops preserving exact resume intent and falls back to series-level guidance.'
+              : 'Escalate once delay stops preserving the same launch story and starts requiring a new ownership explanation.',
+      tone: interruptionBudgetTone,
     },
   };
 };

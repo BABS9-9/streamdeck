@@ -666,6 +666,13 @@ export function SearchBrowser() {
                         <p className="mt-2 leading-5">Carry forward: {trustContract.recoveryWitness.preservedContext}</p>
                         <p className="mt-2 leading-5 text-slate-400">Break trust when: {trustContract.recoveryWitness.contradictionTrigger}</p>
                       </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">{trustContract.interruptionBudget.title}</p>
+                        <p className="mt-2 leading-5 text-slate-200">{trustContract.interruptionBudget.summary}</p>
+                        <p className="mt-2 leading-5">Acceptable delay: {trustContract.interruptionBudget.acceptableDelay}</p>
+                        <p className="mt-2 leading-5">Continuity layer: {trustContract.interruptionBudget.continuityLayer}</p>
+                        <p className="mt-2 leading-5 text-slate-400">Escalate when: {trustContract.interruptionBudget.escalationTrigger}</p>
+                      </div>
                     </div>
                   </div>
                 ) : null}

@@ -384,6 +384,14 @@ export function MediaLibrary({
         footnote: runtime.trust.recoveryWitness.contradictionTrigger,
         tone: runtime.trust.recoveryWitness.tone,
       },
+      {
+        key: 'interruption-budget',
+        eyebrow: runtime.trust.interruptionBudget.title,
+        title: runtime.trust.interruptionBudget.summary,
+        detail: `${runtime.trust.interruptionBudget.acceptableDelay} ${runtime.trust.interruptionBudget.continuityLayer}`,
+        footnote: runtime.trust.interruptionBudget.escalationTrigger,
+        tone: runtime.trust.interruptionBudget.tone,
+      },
     ];
 
     return (

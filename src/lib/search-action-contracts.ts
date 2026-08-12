@@ -158,6 +158,15 @@ export type SearchTrustRecoveryWitness = {
   tone: SearchContractTone;
 };
 
+export type SearchTrustInterruptionBudget = {
+  title: string;
+  summary: string;
+  acceptableDelay: string;
+  continuityLayer: string;
+  escalationTrigger: string;
+  tone: SearchContractTone;
+};
+
 export type SearchResultTrustContract = {
   launchReadiness: SearchTrustReadinessCard[];
   providerChoice: SearchTrustProviderChoice;
@@ -168,6 +177,7 @@ export type SearchResultTrustContract = {
   providerStability: SearchTrustProviderStability;
   returnCooldown: SearchTrustReturnCooldown;
   recoveryWitness: SearchTrustRecoveryWitness;
+  interruptionBudget: SearchTrustInterruptionBudget;
 };
 
 export type GlobalSearchRouteContract = {
@@ -620,6 +630,11 @@ const buildTrustContract = ({
     returnCooldownTone,
     proofDebtTone,
   ]);
+  const interruptionBudgetTone = getDominantTone([
+    readinessTone,
+    providerStabilityTone,
+    returnCooldownTone,
+  ]);
   const claimReason = runtimeProvider?.indexState === 'stale'
     ? `${launchVariant.provider.name} produced a ranked hit, but the index is stale enough that Search should not oversell freshness.`
     : runtimeProvider?.indexState === 'missing'
@@ -829,6 +844,34 @@ const buildTrustContract = ({
               ? `Break the recovery witness if the next move stops preserving the same query context while handing off from ${activeShellLabel} to ${launchVariant.provider.name}.`
               : 'Break the recovery witness as soon as provider health, launch ownership, or saved-state continuity changes the destination story.',
       tone: recoveryWitnessTone,
+    },
+    interruptionBudget: {
+      title: 'Interruption budget',
+      summary: interruptionBudgetTone === 'ready'
+        ? `${launchVariant.provider.name} can absorb ordinary Search refresh delay without changing what this result means.`
+        : interruptionBudgetTone === 'watch'
+          ? `${launchVariant.provider.name} can absorb a short watched delay, but Search should keep the delay budget visible before it sells the same next move.`
+          : `${launchVariant.provider.name} no longer has enough delay budget to let Search pretend this result still owns the same next move.`,
+      acceptableDelay: interruptionBudgetTone === 'ready'
+        ? `A brief catalog refresh, ranked-result replay, or shell-level provider revalidation may happen as long as ${result.item.name} keeps the same launch owner and trust posture.`
+        : interruptionBudgetTone === 'watch'
+          ? `Search may spend a short delay rechecking ${launchVariant.provider.name}, but only while the same result card, same query, and same provider explanation stay intact.`
+          : `Do not burn time on retries once the same query needs a new provider explanation, a new launch owner, or fresher proof before ${result.item.name} stays honest.`,
+      continuityLayer: primaryAction.requiresSwitch
+        ? `The budget is being bought by preserving the current query, grouped duplicate collapse, and a visible handoff from ${activeShellLabel} to ${launchVariant.provider.name}.`
+        : result.kind === 'series'
+          ? 'The budget is being bought by preserving the query, ranked duplicate grouping, and the same series drill-down destination while proof refreshes.'
+          : 'The budget is being bought by preserving the query, ranked duplicate grouping, favorite state, and continue-watching truth while launch proof refreshes.',
+      escalationTrigger: providerWarning
+        ? `Escalate immediately if ${launchVariant.provider.name} keeps showing ${providerWarning.toLowerCase()} instead of asking Search delay to hide it.`
+        : healthiestAlternateVariant && healthiestAlternateVariant.compositeScore >= launchVariant.compositeScore
+          ? `Escalate once ${healthiestAlternateVariant.provider.name} becomes equally or more trustworthy for the same result, because waiting no longer preserves one obvious owner.`
+          : runtimeProvider?.indexState === 'stale'
+            ? 'Escalate once stale index proof becomes the main reason this result still looks launch-safe.'
+            : headroomTone !== 'ready'
+              ? 'Escalate once shrinking line headroom means the same playback move is no longer boringly repeatable.'
+              : `Escalate once delay stops preserving the same ${result.kind === 'series' ? 'browse' : 'launch'} story and starts requiring a new ownership explanation.`,
+      tone: interruptionBudgetTone,
     },
   };
 };
