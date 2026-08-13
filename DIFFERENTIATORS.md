@@ -9,6 +9,7 @@ StreamDeck should feel like a premium streaming product first and an IPTV utilit
 | Feature | One-line pitch | Competitive gap | Build phase | Architecture notes |
 | --- | --- | --- | --- | --- |
 | Multi-connection switching | Save multiple Xtream providers and hot-swap between them without re-entering credentials. | TiviMate, IPTV Smarters Pro, Flix IPTV, and iMPlayer all make provider switching feel heavier than it should. | Phase 1 | Canonical provider IDs, persisted provider sessions, saved auth summaries, provider-specific favorites/history/search caches, and visible active-provider ownership across Login, Home, Live, Search, Favorites, Continue Watching, and Player. |
+| Saved-provider podium | Rank who owns the next launch, who is the standby recovery path, and which risky provider must stay visible but blocked. | Competitors usually hide saved-provider ranking in Settings, so users only learn who should have owned the next move after playback or browse already fails. | Phase 1 | Reuse one provider podium contract across Login, Home, and Live, backed by canonical provider IDs, auth summaries, line headroom, provider health, and explicit switch actions on the premium surfaces themselves. |
 | Smart EPG overlay | Show NOW and NEXT directly on live channel cards and preview rails instead of burying guide data on a separate screen. | Most players make guide info a separate mode or a low-context overlay. | Phase 1 | Fetch short EPG per selected or visible live stream, normalize NOW/NEXT state, cache lightly, and degrade honestly when guide data is stale or missing. |
 | Guide freshness board | Publish how many tracked channels are fresh, refreshing, stale, missing, or erroring before guide-driven browse and launch claims sound more current than they are. | Competitors usually show guide data as present or absent, with no honest middle state for partial freshness, cache-backed continuity, or operator recovery. | Phase 1 | Reuse one provider-scoped guide coverage report across Login, Home, and Live so freshness counts, stale callouts, recovery ownership, and safest next move stay aligned. |
 | Continue Watching across live + VOD | Keep one resume system for live channels, movies, and series so the next launch always starts from user intent. | Competitors split resume by content type or ignore live continuity entirely. | Phase 1 -> Phase 2 polish | Unified watch-history model with provider-aware entries, playback progress updates, live-channel recall, series episode context, and provider-safe recovery when the original source fails. |
@@ -94,11 +95,14 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
    The shell should distinguish between the same destination, an acceptable approximation, and a disguised restart before “seamless fallback” turns into fiction.
 25. Guide freshness honesty
    The shell should show how much guide truth is fresh, cached, stale, or missing before NOW / NEXT copy overclaims what the provider has actually proven.
+26. Saved-provider podium honesty
+   The shell should rank which provider owns the next move, which source is the clean standby, and which risky shortcut stays blocked before switching becomes a hidden afterthought.
 
 ## Phase 1 Surface Implications
 
 ### Login
 - Must make multi-connection switching feel native, saved, and safe.
+- Must rank saved providers directly on the screen so the user can see who owns the next Home move, who is warm standby, and which risky shortcut is blocked.
 - Must expose which provider currently owns the next Home launch.
 - Must make the mock-provider path obvious for demos and local development.
 - Must show provider risk before Connect implies the current source is still a safe Home owner.
@@ -126,6 +130,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 
 ### Home
 - Must show that StreamDeck is a content product, not a credential tool.
+- Must rank saved providers near the hero so the user can see which source owns the featured launch, which standby copy keeps browse continuity alive, and which risky source is held back.
 - Must surface collections, continue-watching state, and provider posture together.
 - Must make cross-surface continuity visible before the user opens Live or playback.
 - Must keep provider risk attached to the hero and quick-launch story instead of burying it in Settings.
@@ -153,6 +158,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 
 ### Live
 - Must deliver instant preview, inline NOW/NEXT, favorites, and category surf speed.
+- Must rank saved providers near Play so the selected card shows who owns the next launch, which standby source preserves the same live lane, and which risky provider is blocked from taking over silently.
 - Must keep the selected-channel context intact during retries, guide degradation, and provider recovery.
 - Must surface stream-health truth without turning the screen into an engineering dashboard.
 - Must publish provider pressure before users misread auth or capacity trouble as a bad stream.
@@ -197,6 +203,6 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 
 ## Implementation Priorities Right Now
 
-1. Keep Phase 1 strongest on multi-connection switching, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, claim ceiling, confidence floor, connection headroom, interruption budget, retry honesty, fallback cost, provider choice truth, autonomy boundary, launch readiness, launch scorecard, browse launch scorecard, handoff clarity, provider stability truth, return cooldown truth, recovery witness, canonical provider identity, fallback ranking, fallback equivalence, and stream-health HUD.
+1. Keep Phase 1 strongest on multi-connection switching, saved-provider podium, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, claim ceiling, confidence floor, connection headroom, interruption budget, retry honesty, fallback cost, provider choice truth, autonomy boundary, launch readiness, launch scorecard, browse launch scorecard, handoff clarity, provider stability truth, return cooldown truth, recovery witness, canonical provider identity, fallback ranking, fallback equivalence, and stream-health HUD.
 2. Treat cross-provider search as the next major product unlock once provider catalogs are stable.
 3. Leave recording, watch party, and per-profile parental controls scaffold-friendly in the architecture, but do not let them dilute the Phase 1 browser, playback, and continuity bar.
