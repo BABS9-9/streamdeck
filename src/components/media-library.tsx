@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildMediaDetailRuntimeContract, MediaDetailContractTone, MediaDetailRuntimeContract } from '@/lib/media-detail-runtime';
 import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getProviderTrustDisplay, getProviderTrustLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { describeSeriesCompletenessBand } from '@/lib/search-continuity';
-import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildSeriesEpisodeUrl, buildVodStreamUrl, getArtwork, getContentId, getSeriesInfo, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
-import { MockProviderHealth, MockProviderScenario, XtreamEpisode, XtreamSeriesInfo, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderManifest, MockProviderScenario, XtreamEpisode, XtreamSeriesInfo, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useLibraryStore } from '@/stores/library-store';
 import { usePlayerStore } from '@/stores/player-store';
@@ -64,6 +64,7 @@ export function MediaLibrary({
   const [cacheMessage, setCacheMessage] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [mockManifest, setMockManifest] = useState<MockProviderManifest | null>(null);
   const [scenario, setScenario] = useState<MockProviderScenario>('healthy');
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
   const [providerVariants, setProviderVariants] = useState<Record<string, ProviderVariant[]>>({});
@@ -91,6 +92,22 @@ export function MediaLibrary({
       })
       .catch(() => {
         if (!cancelled) setMockHealth(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConnection, scenario]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMockProviderManifest(activeConnection, scenario)
+      .then((manifest) => {
+        if (!cancelled) setMockManifest(manifest);
+      })
+      .catch(() => {
+        if (!cancelled) setMockManifest(null);
       });
 
     return () => {
@@ -301,6 +318,7 @@ export function MediaLibrary({
   const activeScenario = mockHealth?.healthScenarios?.[mockHealth.activeScenario];
   const libraryFlowCopy = kind === 'movies' ? mockHealth?.demoFlows?.movies : mockHealth?.demoFlows?.series;
   const surfaceRecoveryPlan = kind === 'movies' ? mockHealth?.surfaceRecoveryPlans?.movies : mockHealth?.surfaceRecoveryPlans?.series;
+  const browseLaunchScorecard = mockManifest?.browseLaunchScorecards?.find((item) => item.screenId === kind) ?? null;
   const activeConnectionStatus = activeConnection ? connectionStatus[activeConnection.id] : null;
   const activeSummary = activeConnection?.lastAuthSummary;
   const activeProviderNeedsRecovery = activeSummary?.status !== 'Active'
@@ -655,6 +673,31 @@ export function MediaLibrary({
                 </ul>
               </div>
             ) : null}
+            {browseLaunchScorecard ? (
+              <div className="mt-4 rounded-[1.4rem] border border-white/10 bg-black/20 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-sky-200">Browse launch scorecard</p>
+                    <h4 className="mt-2 text-base font-semibold text-white">{browseLaunchScorecard.title}</h4>
+                    <p className="mt-2 max-w-3xl text-sm text-slate-300">{browseLaunchScorecard.summary}</p>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                    {browseLaunchScorecard.metrics.map((metric) => metric.label).join(' / ')}
+                  </span>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  {browseLaunchScorecard.metrics.map((metric) => (
+                    <div key={metric.label} className={`rounded-2xl border p-3 text-xs ${trustToneClasses[metric.tone]}`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="uppercase tracking-[0.2em] text-white/80">{metric.label}</p>
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/70">{metric.value}</p>
+                      </div>
+                      <p className="mt-2 leading-5 text-white/85">{metric.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </section>
         ) : null}
         <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
@@ -842,6 +885,31 @@ export function MediaLibrary({
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
                 {activeScenario.verificationSteps.map((step) => <li key={step}>• {step}</li>)}
               </ul>
+            </div>
+          ) : null}
+          {browseLaunchScorecard ? (
+            <div className="mt-4 rounded-[1.4rem] border border-white/10 bg-black/20 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-sky-200">Browse launch scorecard</p>
+                  <h4 className="mt-2 text-base font-semibold text-white">{browseLaunchScorecard.title}</h4>
+                  <p className="mt-2 max-w-3xl text-sm text-slate-300">{browseLaunchScorecard.summary}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                  {browseLaunchScorecard.metrics.map((metric) => metric.label).join(' / ')}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-3">
+                {browseLaunchScorecard.metrics.map((metric) => (
+                  <div key={metric.label} className={`rounded-2xl border p-3 text-xs ${trustToneClasses[metric.tone]}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="uppercase tracking-[0.2em] text-white/80">{metric.label}</p>
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-white/70">{metric.value}</p>
+                    </div>
+                    <p className="mt-2 leading-5 text-white/85">{metric.detail}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
         </section>

@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { buildSearchResultActionKey, GlobalSearchRouteContract } from '@/lib/search-action-contracts';
-import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
 import { describeSeriesCompletenessBand, GroupedSearchResult } from '@/lib/search-continuity';
 import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
 import { getArtwork, getContentId } from '@/lib/xtream-api';
-import { MockProviderHealth, MockProviderScenario, ProviderCatalog, SavedConnection } from '@/lib/types';
+import { MockProviderHealth, MockProviderManifest, MockProviderScenario, ProviderCatalog, SavedConnection } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { useLibraryStore } from '@/stores/library-store';
@@ -66,6 +66,7 @@ export function SearchBrowser() {
   const [usingCache, setUsingCache] = useState(false);
   const [degradedProviders, setDegradedProviders] = useState<Array<{ provider: SavedConnection; message: string }>>([]);
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
+  const [mockManifest, setMockManifest] = useState<MockProviderManifest | null>(null);
   const [scenario, setScenario] = useState<MockProviderScenario>('healthy');
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
 
@@ -89,6 +90,22 @@ export function SearchBrowser() {
       })
       .catch(() => {
         if (!cancelled) setMockHealth(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConnection, scenario]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMockProviderManifest(activeConnection, scenario)
+      .then((manifest) => {
+        if (!cancelled) setMockManifest(manifest);
+      })
+      .catch(() => {
+        if (!cancelled) setMockManifest(null);
       });
 
     return () => {
@@ -283,6 +300,8 @@ export function SearchBrowser() {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No saved providers yet. Connect on the login screen first.</div>;
   }
 
+  const browseLaunchScorecard = mockManifest?.browseLaunchScorecards?.find((item) => item.screenId === 'search') ?? null;
+
   return (
     <div className="space-y-6">
       <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 lg:p-8">
@@ -434,6 +453,40 @@ export function SearchBrowser() {
                 <span>{mockHealth.surfaceRecoveryPlans.search.cta}</span>
                 <span className="text-xs text-sky-50/80">{healthiestConnection.name}</span>
               </button>
+            </div>
+          ) : null}
+          {browseLaunchScorecard ? (
+            <div className="mt-4 rounded-[1.4rem] border border-white/10 bg-black/20 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-sky-200">Browse launch scorecard</p>
+                  <h4 className="mt-2 text-base font-semibold text-white">{browseLaunchScorecard.title}</h4>
+                  <p className="mt-2 max-w-3xl text-sm text-slate-300">{browseLaunchScorecard.summary}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                  {browseLaunchScorecard.metrics.map((metric) => metric.label).join(' / ')}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-3">
+                {browseLaunchScorecard.metrics.map((metric) => (
+                  <div
+                    key={metric.label}
+                    className={`rounded-2xl border p-3 text-xs ${
+                      metric.tone === 'ready'
+                        ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+                        : metric.tone === 'watch'
+                          ? 'border-amber-400/20 bg-amber-500/10 text-amber-100'
+                          : 'border-rose-400/20 bg-rose-500/10 text-rose-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="uppercase tracking-[0.2em] text-white/80">{metric.label}</p>
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-white/70">{metric.value}</p>
+                    </div>
+                    <p className="mt-2 leading-5">{metric.detail}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
           <ProviderTrustStack
