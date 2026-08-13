@@ -176,6 +176,24 @@ export type SearchTrustActionGate = {
   tone: SearchContractTone;
 };
 
+export type SearchTrustConfidenceFloor = {
+  title: string;
+  summary: string;
+  minimumProof: string;
+  downgradeMode: string;
+  hardStopTrigger: string;
+  tone: SearchContractTone;
+};
+
+export type SearchTrustRetryHonesty = {
+  title: string;
+  summary: string;
+  honestRetryWindow: string;
+  preservesContext: string;
+  giveUpTrigger: string;
+  tone: SearchContractTone;
+};
+
 export type SearchLaunchScorecard = {
   title: string;
   summary: string;
@@ -200,6 +218,8 @@ export type SearchResultTrustContract = {
   recoveryWitness: SearchTrustRecoveryWitness;
   interruptionBudget: SearchTrustInterruptionBudget;
   actionGate: SearchTrustActionGate;
+  confidenceFloor: SearchTrustConfidenceFloor;
+  retryHonesty: SearchTrustRetryHonesty;
 };
 
 export type GlobalSearchRouteContract = {
@@ -722,6 +742,16 @@ const buildTrustContract = ({
     providerStabilityTone,
     returnCooldownTone,
   ]);
+  const confidenceFloorTone = getDominantTone([
+    claimCeilingTone,
+    providerChoiceTone,
+    providerStabilityTone,
+  ]);
+  const retryHonestyTone = getDominantTone([
+    interruptionBudgetTone,
+    returnCooldownTone,
+    providerStabilityTone,
+  ]);
   const claimReason = runtimeProvider?.indexState === 'stale'
     ? `${launchVariant.provider.name} produced a ranked hit, but the index is stale enough that Search should not oversell freshness.`
     : runtimeProvider?.indexState === 'missing'
@@ -1003,8 +1033,66 @@ const buildTrustContract = ({
           ? `Restore invisible premium ownership only after the active shell and ${launchVariant.provider.name} stop disagreeing about who owns the next move.`
           : headroomTone !== 'ready'
             ? `Restore the premium CTA after line posture returns to repeatably safe headroom and the same result stays launch-safe across fresh checks.`
-            : `Keep the premium CTA only while provider health, index freshness, and launch ownership keep backing the same ranked result story.`,
+        : `Keep the premium CTA only while provider health, index freshness, and launch ownership keep backing the same ranked result story.`,
       tone: getDominantTone([providerChoiceTone, claimCeilingTone, interruptionBudgetTone]),
+    },
+    confidenceFloor: {
+      title: 'Confidence floor',
+      summary: confidenceFloorTone === 'ready'
+        ? `${launchVariant.provider.name} still has enough live proof for Search to keep the premium next move above its minimum honesty bar.`
+        : confidenceFloorTone === 'watch'
+          ? `${launchVariant.provider.name} can stay premium-looking, but Search is getting close to the point where watched language should replace carefree launch confidence.`
+          : `${launchVariant.provider.name} has already fallen below Search's minimum premium-proof floor for this result, so downgrade language should lead.`,
+      minimumProof: confidenceFloorTone === 'ready'
+        ? `Keep ${launchVariant.provider.name} premium only while provider health, fresh index proof, and the visible launch-owner story still agree on the same next ${result.kind === 'series' ? 'browse' : 'launch'} move.`
+        : confidenceFloorTone === 'watch'
+          ? `Search still needs the same ranked result, same provider owner, and a visible explanation for any handoff or thin headroom before it treats this result like an easy premium move.`
+          : `Do not call this result premium again until ${launchVariant.provider.name} regains healthy provider posture, current index proof, and a boringly repeatable ownership story.`,
+      downgradeMode: providerWarning
+        ? `Replace the bright CTA with recovery-first provider guidance while ${launchVariant.provider.name} keeps showing visible warnings.`
+        : primaryAction.requiresSwitch
+          ? `Downgrade into an explicit provider handoff so Search stops implying that ${activeShellLabel} and ${launchVariant.provider.name} are the same owner.`
+          : headroomTone !== 'ready'
+            ? `Downgrade into watched launch copy that keeps line pressure and recovery options visible beside ${result.item.name}.`
+            : `Downgrade into watched proof language as soon as freshness, provider stability, or launch ownership stop lining up cleanly.`,
+      hardStopTrigger: providerWarning
+        ? `Hard-stop premium posture immediately when ${launchVariant.provider.name} still shows ${providerWarning.toLowerCase()} on the next refresh.`
+        : healthiestAlternateVariant && healthiestAlternateVariant.compositeScore >= launchVariant.compositeScore
+          ? `Hard-stop premium posture once ${healthiestAlternateVariant.provider.name} becomes equally or more trustworthy for the same result and Search still cannot name one honest owner.`
+          : runtimeProvider?.indexState === 'missing'
+            ? 'Hard-stop premium posture once missing index proof is doing the real work behind this result.'
+            : headroomTone === 'recover'
+              ? 'Hard-stop premium posture once safe playback headroom disappears for the same next move.'
+              : `Hard-stop premium posture once Search needs a different provider story to keep ${result.item.name} honest.`,
+      tone: confidenceFloorTone,
+    },
+    retryHonesty: {
+      title: 'Retry honesty',
+      summary: retryHonestyTone === 'ready'
+        ? `${launchVariant.provider.name} can absorb an ordinary Search retry without changing who owns the next move or what this result means.`
+        : retryHonestyTone === 'watch'
+          ? `${launchVariant.provider.name} can still take a short watched retry, but Search should say exactly what context survives before it asks for another attempt.`
+          : `${launchVariant.provider.name} should stop getting more blind retries because recovery is now more honest than another attempt at the same move.`,
+      honestRetryWindow: retryHonestyTone === 'ready'
+        ? `A quick provider recheck, query replay, or short launch retry is honest while ${result.item.name} keeps the same ranked owner, same proof packet, and same premium CTA story.`
+        : retryHonestyTone === 'watch'
+          ? `Only one short retry remains honest, and only while Search preserves the same query, same grouped duplicate collapse, and same visible provider explanation.`
+          : `Retry stops being honest once the next tap needs a new provider owner, fresher proof, or recovery-first language to stay believable.`,
+      preservesContext: primaryAction.requiresSwitch
+        ? `A watched retry may preserve the current query, result ranking, and the visible handoff from ${activeShellLabel} to ${launchVariant.provider.name}.`
+        : result.kind === 'series'
+          ? 'A watched retry may preserve the query, duplicate grouping, and the same series drill-down destination while continuity proof refreshes.'
+          : 'A watched retry may preserve the query, duplicate grouping, favorite state, and continue-watching context while launch proof refreshes.',
+      giveUpTrigger: providerWarning
+        ? `Give up on retry as soon as ${launchVariant.provider.name} keeps showing ${providerWarning.toLowerCase()} instead of clearing the warning.`
+        : healthiestAlternateVariant && healthiestAlternateVariant.compositeScore >= launchVariant.compositeScore
+          ? `Give up on retry once ${healthiestAlternateVariant.provider.name} becomes equally or more trustworthy for the same result, because another attempt no longer preserves one clear owner.`
+          : headroomTone !== 'ready'
+            ? 'Give up on retry once shrinking line headroom makes the same next move stop feeling repeatable.'
+            : runtimeProvider?.indexState === 'stale'
+              ? 'Give up on retry once stale index proof becomes the main reason this result still looks safe.'
+              : `Give up on retry once the next attempt stops preserving the same ${result.kind === 'series' ? 'browse' : 'launch'} story for ${result.item.name}.`,
+      tone: retryHonestyTone,
     },
   };
 };

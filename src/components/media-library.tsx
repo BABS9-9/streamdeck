@@ -403,6 +403,14 @@ export function MediaLibrary({
         tone: runtime.trust.actionGate.tone,
       },
       {
+        key: 'confidence-floor',
+        eyebrow: runtime.trust.confidenceFloor.title,
+        title: runtime.trust.confidenceFloor.summary,
+        detail: `${runtime.trust.confidenceFloor.minimumProof} ${runtime.trust.confidenceFloor.downgradeMode}`,
+        footnote: runtime.trust.confidenceFloor.hardStopTrigger,
+        tone: runtime.trust.confidenceFloor.tone,
+      },
+      {
         key: 'recovery-witness',
         eyebrow: runtime.trust.recoveryWitness.title,
         title: runtime.trust.recoveryWitness.summary,
@@ -417,6 +425,14 @@ export function MediaLibrary({
         detail: `${runtime.trust.interruptionBudget.acceptableDelay} ${runtime.trust.interruptionBudget.continuityLayer}`,
         footnote: runtime.trust.interruptionBudget.escalationTrigger,
         tone: runtime.trust.interruptionBudget.tone,
+      },
+      {
+        key: 'retry-honesty',
+        eyebrow: runtime.trust.retryHonesty.title,
+        title: runtime.trust.retryHonesty.summary,
+        detail: `${runtime.trust.retryHonesty.honestRetryWindow} ${runtime.trust.retryHonesty.preservesContext}`,
+        footnote: runtime.trust.retryHonesty.giveUpTrigger,
+        tone: runtime.trust.retryHonesty.tone,
       },
     ];
 

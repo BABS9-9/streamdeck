@@ -101,6 +101,24 @@ export type MediaDetailActionGate = {
   tone: MediaDetailContractTone;
 };
 
+export type MediaDetailConfidenceFloor = {
+  title: string;
+  summary: string;
+  minimumProof: string;
+  downgradeMode: string;
+  hardStopTrigger: string;
+  tone: MediaDetailContractTone;
+};
+
+export type MediaDetailRetryHonesty = {
+  title: string;
+  summary: string;
+  honestRetryWindow: string;
+  preservesContext: string;
+  giveUpTrigger: string;
+  tone: MediaDetailContractTone;
+};
+
 export type MediaDetailLaunchScorecard = {
   title: string;
   summary: string;
@@ -134,6 +152,8 @@ export type MediaDetailTrustContract = {
   recoveryWitness: MediaDetailRecoveryWitness;
   interruptionBudget: MediaDetailInterruptionBudget;
   actionGate: MediaDetailActionGate;
+  confidenceFloor: MediaDetailConfidenceFloor;
+  retryHonesty: MediaDetailRetryHonesty;
 };
 
 export type MediaDetailRuntimeContract = {
@@ -415,6 +435,16 @@ const buildMediaDetailTrustContract = ({
     readinessTone,
     stabilityTone,
     returnCooldownTone,
+  ]);
+  const confidenceFloorTone = getDominantTone([
+    claimTone,
+    stabilityTone,
+    kind === 'series' && !hasResumeHook ? 'watch' : 'ready',
+  ]);
+  const retryHonestyTone = getDominantTone([
+    interruptionBudgetTone,
+    returnCooldownTone,
+    stabilityTone,
   ]);
 
   const primaryReadiness: MediaDetailReadinessCard = {
@@ -713,6 +743,78 @@ const buildMediaDetailTrustContract = ({
               ? 'Restore exact resume language only after canonical episode proof survives provider-specific series resolution again.'
               : `Keep the premium CTA only while ${activeConnection.name} remains the same boringly safe owner for this rail.`,
       tone: getDominantTone([claimTone, stabilityTone, interruptionBudgetTone]),
+    },
+    confidenceFloor: {
+      title: 'Confidence floor',
+      summary: confidenceFloorTone === 'ready'
+        ? `${sameProviderOwner ? activeConnection.name : launchOwner.providerName} still has enough proof for this rail to keep its premium next move above the minimum honesty floor.`
+        : confidenceFloorTone === 'watch'
+          ? 'This rail can still look premium, but its minimum proof bar is getting thin enough that watched copy should stay visible.'
+          : 'This rail has already lost the minimum proof needed for premium posture, so downgrade language should lead the next move.',
+      minimumProof: confidenceFloorTone === 'ready'
+        ? kind === 'series'
+          ? 'Keep premium resume or drill-down language only while the same provider owner, same continuity summary, and exact episode intent still agree on the next move.'
+          : 'Keep premium playback language only while the same title, same launch owner, healthy provider posture, and safe headroom still agree on the next move.'
+        : confidenceFloorTone === 'watch'
+          ? kind === 'series'
+            ? 'The rail still needs the same series title, same provider explanation, and either stable episode proof or honest series-level continuity language before it calls the CTA premium.'
+            : 'The rail still needs the same launch owner, same title context, and a visible explanation for thin headroom or alternates before it treats play like an easy premium action.'
+          : `Do not restore premium posture until ${sameProviderOwner ? activeConnection.name : launchOwner.providerName} regains healthy ownership, safe headroom, and repeatable continuity proof.`,
+      downgradeMode: activeWarning
+        ? `Downgrade into recovery-first provider guidance while ${activeConnection.name} keeps showing visible warnings.`
+        : !sameProviderOwner
+          ? `Downgrade into an explicit provider handoff so the detail shell stops pretending ${activeConnection.name} still owns the next move.`
+          : headroom.tone !== 'ready'
+            ? `Downgrade into watched ${kind === 'series' ? 'resume' : 'play'} copy that keeps line pressure and recovery options visible on the rail.`
+            : kind === 'series' && !hasResumeHook
+              ? 'Downgrade into series-level continuity language until exact episode proof survives drill-down.'
+              : 'Downgrade into watched proof language as soon as health, ownership, or continuity stop lining up cleanly.',
+      hardStopTrigger: activeWarning
+        ? `Hard-stop premium posture immediately when ${activeConnection.name} still shows ${activeWarning.toLowerCase()} on the next refresh.`
+        : !sameProviderOwner
+          ? `Hard-stop premium posture once ${launchOwner.providerName} keeps owning the safer next move and this rail still cannot name the handoff cleanly.`
+          : headroom.tone === 'recover'
+            ? 'Hard-stop premium posture once safe playback headroom disappears for the same next move.'
+            : kind === 'series' && !hasResumeHook
+              ? 'Hard-stop premium posture once exact episode proof falls back to series-level continuity only.'
+              : 'Hard-stop premium posture once the rail needs a different ownership story to keep the same destination honest.',
+      tone: confidenceFloorTone,
+    },
+    retryHonesty: {
+      title: 'Retry honesty',
+      summary: retryHonestyTone === 'ready'
+        ? `${sameProviderOwner ? activeConnection.name : launchOwner.providerName} can absorb an ordinary detail retry without changing what this rail means or who owns the next move.`
+        : retryHonestyTone === 'watch'
+          ? 'This rail can still take a short watched retry, but it should say exactly what context survives before it asks for another attempt.'
+          : 'This rail should stop asking for more blind retries because recovery is now more honest than another attempt at the same move.',
+      honestRetryWindow: retryHonestyTone === 'ready'
+        ? kind === 'series'
+          ? 'A quick series-info refresh, provider validation pass, or short drill-down retry is honest while the same title, same continuity summary, and same provider-owner story stay intact.'
+          : 'A quick provider recheck or short playback retry is honest while the same title, same launch owner, and same playback-safe story stay intact.'
+        : retryHonestyTone === 'watch'
+          ? kind === 'series'
+            ? 'Only one short retry remains honest, and only while the rail preserves the same series title, same saved episode intent, and same visible provider explanation.'
+            : 'Only one short retry remains honest, and only while the rail preserves the same title, same artwork, and same visible launch-owner explanation.'
+          : kind === 'series'
+            ? 'Retry stops being honest once the rail needs a different provider owner or falls back from exact resume intent to generic series guidance.'
+            : 'Retry stops being honest once the rail needs a different launch owner, safer headroom, or recovery-first language to stay believable.',
+      preservesContext: kind === 'series'
+        ? hasResumeHook
+          ? 'A watched retry may preserve the series title, saved season and episode intent, continuity summary, and ranked rescue path during delay.'
+          : 'A watched retry may preserve the series title, drill-down context, and ranked rescue path while exact episode proof refreshes.'
+        : sameProviderOwner
+          ? 'A watched retry may preserve the title metadata, artwork, favorite and resume truth, and same-provider launch context during delay.'
+          : `A watched retry may preserve the title metadata, artwork, and recovery path while launch ownership hands off to ${launchOwner.providerName}.`,
+      giveUpTrigger: activeWarning
+        ? `Give up on retry as soon as ${activeConnection.name} keeps showing ${activeWarning.toLowerCase()} instead of clearing the warning.`
+        : !sameProviderOwner
+          ? `Give up on retry once ${launchOwner.providerName} keeps owning the safer next move, because another attempt no longer preserves one honest owner on this rail.`
+          : headroom.tone !== 'ready'
+            ? 'Give up on retry once shrinking line headroom makes the same next move stop feeling repeatable.'
+            : kind === 'series' && !hasResumeHook
+              ? 'Give up on retry once delay stops preserving exact resume intent and falls back to series-level guidance.'
+              : 'Give up on retry once the next attempt stops preserving the same detail launch story for this title.',
+      tone: retryHonestyTone,
     },
   };
 };
