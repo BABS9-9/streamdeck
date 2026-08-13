@@ -371,6 +371,71 @@ export function SearchBrowser() {
         {runtimeContract?.summary ? (
           <p className="mt-4 text-sm text-slate-400">{runtimeContract.summary}</p>
         ) : null}
+        {runtimeContract?.indexing ? (
+          <div className="mt-4 rounded-[1.5rem] border border-sky-400/20 bg-sky-500/10 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-sky-200">{runtimeContract.indexing.title}</p>
+                <h3 className="mt-2 text-base font-semibold text-white">{runtimeContract.indexing.query.summary}</h3>
+                <p className="mt-2 max-w-3xl text-sm text-slate-200">{runtimeContract.indexing.summary}</p>
+                <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-300">{runtimeContract.indexing.freshnessSummary}</p>
+                <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-300">{runtimeContract.indexing.ownership.summary}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em] text-white/80">
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+                  Query: {runtimeContract.indexing.query.normalizedQuery || 'pending'}
+                </span>
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+                  {runtimeContract.indexing.query.expandedTokens.length} ranking signals
+                </span>
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+                  {runtimeContract.indexing.duplicateCollapse.duplicateGroups} duplicate groups
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                <p className="uppercase tracking-[0.2em] text-slate-500">Duplicate collapse</p>
+                <p className="mt-2 leading-5 text-slate-100">{runtimeContract.indexing.duplicateCollapse.summary}</p>
+                <p className="mt-2 leading-5 text-slate-400">
+                  {runtimeContract.indexing.duplicateCollapse.multiProviderResultCount} multi-provider result{runtimeContract.indexing.duplicateCollapse.multiProviderResultCount === 1 ? '' : 's'} · {runtimeContract.indexing.duplicateCollapse.singleProviderResultCount} single-provider result{runtimeContract.indexing.duplicateCollapse.singleProviderResultCount === 1 ? '' : 's'}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+                <p className="uppercase tracking-[0.2em] text-slate-500">Matched content kinds</p>
+                <p className="mt-2 leading-5 text-slate-100">
+                  {runtimeContract.indexing.query.matchedKinds.length > 0
+                    ? runtimeContract.indexing.query.matchedKinds.join(' · ')
+                    : 'No content kinds matched yet.'}
+                </p>
+                <p className="mt-2 leading-5 text-slate-400">
+                  Expanded terms: {runtimeContract.indexing.query.expandedTokens.join(', ') || 'none yet'}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-2 lg:grid-cols-3">
+              {runtimeContract.indexing.providerFreshness.map((provider) => (
+                <div
+                  key={provider.providerId}
+                  className={`rounded-2xl border p-3 text-xs ${
+                    provider.tone === 'ready'
+                      ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+                      : provider.tone === 'watch'
+                        ? 'border-amber-400/20 bg-amber-500/10 text-amber-100'
+                        : 'border-rose-400/20 bg-rose-500/10 text-rose-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="uppercase tracking-[0.2em] text-white/80">{provider.providerName}</p>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-white/70">{provider.indexState}</p>
+                  </div>
+                  <p className="mt-2 leading-5">{provider.freshnessSummary}</p>
+                  <p className="mt-2 leading-5 text-white/75">{provider.ownershipSummary}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {mockHealth ? (
@@ -571,6 +636,7 @@ export function SearchBrowser() {
             const continueWatching = actionContract?.continueWatching ?? null;
             const switchIntent = actionContract?.switchIntent ?? null;
             const trustContract = actionContract?.trust ?? null;
+            const rankingContract = runtimeContract?.indexing.rankingByResultKey[result.canonicalKey] ?? null;
             return (
               <article key={`${result.provider.id}-${result.kind}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                 <div className="aspect-video rounded-2xl bg-cover bg-center bg-no-repeat" style={{ backgroundImage: artwork ? `url(${artwork})` : undefined }} />
@@ -645,6 +711,58 @@ export function SearchBrowser() {
                     </p>
                   ) : null}
                 </div>
+                {rankingContract ? (
+                  <div className="mt-3 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-3 text-xs text-sky-100">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="uppercase tracking-[0.2em] text-sky-200">Ranking contract</p>
+                        <p className="mt-2 leading-5 text-slate-100">{rankingContract.summary}</p>
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-sky-100">
+                        Rank #{rankingContract.rank}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+                        Owner · {rankingContract.launchOwnerProviderName}
+                      </span>
+                      <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+                        Score · {Math.round(rankingContract.score)}
+                      </span>
+                      <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+                        Query overlap · {rankingContract.queryOverlap.join(', ') || 'title-led'}
+                      </span>
+                    </div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-slate-200">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">Ownership</p>
+                        <p className="mt-2 leading-5">{rankingContract.ownershipSummary}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-slate-200">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">Freshness</p>
+                        <p className="mt-2 leading-5">{rankingContract.freshnessSummary}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-slate-200">
+                        <p className="uppercase tracking-[0.2em] text-slate-500">Duplicate collapse</p>
+                        <p className="mt-2 leading-5">{rankingContract.duplicateSummary}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-3">
+                      {rankingContract.providerStandings.slice(0, 3).map((standing) => (
+                        <div key={standing.providerId} className="rounded-2xl border border-white/10 bg-black/20 p-3 text-slate-200">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="uppercase tracking-[0.2em] text-slate-500">{standing.providerName}</p>
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                              {standing.isOwner ? 'owner' : `-${Math.max(0, Math.round(standing.trustDeltaFromOwner))}`}
+                            </p>
+                          </div>
+                          <p className="mt-2 leading-5">Composite score {Math.round(standing.compositeScore)}</p>
+                          <p className="mt-2 leading-5 text-slate-400">{standing.summary}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 {trustContract ? (
                   <div className="mt-3 grid gap-3">
                     <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">

@@ -9,6 +9,12 @@ export type ProviderIndexedSearchHit = {
   matchReason: string;
 };
 
+export type SearchTermPayload = {
+  normalized: string;
+  tokens: string[];
+  expandedTokens: string[];
+};
+
 const SEARCH_ALIASES: Record<string, string[]> = {
   sports: ['sport', 'sports', 'fight', 'goal', 'match', 'arena'],
   news: ['news', 'headline', 'report', 'desk', 'wire'],
@@ -18,7 +24,7 @@ const SEARCH_ALIASES: Record<string, string[]> = {
 
 export const normalizeSearchText = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-const getSearchTerms = (query: string) => {
+export const buildSearchTerms = (query: string): SearchTermPayload => {
   const normalized = normalizeSearchText(query);
   const tokens = normalized.split(/\s+/).filter(Boolean);
   const expanded = new Set(tokens);
@@ -80,7 +86,7 @@ export const buildProviderSearchIndexSnapshot = ({
   };
 };
 
-const scoreIndexedEntry = (query: ReturnType<typeof getSearchTerms>, entry: ProviderSearchIndexEntry) => {
+const scoreIndexedEntry = (query: SearchTermPayload, entry: ProviderSearchIndexEntry) => {
   if (!entry.normalizedSearchText) return null;
 
   let score = 0;
@@ -132,7 +138,7 @@ export const queryProviderSearchIndex = ({
   query: string;
   limit?: number;
 }): ProviderIndexedSearchHit[] => {
-  const searchTerms = getSearchTerms(query);
+  const searchTerms = buildSearchTerms(query);
   if (!searchTerms.normalized || searchTerms.normalized.length < 2) return [];
 
   return snapshot.entries

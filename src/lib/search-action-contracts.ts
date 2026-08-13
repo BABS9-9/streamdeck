@@ -1,4 +1,6 @@
 import { buildSeriesContinuityHref } from './media-detail-runtime';
+import { GlobalSearchIndexingContract, buildGlobalSearchIndexingContract } from './global-search-indexing-contracts';
+import { GlobalSearchRuntimeContract } from './search-runtime-contracts';
 import { getContentId, buildLiveStreamUrl, buildVodStreamUrl } from './xtream-api';
 import { GroupedSearchResult, SearchResultVariantPayload } from './search-continuity';
 import { FavoriteEntry, SavedConnection, WatchHistoryItem, XtreamStream } from './types';
@@ -237,6 +239,7 @@ export type GlobalSearchRouteContract = {
   providerHitsById: Record<string, number>;
   status: 'ready' | 'partial' | 'stale' | 'empty';
   summary: string;
+  indexing: GlobalSearchIndexingContract;
   providers: Array<{
     providerId: string;
     providerName: string;
@@ -661,7 +664,7 @@ const buildTrustContract = ({
   favorite,
   activeConnectionId,
 }: {
-  runtime: Omit<GlobalSearchRouteContract, 'actionsByResultKey'>;
+  runtime: GlobalSearchRuntimeContract;
   result: GroupedSearchResult;
   launchVariant: SearchResultVariantPayload;
   variants: SearchResultVariantPayload[];
@@ -1107,7 +1110,7 @@ export const buildSearchRouteActionContract = ({
   favoriteEntriesByProvider,
   watchHistory,
 }: {
-  runtime: Omit<GlobalSearchRouteContract, 'actionsByResultKey'>;
+  runtime: GlobalSearchRuntimeContract;
   activeConnectionId?: string | null;
   connections: SavedConnection[];
   favoriteEntriesByProvider: Record<string, FavoriteEntry[]>;
@@ -1206,6 +1209,7 @@ export const buildSearchRouteActionContract = ({
 
   return {
     ...runtime,
+    indexing: buildGlobalSearchIndexingContract({ runtime }),
     actionsByResultKey,
   };
 };
