@@ -872,10 +872,10 @@ const buildCompetitiveDifferentiators = () => ([
   {
     slug: 'launch-scorecard',
     feature: 'Launch scorecard',
-    pitch: 'Publish a compact go / watch / recover scorecard on each key surface before the user commits to Connect, Browse, or Play.',
+    pitch: 'Publish a compact go / watch / recover scorecard beside each premium CTA before the user commits to Connect, Browse, or Play.',
     competitiveGap: 'Most IPTV players imply readiness through UI polish and leave users guessing whether the next CTA is fully proven, cache-backed, or already recovery-owned.',
     buildPhase: 'Phase 1',
-    architectureNotes: 'Drive Login, Home, and Live from one scorecard, exit-criteria, and handoff contract so readiness, hold conditions, and next-hop truth stay synchronized.',
+    architectureNotes: 'Drive Login, Home, and Live from one scorecard, exit-criteria, and handoff contract so readiness, hold conditions, and next-hop truth stay synchronized and stay visible beside Connect, hero launch, and Play.',
     surfaces: ['login', 'home', 'live'],
   },
   {
