@@ -28,7 +28,7 @@ StreamDeck should feel like a premium streaming product first and an IPTV utilit
 | Autonomy boundary | Publish what StreamDeck may safely keep automatic, what provider or playback choice still belongs to the user, and what trigger forces an explicit handoff before rescue feels sneaky. | Competitors often blur auto-retry, silent provider switching, and recovery logic together, so users cannot tell when the app acted for them versus around them. | Phase 1 | Keep one surface-specific autonomy-boundary contract across Login, Home, and Live so trust maintenance, user-owned choice, and forced-handoff triggers stay aligned before premium automation overclaims safety. |
 | Launch readiness | Publish whether Connect, hero launch, or Play is actually ready now, only watch-safe, or already recovery-led before motion or polish implies more proof than the runtime owns. | Competitors usually imply readiness through cinematic UI alone, so users cannot tell when the next move is fully proven versus merely still visible. | Phase 1 | Keep one surface-specific launch-readiness contract across Login, Home, and Live so provider owner, guide truth, playback posture, and recovery move stay aligned before the CTA outruns proof. |
 | Handoff clarity | Publish what context the next screen will keep, what exact condition should hold the user in place, and what fallback lane takes over before Connect, hero launch, or Play silently changes the mission. | Competitors usually hide handoff rules inside implicit navigation, so users only discover that launch context changed after a jarring jump, a reset, or a disguised fallback. | Phase 1 | Reuse one surface-specific exit-criteria plus handoff-map contract across Login, Home, and Live so go-signals, hold-signals, carried-forward context, and fallback lane all stay aligned beside the primary CTA. |
-| Launch scorecard | Publish a compact go / watch / recover scorecard on each key surface so users know how safe the next move really is before they connect, browse, or play. | Competitors usually imply launch confidence through polish alone, leaving users to guess whether a CTA is fully proven, partially cached, or already owned by recovery logic. | Phase 1 | Drive Login, Home, and Live from one shared scorecard + exit-criteria + handoff contract so readiness, hold conditions, and next-hop truth stay aligned across the shell. |
+| Launch scorecard | Publish a compact go / watch / recover scorecard directly beside each premium CTA so users know how safe the next move really is before they connect, browse, or play. | Competitors usually imply launch confidence through polish alone, leaving users to guess whether a CTA is fully proven, partially cached, or already owned by recovery logic. | Phase 1 | Drive Login, Home, and Live from one shared scorecard + exit-criteria + handoff contract so readiness, hold conditions, and next-hop truth stay aligned across the shell and stay visible beside Connect, hero launch, and Play. |
 | Provider stability truth | Tell users when the current provider is genuinely stable enough to own the next move, what normal volatility is still tolerable, and what instability means rescue should stay primary. | Competitors usually treat one lucky refresh or a momentary calm spell like full recovery, so users get pushed back onto a shaky provider before the trust story is actually boring again. | Phase 1 | Reuse one surface-specific provider-stability contract across Login, Home, and Live so stability thresholds, tolerated jitter, and rescue-primary triggers stay aligned beside the primary CTA. |
 | Return cooldown truth | Tell users how long the current provider still needs to stay calm before it can take the next move back from rescue, what proof keeps the cooldown shrinking, and what reset restarts that wait. | Competitors usually talk about recovery like an instant yes/no flip, so one good poll or one lucky preview makes the original provider look “back” long before it has earned boring ownership again. | Phase 1 | Reuse one surface-specific return-cooldown contract across Login, Home, and Live so cooldown runway, countdown reset triggers, and return-owner proof stay aligned beside the primary CTA. |
 | Recovery witness | Tell users what exact evidence proves rescue preserved the same destination, what context still carries forward, and what contradiction breaks that trust immediately. | Competitors usually ask users to trust fallback on vibes alone, so rescue feels magical until the destination, provider, or launch meaning quietly drifts. | Phase 1 | Reuse one surface-specific recovery-witness contract across Login, Home, and Live so required evidence, preserved context, and trust-break triggers stay aligned beside the primary CTA. |
@@ -73,21 +73,23 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
    The shell should say what trust work can stay automatic, what provider or playback decision still belongs to the user, and what event forces an explicit handoff before recovery turns into hidden automation.
 15. Launch-readiness honesty
    The shell should show whether the next move is genuinely ready, only watch-safe, or already recovery-owned before cinematic polish outruns proof.
-16. Handoff clarity
+16. Launch-scorecard honesty
+   The shell should keep a compact go / watch / recover board beside the primary CTA so users can read the safest next move at a glance instead of inferring it from mood or motion.
+17. Handoff clarity
    The shell should say what the next screen will preserve, what condition should hold the current surface in place, and what fallback lane takes over before a CTA quietly changes the mission.
-17. Provider-stability honesty
+18. Provider-stability honesty
    The shell should say when the current provider is actually stable enough to own the next move again, what jitter is still acceptable, and what instability keeps rescue in charge.
-18. Return-cooldown honesty
+19. Return-cooldown honesty
    The shell should say how long the original provider still needs to stay calm before it may take the next move back, what proof keeps the cooldown shrinking, and what reset restarts the wait.
-19. Recovery-witness honesty
+20. Recovery-witness honesty
    The shell should show what evidence proves rescue preserved the same destination, what context survives the handoff, and what contradiction breaks that trust immediately.
-20. Canonical ownership continuity
+21. Canonical ownership continuity
    Saved-provider aliases, reconnect variants, and rescue paths should still resolve to one clear provider owner before the app reuses trust, history, or favorites.
-21. Honest fallback ranking
+22. Honest fallback ranking
    The shell should explain which rescue is currently the strongest exact save versus an approximate fallback before it silently changes the next move.
-22. Honest rescue equivalence
+23. Honest rescue equivalence
    The shell should distinguish between the same destination, an acceptable approximation, and a disguised restart before “seamless fallback” turns into fiction.
-23. Guide freshness honesty
+24. Guide freshness honesty
    The shell should show how much guide truth is fresh, cached, stale, or missing before NOW / NEXT copy overclaims what the provider has actually proven.
 
 ## Phase 1 Surface Implications
@@ -108,6 +110,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must say what trust work Login may keep automatic, what provider and credential choice still belongs to the user, and what trigger forces a visible handoff before recovery feels hidden.
 - Must say whether Connect is ready now, only safe to watch, or already recovery-led before the main setup CTA outruns current provider and guide proof.
 - Must publish whether Connect is launch-ready, watch-only, or already recovery-led before premium setup polish outruns proof.
+- Must keep a compact go / watch / recover scorecard beside Connect so the setup-safe next move is glanceable before the user reads deeper trust copy.
 - Must say exactly what Connect carries into Home, what condition should keep Login in place, and what fallback lane takes over before setup quietly changes the destination story.
 - Must say when the current provider is stable enough to keep owning fresh Home launches, what auth or line jitter can stay tolerable, and what instability means rescue should remain the named owner.
 - Must say how much cooldown runway is still left before the original provider may take Home ownership back, what fresh proof keeps that runway shrinking, and what auth or line wobble restarts the countdown.
@@ -134,6 +137,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must say what browse maintenance Home may keep automatic, what launch or provider choice still belongs to the user, and what trigger forces a visible handoff before the hero starts lying.
 - Must say whether the featured CTA is ready now, browse-safe only, or already recovery-owned before the hero implies more launch certainty than the runtime has earned.
 - Must publish whether the hero and rails are truly launch-ready, only cache-borrowed, or already recovery-owned before Home overclaims premium confidence.
+- Must keep a compact go / watch / recover scorecard beside the hero CTA so the safest browse move is readable without drilling into the deeper proof stack.
 - Must say exactly what Home carries into Live, what condition should keep the user anchored in browse, and what fallback lane takes over before the hero quietly changes the launch path.
 - Must say when the hero is stable enough to move ownership back onto the current provider, what browse volatility can be tolerated without drama, and what instability keeps rescue primary.
 - Must say how much cooldown runway is still left before the hero may move ownership back onto the current provider, what repeated browse proof keeps that runway shrinking, and what contradiction restarts the wait.
@@ -160,6 +164,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must say what surf continuity Live may keep automatic, what playback or provider-switch decision still belongs to the user, and what trigger forces a visible handoff before preview motion hides the choice.
 - Must say whether Play is ready now, preview-safe only, or already rescue-led before motion makes the selected card sound more proven than it is.
 - Must publish whether Play is exact-channel ready, only safe to preview, or already leaning on rescue logic before motion implies more certainty than current proof.
+- Must keep a compact go / watch / recover scorecard beside Play so the user can read launch safety before preview motion turns into false certainty.
 - Must say exactly what selected-card context Play carries into the dock, what condition should keep Live in browse mode, and what fallback lane takes over before preview polish quietly changes the channel story.
 - Must say when the selected card is stable enough to put the original provider back in charge, what preview or guide jitter is still acceptable, and what instability keeps rescue primary.
 - Must say how much cooldown runway is still left before the selected card may hand Play ownership back to the original provider, what repeated preview-plus-guide proof keeps that runway shrinking, and what instability restarts the wait.
@@ -172,6 +177,6 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 
 ## Implementation Priorities Right Now
 
-1. Keep Phase 1 strongest on multi-connection switching, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, claim ceiling, confidence floor, connection headroom, interruption budget, retry honesty, fallback cost, provider choice truth, autonomy boundary, launch readiness, handoff clarity, launch scorecard, provider stability truth, return cooldown truth, recovery witness, canonical provider identity, fallback ranking, fallback equivalence, and stream-health HUD.
+1. Keep Phase 1 strongest on multi-connection switching, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, claim ceiling, confidence floor, connection headroom, interruption budget, retry honesty, fallback cost, provider choice truth, autonomy boundary, launch readiness, launch scorecard, handoff clarity, provider stability truth, return cooldown truth, recovery witness, canonical provider identity, fallback ranking, fallback equivalence, and stream-health HUD.
 2. Treat cross-provider search as the next major product unlock once provider catalogs are stable.
 3. Leave recording, watch party, and per-profile parental controls scaffold-friendly in the architecture, but do not let them dilute the Phase 1 browser, playback, and continuity bar.
