@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildMergedFavoriteGroups, buildMergedHistoryGroups, buildProviderNameMap } from '@/lib/merged-library';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustDisplay, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
+import { buildSavedLibraryRuntimeContract } from '@/lib/saved-library-runtime';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { FavoriteEntry, MockProviderHealth, MockProviderScenario, WatchHistoryItem, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
@@ -165,6 +166,15 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     }),
     [activeConnection?.id, watchHistory]
   );
+  const runtimeContract = useMemo(() => buildSavedLibraryRuntimeContract({
+    mode,
+    connections,
+    activeConnectionId: activeConnection?.id,
+    connectionStatus,
+    favoriteEntriesByProvider,
+    watchHistory,
+    providerVariants,
+  }), [activeConnection?.id, connectionStatus, connections, favoriteEntriesByProvider, mode, providerVariants, watchHistory]);
 
   const seriesResumeLookup = useMemo(() => {
     return Object.fromEntries(
@@ -222,22 +232,8 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     || (!!activeSummary?.maxConnections && (activeSummary.activeConnections ?? 0) >= activeSummary.maxConnections)
     || activeConnectionStatus?.state === 'error';
 
-  const activeRecoveryMessage = activeConnectionStatus?.state === 'error'
-    ? activeConnectionStatus.message || 'This provider is failing validation right now.'
-    : activeSummary?.status !== 'Active'
-      ? `Provider status is ${activeSummary?.status || 'not active'}. Renew or switch before relying on saved playback.`
-      : !!activeSummary?.maxConnections && (activeSummary.activeConnections ?? 0) >= activeSummary.maxConnections
-        ? `All ${activeSummary.maxConnections} lines are in use on ${activeConnection?.name}. Use an alternate provider copy if one exists.`
-        : null;
-
   const surfaceRecoveryPlan = mode === 'favorites' ? mockHealth?.surfaceRecoveryPlans?.favorites : mockHealth?.surfaceRecoveryPlans?.continue;
   const healthiestSavedVariant = Object.values(variantSummary).flat()[0] ?? null;
-  const mergedVisibleCount = mode === 'favorites' ? mergedFavoriteGroups.length : mergedContinueGroups.length;
-  const duplicateVisibleCount = (mode === 'favorites' ? mergedFavoriteGroups : mergedContinueGroups)
-    .filter((group) => group.duplicateProviderCount > 1)
-    .length;
-  const providerCopyCount = (mode === 'favorites' ? mergedFavoriteGroups : mergedContinueGroups)
-    .reduce((total, group) => total + group.providerEntries.length, 0);
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
@@ -514,26 +510,25 @@ export function LibraryCollections({ mode }: CollectionsProps) {
   }
 
   const title = mode === 'favorites' ? 'Favorites' : 'Continue watching';
-  const subtitle = mode === 'favorites'
-    ? 'Merged favorites truth across saved providers, without hiding which provider owns each copy.'
-    : 'One merged resume rail for everything you already started, with provider identity preserved on every copy.';
+  const subtitle = runtimeContract.subtitle;
 
   return (
     <div className="space-y-6">
       <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
         <p className="text-xs uppercase tracking-[0.35em] text-violet-300">{mode === 'favorites' ? 'Saved collection' : 'Unified resume rail'}</p>
-        <h2 className="mt-3 text-3xl font-semibold text-white">{title}</h2>
+        <h2 className="mt-3 text-3xl font-semibold text-white">{runtimeContract.title}</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">{subtitle}</p>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-400">{runtimeContract.summary}</p>
         <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-300">
-          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{mergedVisibleCount} merged titles</span>
-          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{providerCopyCount} provider copies</span>
-          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{duplicateVisibleCount} multi-provider matches</span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{runtimeContract.mergedTitleCount} merged titles</span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{runtimeContract.providerCopyCount} provider copies</span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{runtimeContract.duplicateGroupCount} multi-provider matches</span>
         </div>
-        {activeRecoveryMessage ? (
+        {runtimeContract.activeProviderMessage ? (
           <div className="mt-4 rounded-[1.4rem] border border-amber-400/20 bg-amber-500/10 p-4">
             <ProviderRecoveryRail
               eyebrow="Saved-library recovery"
-              title={activeRecoveryMessage}
+              title={runtimeContract.activeProviderMessage}
               detail={mode === 'favorites' ? 'Favorites should stay actionable even when the active provider expires, saturates, or fails validation.' : 'Continue Watching should preserve resume momentum before the user gets dumped out of the flow they were already in.'}
               tone="amber"
               actions={[
@@ -591,6 +586,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
           {!loading && mergedFavoriteGroups.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Save channels or titles from Live, Movies, or Series and they will show up here as one merged rail across all saved providers.</div> : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {mergedFavoriteGroups.map((group) => {
+              const itemRuntime = runtimeContract.itemsByKey[group.key];
               const entry = group.activeEntry ?? group.primaryEntry;
               const activeCatalogItem = entry.providerId === activeConnection.id
                 ? favoriteItems.find((item) => item.entry.providerId === entry.providerId && item.entry.streamId === entry.streamId)?.item
@@ -619,19 +615,22 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                       <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{item.stream_type}</p>
                     </div>
                     <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">
-                      {group.duplicateProviderCount > 1 ? `${group.duplicateProviderCount} copies` : contentId}
+                      {itemRuntime?.duplicateProviderCount > 1 ? `${itemRuntime.duplicateProviderCount} copies` : contentId}
                     </span>
                   </div>
                   <p className="mt-3 line-clamp-3 text-sm text-slate-400">{item.plot || item.genre || 'Saved from your StreamDeck library.'}</p>
                   {renderProviderIdentity(group.providerEntries, activeConnection.id)}
-                  {group.duplicateProviderCount > 1 ? (
+                  <p className="mt-3 text-xs leading-5 text-slate-300">{itemRuntime?.continuitySummary}</p>
+                  {itemRuntime?.launchOwner ? (
                     <p className="mt-3 text-xs leading-5 text-sky-200">
-                      Same title saved under multiple providers. StreamDeck keeps each copy visible so favorites never pretend one provider owns the whole merged row.
+                      {itemRuntime.launchOwner.summary}
                     </p>
                   ) : null}
-                  {item.stream_type === 'series' && seriesResume ? (
-                    <p className="mt-3 text-xs leading-5 text-emerald-200">Resume context found for S{seriesResume.seasonNumber}E{seriesResume.episodeNumber}, so alternate provider copies can jump straight back into the episode.</p>
+                  {itemRuntime?.resume.hasResume ? (
+                    <p className="mt-3 text-xs leading-5 text-emerald-200">{itemRuntime.resume.summary}</p>
                   ) : null}
+                  {itemRuntime?.switchPosture.reason !== 'none' ? <p className="mt-3 text-xs leading-5 text-amber-100/90">{itemRuntime.switchPosture.summary}</p> : null}
+                  {itemRuntime?.recovery.alternateProviderCount || itemRuntime?.recovery.sameCategoryFallback ? <p className="mt-3 text-xs leading-5 text-emerald-100/90">{itemRuntime.recovery.summary}</p> : null}
                   {renderProviderVariants(variantSummary[`favorite:${entry.streamId}`] || [], item.stream_type === 'series' && seriesResume
                     ? {
                         seriesTitle: item.name,
@@ -650,7 +649,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                       onClick={() => playFavoriteCopy(entry)}
                       className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400"
                     >
-                      {entry.providerId === activeConnection.id ? 'Play from favorites' : `Play on ${providerNameMap[entry.providerId] || entry.providerId}`}
+                      {itemRuntime?.primaryAction.label || (entry.providerId === activeConnection.id ? 'Play from favorites' : `Play on ${providerNameMap[entry.providerId] || entry.providerId}`)}
                     </button>
                   ) : seriesResume ? (
                     <button
@@ -672,7 +671,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                       disabled={seriesRecoveryKey === `${entry.providerId}-${item.series_id ?? contentId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}`}
                       className="mt-4 w-full rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {seriesRecoveryKey === `${entry.providerId}-${item.series_id ?? contentId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}` ? 'Starting episode…' : `Resume S${seriesResume.seasonNumber}E${seriesResume.episodeNumber}`}
+                      {seriesRecoveryKey === `${entry.providerId}-${item.series_id ?? contentId}-${seriesResume.seasonNumber || 0}-${seriesResume.episodeNumber || 0}` ? 'Starting episode…' : itemRuntime?.primaryAction.label || `Resume S${seriesResume.seasonNumber}E${seriesResume.episodeNumber}`}
                     </button>
                   ) : (
                     <Link
@@ -692,6 +691,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
           {mergedContinueGroups.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-slate-400">Start any live stream, movie, or series item and it will land here with merged provider-aware resume context.</div> : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {mergedContinueGroups.map((group) => {
+              const itemRuntime = runtimeContract.itemsByKey[group.key];
               const item = group.activeEntry ?? group.primaryEntry;
               return (
               <article key={group.key} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
@@ -702,7 +702,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                     <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{formatEpisodeLabel(item)}</p>
                   </div>
                   <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">
-                    {group.duplicateProviderCount > 1 ? `${group.duplicateProviderCount} copies` : `${Math.round(item.progress * 100)}%`}
+                    {itemRuntime?.duplicateProviderCount > 1 ? `${itemRuntime.duplicateProviderCount} copies` : `${Math.round(item.progress * 100)}%`}
                   </span>
                 </div>
                 {item.kind === 'series' && item.seriesTitle ? (
@@ -713,14 +713,10 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   <div className="h-full rounded-full bg-violet-400" style={{ width: `${Math.max(8, group.bestProgress * 100)}%` }} />
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{formatResume(item.positionSeconds)}{item.durationSeconds ? ` • ${Math.round(item.progress * 100)}% of ${Math.floor(item.durationSeconds / 60)} min` : ''}</p>
-                {activeProviderNeedsRecovery ? (
-                  <p className="mt-2 text-xs leading-5 text-amber-200">If this resume item stalls on the active provider, use an alternate provider copy below instead of losing the spot.</p>
-                ) : null}
-                {group.duplicateProviderCount > 1 ? (
-                  <p className="mt-2 text-xs leading-5 text-sky-200">
-                    Multiple saved providers carry this same resume path. StreamDeck keeps the copies separate so switching providers does not corrupt the last known spot.
-                  </p>
-                ) : null}
+                <p className="mt-2 text-xs leading-5 text-slate-300">{itemRuntime?.continuitySummary}</p>
+                {itemRuntime?.launchOwner ? <p className="mt-2 text-xs leading-5 text-sky-200">{itemRuntime.launchOwner.summary}</p> : null}
+                {itemRuntime?.recovery.alternateProviderCount || itemRuntime?.recovery.sameCategoryFallback ? <p className="mt-2 text-xs leading-5 text-amber-200">{itemRuntime.recovery.summary}</p> : null}
+                {itemRuntime?.switchPosture.reason !== 'none' ? <p className="mt-2 text-xs leading-5 text-amber-100/90">{itemRuntime.switchPosture.summary}</p> : null}
                 <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
                 {(() => {
                   const variants = variantSummary[`continue:${item.id}`] || [];
@@ -851,7 +847,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                     disabled={!item.playbackUrl}
                     className="rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white hover:bg-violet-400 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
                   >
-                    {item.providerId === activeConnection.id ? 'Resume playback' : `Resume on ${providerNameMap[item.providerId] || item.providerId}`}
+                    {itemRuntime?.primaryAction.label || (item.providerId === activeConnection.id ? 'Resume playback' : `Resume on ${providerNameMap[item.providerId] || item.providerId}`)}
                   </button>
                   {item.kind === 'series' && item.seriesId ? (
                     <Link
