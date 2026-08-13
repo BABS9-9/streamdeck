@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, connection-headroom truth, launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
+  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, connection-headroom truth, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
 };
 
 const channelNames = {
@@ -4527,17 +4527,119 @@ const buildSurfaceLaunchOwnerships = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildBrowseLaunchScorecards = (scenario = 'healthy') => ([
+  {
+    screenId: 'search',
+    title: 'Search browse launch scorecard',
+    summary: scenario === 'healthy'
+      ? 'Search should treat the next result action as go-safe only while provider ownership, index proof, and playback headroom all still agree.'
+      : 'Search should keep the same ranked result packet visible, but downgrade the next move to watch-safe or recovery-led the moment provider proof or headroom softens.',
+    metrics: [
+      {
+        label: 'Go',
+        value: scenario === 'healthy' ? 'Result owner aligned' : 'Owner drifting',
+        detail: scenario === 'healthy'
+          ? 'The healthiest ranked provider still matches the shell that owns the next browse-to-play handoff.'
+          : 'Search should preserve the current query while it makes provider ownership visible instead of implying the current shell still owns launch.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+      {
+        label: 'Watch',
+        value: scenario === 'degradedSearch' ? 'Proof aging' : 'Proof current',
+        detail: scenario === 'degradedSearch'
+          ? 'Cached or partial search proof may still rank the title, but the card should say that freshness has softened before premium play language survives.'
+          : 'Current index proof still backs the visible result, so Search can keep strong browse confidence without hiding alternates.',
+        tone: scenario === 'degradedSearch' ? 'watch' : 'ready',
+      },
+      {
+        label: 'Recover',
+        value: scenario === 'lineSaturated' || scenario === 'expiredAccount' || scenario === 'authUnstable' ? 'Recovery louder' : 'Recovery nearby',
+        detail: scenario === 'lineSaturated' || scenario === 'expiredAccount' || scenario === 'authUnstable'
+          ? 'Playback risk now outranks convenience, so Search should point the user toward a healthier saved provider before a result click overclaims safety.'
+          : 'Recovery remains one move away, but it does not need to own the next tap while provider truth still supports the ranked result.',
+        tone: scenario === 'lineSaturated' || scenario === 'expiredAccount' || scenario === 'authUnstable' ? 'recover' : 'watch',
+      },
+    ],
+  },
+  {
+    screenId: 'movies',
+    title: 'Movies browse launch scorecard',
+    summary: scenario === 'healthy'
+      ? 'Movies should keep the detail rail in go-safe posture only while the active provider still owns playback, title proof, and line headroom together.'
+      : 'Movies should keep the same title context alive, but downgrade play posture the instant the active provider stops owning an honest next move.',
+    metrics: [
+      {
+        label: 'Go',
+        value: scenario === 'healthy' ? 'Detail owner steady' : 'Owner changing',
+        detail: scenario === 'healthy'
+          ? 'The current detail rail still belongs to the provider that can honestly carry the next play or resume action.'
+          : 'The detail rail should keep title context while it makes a healthier provider handoff explicit instead of pretending nothing changed.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+      {
+        label: 'Watch',
+        value: scenario === 'degradedSearch' ? 'Catalog cached' : 'Detail proof current',
+        detail: scenario === 'degradedSearch'
+          ? 'Saved catalog and detail context can stay useful, but the rail should say when freshness is borrowed instead of fully live.'
+          : 'Metadata, variants, and resume context are fresh enough to keep the detail action in premium browse posture.',
+        tone: scenario === 'degradedSearch' ? 'watch' : 'ready',
+      },
+      {
+        label: 'Recover',
+        value: scenario === 'expiredAccount' || scenario === 'lineSaturated' ? 'Recovery primary' : 'Recovery one tap',
+        detail: scenario === 'expiredAccount' || scenario === 'lineSaturated'
+          ? 'Provider posture is weak enough that recovery should sit louder than convenience before the rail promises a clean launch.'
+          : 'A healthier provider variant should stay close by, but it does not have to take over until proof or headroom slips.',
+        tone: scenario === 'expiredAccount' || scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+    ],
+  },
+  {
+    screenId: 'series',
+    title: 'Series browse launch scorecard',
+    summary: scenario === 'healthy'
+      ? 'Series should keep drill-down in go-safe posture only while provider ownership, resume mapping, and launch headroom still agree on the next episode move.'
+      : 'Series should preserve season and episode context, but downgrade launch posture as soon as continuity proof becomes partial or rescue-led.',
+    metrics: [
+      {
+        label: 'Go',
+        value: scenario === 'healthy' ? 'Episode owner steady' : 'Owner in handoff',
+        detail: scenario === 'healthy'
+          ? 'The same provider still owns the next drill-down or resume move, so Series can keep the premium next-episode story intact.'
+          : 'Series should preserve season and episode context while making the healthier provider owner explicit before resume copy overclaims safety.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+      {
+        label: 'Watch',
+        value: scenario === 'degradedSearch' ? 'Resume pending' : 'Resume mapped',
+        detail: scenario === 'degradedSearch'
+          ? 'Series continuity can stay alive, but exact episode proof is aging and should remain in watch-state language.'
+          : 'Canonical season and episode hints still back the visible drill-down, so the browse shell can keep strong continuity language.',
+        tone: scenario === 'degradedSearch' ? 'watch' : 'ready',
+      },
+      {
+        label: 'Recover',
+        value: scenario === 'authUnstable' || scenario === 'expiredAccount' ? 'Recovery leads' : 'Recovery available',
+        detail: scenario === 'authUnstable' || scenario === 'expiredAccount'
+          ? 'Provider trust is weak enough that the drill-down should steer toward a healthier saved copy before it promises exact resume continuity.'
+          : 'Alternate provider resume paths should stay visible, but they do not need to own the next move while continuity proof still holds.',
+        tone: scenario === 'authUnstable' || scenario === 'expiredAccount' ? 'recover' : 'watch',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, canonical provider identity, fallback ranking, fallback-equivalence truth, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, and identity-anchor continuity in the shell',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, canonical provider identity, fallback ranking, fallback-equivalence truth, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell so provider-risk strips, launch scorecards, canonical provider identity, fallback ranking, fallback-equivalence contracts, launch ownership, proof provenance, intent locks, explanation boundaries, autonomy limits, interruption budgets, retry contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery witnesses, action gates, fallback cost, identity anchors, provider choice, recovery route, rescue receipts, and claim-ceiling truth stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell, so degraded rehearsals keep the same provider-risk strip, launch scorecard, canonical provider owner, fallback ranking, fallback-equivalence contract, launch owner, proof source, intent lock, explanation boundary, autonomy boundary, interruption budget, retry contract, provider-switch truth, provider-return truth, provider-stability truth, recovery witness, action gate, fallback cost, identity anchor, next move, provider-choice truth, recovery route, rescue receipts, and claim ceiling instead of drifting into surface-specific copy.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, launch ownership, proof provenance, continuity truth, recovery posture, and launch safety stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -4792,6 +4894,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceCanonicalProviderIdentityContracts: buildSurfaceCanonicalProviderIdentityContracts(scenario),
   surfaceFallbackRankingContracts: buildSurfaceFallbackRankingContracts(scenario),
   surfaceFallbackEquivalenceContracts: buildSurfaceFallbackEquivalenceContracts(scenario),
+  browseLaunchScorecards: buildBrowseLaunchScorecards(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
@@ -5126,14 +5229,14 @@ const server = http.createServer((req, res) => {
                   ? 'Verify Live keeps the current browse context visible while auth checks fail, and that retry or provider-switch guidance is clearer than a generic playback error, with direct alternate-provider launch still available from live cards.'
                   : 'Verify inline NOW/NEXT guide data, hover preview fallback, surf-rail browsing, and in-place rehearsal refresh against realistic fake categories.',
         search: degradedSearch
-          ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, offers direct retry actions, keeps alternate provider copies launchable from the same result card, and refreshes immediately when the rehearsal mode changes.'
-          : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell, with the healthiest copy first and alternate provider copies still launchable from the same result card.',
+          ? 'Verify cross-provider search keeps cached hits visible, explains partial provider failure, keeps the browse launch scorecard in watch-safe posture, offers direct retry actions, keeps alternate provider copies launchable from the same result card, and refreshes immediately when the rehearsal mode changes.'
+          : 'Verify one query returns ranked live, movie, and series hits across saved providers without leaving the shell, with a browse launch scorecard that keeps the healthiest copy first and alternate provider copies still launchable from the same result card.',
         movies: degradedSearch
-          ? 'Verify Movies falls back to saved catalog state with intentional degraded copy instead of blanking the browse surface, and that the shared premium recovery rail plus provider fact grid still present healthiest-provider actions without a manual reload.'
-          : 'Verify the movie library loads from cache first, then refreshes into the cinematic detail rail cleanly as soon as the rehearsal mode changes, with alternate-provider actions and provider posture rendered through the shared premium recovery rail plus provider fact grid.',
+          ? 'Verify Movies falls back to saved catalog state with intentional degraded copy instead of blanking the browse surface, and that the browse launch scorecard plus shared premium recovery rail still present healthiest-provider actions without a manual reload.'
+          : 'Verify the movie library loads from cache first, then refreshes into the cinematic detail rail cleanly as soon as the rehearsal mode changes, with a browse launch scorecard, alternate-provider actions, and provider posture rendered together.',
         series: degradedSearch
-          ? 'Verify Series keeps the drill-down shell usable from saved catalog data even when search-oriented provider endpoints are degraded, with the shared premium recovery rail plus provider fact grid preserving episode-aware fallback actions.'
-          : 'Verify series list, season switches, episode launch, and alternate-provider resume all stay connected to the real mock Xtream payloads, then flip rehearsal modes and watch the drill-down refresh live through the shared premium recovery rail plus provider fact grid.',
+          ? 'Verify Series keeps the drill-down shell usable from saved catalog data even when search-oriented provider endpoints are degraded, with a browse launch scorecard and shared premium recovery rail preserving episode-aware fallback actions.'
+          : 'Verify series list, season switches, episode launch, and alternate-provider resume all stay connected to the real mock Xtream payloads, then flip rehearsal modes and watch the drill-down refresh live through the browse launch scorecard plus shared premium recovery rail.',
         favorites: lineSaturated
           ? 'Verify Favorites keeps saved live items launchable through healthier exact copies first, then same-category rescue when no exact duplicate survives on the healthier provider, while the shared provider fact grid keeps account posture visible.'
           : expiredAccount

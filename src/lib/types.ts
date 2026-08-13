@@ -949,6 +949,17 @@ export type MockProviderManifest = {
     label: string;
     value: string;
   }>;
+  browseLaunchScorecards?: Array<{
+    screenId: 'search' | 'movies' | 'series';
+    title: string;
+    summary: string;
+    metrics: Array<{
+      label: string;
+      value: string;
+      detail: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
 };
 
 export type MockProviderHealth = {
