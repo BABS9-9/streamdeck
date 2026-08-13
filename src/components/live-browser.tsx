@@ -40,6 +40,7 @@ import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
+import { SurfaceProviderPodium } from '@/components/surface-provider-podium';
 import { SurfaceProviderReturnContract } from '@/components/surface-provider-return-contract';
 import { SurfaceProviderStabilityContract } from '@/components/surface-provider-stability-contract';
 import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
@@ -306,6 +307,7 @@ export function LiveBrowser() {
   const handoffMap = runtimeSurfaceContracts.handoffMap;
   const autonomyBoundary = runtimeSurfaceContracts.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = runtimeSurfaceContracts.connectionHeadroom || manifestConnectionHeadroom;
+  const providerPodium = manifest?.surfaceProviderPodiums?.find((item) => item.screenId === 'live') ?? null;
 
   return (
     <div className="space-y-6">
@@ -330,6 +332,16 @@ export function LiveBrowser() {
       />
       <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
       <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
+      <SurfaceProviderPodium
+        contract={providerPodium}
+        board={savedProviderBoard}
+        badge="Play-owner podium"
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'live',
+          reason: 'manual',
+          preservedTitle: selectedStream?.name || null,
+        })}
+      />
       <SurfaceFallbackEquivalence contract={fallbackEquivalence} badge="Fallback equivalence" />
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Play confidence" />
       <SurfaceLaunchScorecard scorecard={launchScorecard} badge="Launch scorecard" />

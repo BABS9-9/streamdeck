@@ -41,6 +41,7 @@ import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
+import { SurfaceProviderPodium } from '@/components/surface-provider-podium';
 import { SurfaceProviderReturnContract } from '@/components/surface-provider-return-contract';
 import { SurfaceProviderStabilityContract } from '@/components/surface-provider-stability-contract';
 import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
@@ -352,6 +353,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceConfidenceFloors.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const providerPodium = useMemo(
+    () => manifest?.surfaceProviderPodiums?.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const savedProviderBoard = useMemo(
     () => buildSavedProviderHealthBoard({
       connections,
@@ -460,6 +465,16 @@ export function HomeDashboard() {
       />
       <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
       <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
+      <SurfaceProviderPodium
+        contract={providerPodium}
+        board={savedProviderBoard}
+        badge="Featured-provider podium"
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'home',
+          reason: 'manual',
+          preservedTitle: home.featured?.name || null,
+        })}
+      />
 
       <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04]">
         <div

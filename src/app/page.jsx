@@ -38,6 +38,7 @@ import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
+import { SurfaceProviderPodium } from '@/components/surface-provider-podium';
 import { SurfaceProviderReturnContract } from '@/components/surface-provider-return-contract';
 import { SurfaceProviderStabilityContract } from '@/components/surface-provider-stability-contract';
 import { SurfaceProviderSwitchContract } from '@/components/surface-provider-switch-contract';
@@ -275,6 +276,10 @@ export default function LoginPage() {
     () => manifest?.surfaceConfidenceFloors?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
+  const providerPodium = useMemo(
+    () => manifest?.surfaceProviderPodiums?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
   const savedProviderBoard = useMemo(
     () => buildSavedProviderHealthBoard({
       connections,
@@ -423,6 +428,18 @@ export default function LoginPage() {
               </div>
             </div>
           ) : null}
+
+          <div className="mt-6">
+            <SurfaceProviderPodium
+              contract={providerPodium}
+              board={savedProviderBoard}
+              badge="Saved-provider podium"
+              onSelectProvider={(providerId) => setActiveConnection(providerId, {
+                sourceSurface: 'login',
+                reason: 'manual',
+              })}
+            />
+          </div>
 
           <div className="mt-6">
             <MockDemoBoard health={health} manifest={manifest} screenId="login" />
