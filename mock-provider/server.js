@@ -4629,6 +4629,108 @@ const buildBrowseLaunchScorecards = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceProviderPodiums = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Saved-provider podium',
+    summary: scenario === 'healthy'
+      ? 'Login should show which saved provider owns the next Home launch, which standby source can take over cleanly, and which risky source must stay visible without being auto-promoted.'
+      : 'Login should keep saved providers visible, but rank who can still own Home honestly, who can recover it next, and who must stay blocked until trust or line posture improves.',
+    slots: [
+      {
+        label: 'Owns next Home move',
+        qualification: scenario === 'healthy'
+          ? 'This slot belongs to the saved provider with the clearest auth proof, spare line headroom, and safest path into Home right now.'
+          : 'This slot belongs to the saved provider that still keeps Login honest even while the active source is degraded, saturated, expired, or unstable.',
+        downgradeTrigger: 'Downgrade this owner the moment auth trust softens, line pressure removes launch headroom, or another saved provider clearly becomes safer.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+      {
+        label: 'Standby recovery owner',
+        qualification: scenario === 'healthy'
+          ? 'Keep one healthier saved provider visibly warmed up so recovery feels like a guided handoff instead of a fresh setup ritual.'
+          : 'Standby should already look plausible enough that one tap can recover the flow without hiding who changed under the hood.',
+        downgradeTrigger: 'Downgrade standby when the alternate source no longer preserves the same Home destination or loses the spare capacity that made it safe.',
+        tone: 'watch',
+      },
+      {
+        label: 'Blocked from auto-promotion',
+        qualification: scenario === 'healthy'
+          ? 'A risky saved provider may stay visible for context, but it should not silently inherit launch ownership while safer options exist.'
+          : 'Expired, saturated, or unstable sources should stay named here so the user understands why StreamDeck stopped treating them like premium shortcuts.',
+        downgradeTrigger: 'Keep this slot blocked until fresh validation, renewed account status, or released provider lines prove the same shortcut is safe again.',
+        tone: 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Featured-provider podium',
+    summary: scenario === 'healthy'
+      ? 'Home should rank which saved provider truly owns the hero and quick-rail launch story, which standby copy can keep browse continuity alive, and which source must stay visible but secondary.'
+      : 'Home should preserve the same browse shell, but make provider ranking obvious before a degraded, cached, or rescue-owned hero keeps sounding fully current.',
+    slots: [
+      {
+        label: 'Owns featured launch',
+        qualification: scenario === 'healthy'
+          ? 'This slot owns the hero only while featured browse proof, guide posture, and launch headroom still agree on the same provider-backed next move.'
+          : 'This slot owns the hero when it is still the safest provider-backed browse owner, even if rescue or cache is doing more visible work underneath.',
+        downgradeTrigger: 'Downgrade the hero owner when cached rails outrun fresh provider proof or another saved provider becomes the safer launch owner.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+      {
+        label: 'Standby browse owner',
+        qualification: scenario === 'healthy'
+          ? 'Keep one alternate provider close enough to inherit featured browse, quick rails, and live continuity without throwing the user into Settings.'
+          : 'Standby should preserve the same discovery posture when the hero needs to change owners without pretending that nothing changed.',
+        downgradeTrigger: 'Downgrade standby when it cannot preserve the same featured intent, the same live lane, or enough line headroom to stay credible.',
+        tone: 'watch',
+      },
+      {
+        label: 'Hold for later',
+        qualification: scenario === 'healthy'
+          ? 'A weaker saved provider may still matter for favorites or history, but it should not outrank the hero owner or standby path.'
+          : 'Keep risky or expired sources visible for context, but do not let them inherit the hero while the current browse story depends on stronger proof elsewhere.',
+        downgradeTrigger: 'Hold this slot until provider trust, guide posture, and launch headroom recover enough to support the same browse promise again.',
+        tone: 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Play-owner podium',
+    summary: scenario === 'healthy'
+      ? 'Live should rank which saved provider owns the next Play on the selected card, which standby source can preserve category-surf momentum, and which risky source must stay visible without taking over.'
+      : 'Live should keep the same selected-card story visible, but publish which provider still owns Play, which fallback can keep the category alive, and which source is blocked from a silent handoff.',
+    slots: [
+      {
+        label: 'Owns Play now',
+        qualification: scenario === 'healthy'
+          ? 'This slot owns Play only while preview, guide posture, and line headroom still back the same exact-channel decision.'
+          : 'This slot owns Play when it is still the safest exact-channel or same-surface provider-backed launch available on the selected card.',
+        downgradeTrigger: 'Downgrade the Play owner when preview stability slips, NOW / NEXT proof weakens, or another saved provider clearly outranks it on launch safety.',
+        tone: scenario === 'healthy' ? 'ready' : 'watch',
+      },
+      {
+        label: 'Category-safe rescue',
+        qualification: scenario === 'healthy'
+          ? 'Keep one standby provider close enough to preserve the same live lane when exact-channel proof softens.'
+          : 'Standby should keep channel-surf momentum alive even when the original provider loses exact-channel ownership and rescue becomes the honest next move.',
+        downgradeTrigger: 'Downgrade standby when it can no longer preserve the same category flow, same launch meaning, or enough capacity to stay believable.',
+        tone: 'watch',
+      },
+      {
+        label: 'Keep visible but blocked',
+        qualification: scenario === 'healthy'
+          ? 'A weaker provider may stay visible for context, but it should not quietly inherit Play while cleaner launch paths exist.'
+          : 'Show the risky provider here so the user sees why StreamDeck stopped trusting it with immediate playback even though the card context is still visible.',
+        downgradeTrigger: 'Keep this slot blocked until preview, guide truth, and provider line posture recover enough to support the same selected-card launch honestly.',
+        tone: 'recover',
+      },
+    ],
+  },
+]);
+
 const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
@@ -4894,6 +4996,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceCanonicalProviderIdentityContracts: buildSurfaceCanonicalProviderIdentityContracts(scenario),
   surfaceFallbackRankingContracts: buildSurfaceFallbackRankingContracts(scenario),
   surfaceFallbackEquivalenceContracts: buildSurfaceFallbackEquivalenceContracts(scenario),
+  surfaceProviderPodiums: buildSurfaceProviderPodiums(scenario),
   browseLaunchScorecards: buildBrowseLaunchScorecards(scenario),
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
