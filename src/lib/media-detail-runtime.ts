@@ -101,6 +101,17 @@ export type MediaDetailActionGate = {
   tone: MediaDetailContractTone;
 };
 
+export type MediaDetailLaunchScorecard = {
+  title: string;
+  summary: string;
+  metrics: Array<{
+    label: string;
+    value: string;
+    detail: string;
+    tone: MediaDetailContractTone;
+  }>;
+};
+
 export type MediaDetailRecoveryPlan = {
   title: string;
   summary: string;
@@ -112,6 +123,7 @@ export type MediaDetailRecoveryPlan = {
 
 export type MediaDetailTrustContract = {
   launchReadiness: MediaDetailReadinessCard[];
+  launchScorecard: MediaDetailLaunchScorecard;
   providerChoice: MediaDetailProviderChoice;
   claimCeiling: MediaDetailClaimCeiling;
   proofDebt: MediaDetailProofDebt;
@@ -275,6 +287,73 @@ const getDominantTone = (tones: MediaDetailContractTone[]): MediaDetailContractT
   return [...tones].sort((left, right) => getToneWeight(right) - getToneWeight(left))[0] ?? 'ready';
 };
 
+const buildLaunchScorecard = ({
+  kind,
+  launchOwner,
+  activeConnection,
+  sameProviderOwner,
+  activeWarning,
+  hasAlternates,
+  hasResumeHook,
+  headroom,
+  stabilityTone,
+  interruptionBudgetTone,
+}: {
+  kind: 'movie' | 'series';
+  launchOwner: SearchResultVariantPayload;
+  activeConnection: SavedConnection;
+  sameProviderOwner: boolean;
+  activeWarning: string | null;
+  hasAlternates: boolean;
+  hasResumeHook: boolean;
+  headroom: ReturnType<typeof getHeadroomSummary>;
+  stabilityTone: MediaDetailContractTone;
+  interruptionBudgetTone: MediaDetailContractTone;
+}): MediaDetailLaunchScorecard => {
+  const overallTone = getDominantTone([stabilityTone, interruptionBudgetTone]);
+
+  return {
+    title: kind === 'series' ? 'Series launch scorecard' : 'Detail launch scorecard',
+    summary: `The next ${kind === 'series' ? 'series move' : 'playback move'} is currently ${overallTone === 'ready' ? 'go-safe' : overallTone === 'watch' ? 'watch-safe' : 'recovery-led'} based on launch ownership, continuity proof, and provider headroom.`,
+    metrics: [
+      {
+        label: 'Go',
+        value: sameProviderOwner ? activeConnection.name : launchOwner.providerName,
+        detail: sameProviderOwner
+          ? `${activeConnection.name} still owns the active detail shell and the next ${kind === 'series' ? 'drill-down' : 'play'} move.`
+          : `${launchOwner.providerName} now owns the safer next move, so the detail rail should preserve title context while it hands off from ${activeConnection.name}.`,
+        tone: stabilityTone,
+      },
+      {
+        label: 'Watch',
+        value: kind === 'series'
+          ? hasResumeHook ? 'Resume mapped' : 'Resume pending'
+          : hasAlternates ? 'Alternates visible' : 'Single owner',
+        detail: kind === 'series'
+          ? hasResumeHook
+            ? 'Canonical season and episode hints are available, but the rail should still keep watched continuity language visible until provider-specific resolution lands.'
+            : 'Series continuity is still real, but exact episode proof is pending and should stay in watch-state language.'
+          : hasAlternates
+            ? `Alternate saved copies are already visible, so the rail should keep provider-choice truth readable even while ${launchOwner.providerName} stays primary.`
+            : `${launchOwner.providerName} is the only saved copy, so the watched posture is mostly about provider health and headroom rather than provider choice.`,
+        tone: interruptionBudgetTone,
+      },
+      {
+        label: 'Recover',
+        value: activeWarning ? activeWarning : headroom.currentWindow,
+        detail: activeWarning
+          ? `${activeConnection.name} is already carrying a visible warning, so recovery language should stay louder than convenience.`
+          : headroom.tone === 'ready'
+            ? `${activeConnection.name} still has enough headroom to keep recovery secondary while the same ownership story holds.`
+            : headroom.tone === 'watch'
+              ? `${activeConnection.name} can still carry the next move, but thin line posture means recovery should stay one tap away.`
+              : `${activeConnection.name} no longer has safe launch headroom, so the rail should pivot toward recovery or a healthier saved provider copy.`,
+        tone: getDominantTone([headroom.tone, stabilityTone]),
+      },
+    ],
+  };
+};
+
 const buildMediaDetailTrustContract = ({
   kind,
   variants,
@@ -370,6 +449,18 @@ const buildMediaDetailTrustContract = ({
 
   return {
     launchReadiness: [primaryReadiness, secondaryReadiness],
+    launchScorecard: buildLaunchScorecard({
+      kind,
+      launchOwner,
+      activeConnection,
+      sameProviderOwner,
+      activeWarning,
+      hasAlternates,
+      hasResumeHook,
+      headroom,
+      stabilityTone,
+      interruptionBudgetTone,
+    }),
     providerChoice: {
       title: 'Provider choice',
       summary: sameProviderOwner && !hasAlternates

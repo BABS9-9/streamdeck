@@ -176,8 +176,20 @@ export type SearchTrustActionGate = {
   tone: SearchContractTone;
 };
 
+export type SearchLaunchScorecard = {
+  title: string;
+  summary: string;
+  metrics: Array<{
+    label: string;
+    value: string;
+    detail: string;
+    tone: SearchContractTone;
+  }>;
+};
+
 export type SearchResultTrustContract = {
   launchReadiness: SearchTrustReadinessCard[];
+  launchScorecard: SearchLaunchScorecard;
   providerChoice: SearchTrustProviderChoice;
   claimCeiling: SearchTrustClaimCeiling;
   proofDebt: SearchTrustProofDebt;
@@ -554,6 +566,71 @@ const getResultRecoveryMove = ({
   return `Keep ${result.item.name} pinned in Search while ${launchVariant.provider.name} remains the active owner for the next move.`;
 };
 
+const buildLaunchScorecard = ({
+  result,
+  runtimeProvider,
+  launchVariant,
+  primaryAction,
+  connectionTone,
+  indexTone,
+  headroomTone,
+  providerStabilityTone,
+  interruptionBudgetTone,
+  activeShellLabel,
+  healthiestAlternateVariant,
+  lineUsage,
+}: {
+  result: GroupedSearchResult;
+  runtimeProvider: GlobalSearchRouteContract['providers'][number] | null;
+  launchVariant: SearchResultVariantPayload;
+  primaryAction: SearchPrimaryActionContract;
+  connectionTone: SearchContractTone;
+  indexTone: SearchContractTone;
+  headroomTone: SearchContractTone;
+  providerStabilityTone: SearchContractTone;
+  interruptionBudgetTone: SearchContractTone;
+  activeShellLabel: string;
+  healthiestAlternateVariant: SearchResultVariantPayload | null;
+  lineUsage: string;
+}): SearchLaunchScorecard => {
+  const overallTone = getDominantTone([providerStabilityTone, interruptionBudgetTone]);
+
+  return {
+    title: 'Search launch scorecard',
+    summary: `The next move for ${result.item.name} is currently ${overallTone === 'ready' ? 'go-safe' : overallTone === 'watch' ? 'watch-safe' : 'recovery-led'} based on provider ownership, search proof, and ${result.kind === 'series' ? 'continuity' : 'launch'} headroom.`,
+    metrics: [
+      {
+        label: 'Go',
+        value: primaryAction.requiresSwitch ? launchVariant.provider.name : activeShellLabel,
+        detail: primaryAction.requiresSwitch
+          ? `${launchVariant.provider.name} owns the cleanest next move, but Search should preserve the current query while it hands off from ${activeShellLabel}.`
+          : `${launchVariant.provider.name} already matches the active Search shell, so the next move can stay inline while the same ranked proof holds.`,
+        tone: getDominantTone([connectionTone, providerStabilityTone]),
+      },
+      {
+        label: 'Watch',
+        value: runtimeProvider?.indexState === 'ready' ? 'Proof current' : runtimeProvider?.indexState === 'stale' ? 'Proof aging' : 'Proof missing',
+        detail: runtimeProvider?.indexState === 'ready'
+          ? `${launchVariant.provider.name} still has current index proof behind this result${healthiestAlternateVariant ? `, but ${healthiestAlternateVariant.provider.name} remains visible as a watched alternate owner.` : '.'}`
+          : runtimeProvider?.indexState === 'stale'
+            ? `${launchVariant.provider.name} still ranks for this title, but the supporting index is stale enough that Search should keep watch-state language visible.`
+            : `${launchVariant.provider.name} lacks ready index proof for this result, so any premium CTA needs watched copy or visible recovery framing.`,
+        tone: getDominantTone([indexTone, interruptionBudgetTone]),
+      },
+      {
+        label: 'Recover',
+        value: lineUsage,
+        detail: headroomTone === 'ready'
+          ? `${launchVariant.provider.name} still has enough playback headroom to keep rescue secondary while the same provider owns the next move.`
+          : headroomTone === 'watch'
+            ? `${launchVariant.provider.name} can still carry the next move, but shrinking line headroom means the recovery path should stay one tap away.`
+            : `${launchVariant.provider.name} is out of safe launch headroom, so Search should hand control to recovery or a healthier saved provider copy.`,
+        tone: getDominantTone([headroomTone, providerStabilityTone]),
+      },
+    ],
+  };
+};
+
 const buildTrustContract = ({
   runtime,
   result,
@@ -695,6 +772,20 @@ const buildTrustContract = ({
         tone: result.kind === 'series' ? getDominantTone([connectionTone, indexTone]) : headroomTone,
       },
     ],
+    launchScorecard: buildLaunchScorecard({
+      result,
+      runtimeProvider,
+      launchVariant,
+      primaryAction,
+      connectionTone,
+      indexTone,
+      headroomTone,
+      providerStabilityTone,
+      interruptionBudgetTone,
+      activeShellLabel,
+      healthiestAlternateVariant,
+      lineUsage,
+    }),
     providerChoice: {
       title: 'Provider choice truth',
       summary: primaryAction.requiresSwitch

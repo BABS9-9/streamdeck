@@ -594,6 +594,38 @@ export function SearchBrowser() {
                 </div>
                 {trustContract ? (
                   <div className="mt-3 grid gap-3">
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] uppercase tracking-[0.24em] text-sky-200">Go / Watch / Recover</p>
+                          <p className="mt-2 text-sm font-semibold text-white">{trustContract.launchScorecard.title}</p>
+                          <p className="mt-2 text-xs leading-5 text-slate-300">{trustContract.launchScorecard.summary}</p>
+                        </div>
+                        <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                          {trustContract.launchScorecard.metrics.map((metric) => metric.label).join(' / ')}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid gap-2 md:grid-cols-3">
+                        {trustContract.launchScorecard.metrics.map((metric) => (
+                          <div
+                            key={metric.label}
+                            className={`rounded-2xl border p-3 text-xs ${
+                              metric.tone === 'ready'
+                                ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+                                : metric.tone === 'watch'
+                                  ? 'border-amber-400/20 bg-amber-500/10 text-amber-100'
+                                  : 'border-rose-400/20 bg-rose-500/10 text-rose-100'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="uppercase tracking-[0.2em] text-white/80">{metric.label}</p>
+                              <p className="text-[10px] uppercase tracking-[0.18em] text-white/70">{metric.value}</p>
+                            </div>
+                            <p className="mt-2 leading-5">{metric.detail}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                     <div className="grid gap-2 md:grid-cols-3">
                       {trustContract.launchReadiness.map((card) => (
                         <div

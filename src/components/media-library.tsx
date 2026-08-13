@@ -404,6 +404,29 @@ export function MediaLibrary({
 
     return (
       <div className="mt-5 grid gap-3 lg:grid-cols-2">
+        <div className="rounded-[1.2rem] border border-white/10 bg-white/[0.04] p-4 lg:col-span-2">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-sky-200">Go / Watch / Recover</p>
+              <p className="mt-2 text-sm font-medium text-white">{runtime.trust.launchScorecard.title}</p>
+              <p className="mt-2 text-sm text-white/80">{runtime.trust.launchScorecard.summary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-white/80">
+              {runtime.trust.launchScorecard.metrics.map((metric) => metric.label).join(' / ')}
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-3">
+            {runtime.trust.launchScorecard.metrics.map((metric) => (
+              <div key={metric.label} className={`rounded-[1.2rem] border p-4 ${trustToneClasses[metric.tone]}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{metric.label}</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/70">{metric.value}</p>
+                </div>
+                <p className="mt-2 text-sm text-white/85">{metric.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
         {runtime.trust.launchReadiness.map((item) => (
           <div key={item.label} className={`rounded-[1.2rem] border p-4 ${trustToneClasses[item.tone]}`}>
             <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{item.label}</p>
