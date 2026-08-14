@@ -1983,8 +1983,8 @@ const buildSurfaceFreshnessBoards = (scenario = 'healthy') => ([
     screenId: 'login',
     title: 'Login freshness budget',
     summary: scenario === 'healthy'
-      ? 'Login should publish exactly how fresh auth and trust facts must be before the user moves into Home.'
-      : 'Login should tell the truth about how long saved trust can stay useful before stale auth proof forces recovery to lead the surface.',
+      ? 'Login should publish exactly how fresh auth and trust facts must stay beside Connect before the user moves into Home.'
+      : 'Login should tell the truth beside Connect about how long saved trust can stay useful before stale auth proof forces recovery to lead the surface.',
     budgets: [
       {
         label: 'Auth truth',
@@ -2008,8 +2008,8 @@ const buildSurfaceFreshnessBoards = (scenario = 'healthy') => ([
     screenId: 'home',
     title: 'Home freshness budget',
     summary: scenario === 'healthy'
-      ? 'Home should state how long hero, counts, and trust cues stay premium before cached continuity takes over.'
-      : 'Home should be explicit about when the featured story is still safe from cache and when stale browse proof means trust recovery must take the lead.',
+      ? 'Home should state beside the hero CTA how long hero, counts, and trust cues stay premium before cached continuity takes over.'
+      : 'Home should be explicit beside the hero CTA about when the featured story is still safe from cache and when stale browse proof means trust recovery must take the lead.',
     budgets: [
       {
         label: 'Hero + counts',
@@ -2033,8 +2033,8 @@ const buildSurfaceFreshnessBoards = (scenario = 'healthy') => ([
     screenId: 'live',
     title: 'Live freshness budget',
     summary: scenario === 'healthy'
-      ? 'Live should tell the user how fresh preview, guide, and recovery claims are before they press play.'
-      : 'Live should separate usable surf continuity from stale playback certainty so degraded browse never feels like live launch proof.',
+      ? 'Live should tell the user beside Play how fresh preview, guide, and recovery claims are before they press play.'
+      : 'Live should separate usable surf continuity from stale playback certainty beside Play so degraded browse never feels like live launch proof.',
     budgets: [
       {
         label: 'Guide + preview',
