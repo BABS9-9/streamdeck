@@ -53,6 +53,7 @@ import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
@@ -301,6 +302,13 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [providerPodium, savedProviderBoard]
+  );
+  const holdReceiptRuntime = useMemo(
+    () => buildSavedProviderHoldReceiptRuntime({
+      contract: holdReceipt,
+      board: savedProviderBoard,
+    }),
+    [holdReceipt, savedProviderBoard]
   );
   const loginGuideCards = useMemo(
     () => activeConnection
@@ -556,7 +564,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceHoldReceiptInline
-              contract={holdReceipt}
+              runtime={holdReceiptRuntime}
               title="Connect hold receipt"
               badge="Hold truth"
             />

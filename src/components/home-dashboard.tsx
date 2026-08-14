@@ -56,6 +56,7 @@ import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
@@ -379,6 +380,13 @@ export function HomeDashboard() {
     }),
     [providerPodium, savedProviderBoard]
   );
+  const holdReceiptRuntime = useMemo(
+    () => buildSavedProviderHoldReceiptRuntime({
+      contract: holdReceipt,
+      board: savedProviderBoard,
+    }),
+    [holdReceipt, savedProviderBoard]
+  );
   const heroGuide = activeConnection && featuredLive
     ? getGuidePayload(lookupStreamGuide(activeConnection.id, featuredLive, Number.MAX_SAFE_INTEGER))
     : null;
@@ -634,7 +642,7 @@ export function HomeDashboard() {
             </div>
             <div className="mt-4">
               <SurfaceHoldReceiptInline
-                contract={holdReceipt}
+                runtime={holdReceiptRuntime}
                 title="Hero hold receipt"
                 badge="Hold truth"
               />

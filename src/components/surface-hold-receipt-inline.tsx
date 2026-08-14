@@ -1,6 +1,6 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { SurfaceHoldReceiptRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -15,19 +15,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceHoldReceiptInlineProps = {
-  contract: MockProviderManifest['surfaceHoldReceipts'][number] | null;
+  runtime: SurfaceHoldReceiptRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceHoldReceiptInline({
-  contract,
+  runtime,
   title,
   badge,
 }: SurfaceHoldReceiptInlineProps) {
-  const hold = contract?.holds?.[0];
+  const hold = runtime?.holds?.[0];
 
-  if (!contract || !hold) return null;
+  if (!runtime || !hold) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[hold.tone]}`}>
@@ -40,11 +40,12 @@ export function SurfaceHoldReceiptInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[hold.tone]}</p>
       <p className="mt-2 text-sm leading-6 text-white">Blocker: {hold.blocker}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Clear with: {hold.clearanceProof}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Recovery owner: {hold.recoveryOwner}</p>
+      <p className="mt-3 text-sm leading-6 text-white/75">Runtime owner posture: {hold.ownerStatusLabel}</p>
     </div>
   );
 }

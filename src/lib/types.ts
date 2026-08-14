@@ -427,6 +427,26 @@ export type SurfaceProviderPodiumRuntimeContract = {
   slots: SurfaceProviderPodiumRuntimeSlot[];
 };
 
+export type SurfaceHoldReceiptRuntimeHold = {
+  label: string;
+  blocker: string;
+  clearanceProof: string;
+  recoveryOwner: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+};
+
+export type SurfaceHoldReceiptRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  holds: SurfaceHoldReceiptRuntimeHold[];
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;
