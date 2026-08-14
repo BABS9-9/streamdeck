@@ -22,6 +22,7 @@ import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
 import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equivalence';
 import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
+import { SurfaceFallbackRankingInline } from '@/components/surface-fallback-ranking-inline';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFallbackCostInline } from '@/components/surface-fallback-cost-inline';
 import { SurfaceFreshnessBoardInline } from '@/components/surface-freshness-board-inline';
@@ -461,6 +462,13 @@ export function LiveBrowser() {
                 contract={fallbackCost}
                 title="Play fallback cost"
                 badge="Recovery trade-off"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceFallbackRankingInline
+                contract={fallbackRanking}
+                title="Play fallback ranking"
+                badge="Rescue order"
               />
             </div>
             <div className="mt-4">
