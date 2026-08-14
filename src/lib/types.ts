@@ -533,6 +533,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceHoldReceipts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    holds: Array<{
+      label: string;
+      blocker: string;
+      clearanceProof: string;
+      recoveryOwner: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceContinuityWindows: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;

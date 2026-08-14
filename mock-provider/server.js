@@ -630,6 +630,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Hold receipt on Login',
+    detail: 'The adapter now publishes what exact blocker is holding Connect in place, what proof clears that hold, and which fallback already owns recovery before another connect press gets mistaken for progress.',
+    surface: 'login',
+  },
+  {
     title: 'Provider stability on Login',
     detail: 'The adapter now publishes when the current provider is stable enough to keep owning fresh Home launches, what auth or line jitter is still tolerable, and what instability keeps rescue primary.',
     surface: 'login',
@@ -660,6 +665,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Hold receipt on Home',
+    detail: 'The adapter now publishes what exact blocker is holding the hero launch in place, what fresh browse proof clears that hold, and which fallback already owns recovery before another hero press gets treated like forward motion.',
+    surface: 'home',
+  },
+  {
     title: 'Provider stability on Home',
     detail: 'The adapter now publishes when the hero is stable enough to move ownership back onto the current provider, what browse volatility can stay boring, and what instability keeps rescue primary.',
     surface: 'home',
@@ -687,6 +697,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Launch scorecard on Live',
     detail: 'The adapter now publishes whether Play is exact-channel ready, only safe to preview, or already leaning on rescue logic before motion implies more confidence than current proof.',
+    surface: 'live',
+  },
+  {
+    title: 'Hold receipt on Live',
+    detail: 'The adapter now publishes what exact blocker is holding Play in place on the selected card, what fresh preview or guide proof clears that hold, and which fallback already owns recovery before another play press looks like the same move.',
     surface: 'live',
   },
   {
@@ -876,6 +891,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Most IPTV players imply readiness through UI polish and leave users guessing whether the next CTA is fully proven, cache-backed, or already recovery-owned.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one scorecard, exit-criteria, and handoff contract so readiness, hold conditions, and next-hop truth stay synchronized and stay visible beside Connect, hero launch, and Play.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'hold-receipt',
+    feature: 'Hold receipt',
+    pitch: 'Publish the exact blocker holding Connect, hero launch, or Play in place, what proof clears that hold, and which fallback already owns recovery before users keep pressing the premium CTA.',
+    competitiveGap: 'Most IPTV players keep the CTA visible and the hold implicit, so users retry without knowing whether auth, line pressure, guide drift, or rescue ownership is actually blocking the move.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one hold-receipt contract so blocker, clearance proof, and recovery owner stay aligned beside the CTA instead of surfacing later as vague failure copy.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -4527,6 +4551,111 @@ const buildSurfaceLaunchOwnerships = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceHoldReceipts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Connect hold receipt',
+    summary: scenario === 'healthy'
+      ? 'Login should still name the blocker, the clearance proof, and the recovery owner before Connect keeps looking like a free retry.'
+      : 'Login should stop hiding the hold inside vague setup friction and name what is blocking Home, what clears it, and who already owns recovery.',
+    holds: [
+      {
+        label: 'Connect blocker',
+        blocker: scenario === 'healthy'
+          ? 'No blocker currently outranks Connect, but line pressure, auth drift, or a stronger saved-provider owner should demote it immediately.'
+          : scenario === 'lineSaturated'
+            ? 'All provider lines are already occupied, so Connect is holding on capacity, not on missing credentials.'
+            : scenario === 'expiredAccount'
+              ? 'The active account is expired, so Connect cannot honestly promise a fresh Home handoff from this provider.'
+              : scenario === 'authUnstable'
+                ? 'Auth trust is unstable enough that Connect cannot keep pretending the current provider still cleanly owns Home.'
+                : 'Saved-provider proof is soft enough that Connect should hold until trust, capacity, or ownership becomes boring again.',
+        clearanceProof: scenario === 'healthy'
+          ? 'Keep current auth healthy, preserve line headroom, and keep the same saved provider owning the next Home move.'
+          : scenario === 'lineSaturated'
+            ? 'Clear one provider line or switch to the healthiest saved standby with spare capacity.'
+            : scenario === 'expiredAccount'
+              ? 'Revalidate with a renewed account or switch to a saved provider whose auth still clears Home honestly.'
+              : scenario === 'authUnstable'
+                ? 'Land one stable auth pass plus a clear saved-provider owner before promoting Connect back to premium posture.'
+                : 'Restore the same provider owner, healthy auth, and launch headroom before Connect sounds ready again.',
+        recoveryOwner: scenario === 'healthy'
+          ? 'The current saved-provider owner still keeps recovery local to Login if posture changes.'
+          : 'The healthiest saved provider or trust-led retry path owns the next safe Home move until the current provider earns it back.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Hero hold receipt',
+    summary: scenario === 'healthy'
+      ? 'Home should still name what would hold the hero in place before cinematic browse polish disguises a real blocker.'
+      : 'Home should say exactly what is blocking the featured launch, what clears it, and which fallback already owns browse recovery.',
+    holds: [
+      {
+        label: 'Hero blocker',
+        blocker: scenario === 'healthy'
+          ? 'No blocker currently outranks the hero, but stale guide proof, provider drift, or a safer standby owner should hold the featured launch immediately.'
+          : scenario === 'degradedEpg'
+            ? 'Guide freshness has slipped, so the hero should hold on browse proof instead of overclaiming current NOW / NEXT confidence.'
+            : scenario === 'degradedLive'
+              ? 'Live catalog support is soft enough that the hero cannot promise the same launch certainty without naming recovery.'
+              : scenario === 'lineSaturated'
+                ? 'Provider capacity is tight enough that the hero should hold before browse polish turns line pressure into a launch surprise.'
+                : 'Recovery already owns enough of the browse story that the hero must stop pretending it is fully provider-led.',
+        clearanceProof: scenario === 'healthy'
+          ? 'Keep featured browse proof fresh, guide continuity readable, and the same provider owning the next launch.'
+          : scenario === 'degradedEpg'
+            ? 'Refresh guide coverage or downgrade the hero openly until cached browse proof stops standing in for live freshness.'
+            : scenario === 'degradedLive'
+              ? 'Restore live catalog certainty or move the hero onto the healthiest recovery-backed rail explicitly.'
+            : scenario === 'lineSaturated'
+              ? 'Recover provider headroom or hand the hero to a saved standby with spare launch capacity.'
+              : 'Re-earn the same featured owner, current browse proof, and honest launch headroom before promoting the hero again.',
+        recoveryOwner: scenario === 'healthy'
+          ? 'Quick-launch rails stay close enough to own recovery without breaking the Home story.'
+          : 'The safest quick rail or standby browse owner already owns recovery until the hero clears the hold honestly.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Play hold receipt',
+    summary: scenario === 'healthy'
+      ? 'Live should still name what would hold Play on the selected card before preview motion turns a blocker into invisible retry theater.'
+      : 'Live should make the selected-card blocker explicit, show what clears it, and name which fallback already owns recovery before another Play press looks like the same move.',
+    holds: [
+      {
+        label: 'Play blocker',
+        blocker: scenario === 'healthy'
+          ? 'No blocker currently outranks Play, but preview instability, guide drift, or line pressure should hold the selected card immediately.'
+          : scenario === 'degradedLive'
+            ? 'Exact-channel proof is weak enough that Play should hold before preview polish pretends the selected card is still fully launch-ready.'
+          : scenario === 'degradedEpg'
+            ? 'Guide drift is large enough that Play should hold on stale NOW / NEXT proof before claiming exact-channel confidence.'
+            : scenario === 'lineSaturated'
+              ? 'Provider capacity is saturated, so Play is holding on line pressure rather than on missing channel visibility.'
+              : 'Recovery already owns too much of the watch story for Play to keep sounding exact-channel safe.',
+        clearanceProof: scenario === 'healthy'
+          ? 'Keep preview stable, guide truth current, and enough line headroom to support the same selected-card launch.'
+          : scenario === 'degradedLive'
+            ? 'Restore exact-channel catalog confidence or promote a clearly named same-category rescue before Play regains premium posture.'
+            : scenario === 'degradedEpg'
+              ? 'Refresh guide proof or downgrade the selected card openly until preview safety no longer depends on stale schedule context.'
+            : scenario === 'lineSaturated'
+              ? 'Free a provider line or switch to a healthier saved owner with spare playback capacity.'
+              : 'Re-earn exact-channel proof, stable preview, and honest provider ownership before Play stops holding.',
+        recoveryOwner: scenario === 'healthy'
+          ? 'Same-category rescue stays close enough to own recovery without losing the selected-card story.'
+          : 'The healthiest same-category or standby-provider rescue already owns the next safe launch until the selected card clears the hold.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildBrowseLaunchScorecards = (scenario = 'healthy') => ([
   {
     screenId: 'search',
@@ -4960,6 +5089,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   ],
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
+  surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),
   surfaceContinuityWindows: buildSurfaceContinuityWindows(scenario),
   surfaceDowngradeLadders: buildSurfaceDowngradeLadders(scenario),
   surfaceScorecards: buildSurfaceScorecards(scenario),
