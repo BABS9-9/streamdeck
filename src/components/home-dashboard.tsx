@@ -25,6 +25,7 @@ import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equiva
 import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
 import { SurfaceFallbackCostInline } from '@/components/surface-fallback-cost-inline';
+import { SurfaceFreshnessBoardInline } from '@/components/surface-freshness-board-inline';
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceHandoffMap } from '@/components/surface-handoff-map';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
@@ -610,6 +611,13 @@ export function HomeDashboard() {
                 scorecard={launchScorecard}
                 title="Hero launch scorecard"
                 badge="Go / Watch / Recover"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceFreshnessBoardInline
+                contract={freshnessBoard}
+                title="Hero guide freshness"
+                badge="Guide truth"
               />
             </div>
             <div className="mt-4">
