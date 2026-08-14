@@ -16,6 +16,7 @@ import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
+import { SurfaceHoldReceiptInline } from '@/components/surface-hold-receipt-inline';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -256,6 +257,10 @@ export function HomeDashboard() {
   );
   const launchOwnership = useMemo(
     () => manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
+  const holdReceipt = useMemo(
+    () => manifest?.surfaceHoldReceipts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
   const continuityWindow = useMemo(
@@ -625,6 +630,13 @@ export function HomeDashboard() {
                 contract={fallbackCost}
                 title="Hero fallback cost"
                 badge="Recovery trade-off"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceHoldReceiptInline
+                contract={holdReceipt}
+                title="Hero hold receipt"
+                badge="Hold truth"
               />
             </div>
             <div className="mt-4">

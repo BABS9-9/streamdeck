@@ -13,6 +13,7 @@ import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headr
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
+import { SurfaceHoldReceiptInline } from '@/components/surface-hold-receipt-inline';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -179,6 +180,10 @@ export default function LoginPage() {
   );
   const launchOwnership = useMemo(
     () => manifest?.surfaceLaunchOwnerships?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const holdReceipt = useMemo(
+    () => manifest?.surfaceHoldReceipts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const continuityWindow = useMemo(
@@ -546,6 +551,14 @@ export default function LoginPage() {
               contract={fallbackCost}
               title="Connect fallback cost"
               badge="Recovery trade-off"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceHoldReceiptInline
+              contract={holdReceipt}
+              title="Connect hold receipt"
+              badge="Hold truth"
             />
           </div>
 

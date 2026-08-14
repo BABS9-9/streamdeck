@@ -15,6 +15,7 @@ import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
+import { SurfaceHoldReceiptInline } from '@/components/surface-hold-receipt-inline';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
 import { SurfaceContinuityWindow } from '@/components/surface-continuity-window';
 import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
@@ -210,6 +211,7 @@ export function LiveBrowser() {
   const fallbackRanking = manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === 'live') ?? null;
   const fallbackEquivalence = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'live') ?? null;
   const launchOwnership = manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'live') ?? null;
+  const holdReceipt = manifest?.surfaceHoldReceipts.find((item) => item.screenId === 'live') ?? null;
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
   const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
@@ -434,6 +436,13 @@ export function LiveBrowser() {
                 contract={fallbackCost}
                 title="Play fallback cost"
                 badge="Recovery trade-off"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceHoldReceiptInline
+                contract={holdReceipt}
+                title="Play hold receipt"
+                badge="Hold truth"
               />
             </div>
             <div className="mt-4">

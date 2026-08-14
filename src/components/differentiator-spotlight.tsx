@@ -23,9 +23,9 @@ const surfaceCopy: Record<ScreenId, { eyebrow: string; title: string; detail: st
 };
 
 const spotlightPriority: Record<ScreenId, string[]> = {
-  login: ['launch-readiness', 'launch-scorecard', 'confidence-floor', 'interruption-budget', 'retry-honesty', 'fallback-cost'],
-  home: ['launch-readiness', 'launch-scorecard', 'confidence-floor', 'interruption-budget', 'retry-honesty', 'guide-freshness-board'],
-  live: ['launch-readiness', 'launch-scorecard', 'confidence-floor', 'interruption-budget', 'retry-honesty', 'instant-channel-preview'],
+  login: ['launch-readiness', 'launch-scorecard', 'hold-receipt', 'confidence-floor', 'interruption-budget', 'retry-honesty'],
+  home: ['launch-readiness', 'launch-scorecard', 'hold-receipt', 'confidence-floor', 'interruption-budget', 'guide-freshness-board'],
+  live: ['launch-readiness', 'launch-scorecard', 'hold-receipt', 'confidence-floor', 'interruption-budget', 'instant-channel-preview'],
 };
 
 export function DifferentiatorSpotlight({
