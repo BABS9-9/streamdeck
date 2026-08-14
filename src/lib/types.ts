@@ -263,6 +263,93 @@ export type FavoriteEntry = {
   updatedAt: number;
 };
 
+export type SavedLibraryRouteTone = 'ready' | 'watch' | 'recover';
+
+export type SavedLibraryRouteFreshnessSource = 'provider-cache' | 'provider-network' | 'resume-history';
+
+export type SavedLibraryRouteRankingReason =
+  | 'active-owner'
+  | 'resume-owner'
+  | 'recent-copy'
+  | 'healthy-alternate'
+  | 'warning-active';
+
+export type SavedLibraryRouteRankingEntry = {
+  providerId: string;
+  providerName: string;
+  rank: number;
+  isOwner: boolean;
+  isActive: boolean;
+  carriesResume: boolean;
+  reason: SavedLibraryRouteRankingReason;
+  summary: string;
+  tone: SavedLibraryRouteTone;
+};
+
+export type SavedLibraryRouteDuplicateCollapseContract = {
+  title: string;
+  summary: string;
+  visibleProviderCount: number;
+  hiddenProviderCount: number;
+  tone: SavedLibraryRouteTone;
+};
+
+export type SavedLibraryRouteResumeProgressContract = {
+  title: string;
+  summary: string;
+  progressLabel: string;
+  progressPercent: number | null;
+  positionLabel: string | null;
+  providerName: string | null;
+  tone: SavedLibraryRouteTone;
+};
+
+export type SavedLibraryRouteFreshnessContract = {
+  title: string;
+  summary: string;
+  detail: string;
+  source: SavedLibraryRouteFreshnessSource;
+  updatedAt: number | null;
+  ageMinutes: number | null;
+  tone: SavedLibraryRouteTone;
+};
+
+export type SavedLibraryRouteRecoveryContract = {
+  title: string;
+  summary: string;
+  ctaLabel: string | null;
+  targetProviderId: string | null;
+  alternateCount: number;
+  preserves: string;
+  tone: SavedLibraryRouteTone;
+};
+
+export type SavedLibraryRouteItemContract = {
+  key: string;
+  routeLabel: string;
+  ownerRanking: SavedLibraryRouteRankingEntry[];
+  duplicateCollapse: SavedLibraryRouteDuplicateCollapseContract;
+  resumeProgress: SavedLibraryRouteResumeProgressContract;
+  freshness: SavedLibraryRouteFreshnessContract;
+  recoveryPacket: SavedLibraryRouteRecoveryContract;
+};
+
+export type SavedLibraryRouteOverviewCard = {
+  id: 'owner-ranking' | 'duplicate-collapse' | 'resume-progress' | 'freshness' | 'recovery';
+  label: string;
+  value: string;
+  detail: string;
+  tone: SavedLibraryRouteTone;
+};
+
+export type SavedLibraryRouteContract = {
+  mode: 'favorites' | 'continue';
+  title: string;
+  summary: string;
+  overviewCards: SavedLibraryRouteOverviewCard[];
+  itemsByKey: Record<string, SavedLibraryRouteItemContract>;
+};
+
 export type LibraryCollectionItem = {
   providerId: string;
   streamId: number;

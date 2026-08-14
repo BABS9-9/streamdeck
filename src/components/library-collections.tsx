@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildMergedFavoriteGroups, buildMergedHistoryGroups, buildProviderNameMap } from '@/lib/merged-library';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustDisplay, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
+import { buildSavedLibraryRouteContract } from '@/lib/saved-library-route-contracts';
 import { buildSavedLibraryRuntimeContract } from '@/lib/saved-library-runtime';
 import { buildLiveStreamUrl, buildVodStreamUrl, getArtwork, getContentId, resolveSeriesEpisodePlayback } from '@/lib/xtream-api';
 import { FavoriteEntry, MockProviderHealth, MockProviderScenario, WatchHistoryItem, XtreamStream } from '@/lib/types';
@@ -175,6 +176,35 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     watchHistory,
     providerVariants,
   }), [activeConnection?.id, connectionStatus, connections, favoriteEntriesByProvider, mode, providerVariants, watchHistory]);
+  const routeContract = useMemo(() => buildSavedLibraryRouteContract({
+    mode,
+    runtimeContract,
+    groups: mode === 'favorites' ? mergedFavoriteGroups : mergedContinueGroups,
+    providerNameMap,
+    connectionStatus,
+    activeConnectionId: activeConnection?.id,
+    freshnessInput: {
+      source: mode === 'favorites'
+        ? cacheState === 'fresh'
+          ? 'provider-network'
+          : 'provider-cache'
+        : 'resume-history',
+      updatedAt: mode === 'favorites'
+        ? activeConnection
+          ? connectionStatus[activeConnection.id]?.checkedAt ?? mergedFavoriteGroups[0]?.updatedAt ?? null
+          : mergedFavoriteGroups[0]?.updatedAt ?? null
+        : mergedContinueGroups[0]?.updatedAt ?? null,
+    },
+  }), [
+    activeConnection,
+    cacheState,
+    connectionStatus,
+    mergedContinueGroups,
+    mergedFavoriteGroups,
+    mode,
+    providerNameMap,
+    runtimeContract,
+  ]);
 
   const seriesResumeLookup = useMemo(() => {
     return Object.fromEntries(
@@ -524,6 +554,24 @@ export function LibraryCollections({ mode }: CollectionsProps) {
           <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{runtimeContract.providerCopyCount} provider copies</span>
           <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 uppercase tracking-[0.18em]">{runtimeContract.duplicateGroupCount} multi-provider matches</span>
         </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {routeContract.overviewCards.map((card) => (
+            <div
+              key={card.id}
+              className={`rounded-[1.3rem] border p-4 ${
+                card.tone === 'recover'
+                  ? 'border-amber-300/20 bg-amber-500/10'
+                  : card.tone === 'watch'
+                    ? 'border-sky-300/20 bg-sky-500/10'
+                    : 'border-white/10 bg-black/20'
+              }`}
+            >
+              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-300">{card.label}</p>
+              <p className="mt-2 text-sm font-medium text-white">{card.value}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-300">{card.detail}</p>
+            </div>
+          ))}
+        </div>
         {runtimeContract.activeProviderMessage ? (
           <div className="mt-4 rounded-[1.4rem] border border-amber-400/20 bg-amber-500/10 p-4">
             <ProviderRecoveryRail
@@ -587,6 +635,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {mergedFavoriteGroups.map((group) => {
               const itemRuntime = runtimeContract.itemsByKey[group.key];
+              const routeItem = routeContract.itemsByKey[group.key];
               const entry = group.activeEntry ?? group.primaryEntry;
               const activeCatalogItem = entry.providerId === activeConnection.id
                 ? favoriteItems.find((item) => item.entry.providerId === entry.providerId && item.entry.streamId === entry.streamId)?.item
@@ -621,6 +670,16 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   <p className="mt-3 line-clamp-3 text-sm text-slate-400">{item.plot || item.genre || 'Saved from your StreamDeck library.'}</p>
                   {renderProviderIdentity(group.providerEntries, activeConnection.id)}
                   <p className="mt-3 text-xs leading-5 text-slate-300">{itemRuntime?.continuitySummary}</p>
+                  {routeItem ? (
+                    <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{routeItem.routeLabel}</p>
+                      <p className="mt-2 text-xs leading-5 text-sky-100">{routeItem.ownerRanking[0]?.summary}</p>
+                      <p className="mt-2 text-xs leading-5 text-slate-300">{routeItem.duplicateCollapse.summary}</p>
+                      <p className="mt-2 text-xs leading-5 text-emerald-100/90">{routeItem.resumeProgress.summary}</p>
+                      <p className="mt-2 text-xs leading-5 text-slate-400">{routeItem.freshness.summary} {routeItem.freshness.detail}</p>
+                      <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.recoveryPacket.summary}</p>
+                    </div>
+                  ) : null}
                   {itemRuntime?.launchOwner ? (
                     <p className="mt-3 text-xs leading-5 text-sky-200">
                       {itemRuntime.launchOwner.summary}
@@ -692,6 +751,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {mergedContinueGroups.map((group) => {
               const itemRuntime = runtimeContract.itemsByKey[group.key];
+              const routeItem = routeContract.itemsByKey[group.key];
               const item = group.activeEntry ?? group.primaryEntry;
               return (
               <article key={group.key} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
@@ -714,6 +774,19 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{formatResume(item.positionSeconds)}{item.durationSeconds ? ` • ${Math.round(item.progress * 100)}% of ${Math.floor(item.durationSeconds / 60)} min` : ''}</p>
                 <p className="mt-2 text-xs leading-5 text-slate-300">{itemRuntime?.continuitySummary}</p>
+                {routeItem ? (
+                  <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{routeItem.routeLabel}</p>
+                    <p className="mt-2 text-xs leading-5 text-sky-100">{routeItem.ownerRanking[0]?.summary}</p>
+                    <p className="mt-2 text-xs leading-5 text-slate-300">{routeItem.duplicateCollapse.summary}</p>
+                    <p className="mt-2 text-xs leading-5 text-emerald-100/90">
+                      {routeItem.resumeProgress.summary}
+                      {routeItem.resumeProgress.positionLabel ? ` Resume point ${routeItem.resumeProgress.positionLabel}.` : ''}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-slate-400">{routeItem.freshness.summary} {routeItem.freshness.detail}</p>
+                    <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.recoveryPacket.summary}</p>
+                  </div>
+                ) : null}
                 {itemRuntime?.launchOwner ? <p className="mt-2 text-xs leading-5 text-sky-200">{itemRuntime.launchOwner.summary}</p> : null}
                 {itemRuntime?.recovery.alternateProviderCount || itemRuntime?.recovery.sameCategoryFallback ? <p className="mt-2 text-xs leading-5 text-amber-200">{itemRuntime.recovery.summary}</p> : null}
                 {itemRuntime?.switchPosture.reason !== 'none' ? <p className="mt-2 text-xs leading-5 text-amber-100/90">{itemRuntime.switchPosture.summary}</p> : null}
