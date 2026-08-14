@@ -736,17 +736,17 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Fallback equivalence on Login',
-    detail: 'The adapter now publishes when a saved-provider shortcut is still the same Home move, when it is only an approximate convenience, and when rescue has turned setup into a true restart.',
+    detail: 'The adapter now publishes beside Connect when a saved-provider shortcut is still the same Home move, when it is only an approximate convenience, and when rescue has turned setup into a true restart.',
     surface: 'login',
   },
   {
     title: 'Fallback equivalence on Home',
-    detail: 'The adapter now publishes when hero rescue preserved the same discovery story, when it only kept rough browse intent alive, and when the fallback has actually become a new launch path.',
+    detail: 'The adapter now publishes beside the hero CTA when rescue preserved the same discovery story, when it only kept rough browse intent alive, and when the fallback has actually become a new launch path.',
     surface: 'home',
   },
   {
     title: 'Fallback equivalence on Live',
-    detail: 'The adapter now publishes when rescue preserved the exact selected channel, when it only preserved category surf momentum, and when the user has effectively restarted the live session.',
+    detail: 'The adapter now publishes beside Play when rescue preserved the exact selected channel, when it only preserved category surf momentum, and when the user has effectively restarted the live session.',
     surface: 'live',
   },
   {
@@ -1013,10 +1013,10 @@ const buildCompetitiveDifferentiators = () => ([
   {
     slug: 'fallback-equivalence',
     feature: 'Fallback equivalence',
-    pitch: 'Tell users when rescue still preserves the same destination, when it only preserves rough browse or surf momentum, and when it has become a real restart.',
+    pitch: 'Publish beside the premium CTA when rescue still preserves the same destination, when it only preserves rough browse or surf momentum, and when it has become a real restart.',
     competitiveGap: 'Competitors usually label every fallback as seamless even when the destination, title, or trust story changed under the hood.',
     buildPhase: 'Phase 1',
-    architectureNotes: 'Publish one surface-specific contract across Login, Home, and Live so the shell can distinguish exact preservation, approximate rescue, and honest restart without ad hoc copy.',
+    architectureNotes: 'Publish one surface-specific contract across Login, Home, and Live so the shell can distinguish exact preservation, approximate rescue, and honest restart beside Connect, the hero CTA, and Play without ad hoc copy.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -3939,8 +3939,8 @@ const buildSurfaceFallbackEquivalenceContracts = (scenario = 'healthy') => ([
     screenId: 'login',
     title: 'Login fallback-equivalence contract',
     summary: scenario === 'healthy'
-      ? 'Login should tell the user whether the rescue provider preserves the same saved-provider experience, only an approximate shortcut, or a true restart into a different account story.'
-      : 'Login should publish whether fallback keeps the same saved-provider experience, only preserves a rough shortcut, or forces an honest restart into a different account story.',
+      ? 'Login should tell the user beside Connect whether the rescue provider preserves the same saved-provider experience, only an approximate shortcut, or a true restart into a different account story.'
+      : 'Login should publish beside Connect whether fallback keeps the same saved-provider experience, only preserves a rough shortcut, or forces an honest restart into a different account story.',
     equivalence: [
       {
         label: 'Saved-provider shortcut',
@@ -3966,8 +3966,8 @@ const buildSurfaceFallbackEquivalenceContracts = (scenario = 'healthy') => ([
     screenId: 'home',
     title: 'Home fallback-equivalence contract',
     summary: scenario === 'healthy'
-      ? 'Home should tell the user whether rescue preserves the same discovery surface, only keeps the rough browsing intent, or resets the product story into a different launch experience.'
-      : 'Home should publish whether fallback preserves the same discovery surface, only keeps a rough browse intent, or forces a reset into a different launch story.',
+      ? 'Home should tell the user beside the hero CTA whether rescue preserves the same discovery surface, only keeps the rough browsing intent, or resets the product story into a different launch experience.'
+      : 'Home should publish beside the hero CTA whether fallback preserves the same discovery surface, only keeps a rough browse intent, or forces a reset into a different launch story.',
     equivalence: [
       {
         label: 'Hero and quick-rail rescue',
@@ -3993,8 +3993,8 @@ const buildSurfaceFallbackEquivalenceContracts = (scenario = 'healthy') => ([
     screenId: 'live',
     title: 'Live fallback-equivalence contract',
     summary: scenario === 'healthy'
-      ? 'Live should tell the user whether rescue keeps the exact same watch target, only keeps the same category momentum, or forces a true restart into a different surf path.'
-      : 'Live should publish whether fallback keeps the exact watch target, only preserves category momentum, or forces a real restart into a different surf path.',
+      ? 'Live should tell the user beside Play whether rescue keeps the exact same watch target, only keeps the same category momentum, or forces a true restart into a different surf path.'
+      : 'Live should publish beside Play whether fallback keeps the exact watch target, only preserves category momentum, or forces a real restart into a different surf path.',
     equivalence: [
       {
         label: 'Selected channel rescue',
