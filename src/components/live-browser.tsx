@@ -54,6 +54,7 @@ import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamCategory, XtreamStream } from '@/lib/types';
@@ -242,6 +243,14 @@ export function LiveBrowser() {
     }),
     [activeConnection?.id, connectionStatus, connections]
   );
+  const providerPodium = manifest?.surfaceProviderPodiums?.find((item) => item.screenId === 'live') ?? null;
+  const providerPodiumRuntime = useMemo(
+    () => buildSavedProviderPodiumRuntime({
+      contract: providerPodium,
+      board: savedProviderBoard,
+    }),
+    [providerPodium, savedProviderBoard]
+  );
   const selectedGuideEntry = selectedStream ? lookupStreamGuide(activeConnection.id, selectedStream, Number.MAX_SAFE_INTEGER) : null;
   const selectedGuide = getGuidePayload(selectedGuideEntry);
   const selectedGuideState = selectedStream ? syncByGuideKey[`${activeConnection.id}:${getContentId(selectedStream)}`] : null;
@@ -307,7 +316,6 @@ export function LiveBrowser() {
   const handoffMap = runtimeSurfaceContracts.handoffMap;
   const autonomyBoundary = runtimeSurfaceContracts.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = runtimeSurfaceContracts.connectionHeadroom || manifestConnectionHeadroom;
-  const providerPodium = manifest?.surfaceProviderPodiums?.find((item) => item.screenId === 'live') ?? null;
 
   return (
     <div className="space-y-6">
@@ -333,8 +341,7 @@ export function LiveBrowser() {
       <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
       <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
       <SurfaceProviderPodium
-        contract={providerPodium}
-        board={savedProviderBoard}
+        runtime={providerPodiumRuntime}
         badge="Play-owner podium"
         onSelectProvider={(providerId) => setActiveConnection(providerId, {
           sourceSurface: 'live',

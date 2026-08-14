@@ -52,6 +52,7 @@ import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -289,6 +290,13 @@ export default function LoginPage() {
     }),
     [activeConnection?.id, connectionStatus, connections]
   );
+  const providerPodiumRuntime = useMemo(
+    () => buildSavedProviderPodiumRuntime({
+      contract: providerPodium,
+      board: savedProviderBoard,
+    }),
+    [providerPodium, savedProviderBoard]
+  );
   const loginGuideCards = useMemo(
     () => activeConnection
       ? loginGuideStreams.map((stream) => ({
@@ -431,8 +439,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProviderPodium
-              contract={providerPodium}
-              board={savedProviderBoard}
+              runtime={providerPodiumRuntime}
               badge="Saved-provider podium"
               onSelectProvider={(providerId) => setActiveConnection(providerId, {
                 sourceSurface: 'login',

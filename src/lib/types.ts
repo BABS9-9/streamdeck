@@ -407,6 +407,26 @@ export type SavedProviderHealthBoard = {
   } | null;
 };
 
+export type SurfaceProviderPodiumRuntimeSlot = {
+  label: string;
+  qualification: string;
+  downgradeTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  provider: SavedProviderHealthEntry | null;
+  capacityLabel: string;
+  postureSummary: string;
+};
+
+export type SurfaceProviderPodiumRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  slots: SurfaceProviderPodiumRuntimeSlot[];
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;

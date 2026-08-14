@@ -55,6 +55,7 @@ import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamStream } from '@/lib/types';
@@ -366,6 +367,13 @@ export function HomeDashboard() {
     }),
     [activeConnection?.id, connectionStatus, connections]
   );
+  const providerPodiumRuntime = useMemo(
+    () => buildSavedProviderPodiumRuntime({
+      contract: providerPodium,
+      board: savedProviderBoard,
+    }),
+    [providerPodium, savedProviderBoard]
+  );
   const heroGuide = activeConnection && featuredLive
     ? getGuidePayload(lookupStreamGuide(activeConnection.id, featuredLive, Number.MAX_SAFE_INTEGER))
     : null;
@@ -466,8 +474,7 @@ export function HomeDashboard() {
       <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
       <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
       <SurfaceProviderPodium
-        contract={providerPodium}
-        board={savedProviderBoard}
+        runtime={providerPodiumRuntime}
         badge="Featured-provider podium"
         onSelectProvider={(providerId) => setActiveConnection(providerId, {
           sourceSurface: 'home',
