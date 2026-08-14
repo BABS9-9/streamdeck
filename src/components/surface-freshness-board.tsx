@@ -1,16 +1,6 @@
 'use client';
 
-type SurfaceFreshnessBoardContract = {
-  title: string;
-  summary: string;
-  budgets: Array<{
-    label: string;
-    liveWindow: string;
-    safeFallbackWindow: string;
-    recoveryTrigger: string;
-    tone: 'ready' | 'watch' | 'recover';
-  }>;
-};
+import { SurfaceFreshnessBoardRuntimeContract } from '@/lib/types';
 
 const toneClasses = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -25,27 +15,27 @@ const toneLabels = {
 } as const;
 
 export function SurfaceFreshnessBoard({
-  contract,
+  runtime,
   badge,
 }: {
-  contract: SurfaceFreshnessBoardContract | null;
+  runtime: SurfaceFreshnessBoardRuntimeContract | null;
   badge: string;
 }) {
-  if (!contract) return null;
+  if (!runtime) return null;
 
   return (
     <section className="rounded-[2rem] border border-emerald-400/20 bg-emerald-500/10 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-emerald-200">{contract.title}</p>
-          <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-200">{contract.summary}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-emerald-200">{runtime.title}</p>
+          <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-200">{runtime.summary}</p>
         </div>
         <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
           {badge}
         </span>
       </div>
       <div className="mt-4 grid gap-3 xl:grid-cols-2">
-        {contract.budgets.map((item) => (
+        {runtime.budgets.map((item) => (
           <div key={item.label} className={`rounded-[1.5rem] border p-4 ${toneClasses[item.tone]}`}>
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-white">{item.label}</p>

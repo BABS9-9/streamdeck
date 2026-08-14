@@ -56,6 +56,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
@@ -388,6 +389,14 @@ export function HomeDashboard() {
     }),
     [holdReceipt, savedProviderBoard]
   );
+  const freshnessBoardRuntime = useMemo(
+    () => buildSavedProviderFreshnessBoardRuntime({
+      contract: freshnessBoard,
+      board: savedProviderBoard,
+      report: homeGuideCoverage,
+    }),
+    [freshnessBoard, homeGuideCoverage, savedProviderBoard]
+  );
   const heroGuide = activeConnection && featuredLive
     ? getGuidePayload(lookupStreamGuide(activeConnection.id, featuredLive, Number.MAX_SAFE_INTEGER))
     : null;
@@ -615,7 +624,7 @@ export function HomeDashboard() {
             </div>
             <div className="mt-4">
               <SurfaceFreshnessBoardInline
-                contract={freshnessBoard}
+                runtime={freshnessBoardRuntime}
                 title="Hero guide freshness"
                 badge="Guide truth"
               />
@@ -738,7 +747,7 @@ export function HomeDashboard() {
       <SurfaceProviderReturnContract contract={providerReturnContract} badge="Return truth" />
       <SurfaceProviderStabilityContract contract={providerStabilityContract} badge="Stability truth" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
-      <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
+      <SurfaceFreshnessBoard runtime={freshnessBoardRuntime} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
       <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />

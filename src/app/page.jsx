@@ -53,6 +53,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
@@ -327,6 +328,14 @@ export default function LoginPage() {
       : null,
     [activeConnection, getCoverageReport, loginGuideStreams]
   );
+  const freshnessBoardRuntime = useMemo(
+    () => buildSavedProviderFreshnessBoardRuntime({
+      contract: freshnessBoard,
+      board: savedProviderBoard,
+      report: loginGuideCoverage,
+    }),
+    [freshnessBoard, loginGuideCoverage, savedProviderBoard]
+  );
   const loginGuideContinuity = useMemo(
     () => buildProviderGuideContinuity({
       screenId: 'login',
@@ -533,7 +542,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceFreshnessBoardInline
-              contract={freshnessBoard}
+              runtime={freshnessBoardRuntime}
               title="Connect guide freshness"
               badge="Guide truth"
             />
@@ -698,7 +707,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
+            <SurfaceFreshnessBoard runtime={freshnessBoardRuntime} badge="Freshness truth" />
           </div>
 
           <div className="mt-6">

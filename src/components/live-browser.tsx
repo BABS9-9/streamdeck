@@ -55,6 +55,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
@@ -269,6 +270,14 @@ export function LiveBrowser() {
     () => getCoverageReport(activeConnection.id, filteredStreams.slice(0, 8).map((stream) => getContentId(stream)), Number.MAX_SAFE_INTEGER),
     [activeConnection.id, filteredStreams, getCoverageReport]
   );
+  const freshnessBoardRuntime = useMemo(
+    () => buildSavedProviderFreshnessBoardRuntime({
+      contract: freshnessBoard,
+      board: savedProviderBoard,
+      report: liveGuideCoverage,
+    }),
+    [freshnessBoard, liveGuideCoverage, savedProviderBoard]
+  );
   const liveGuideContinuity = useMemo(
     () => buildProviderGuideContinuity({
       screenId: 'live',
@@ -381,7 +390,7 @@ export function LiveBrowser() {
       <SurfaceProviderReturnContract contract={providerReturnContract} badge="Return truth" />
       <SurfaceProviderStabilityContract contract={providerStabilityContract} badge="Stability truth" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
-      <SurfaceFreshnessBoard contract={freshnessBoard} badge="Freshness truth" />
+      <SurfaceFreshnessBoard runtime={freshnessBoardRuntime} badge="Freshness truth" />
       <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
       <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
@@ -421,7 +430,7 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceFreshnessBoardInline
-                contract={freshnessBoard}
+                runtime={freshnessBoardRuntime}
                 title="Play guide freshness"
                 badge="Guide truth"
               />

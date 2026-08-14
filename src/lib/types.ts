@@ -447,6 +447,27 @@ export type SurfaceHoldReceiptRuntimeContract = {
   holds: SurfaceHoldReceiptRuntimeHold[];
 };
 
+export type SurfaceFreshnessBoardRuntimeBudget = {
+  label: string;
+  liveWindow: string;
+  safeFallbackWindow: string;
+  recoveryTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  guideStatus: ProviderGuideCoverageReport['status'] | 'unknown';
+};
+
+export type SurfaceFreshnessBoardRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  budgets: SurfaceFreshnessBoardRuntimeBudget[];
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;
