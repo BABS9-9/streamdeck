@@ -316,7 +316,7 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Fallback ranking on login',
-    detail: 'The adapter now publishes which saved-provider rescue currently ranks first, what evidence keeps it first, and what trigger forces Login to rerank before it auto-picks.',
+    detail: 'The adapter now publishes which saved-provider rescue currently ranks first beside Connect, what evidence keeps it first, and what trigger forces Login to rerank before it auto-picks.',
     surface: 'login',
   },
   {
@@ -421,7 +421,7 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Fallback ranking on Home',
-    detail: 'The adapter now publishes which featured or rail rescue currently ranks first, what proof keeps it there, and what event forces Home to rerank before hero polish outruns truth.',
+    detail: 'The adapter now publishes which featured or rail rescue currently ranks first beside the hero CTA, what proof keeps it there, and what event forces Home to rerank before hero polish outruns truth.',
     surface: 'home',
   },
   {
@@ -526,7 +526,7 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Fallback ranking on Live',
-    detail: 'The adapter now publishes which exact-channel or category-level rescue currently ranks first, what evidence keeps it ahead, and what trigger forces Live to rerank before Play changes hands.',
+    detail: 'The adapter now publishes which exact-channel or category-level rescue currently ranks first beside Play, what evidence keeps it ahead, and what trigger forces Live to rerank before Play changes hands.',
     surface: 'live',
   },
   {
@@ -2740,7 +2740,7 @@ const buildSurfaceFallbackRankingContracts = (scenario = 'healthy') => ([
     title: 'Login fallback-ranking contract',
     summary: scenario === 'healthy'
       ? 'Login should show which saved provider currently leads the Home rescue stack so a one-tap shortcut never feels like a blind guess.'
-      : 'Login should publish which saved provider currently leads rescue, what trust evidence put it there, and what new proof would rerank the stack before the user gets pushed into the wrong Home owner.',
+      : 'Login should publish which saved provider currently leads rescue beside Connect, what trust evidence put it there, and what new proof would rerank the stack before the user gets pushed into the wrong Home owner.',
     rankings: [
       {
         label: 'Lead the Home rescue stack',
@@ -2767,7 +2767,7 @@ const buildSurfaceFallbackRankingContracts = (scenario = 'healthy') => ([
     title: 'Home fallback-ranking contract',
     summary: scenario === 'healthy'
       ? 'Home should show which saved provider currently leads browse rescue so hero and rail fallbacks keep the discovery story honest.'
-      : 'Home should publish which saved provider leads browse rescue, what continuity evidence put it on top, and what proof would rerank the stack before hero recovery feels arbitrary.',
+      : 'Home should publish which saved provider leads browse rescue beside the hero CTA, what continuity evidence put it on top, and what proof would rerank the stack before hero recovery feels arbitrary.',
     rankings: [
       {
         label: 'Lead the featured rescue stack',
@@ -2794,7 +2794,7 @@ const buildSurfaceFallbackRankingContracts = (scenario = 'healthy') => ([
     title: 'Live fallback-ranking contract',
     summary: scenario === 'healthy'
       ? 'Live should show which saved provider currently leads surf rescue so exact-match recovery and same-category fallback do not feel interchangeable.'
-      : 'Live should publish which saved provider leads surf rescue, what playback evidence put it on top, and what new proof would rerank the stack before Play gets handed to the wrong owner.',
+      : 'Live should publish which saved provider leads surf rescue beside Play, what playback evidence put it on top, and what new proof would rerank the stack before Play gets handed to the wrong owner.',
     rankings: [
       {
         label: 'Lead the selected-card rescue stack',
