@@ -945,6 +945,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'rescue-receipt',
+    feature: 'Rescue receipt',
+    pitch: 'Tell users what setup, browse, or surf context survived the fallback, what changed under the hood, and what they should reconfirm before trusting the next move.',
+    competitiveGap: 'Competitors usually make fallback feel seamless by hiding the delta, so users only discover a provider swap, cached browse path, or approximate rescue after they already committed to the CTA.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one rescue-receipt contract so preserved context, hidden change, and reconfirmation truth stay aligned right beside Connect, the hero CTA, and Play.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'identity-anchor',
     feature: 'Identity anchor',
     pitch: 'Keep provider ownership, rescue ownership, and preserved surface meaning visibly attached to Connect, the hero CTA, and Play so fallback never turns into anonymous momentum.',
