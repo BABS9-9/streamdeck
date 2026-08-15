@@ -674,21 +674,28 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                     <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
                       <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{routeItem.routeLabel}</p>
                       <p className="mt-2 text-xs leading-5 text-sky-100">{routeItem.ownerRanking[0]?.summary}</p>
+                      <p className="mt-2 text-xs leading-5 text-sky-200">{routeItem.launchOwner.summary}</p>
+                      <p className="mt-2 text-xs leading-5 text-sky-100/80">{routeItem.launchOwner.strongestPromise}</p>
                       <p className="mt-2 text-xs leading-5 text-slate-300">{routeItem.duplicateCollapse.summary}</p>
                       <p className="mt-2 text-xs leading-5 text-emerald-100/90">{routeItem.resumeProgress.summary}</p>
                       <p className="mt-2 text-xs leading-5 text-slate-400">{routeItem.freshness.summary} {routeItem.freshness.detail}</p>
                       <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.recoveryPacket.summary}</p>
+                      {routeItem.switchPosture.reason !== 'none' ? (
+                        <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.switchPosture.summary}</p>
+                      ) : null}
                     </div>
                   ) : null}
-                  {itemRuntime?.launchOwner ? (
-                    <p className="mt-3 text-xs leading-5 text-sky-200">
-                      {itemRuntime.launchOwner.summary}
-                    </p>
+                  {routeItem?.launchOwner ? (
+                    <div className="mt-3 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-50">
+                      <p>{routeItem.launchOwner.summary}</p>
+                      <p className="mt-2 text-xs leading-5 text-sky-100">{routeItem.launchOwner.strongestPromise}</p>
+                      <p className="mt-2 text-xs leading-5 text-sky-200/80">{routeItem.launchOwner.suppressedPromise}</p>
+                    </div>
                   ) : null}
                   {itemRuntime?.resume.hasResume ? (
                     <p className="mt-3 text-xs leading-5 text-emerald-200">{itemRuntime.resume.summary}</p>
                   ) : null}
-                  {itemRuntime?.switchPosture.reason !== 'none' ? <p className="mt-3 text-xs leading-5 text-amber-100/90">{itemRuntime.switchPosture.summary}</p> : null}
+                  {routeItem?.switchPosture.reason !== 'none' ? <p className="mt-3 text-xs leading-5 text-amber-100/90">{routeItem.switchPosture.summary}</p> : null}
                   {itemRuntime?.recovery.alternateProviderCount || itemRuntime?.recovery.sameCategoryFallback ? <p className="mt-3 text-xs leading-5 text-emerald-100/90">{itemRuntime.recovery.summary}</p> : null}
                   {renderProviderVariants(variantSummary[`favorite:${entry.streamId}`] || [], item.stream_type === 'series' && seriesResume
                     ? {
@@ -778,6 +785,8 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                   <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{routeItem.routeLabel}</p>
                     <p className="mt-2 text-xs leading-5 text-sky-100">{routeItem.ownerRanking[0]?.summary}</p>
+                    <p className="mt-2 text-xs leading-5 text-sky-200">{routeItem.launchOwner.summary}</p>
+                    <p className="mt-2 text-xs leading-5 text-sky-100/80">{routeItem.launchOwner.strongestPromise}</p>
                     <p className="mt-2 text-xs leading-5 text-slate-300">{routeItem.duplicateCollapse.summary}</p>
                     <p className="mt-2 text-xs leading-5 text-emerald-100/90">
                       {routeItem.resumeProgress.summary}
@@ -785,11 +794,18 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                     </p>
                     <p className="mt-2 text-xs leading-5 text-slate-400">{routeItem.freshness.summary} {routeItem.freshness.detail}</p>
                     <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.recoveryPacket.summary}</p>
+                    {routeItem.switchPosture.reason !== 'none' ? <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.switchPosture.summary}</p> : null}
                   </div>
                 ) : null}
-                {itemRuntime?.launchOwner ? <p className="mt-2 text-xs leading-5 text-sky-200">{itemRuntime.launchOwner.summary}</p> : null}
+                {routeItem?.launchOwner ? (
+                  <div className="mt-2 space-y-2 text-xs leading-5">
+                    <p className="text-sky-200">{routeItem.launchOwner.summary}</p>
+                    <p className="text-sky-100/80">{routeItem.launchOwner.strongestPromise}</p>
+                    <p className="text-sky-200/70">{routeItem.launchOwner.suppressedPromise}</p>
+                  </div>
+                ) : null}
                 {itemRuntime?.recovery.alternateProviderCount || itemRuntime?.recovery.sameCategoryFallback ? <p className="mt-2 text-xs leading-5 text-amber-200">{itemRuntime.recovery.summary}</p> : null}
-                {itemRuntime?.switchPosture.reason !== 'none' ? <p className="mt-2 text-xs leading-5 text-amber-100/90">{itemRuntime.switchPosture.summary}</p> : null}
+                {routeItem?.switchPosture.reason !== 'none' ? <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.switchPosture.summary}</p> : null}
                 <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
                 {(() => {
                   const variants = variantSummary[`continue:${item.id}`] || [];

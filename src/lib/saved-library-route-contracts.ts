@@ -6,10 +6,12 @@ import {
   SavedLibraryRouteDuplicateCollapseContract,
   SavedLibraryRouteFreshnessContract,
   SavedLibraryRouteItemContract,
+  SavedLibraryRouteLaunchOwnerContract,
   SavedLibraryRouteOverviewCard,
   SavedLibraryRouteRankingEntry,
   SavedLibraryRouteRecoveryContract,
   SavedLibraryRouteResumeProgressContract,
+  SavedLibraryRouteSwitchPostureContract,
   SavedConnection,
   WatchHistoryItem,
 } from './types';
@@ -154,6 +156,31 @@ const buildDuplicateCollapse = ({
   };
 };
 
+const buildLaunchOwnerPacket = ({
+  itemRuntime,
+}: {
+  itemRuntime: SavedLibraryItemRuntimeContract;
+}): SavedLibraryRouteLaunchOwnerContract => ({
+  title: itemRuntime.launchOwner.title,
+  summary: itemRuntime.launchOwner.summary,
+  strongestPromise: itemRuntime.launchOwner.strongestPromise,
+  suppressedPromise: itemRuntime.launchOwner.suppressedPromise,
+  tone: itemRuntime.launchOwner.tone,
+});
+
+const buildSwitchPosturePacket = ({
+  itemRuntime,
+}: {
+  itemRuntime: SavedLibraryItemRuntimeContract;
+}): SavedLibraryRouteSwitchPostureContract => ({
+  title: itemRuntime.switchPosture.title,
+  summary: itemRuntime.switchPosture.summary,
+  ctaLabel: itemRuntime.switchPosture.ctaLabel,
+  targetProviderId: itemRuntime.switchPosture.targetProviderId,
+  reason: itemRuntime.switchPosture.reason,
+  tone: itemRuntime.switchPosture.tone,
+});
+
 const buildResumeProgress = ({
   mode,
   group,
@@ -266,6 +293,8 @@ const buildOverviewCards = ({
   const ownerSwitchCount = itemContracts.filter((item) =>
     item.ownerRanking.some((entry) => entry.rank === 1 && !entry.isActive)
   ).length;
+  const borrowedLaunchOwnerCount = itemContracts.filter((item) => item.launchOwner.tone !== 'ready').length;
+  const switchPressureCount = itemContracts.filter((item) => item.switchPosture.reason !== 'none').length;
   const duplicateCount = itemContracts.filter((item) => item.duplicateCollapse.visibleProviderCount > 1).length;
   const resumeAttachedCount = itemContracts.filter((item) => item.resumeProgress.progressPercent !== null).length;
   const freshCount = itemContracts.filter((item) => item.freshness.tone === 'ready').length;
@@ -280,6 +309,24 @@ const buildOverviewCards = ({
         ? 'Highlights which favorite rows still owe an explicit provider-owner callout.'
         : 'Highlights which resume rows still owe an explicit provider-owner callout.',
       tone: ownerSwitchCount > 0 ? 'watch' : 'ready',
+    },
+    {
+      id: 'launch-owner',
+      label: 'Launch owner',
+      value: borrowedLaunchOwnerCount > 0 ? `${borrowedLaunchOwnerCount} rows borrow launch truth` : 'Launch truth settled',
+      detail: 'Tracks when visible rows can no longer promise the same next move from the active provider without naming a different owner.',
+      tone: borrowedLaunchOwnerCount > 0 ? 'watch' : 'ready',
+    },
+    {
+      id: 'switch-posture',
+      label: 'Switch posture',
+      value: switchPressureCount > 0 ? `${switchPressureCount} rows keep switch pressure visible` : 'No switch pressure',
+      detail: 'Separates owner-required or recovery-forced switches from optional alternate-provider shortcuts.',
+      tone: itemContracts.some((item) => item.switchPosture.tone === 'recover')
+        ? 'recover'
+        : switchPressureCount > 0
+          ? 'watch'
+          : 'ready',
     },
     {
       id: 'duplicate-collapse',
@@ -342,6 +389,12 @@ export const buildSavedLibraryRouteContract = ({
         providerNameMap,
         activeConnectionId,
       }),
+      launchOwner: buildLaunchOwnerPacket({
+        itemRuntime,
+      }),
+      switchPosture: buildSwitchPosturePacket({
+        itemRuntime,
+      }),
       duplicateCollapse: buildDuplicateCollapse({
         mode,
         itemRuntime,
@@ -368,8 +421,8 @@ export const buildSavedLibraryRouteContract = ({
 
   const itemContracts = Object.values(itemsByKey);
   const summary = mode === 'favorites'
-    ? 'Favorites route contracts now publish owner ranking, duplicate collapse, resume witness, freshness, and recovery without relying on UI heuristics.'
-    : 'Continue Watching route contracts now publish owner ranking, duplicate collapse, resume progress, freshness, and recovery without relying on UI heuristics.';
+    ? 'Favorites route contracts now publish owner ranking, launch-owner truth, switch posture, duplicate collapse, resume witness, freshness, and recovery without relying on UI heuristics.'
+    : 'Continue Watching route contracts now publish owner ranking, launch-owner truth, switch posture, duplicate collapse, resume progress, freshness, and recovery without relying on UI heuristics.';
 
   return {
     mode,

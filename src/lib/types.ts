@@ -324,10 +324,29 @@ export type SavedLibraryRouteRecoveryContract = {
   tone: SavedLibraryRouteTone;
 };
 
+export type SavedLibraryRouteLaunchOwnerContract = {
+  title: string;
+  summary: string;
+  strongestPromise: string;
+  suppressedPromise: string;
+  tone: SavedLibraryRouteTone;
+};
+
+export type SavedLibraryRouteSwitchPostureContract = {
+  title: string;
+  summary: string;
+  ctaLabel: string | null;
+  targetProviderId: string | null;
+  reason: 'owner' | 'recovery' | 'optional' | 'none';
+  tone: SavedLibraryRouteTone;
+};
+
 export type SavedLibraryRouteItemContract = {
   key: string;
   routeLabel: string;
   ownerRanking: SavedLibraryRouteRankingEntry[];
+  launchOwner: SavedLibraryRouteLaunchOwnerContract;
+  switchPosture: SavedLibraryRouteSwitchPostureContract;
   duplicateCollapse: SavedLibraryRouteDuplicateCollapseContract;
   resumeProgress: SavedLibraryRouteResumeProgressContract;
   freshness: SavedLibraryRouteFreshnessContract;
@@ -335,7 +354,7 @@ export type SavedLibraryRouteItemContract = {
 };
 
 export type SavedLibraryRouteOverviewCard = {
-  id: 'owner-ranking' | 'duplicate-collapse' | 'resume-progress' | 'freshness' | 'recovery';
+  id: 'owner-ranking' | 'launch-owner' | 'switch-posture' | 'duplicate-collapse' | 'resume-progress' | 'freshness' | 'recovery';
   label: string;
   value: string;
   detail: string;
