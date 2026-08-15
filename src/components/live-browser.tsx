@@ -12,6 +12,7 @@ import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { MultiConnectionGuideRuntime } from '@/components/multi-connection-guide-runtime';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
+import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-canonical-provider-identity-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
@@ -498,6 +499,13 @@ export function LiveBrowser() {
                 contract={fallbackCost}
                 title="Play fallback cost"
                 badge="Recovery trade-off"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceCanonicalProviderIdentityInline
+                contract={canonicalProviderIdentity}
+                title="Play canonical provider identity"
+                badge="Owner truth"
               />
             </div>
             <div className="mt-4">

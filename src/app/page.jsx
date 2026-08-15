@@ -12,6 +12,7 @@ import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
+import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-canonical-provider-identity-inline';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceHoldReceiptInline } from '@/components/surface-hold-receipt-inline';
 import { SurfaceConfidenceFloor } from '@/components/surface-confidence-floor';
@@ -617,6 +618,14 @@ export default function LoginPage() {
               contract={fallbackCost}
               title="Connect fallback cost"
               badge="Recovery trade-off"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceCanonicalProviderIdentityInline
+              contract={canonicalProviderIdentity}
+              title="Connect canonical provider identity"
+              badge="Owner truth"
             />
           </div>
 
