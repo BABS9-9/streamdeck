@@ -1028,10 +1028,10 @@ const buildCompetitiveDifferentiators = () => ([
   {
     slug: 'canonical-provider-identity',
     feature: 'Canonical provider identity',
-    pitch: 'Keep retries, saved labels, and rescue paths tied to one canonical provider owner so continuity never silently attaches to the wrong source.',
+    pitch: 'Keep retries, saved labels, and rescue paths tied to one canonical provider owner and keep that owner visible beside premium CTAs before continuity silently attaches to the wrong source.',
     competitiveGap: 'Most IPTV players let alias URLs, relabeled connections, or nearly identical providers blur together until favorites, history, or trust cues feel random.',
     buildPhase: 'Phase 1',
-    architectureNotes: 'Normalize provider identity around one canonical key and surface that ownership on Login, Home, and Live before reconnect shortcuts, cached rails, or rescue copy imply the wrong source story.',
+    architectureNotes: 'Normalize provider identity around one canonical key and keep that owner visible beside Connect, the hero CTA, and Play before reconnect shortcuts, cached rails, or rescue copy imply the wrong source story.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -2697,8 +2697,8 @@ const buildSurfaceCanonicalProviderIdentityContracts = (scenario = 'healthy') =>
     screenId: 'login',
     title: 'Login canonical provider identity',
     summary: scenario === 'healthy'
-      ? 'Login should prove that reconnecting with trimmed URLs, default-port variants, or saved labels still resolves to one canonical provider owner before saved trust or shortcut recovery takes over.'
-      : 'Login should say when a reconnect still belongs to the same provider owner, which saved aliases are safe to absorb, and what mismatch means the shell must stop selling recovery as the same account story.',
+      ? 'Login should prove beside Connect that reconnecting with trimmed URLs, default-port variants, or saved labels still resolves to one canonical provider owner before saved trust or shortcut recovery takes over.'
+      : 'Login should say beside Connect when a reconnect still belongs to the same provider owner, which saved aliases are safe to absorb, and what mismatch means the shell must stop selling recovery as the same account story.',
     identities: [
       {
         label: 'Reconnect owner',
@@ -2724,8 +2724,8 @@ const buildSurfaceCanonicalProviderIdentityContracts = (scenario = 'healthy') =>
     screenId: 'home',
     title: 'Home canonical provider identity',
     summary: scenario === 'healthy'
-      ? 'Home should keep the hero, rails, and trust posture attached to one canonical provider owner even when the saved provider was previously stored under a different host format or label.'
-      : 'Home should say when cached rails still belong to the same provider owner, which alias history is safe to absorb into that owner, and what mismatch means fallback has become a new provider story.',
+      ? 'Home should keep the hero, rails, and trust posture attached to one canonical provider owner and keep that owner visible beside the featured CTA even when the saved provider was previously stored under a different host format or label.'
+      : 'Home should say beside the featured CTA when cached rails still belong to the same provider owner, which alias history is safe to absorb into that owner, and what mismatch means fallback has become a new provider story.',
     identities: [
       {
         label: 'Hero owner',
@@ -2751,8 +2751,8 @@ const buildSurfaceCanonicalProviderIdentityContracts = (scenario = 'healthy') =>
     screenId: 'live',
     title: 'Live canonical provider identity',
     summary: scenario === 'healthy'
-      ? 'Live should keep the selected card, preview, and launch owner tied to one canonical provider identity so exact-copy rescue and same-category rescue never blur into the wrong source story.'
-      : 'Live should say when the current surf session still belongs to the same canonical owner, which alias history is safe to absorb, and what mismatch means rescue became a different provider jump.',
+      ? 'Live should keep the selected card, preview, and launch owner tied to one canonical provider identity and keep that owner visible beside Play so exact-copy rescue and same-category rescue never blur into the wrong source story.'
+      : 'Live should say beside Play when the current surf session still belongs to the same canonical owner, which alias history is safe to absorb, and what mismatch means rescue became a different provider jump.',
     identities: [
       {
         label: 'Surf-session owner',
@@ -4990,7 +4990,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, canonical provider identity, fallback ranking, fallback-equivalence truth, fallback-expiry truth, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
