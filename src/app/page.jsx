@@ -53,6 +53,7 @@ import { SurfaceRecoveryWitnessInline } from '@/components/surface-recovery-witn
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
+import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
@@ -672,6 +673,14 @@ export default function LoginPage() {
               contract={recoveryWitness}
               title="Connect recovery witness"
               badge="Recovery proof"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceRescueReceiptInline
+              contract={rescueReceipt}
+              title="Connect rescue receipt"
+              badge="What changed"
             />
           </div>
 

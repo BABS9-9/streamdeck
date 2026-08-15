@@ -23,9 +23,9 @@ const surfaceCopy: Record<ScreenId, { eyebrow: string; title: string; detail: st
 };
 
 const spotlightPriority: Record<ScreenId, string[]> = {
-  login: ['launch-readiness', 'launch-scorecard', 'hold-receipt', 'identity-anchor', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
-  home: ['launch-readiness', 'launch-scorecard', 'hold-receipt', 'identity-anchor', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
-  live: ['launch-readiness', 'launch-scorecard', 'hold-receipt', 'identity-anchor', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
+  login: ['launch-readiness', 'launch-scorecard', 'hold-receipt', 'rescue-receipt', 'identity-anchor', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
+  home: ['launch-readiness', 'launch-scorecard', 'hold-receipt', 'rescue-receipt', 'identity-anchor', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
+  live: ['launch-readiness', 'launch-scorecard', 'hold-receipt', 'rescue-receipt', 'identity-anchor', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
 };
 
 export function DifferentiatorSpotlight({
