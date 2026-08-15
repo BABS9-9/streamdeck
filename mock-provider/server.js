@@ -764,6 +764,21 @@ const buildDifferentiators = () => ([
     detail: 'The adapter now publishes when retrying the same selected card still preserves the same watch path, what preview and guide context survives, and what trigger means recovery should replace another Play attempt.',
     surface: 'live',
   },
+  {
+    title: 'Identity anchor on Login',
+    detail: 'The adapter now publishes beside Connect which provider owns setup, which rescue provider would take over, and what setup meaning must stay visible before fallback turns into anonymous momentum.',
+    surface: 'login',
+  },
+  {
+    title: 'Identity anchor on Home',
+    detail: 'The adapter now publishes beside the hero CTA which provider owns browse, which rescue owner would take over, and what discovery meaning must stay visible before fallback turns cinematic but anonymous.',
+    surface: 'home',
+  },
+  {
+    title: 'Identity anchor on Live',
+    detail: 'The adapter now publishes beside Play which provider owns the selected card, which rescue owner would take over, and what surf meaning must stay visible before fallback turns into anonymous preview momentum.',
+    surface: 'live',
+  },
 ]);
 
 const buildCompetitiveDifferentiators = () => ([
@@ -927,6 +942,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually ask users to trust fallback on vibes alone, so rescue feels magical until the destination, provider, or launch meaning quietly drifts.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one recovery-witness contract so required evidence, preserved context, and trust-break triggers stay aligned beside the CTA.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'identity-anchor',
+    feature: 'Identity anchor',
+    pitch: 'Keep provider ownership, rescue ownership, and preserved surface meaning visibly attached to Connect, the hero CTA, and Play so fallback never turns into anonymous momentum.',
+    competitiveGap: 'Competitors usually preserve motion but drop source identity, so rescue looks seamless right up until users realize they no longer know which provider, browse story, or watch target survived.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one identity-anchor contract so provider owner, rescue owner, preserved meaning, and break trigger stay aligned beside the premium CTA.',
     surfaces: ['login', 'home', 'live'],
   },
   {
