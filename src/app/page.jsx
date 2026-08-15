@@ -29,6 +29,7 @@ import { SurfaceFreshnessBoardInline } from '@/components/surface-freshness-boar
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceHandoffMap } from '@/components/surface-handoff-map';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
+import { SurfaceIdentityAnchorInline } from '@/components/surface-identity-anchor-inline';
 import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
@@ -663,6 +664,14 @@ export default function LoginPage() {
               contract={recoveryWitness}
               title="Connect recovery witness"
               badge="Recovery proof"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceIdentityAnchorInline
+              contract={identityAnchor}
+              title="Connect identity anchor"
+              badge="Owner truth"
             />
           </div>
 

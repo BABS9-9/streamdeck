@@ -32,6 +32,7 @@ import { SurfaceFreshnessBoardInline } from '@/components/surface-freshness-boar
 import { SurfaceFreshnessBoard } from '@/components/surface-freshness-board';
 import { SurfaceHandoffMap } from '@/components/surface-handoff-map';
 import { SurfaceIdentityAnchor } from '@/components/surface-identity-anchor';
+import { SurfaceIdentityAnchorInline } from '@/components/surface-identity-anchor-inline';
 import { SurfaceInterruptionBudget } from '@/components/surface-interruption-budget';
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
@@ -734,6 +735,13 @@ export function HomeDashboard() {
                 contract={recoveryWitness}
                 title="Hero recovery witness"
                 badge="Recovery proof"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceIdentityAnchorInline
+                contract={identityAnchor}
+                title="Hero identity anchor"
+                badge="Owner truth"
               />
             </div>
             <div className="mt-4">
