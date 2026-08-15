@@ -23,6 +23,7 @@ import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
 import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equivalence';
 import { SurfaceFallbackEquivalenceInline } from '@/components/surface-fallback-equivalence-inline';
+import { SurfaceFallbackExpiryInline } from '@/components/surface-fallback-expiry-inline';
 import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackRankingInline } from '@/components/surface-fallback-ranking-inline';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
@@ -251,6 +252,10 @@ export function HomeDashboard() {
   }, [activeConnection, watchHistory]);
   const fallbackEquivalence = useMemo(
     () => manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
+  const fallbackExpiry = useMemo(
+    () => manifest?.surfaceFallbackExpiryContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
   const canonicalProviderIdentity = useMemo(
@@ -686,6 +691,13 @@ export function HomeDashboard() {
                 runtime={fallbackEquivalenceRuntime}
                 title="Hero fallback equivalence"
                 badge="Same vs restart"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceFallbackExpiryInline
+                contract={fallbackExpiry}
+                title="Hero fallback expiry"
+                badge="Sameness window"
               />
             </div>
             <div className="mt-4">

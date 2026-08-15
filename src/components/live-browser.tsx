@@ -22,6 +22,7 @@ import { SurfaceDowngradeLadder } from '@/components/surface-downgrade-ladder';
 import { SurfaceExplanationBoundary } from '@/components/surface-explanation-boundary';
 import { SurfaceFallbackEquivalence } from '@/components/surface-fallback-equivalence';
 import { SurfaceFallbackEquivalenceInline } from '@/components/surface-fallback-equivalence-inline';
+import { SurfaceFallbackExpiryInline } from '@/components/surface-fallback-expiry-inline';
 import { SurfaceFallbackRanking } from '@/components/surface-fallback-ranking';
 import { SurfaceFallbackRankingInline } from '@/components/surface-fallback-ranking-inline';
 import { SurfaceFallbackCost } from '@/components/surface-fallback-cost';
@@ -216,6 +217,7 @@ export function LiveBrowser() {
   const canonicalProviderIdentity = manifest?.surfaceCanonicalProviderIdentityContracts.find((item) => item.screenId === 'live') ?? null;
   const fallbackRanking = manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === 'live') ?? null;
   const fallbackEquivalence = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'live') ?? null;
+  const fallbackExpiry = manifest?.surfaceFallbackExpiryContracts.find((item) => item.screenId === 'live') ?? null;
   const launchOwnership = manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'live') ?? null;
   const holdReceipt = manifest?.surfaceHoldReceipts.find((item) => item.screenId === 'live') ?? null;
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'live') ?? null;
@@ -492,6 +494,13 @@ export function LiveBrowser() {
                 runtime={fallbackEquivalenceRuntime}
                 title="Play fallback equivalence"
                 badge="Same vs restart"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceFallbackExpiryInline
+                contract={fallbackExpiry}
+                title="Play fallback expiry"
+                badge="Sameness window"
               />
             </div>
             <div className="mt-4">
