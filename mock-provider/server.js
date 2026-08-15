@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, connection-headroom truth, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
+  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, connection-headroom truth, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, fallback-expiry truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
 };
 
 const channelNames = {
@@ -1017,6 +1017,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually label every fallback as seamless even when the destination, title, or trust story changed under the hood.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Publish one surface-specific contract across Login, Home, and Live so the shell can distinguish exact preservation, approximate rescue, and honest restart beside Connect, the hero CTA, and Play without ad hoc copy.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'fallback-expiry-truth',
+    feature: 'Fallback expiry truth',
+    pitch: 'Publish how long rescue may still claim it preserved the same move, what proof is aging out that claim, and what contradiction expires sameness into approximation or restart.',
+    competitiveGap: 'Competitors usually keep describing rescue as the same move until the break is obvious, so users do not see when the preservation claim already aged past honest use.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one fallback-expiry contract so preservation window, aging proof, and expiry trigger stay aligned right beside Connect, the hero CTA, and Play.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -4018,6 +4027,90 @@ const buildSurfaceFallbackEquivalenceContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceFallbackExpiryContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login fallback-expiry contract',
+    summary: scenario === 'healthy'
+      ? 'Login should say beside Connect how long a saved-provider rescue may still claim to preserve the same Home move before aging trust facts turn that claim into approximation or restart.'
+      : 'Login should publish beside Connect how long a saved-provider rescue may still claim sameness, what trust proof is already aging out, and what contradiction expires that claim into approximation or restart.',
+    expiries: [
+      {
+        label: 'Saved-provider shortcut sameness',
+        preservationWindow: scenario === 'healthy'
+          ? 'The shortcut may still claim to be the same Home move only while canonical provider identity, line posture, and launch owner stay boringly aligned through the next validation pass.'
+          : 'The shortcut may only keep claiming sameness while identity, launch owner, and trust posture survive the current degraded moment without needing new caveats.',
+        agingProof: 'That sameness claim starts aging the moment auth confidence softens, line pressure rises, or the rescue path needs a different explanation than the shortcut promised.',
+        expiryTrigger: scenario === 'healthy'
+          ? 'Expire the same-move claim once Login needs a different provider story, a weaker Home promise, or a fresh user-trust decision.'
+          : 'Expire the same-move claim once rescue changes provider identity, shifts Home ownership, or asks the user to trust a different setup story.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Direct reconnect sameness',
+        preservationWindow: 'Reconnect may only claim sameness while it still restores the same provider owner, same Home destination, and same launch promise the user set out to confirm.',
+        agingProof: 'That claim ages when reconnect starts borrowing trust from fallback ownership, delayed proof, or a thinner saved-provider shortcut.',
+        expiryTrigger: 'Expire sameness once reconnect needs a different credential story, a different owner, or a weaker next move than the original Connect promise.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home fallback-expiry contract',
+    summary: scenario === 'healthy'
+      ? 'Home should say beside the hero CTA how long rescue may still claim it preserved the same discovery story before aging browse or provider proof turns that into approximation or reset.'
+      : 'Home should publish beside the hero CTA how long rescue may still claim the same discovery story, what browse proof is already aging out, and what contradiction expires that claim into approximation or reset.',
+    expiries: [
+      {
+        label: 'Hero discovery sameness',
+        preservationWindow: scenario === 'healthy'
+          ? 'Hero rescue may still claim sameness only while the featured title, quick-launch meaning, and safest next launch stay aligned through the next refresh cycle.'
+          : 'Hero rescue may only keep claiming sameness while the featured story, launch owner, and trust posture survive the degraded pass without being rewritten.',
+        agingProof: 'That claim starts aging when cached rails do more work than fresh browse proof or when provider caveats begin carrying the hero more than the original discovery source does.',
+        expiryTrigger: scenario === 'healthy'
+          ? 'Expire the same-launch claim once the hero changes title family, launch owner, or browse promise between refreshes.'
+          : 'Expire the same-launch claim once rescue swaps the hero story, thins the rail context, or needs a new explanation for why this is still the right next move.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Featured live handoff sameness',
+        preservationWindow: 'Featured live rescue may only claim sameness while it still preserves the same channel identity or the same exact hero-owned watch target into Live.',
+        agingProof: 'That claim ages when Home can only keep mood, category, or rough browse momentum instead of the exact featured launch meaning.',
+        expiryTrigger: 'Expire sameness once Home can no longer carry the same hero-owned watch target into Live without caveats the original hero did not need.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live fallback-expiry contract',
+    summary: scenario === 'healthy'
+      ? 'Live should say beside Play how long rescue may still claim it preserved the same watch target before aging preview, guide, or provider proof turns that into approximation or restart.'
+      : 'Live should publish beside Play how long rescue may still claim the same watch target, what play proof is aging out, and what contradiction expires that claim into approximation or restart.',
+    expiries: [
+      {
+        label: 'Selected-channel sameness',
+        preservationWindow: scenario === 'healthy'
+          ? 'Selected-channel rescue may still claim sameness only while preview, NOW / NEXT, and launch ownership all keep reinforcing the same exact card through the next play decision.'
+          : 'Selected-channel rescue may only keep claiming sameness while preview, guide truth, and launch owner survive the degraded moment without rewriting the selected-card story.',
+        agingProof: 'That claim starts aging when preview falls back to category confidence, guide freshness softens, or the provider owner needs a weaker explanation than the selected card promised.',
+        expiryTrigger: scenario === 'healthy'
+          ? 'Expire the same-channel claim once rescue loses exact-card proof or must ask the user to accept category-level continuity instead of exact-channel certainty.'
+          : 'Expire the same-channel claim once rescue cannot keep the exact selected card, exact play owner, or exact watch meaning intact.',
+        tone: scenario === 'healthy' ? 'ready' : scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated' ? 'watch' : 'recover',
+      },
+      {
+        label: 'Preview-to-play sameness',
+        preservationWindow: 'Preview rescue may only claim sameness while the motion target, selected-card promise, and Play owner still point at the same exact watch decision.',
+        agingProof: 'That claim ages when preview can only preserve the same category or network family instead of the exact selected-card promise.',
+        expiryTrigger: 'Expire sameness once preview and Play no longer describe the same exact channel decision the user already made.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceProviderStabilityContracts = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -4864,7 +4957,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, canonical provider identity, fallback ranking, fallback-equivalence truth, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, canonical provider identity, fallback ranking, fallback-equivalence truth, fallback-expiry truth, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, claim-ceiling discipline, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
@@ -4896,6 +4989,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Canonical provider identity stays visible before trimmed URLs or relabeled saved providers pretend they are different accounts',
         'Fallback ranking stays visible before Login silently auto-picks the fastest rescue without proving it is still the best current move',
         'Fallback equivalence stays visible before a saved-provider shortcut pretends every rescue path is the same Home move',
+        'Fallback expiry truth stays visible before an aging rescue keeps selling itself as the same Home move after its proof window has gone soft',
         'Jump to the healthiest saved provider when trust degrades',
         'Launch ownership stays visible before Connect implies the current provider still owns Home',
         'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
@@ -4930,6 +5024,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Canonical provider identity stays visible before hero rescue reuses trust under a relabeled or host-variant provider story',
         'Fallback ranking stays visible before Home lets cinematic hero polish outrun which rescue really owns the safest next launch',
         'Fallback equivalence stays visible before hero rescue pretends every preserved rail is still the same discovery path',
+        'Fallback expiry truth stays visible before an aging rescue keeps calling itself the same discovery story after proof has gone soft',
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
         'Hero launch ownership stays visible before fallback silently takes the featured CTA',
@@ -4965,6 +5060,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Canonical provider identity stays visible before exact-copy rescue sounds like the same source when the owner actually changed',
         'Fallback ranking stays visible before Live lets same-category rescue outrank an exact-channel save without saying why',
         'Fallback equivalence stays visible before same-category rescue pretends it preserved the exact selected channel',
+        'Fallback expiry truth stays visible before an aging rescue keeps calling itself the same watch target after exact proof has gone soft',
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
         'Selected-card launch ownership stays visible before Play silently changes hands',
@@ -5126,6 +5222,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceCanonicalProviderIdentityContracts: buildSurfaceCanonicalProviderIdentityContracts(scenario),
   surfaceFallbackRankingContracts: buildSurfaceFallbackRankingContracts(scenario),
   surfaceFallbackEquivalenceContracts: buildSurfaceFallbackEquivalenceContracts(scenario),
+  surfaceFallbackExpiryContracts: buildSurfaceFallbackExpiryContracts(scenario),
   surfaceProviderPodiums: buildSurfaceProviderPodiums(scenario),
   browseLaunchScorecards: buildBrowseLaunchScorecards(scenario),
   scenarioSpotlight: {

@@ -1140,6 +1140,18 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceFallbackExpiryContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    expiries: Array<{
+      label: string;
+      preservationWindow: string;
+      agingProof: string;
+      expiryTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceProviderPodiums: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;
