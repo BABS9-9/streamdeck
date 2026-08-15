@@ -64,6 +64,7 @@ import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbac
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
+import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-identity-anchor-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
@@ -291,6 +292,13 @@ export function LiveBrowser() {
     }),
     [holdReceipt, savedProviderBoard]
   );
+  const identityAnchorRuntime = useMemo(
+    () => buildSavedProviderIdentityAnchorRuntime({
+      contract: identityAnchor,
+      board: savedProviderBoard,
+    }),
+    [identityAnchor, savedProviderBoard]
+  );
   const selectedGuideEntry = selectedStream ? lookupStreamGuide(activeConnection.id, selectedStream, Number.MAX_SAFE_INTEGER) : null;
   const selectedGuide = getGuidePayload(selectedGuideEntry);
   const selectedGuideState = selectedStream ? syncByGuideKey[`${activeConnection.id}:${getContentId(selectedStream)}`] : null;
@@ -430,7 +438,7 @@ export function LiveBrowser() {
       <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
-      <SurfaceIdentityAnchor contract={identityAnchor} badge="Identity anchor" />
+      <SurfaceIdentityAnchor runtime={identityAnchorRuntime} badge="Identity anchor" />
       <SurfaceClaimCeiling contract={claimCeiling} badge="Claim ceiling" />
       <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
 
@@ -542,7 +550,7 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceIdentityAnchorInline
-                contract={identityAnchor}
+                runtime={identityAnchorRuntime}
                 title="Play identity anchor"
                 badge="Owner truth"
               />

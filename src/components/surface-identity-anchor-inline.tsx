@@ -1,6 +1,6 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { SurfaceIdentityAnchorRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-sky-400/20 bg-sky-500/10 text-sky-100',
@@ -15,19 +15,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceIdentityAnchorInlineProps = {
-  contract: MockProviderManifest['surfaceIdentityAnchors'][number] | null;
+  runtime: SurfaceIdentityAnchorRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceIdentityAnchorInline({
-  contract,
+  runtime,
   title,
   badge,
 }: SurfaceIdentityAnchorInlineProps) {
-  const anchor = contract?.anchors?.[0];
+  const anchor = runtime?.anchors?.[0];
 
-  if (!contract || !anchor) return null;
+  if (!runtime || !anchor) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[anchor.tone]}`}>
@@ -40,11 +40,13 @@ export function SurfaceIdentityAnchorInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[anchor.tone]}</p>
+      <p className="mt-2 text-sm leading-6 text-white/85">Owner status: {anchor.identityStatus}</p>
       <p className="mt-2 text-sm leading-6 text-white">Must stay visible: {anchor.mustStayVisible}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Preserves meaning: {anchor.preservesMeaning}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Break trigger: {anchor.breakTrigger}</p>
+      <p className="mt-3 text-sm leading-6 text-white/85">Runtime owner: {anchor.ownerStatusLabel}</p>
     </div>
   );
 }

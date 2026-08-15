@@ -65,6 +65,7 @@ import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbac
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
+import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-identity-anchor-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
@@ -420,6 +421,13 @@ export function HomeDashboard() {
     }),
     [holdReceipt, savedProviderBoard]
   );
+  const identityAnchorRuntime = useMemo(
+    () => buildSavedProviderIdentityAnchorRuntime({
+      contract: identityAnchor,
+      board: savedProviderBoard,
+    }),
+    [identityAnchor, savedProviderBoard]
+  );
   const freshnessBoardRuntime = useMemo(
     () => buildSavedProviderFreshnessBoardRuntime({
       contract: freshnessBoard,
@@ -739,7 +747,7 @@ export function HomeDashboard() {
             </div>
             <div className="mt-4">
               <SurfaceIdentityAnchorInline
-                contract={identityAnchor}
+                runtime={identityAnchorRuntime}
                 title="Hero identity anchor"
                 badge="Owner truth"
               />
@@ -818,7 +826,7 @@ export function HomeDashboard() {
       <SurfaceRecoveryWitness contract={recoveryWitness} badge="Recovery witness" />
       <SurfaceRescueReceipt contract={rescueReceipt} badge="Rescue receipt" />
       <SurfaceFallbackCost contract={fallbackCost} badge="Fallback cost" />
-      <SurfaceIdentityAnchor contract={identityAnchor} badge="Identity anchor" />
+      <SurfaceIdentityAnchor runtime={identityAnchorRuntime} badge="Identity anchor" />
       <SurfaceClaimCeiling contract={claimCeiling} badge="Claim ceiling" />
       <SurfaceConfidenceFloor contract={confidenceFloor} badge="Confidence floor" />
 

@@ -62,6 +62,7 @@ import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbac
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
+import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-identity-anchor-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
@@ -342,6 +343,13 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [holdReceipt, savedProviderBoard]
+  );
+  const identityAnchorRuntime = useMemo(
+    () => buildSavedProviderIdentityAnchorRuntime({
+      contract: identityAnchor,
+      board: savedProviderBoard,
+    }),
+    [identityAnchor, savedProviderBoard]
   );
   const loginGuideCards = useMemo(
     () => activeConnection
@@ -669,7 +677,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceIdentityAnchorInline
-              contract={identityAnchor}
+              runtime={identityAnchorRuntime}
               title="Connect identity anchor"
               badge="Owner truth"
             />
@@ -818,7 +826,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceIdentityAnchor contract={identityAnchor} badge="Identity anchor" />
+            <SurfaceIdentityAnchor runtime={identityAnchorRuntime} badge="Identity anchor" />
           </div>
 
           <div className="mt-6">

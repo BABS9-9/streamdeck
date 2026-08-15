@@ -618,6 +618,27 @@ export type SurfaceFallbackExpiryRuntimeContract = {
   expiries: SurfaceFallbackExpiryRuntimeEntry[];
 };
 
+export type SurfaceIdentityAnchorRuntimeEntry = {
+  label: string;
+  mustStayVisible: string;
+  preservesMeaning: string;
+  breakTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  identityStatus: string;
+};
+
+export type SurfaceIdentityAnchorRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  anchors: SurfaceIdentityAnchorRuntimeEntry[];
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;
