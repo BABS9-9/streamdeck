@@ -1,6 +1,7 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { connectionStatusTone } from '@/lib/provider-signals';
+import { SurfaceFallbackExpiryRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -15,19 +16,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceFallbackExpiryInlineProps = {
-  contract: MockProviderManifest['surfaceFallbackExpiryContracts'][number] | null;
+  runtime: SurfaceFallbackExpiryRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceFallbackExpiryInline({
-  contract,
+  runtime,
   title,
   badge,
 }: SurfaceFallbackExpiryInlineProps) {
-  const expiry = contract?.expiries?.[0];
+  const expiry = runtime?.expiries?.[0];
 
-  if (!contract || !expiry) return null;
+  if (!runtime || !expiry) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[expiry.tone]}`}>
@@ -40,11 +41,25 @@ export function SurfaceFallbackExpiryInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
+      {expiry.owner ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] ${connectionStatusTone[expiry.owner.status]}`}>
+            {expiry.owner.status}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {expiry.owner.providerName}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {expiry.expiryStatus}
+          </span>
+        </div>
+      ) : null}
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[expiry.tone]}</p>
       <p className="mt-2 text-sm leading-6 text-white">Preservation window: {expiry.preservationWindow}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Aging proof: {expiry.agingProof}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Expires when: {expiry.expiryTrigger}</p>
+      <p className="mt-3 text-sm leading-6 text-white/75">Runtime owner posture: {expiry.ownerStatusLabel}</p>
     </div>
   );
 }

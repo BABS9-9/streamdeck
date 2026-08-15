@@ -58,6 +58,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
@@ -274,6 +275,13 @@ export function LiveBrowser() {
       board: savedProviderBoard,
     }),
     [fallbackEquivalence, savedProviderBoard]
+  );
+  const fallbackExpiryRuntime = useMemo(
+    () => buildSavedProviderFallbackExpiryRuntime({
+      contract: fallbackExpiry,
+      board: savedProviderBoard,
+    }),
+    [fallbackExpiry, savedProviderBoard]
   );
   const holdReceiptRuntime = useMemo(
     () => buildSavedProviderHoldReceiptRuntime({
@@ -498,7 +506,7 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceFallbackExpiryInline
-                contract={fallbackExpiry}
+                runtime={fallbackExpiryRuntime}
                 title="Play fallback expiry"
                 badge="Sameness window"
               />

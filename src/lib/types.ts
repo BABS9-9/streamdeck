@@ -597,6 +597,27 @@ export type SurfaceFallbackEquivalenceRuntimeContract = {
   equivalence: SurfaceFallbackEquivalenceRuntimeEntry[];
 };
 
+export type SurfaceFallbackExpiryRuntimeEntry = {
+  label: string;
+  preservationWindow: string;
+  agingProof: string;
+  expiryTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  expiryStatus: string;
+};
+
+export type SurfaceFallbackExpiryRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  expiries: SurfaceFallbackExpiryRuntimeEntry[];
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;
