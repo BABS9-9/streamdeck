@@ -57,6 +57,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
@@ -258,6 +259,20 @@ export function LiveBrowser() {
     }),
     [providerPodium, savedProviderBoard]
   );
+  const fallbackRankingRuntime = useMemo(
+    () => buildSavedProviderFallbackRankingRuntime({
+      contract: fallbackRanking,
+      board: savedProviderBoard,
+    }),
+    [fallbackRanking, savedProviderBoard]
+  );
+  const fallbackEquivalenceRuntime = useMemo(
+    () => buildSavedProviderFallbackEquivalenceRuntime({
+      contract: fallbackEquivalence,
+      board: savedProviderBoard,
+    }),
+    [fallbackEquivalence, savedProviderBoard]
+  );
   const holdReceiptRuntime = useMemo(
     () => buildSavedProviderHoldReceiptRuntime({
       contract: holdReceipt,
@@ -361,7 +376,7 @@ export function LiveBrowser() {
         badge="Connection headroom"
       />
       <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
-      <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
+      <SurfaceFallbackRanking runtime={fallbackRankingRuntime} badge="Fallback ranking" />
       <SurfaceProviderPodium
         runtime={providerPodiumRuntime}
         badge="Play-owner podium"
@@ -371,7 +386,7 @@ export function LiveBrowser() {
           preservedTitle: selectedStream?.name || null,
         })}
       />
-      <SurfaceFallbackEquivalence contract={fallbackEquivalence} badge="Fallback equivalence" />
+      <SurfaceFallbackEquivalence runtime={fallbackEquivalenceRuntime} badge="Fallback equivalence" />
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Play confidence" />
       <SurfaceLaunchScorecard scorecard={launchScorecard} badge="Launch scorecard" />
       <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
@@ -467,14 +482,14 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceFallbackRankingInline
-                contract={fallbackRanking}
+                runtime={fallbackRankingRuntime}
                 title="Play fallback ranking"
                 badge="Rescue order"
               />
             </div>
             <div className="mt-4">
               <SurfaceFallbackEquivalenceInline
-                contract={fallbackEquivalence}
+                runtime={fallbackEquivalenceRuntime}
                 title="Play fallback equivalence"
                 badge="Same vs restart"
               />

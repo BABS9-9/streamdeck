@@ -55,6 +55,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
@@ -306,6 +307,20 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [providerPodium, savedProviderBoard]
+  );
+  const fallbackRankingRuntime = useMemo(
+    () => buildSavedProviderFallbackRankingRuntime({
+      contract: fallbackRanking,
+      board: savedProviderBoard,
+    }),
+    [fallbackRanking, savedProviderBoard]
+  );
+  const fallbackEquivalenceRuntime = useMemo(
+    () => buildSavedProviderFallbackEquivalenceRuntime({
+      contract: fallbackEquivalence,
+      board: savedProviderBoard,
+    }),
+    [fallbackEquivalence, savedProviderBoard]
   );
   const holdReceiptRuntime = useMemo(
     () => buildSavedProviderHoldReceiptRuntime({
@@ -584,7 +599,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceFallbackRankingInline
-              contract={fallbackRanking}
+              runtime={fallbackRankingRuntime}
               title="Connect fallback ranking"
               badge="Rescue order"
             />
@@ -592,7 +607,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceFallbackEquivalenceInline
-              contract={fallbackEquivalence}
+              runtime={fallbackEquivalenceRuntime}
               title="Connect fallback equivalence"
               badge="Same vs restart"
             />
@@ -669,11 +684,11 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
+            <SurfaceFallbackRanking runtime={fallbackRankingRuntime} badge="Fallback ranking" />
           </div>
 
           <div className="mt-6">
-            <SurfaceFallbackEquivalence contract={fallbackEquivalence} badge="Fallback equivalence" />
+            <SurfaceFallbackEquivalence runtime={fallbackEquivalenceRuntime} badge="Fallback equivalence" />
           </div>
 
           <div className="mt-6">

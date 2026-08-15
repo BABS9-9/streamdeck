@@ -555,6 +555,48 @@ export type SurfaceFreshnessBoardRuntimeContract = {
   budgets: SurfaceFreshnessBoardRuntimeBudget[];
 };
 
+export type SurfaceFallbackRankingRuntimeEntry = {
+  label: string;
+  currentLeader: string;
+  rankingEvidence: string;
+  rerankTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  leader: SavedProviderHealthEntry | null;
+  leaderStatusLabel: string;
+  rescueOrder: string;
+};
+
+export type SurfaceFallbackRankingRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  rankings: SurfaceFallbackRankingRuntimeEntry[];
+};
+
+export type SurfaceFallbackEquivalenceRuntimeEntry = {
+  label: string;
+  equivalentExperience: string;
+  approximateExperience: string;
+  restartTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  leader: SavedProviderHealthEntry | null;
+  leaderStatusLabel: string;
+  equivalenceStatus: string;
+};
+
+export type SurfaceFallbackEquivalenceRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  equivalence: SurfaceFallbackEquivalenceRuntimeEntry[];
+};
+
 export type StreamHealth = {
   status: 'idle' | 'loading' | 'healthy' | 'buffering' | 'degraded' | 'error';
   bitrateKbps: number | null;

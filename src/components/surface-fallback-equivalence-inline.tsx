@@ -1,6 +1,7 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { connectionStatusTone } from '@/lib/provider-signals';
+import { SurfaceFallbackEquivalenceRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -15,19 +16,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceFallbackEquivalenceInlineProps = {
-  contract: MockProviderManifest['surfaceFallbackEquivalenceContracts'][number] | null;
+  runtime: SurfaceFallbackEquivalenceRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceFallbackEquivalenceInline({
-  contract,
+  runtime,
   title,
   badge,
 }: SurfaceFallbackEquivalenceInlineProps) {
-  const equivalence = contract?.equivalence?.[0];
+  const equivalence = runtime?.equivalence?.[0];
 
-  if (!contract || !equivalence) return null;
+  if (!runtime || !equivalence) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[equivalence.tone]}`}>
@@ -40,11 +41,25 @@ export function SurfaceFallbackEquivalenceInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
+      {equivalence.leader ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] ${connectionStatusTone[equivalence.leader.status]}`}>
+            {equivalence.leader.status}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {equivalence.leader.providerName}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {equivalence.equivalenceStatus}
+          </span>
+        </div>
+      ) : null}
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[equivalence.tone]}</p>
       <p className="mt-2 text-sm leading-6 text-white">Equivalent: {equivalence.equivalentExperience}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Approximate: {equivalence.approximateExperience}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Restart when: {equivalence.restartTrigger}</p>
+      <p className="mt-3 text-sm leading-6 text-white/75">Runtime leader posture: {equivalence.leaderStatusLabel}</p>
     </div>
   );
 }

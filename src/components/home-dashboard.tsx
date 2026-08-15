@@ -58,6 +58,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
@@ -384,6 +385,20 @@ export function HomeDashboard() {
     }),
     [providerPodium, savedProviderBoard]
   );
+  const fallbackRankingRuntime = useMemo(
+    () => buildSavedProviderFallbackRankingRuntime({
+      contract: fallbackRanking,
+      board: savedProviderBoard,
+    }),
+    [fallbackRanking, savedProviderBoard]
+  );
+  const fallbackEquivalenceRuntime = useMemo(
+    () => buildSavedProviderFallbackEquivalenceRuntime({
+      contract: fallbackEquivalence,
+      board: savedProviderBoard,
+    }),
+    [fallbackEquivalence, savedProviderBoard]
+  );
   const holdReceiptRuntime = useMemo(
     () => buildSavedProviderHoldReceiptRuntime({
       contract: holdReceipt,
@@ -497,7 +512,7 @@ export function HomeDashboard() {
         badge="Connection headroom"
       />
       <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
-      <SurfaceFallbackRanking contract={fallbackRanking} badge="Fallback ranking" />
+      <SurfaceFallbackRanking runtime={fallbackRankingRuntime} badge="Fallback ranking" />
       <SurfaceProviderPodium
         runtime={providerPodiumRuntime}
         badge="Featured-provider podium"
@@ -661,14 +676,14 @@ export function HomeDashboard() {
             </div>
             <div className="mt-4">
               <SurfaceFallbackRankingInline
-                contract={fallbackRanking}
+                runtime={fallbackRankingRuntime}
                 title="Hero fallback ranking"
                 badge="Rescue order"
               />
             </div>
             <div className="mt-4">
               <SurfaceFallbackEquivalenceInline
-                contract={fallbackEquivalence}
+                runtime={fallbackEquivalenceRuntime}
                 title="Hero fallback equivalence"
                 badge="Same vs restart"
               />
@@ -749,7 +764,7 @@ export function HomeDashboard() {
         <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">{guideMessage}</div>
       ) : null}
 
-      <SurfaceFallbackEquivalence contract={fallbackEquivalence} badge="Fallback equivalence" />
+      <SurfaceFallbackEquivalence runtime={fallbackEquivalenceRuntime} badge="Fallback equivalence" />
 
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Hero launch safety" />
       <SurfaceLaunchScorecard scorecard={launchScorecard} badge="Launch scorecard" />
