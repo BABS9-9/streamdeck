@@ -38,6 +38,7 @@ StreamDeck should feel like a premium streaming product first and an IPTV utilit
 | Canonical provider identity | Keep saved providers, retries, and rescue paths tied to one canonical provider owner so alias URLs or relabeled connections do not quietly corrupt continuity. | Competitors often treat minor URL or label differences like separate providers, which makes recovery feel random and pollutes favorites, history, and trust cues. | Phase 1 | Normalize provider identity around a canonical provider key and surface that ownership on Login, Home, and Live before shortcuts, cached rails, or rescue copy imply the wrong source story. |
 | Fallback ranking | Publish which fallback currently owns the safest next move directly beside Connect, hero launch, or Play, which rescue is only approximate, and what evidence will rerank the stack before the shell improvises. | Most IPTV players either pick a fallback silently or leave users guessing which rescue is safest versus truest until the CTA already changes hands. | Phase 1 | Keep one surface-specific fallback-ranking contract across Login, Home, and Live so the shell can rank exact-copy rescue, browse-preserving rescue, and hard recovery with the same evidence both in deeper detail panels and right beside the premium CTA. |
 | Fallback equivalence | Publish beside Connect, hero launch, and Play whether rescue still preserves the same intended destination, only preserves rough browse/play momentum, or has become a real restart. | Competitors usually treat every fallback as “seamless,” even when the destination, title, or trust story has changed. | Phase 1 | Keep one surface-specific fallback-equivalence contract across Login, Home, and Live so the app can distinguish exact preservation, approximate rescue, and honest restart without inventing per-screen heuristics or hiding sameness truth away from the CTA. |
+| Fallback expiry truth | Publish how long the current rescue may still claim to preserve the same move before aging proof turns that claim into approximation or restart. | Competitors usually describe fallback as true until it visibly breaks, so users never see when “same move” confidence has already expired even though the CTA still looks premium. | Phase 1 | Keep one surface-specific fallback-expiry contract across Login, Home, and Live so preservation window, aging proof, and expiry trigger stay aligned right beside Connect, hero launch, and Play. |
 | Watch party / sync viewing | Share a session link so multiple viewers stay on the same stream position together. | None of the major IPTV players make synchronized shared viewing a real feature. | Phase 3 | Needs shareable session state, host/guest playback clock sync, provider compatibility checks, and a safe fallback when streams diverge across providers. |
 | Parental controls with per-profile PINs | Lock content by profile and maturity level instead of one blunt global switch. | Existing IPTV players usually stop at a single adult-content toggle. | Phase 2 | Add profile objects, per-profile PIN gates, provider/category/content restrictions, and a lock-state layer respected by browse, search, and playback actions. |
 | Stream health indicator | Show bitrate, buffer health, resolution, dropped frames, and codec posture in a subtle HUD for power users. | Debug detail is usually hidden or absent entirely. | Phase 1 | Update stream-health metrics from HLS.js or native playback events, surface them in player and preview shells, and degrade copy from premium confidence to recovery guidance when the signal turns bad. |
@@ -96,9 +97,11 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
    The shell should explain which rescue currently owns the premium CTA, which rescue is only approximate, and what event would rerank the stack before the next move silently changes hands.
 25. Honest rescue equivalence
    The shell should distinguish between the same destination, an acceptable approximation, and a disguised restart beside the premium CTA before “seamless fallback” turns into fiction.
-26. Guide freshness honesty
+26. Fallback-expiry honesty
+   The shell should say how long rescue may still claim sameness, what proof is aging out that claim, and what contradiction turns the same move into approximation or restart before premium CTA polish overstates continuity.
+27. Guide freshness honesty
    The shell should show how much guide truth is fresh, cached, stale, or missing beside the premium CTA before NOW / NEXT copy overclaims what the provider has actually proven.
-27. Saved-provider podium honesty
+28. Saved-provider podium honesty
    The shell should rank which provider owns the next move, which source is the clean standby, and which risky shortcut stays blocked before switching becomes a hidden afterthought.
 
 ## Phase 1 Surface Implications
@@ -132,6 +135,8 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must keep that fallback ranking visible beside Connect so the user can see who owns the current saved-provider rescue stack before a one-tap shortcut quietly changes hands.
 - Must say when a saved-provider shortcut is still the same Home path, when it is only an approximation, and when fallback has turned setup into a fresh start.
 - Must keep that fallback-equivalence truth visible beside Connect so the user can see whether rescue preserved the same setup move before shortcut polish overclaims sameness.
+- Must say how long Login may still claim a saved-provider rescue is the same Home move, what proof is aging out that sameness claim, and what contradiction expires it into approximation or restart.
+- Must keep that fallback-expiry truth visible beside Connect so the user can see when rescue sameness is about to age out before shortcut polish keeps selling it as current.
 - Must state the hold condition that blocks Home advancement and the exact handoff context that should survive once Login clears the user forward.
 - Must publish how fresh the tracked guide snapshot really is, which channels are already stale or missing, and whether Connect should still lean on the active provider or the recovery owner for the next Home truth.
 
@@ -164,6 +169,8 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must keep that fallback ranking visible beside the hero CTA so the user can see which rescue currently owns the featured launch before cinematic copy implies the wrong source.
 - Must say when hero rescue preserved the same discovery story, when it only preserved rough browse intent, and when the user has actually landed in a new launch path.
 - Must keep that fallback-equivalence truth visible beside the hero CTA so cinematic browse polish cannot call an approximate rescue the same launch.
+- Must say how long Home may still claim rescue preserved the same discovery story, what browse or provider proof is aging out that claim, and what contradiction expires sameness into approximation or reset.
+- Must keep that fallback-expiry truth visible beside the hero CTA so cinematic browse polish cannot keep calling an aging rescue the same launch after its proof window has gone soft.
 - Must tell the user what Home carries forward into Live and what condition should hold the user in place before a rail or hero CTA advances.
 - Must show whether Home guide continuity is fresh enough to back hero confidence, which tracked rails are already stale or missing, and what recovery owner currently keeps the browse story honest.
 
@@ -196,6 +203,8 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must keep that fallback ranking visible beside Play so the user can see whether exact-channel rescue or category-level fallback currently owns the safest launch.
 - Must say when rescue preserved the exact selected channel, when it only preserved category surf momentum, and when the user has effectively restarted the live session.
 - Must keep that fallback-equivalence truth visible beside Play so preview motion cannot pretend category-level rescue is still the same watch target.
+- Must say how long Live may still claim rescue preserved the same watch target, what preview, guide, or provider proof is aging out that claim, and what contradiction expires it into approximation or restart.
+- Must keep that fallback-expiry truth visible beside Play so preview motion cannot keep calling an aging rescue the same watch target after its sameness window has expired.
 - Must tell the user what card/category context survives the Play handoff and what specific condition should keep Live in browse mode instead of pretending playback is fully proven.
 - Must publish how many visible channels still have fresh guide truth, which selected or visible cards are stale or missing, and when Live should promote recovery ownership over confident NOW / NEXT copy.
 
@@ -218,6 +227,6 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 
 ## Implementation Priorities Right Now
 
-1. Keep Phase 1 strongest on multi-connection switching, saved-provider podium, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, claim ceiling, confidence floor, connection headroom, interruption budget, retry honesty, fallback cost, provider choice truth, autonomy boundary, launch readiness, launch scorecard, hold receipt, browse launch scorecard, handoff clarity, provider stability truth, return cooldown truth, recovery witness, canonical provider identity, fallback ranking, fallback equivalence, and stream-health HUD, with fallback ranking and fallback equivalence visible beside premium launch CTAs instead of only in deeper trust panels.
+1. Keep Phase 1 strongest on multi-connection switching, saved-provider podium, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, claim ceiling, confidence floor, connection headroom, interruption budget, retry honesty, fallback cost, provider choice truth, autonomy boundary, launch readiness, launch scorecard, hold receipt, browse launch scorecard, handoff clarity, provider stability truth, return cooldown truth, recovery witness, canonical provider identity, fallback ranking, fallback equivalence, fallback expiry truth, and stream-health HUD, with fallback ranking, fallback equivalence, and fallback expiry truth visible beside premium launch CTAs instead of only in deeper trust panels.
 2. Treat cross-provider search as the next major product unlock once provider catalogs are stable.
 3. Leave recording, watch party, and per-profile parental controls scaffold-friendly in the architecture, but do not let them dilute the Phase 1 browser, playback, and continuity bar.
