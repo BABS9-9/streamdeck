@@ -482,6 +482,46 @@ export type ProviderSearchSnapshot = {
   preferredEpisodeNumber?: number | null;
 };
 
+export type RecentSearchQueryEntry = {
+  providerId: string;
+  providerName: string;
+  query: string;
+  normalizedQuery: string;
+  resultCount: number;
+  duplicateGroups: number;
+  liveCount: number;
+  movieCount: number;
+  seriesCount: number;
+  status: 'ready' | 'partial' | 'stale' | 'empty';
+  updatedAt: number;
+};
+
+export type PlaybackResumePreference = 'resume-if-safe' | 'ask-every-time';
+export type LivePreviewAudioPreference = 'follow-stream' | 'muted-preview';
+export type SearchResultsLayoutPreference = 'grid' | 'list';
+export type SearchDensityPreference = 'comfortable' | 'compact';
+export type ArtworkMotionPreference = 'full' | 'reduced';
+
+export type StreamDeckPlaybackPreferences = {
+  autoPlayOnLaunch: boolean;
+  preferLaunchOwner: boolean;
+  resumeBehavior: PlaybackResumePreference;
+  livePreviewAudio: LivePreviewAudioPreference;
+};
+
+export type StreamDeckDisplayPreferences = {
+  searchResultsLayout: SearchResultsLayoutPreference;
+  searchDensity: SearchDensityPreference;
+  artworkMotion: ArtworkMotionPreference;
+  showProviderBadges: boolean;
+};
+
+export type StreamDeckSettingsPreferences = {
+  playback: StreamDeckPlaybackPreferences;
+  display: StreamDeckDisplayPreferences;
+  updatedAt: number;
+};
+
 export type ProviderSearchIndexEntry = {
   providerId: string;
   streamId: number;

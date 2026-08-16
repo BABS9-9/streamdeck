@@ -7,15 +7,17 @@ import { buildSearchRouteActionContract, GlobalSearchRouteContract } from '@/lib
 import { buildGroupedSearchResultsFromHits } from '@/lib/search-continuity';
 import { buildSearchSnapshotFromResults } from '@/lib/search-snapshot-contracts';
 import { storage } from '@/lib/storage';
-import { ConnectionStatus, FavoriteEntry, ProviderCatalog, ProviderSearchIndexSnapshot, ProviderSearchSnapshot, SavedConnection, WatchHistoryItem } from '@/lib/types';
+import { ConnectionStatus, FavoriteEntry, ProviderCatalog, ProviderSearchIndexSnapshot, ProviderSearchSnapshot, RecentSearchQueryEntry, SavedConnection, WatchHistoryItem } from '@/lib/types';
 
 type SearchState = {
   hydrated: boolean;
   indexesByProvider: Record<string, ProviderSearchIndexSnapshot>;
   snapshotsByProvider: Record<string, ProviderSearchSnapshot>;
+  recentQueries: RecentSearchQueryEntry[];
   hydrate: () => void;
   getSnapshot: (providerId: string) => ProviderSearchSnapshot | null;
   getIndexSnapshot: (providerId: string, maxAgeMs?: number) => ProviderSearchIndexSnapshot | null;
+  getRecentQueries: () => RecentSearchQueryEntry[];
   syncProviderIndex: (providerId: string, catalog: ProviderCatalog, updatedAt?: number) => ProviderSearchIndexSnapshot;
   syncProviderIndexes: (entries: Array<{ providerId: string; catalog: ProviderCatalog; updatedAt?: number }>) => Record<string, ProviderSearchIndexSnapshot>;
   removeProviderIndex: (providerId: string) => void;
@@ -39,6 +41,7 @@ type SearchState = {
     duplicateGroups: number;
     updatedAt?: number;
   }) => void;
+  saveRecentQuery: (entry: RecentSearchQueryEntry) => void;
   removeSnapshot: (providerId: string) => void;
 };
 
@@ -46,12 +49,14 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   hydrated: false,
   indexesByProvider: {},
   snapshotsByProvider: {},
+  recentQueries: [],
   hydrate: () => {
     if (get().hydrated) return;
     set({
       hydrated: true,
       indexesByProvider: storage.getSearchIndexes(),
       snapshotsByProvider: storage.getSearchSnapshots(),
+      recentQueries: storage.getRecentSearchQueries(),
     });
   },
   getSnapshot: (providerId) => get().snapshotsByProvider[providerId] ?? null,
@@ -61,6 +66,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     if (Date.now() - snapshot.updatedAt > maxAgeMs) return null;
     return snapshot;
   },
+  getRecentQueries: () => get().recentQueries,
   syncProviderIndex: (providerId, catalog, updatedAt = Date.now()) => {
     const snapshot = buildProviderSearchIndexSnapshot({ providerId, catalog, updatedAt });
     storage.saveProviderSearchIndex(providerId, snapshot);
@@ -185,6 +191,12 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         [providerId]: snapshot,
       },
     }));
+  },
+  saveRecentQuery: (entry) => {
+    storage.saveRecentSearchQuery(entry);
+    set({
+      recentQueries: storage.getRecentSearchQueries(),
+    });
   },
   removeSnapshot: (providerId) => {
     storage.removeProviderSearchSnapshot(providerId);

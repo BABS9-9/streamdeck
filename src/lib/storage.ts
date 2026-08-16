@@ -7,9 +7,11 @@ import {
   ProviderEpgSnapshot,
   ProviderHomeSnapshot,
   ProviderSearchIndexSnapshot,
+  RecentSearchQueryEntry,
   ProviderSearchSnapshot,
   ProviderSwitchContext,
   SavedConnection,
+  StreamDeckSettingsPreferences,
   WatchHistoryItem,
   XtreamAuthResponse,
 } from './types';
@@ -24,6 +26,8 @@ const KEYS = {
   homeSnapshots: 'streamdeck.home-snapshots',
   searchIndexes: 'streamdeck.search-indexes',
   searchSnapshots: 'streamdeck.search-snapshots',
+  recentSearchQueries: 'streamdeck.recent-search-queries',
+  settingsPreferences: 'streamdeck.settings-preferences',
   providerSwitchContext: 'streamdeck.provider-switch-context',
   collections: 'streamdeck.collections',
   playerDockMode: 'streamdeck.player-dock-mode',
@@ -203,6 +207,85 @@ const flattenHistoryBuckets = (buckets: Record<string, WatchHistoryItem[]>) =>
     .flat()
     .sort((left, right) => (right.updatedAt || 0) - (left.updatedAt || 0))
     .slice(0, 36);
+
+const normalizeRecentSearchQueries = (value: unknown) => {
+  if (!Array.isArray(value)) return [] as RecentSearchQueryEntry[];
+
+  return value
+    .filter((entry): entry is RecentSearchQueryEntry => (
+      Boolean(entry)
+      && typeof entry === 'object'
+      && typeof (entry as RecentSearchQueryEntry).providerId === 'string'
+      && typeof (entry as RecentSearchQueryEntry).providerName === 'string'
+      && typeof (entry as RecentSearchQueryEntry).query === 'string'
+      && typeof (entry as RecentSearchQueryEntry).normalizedQuery === 'string'
+    ))
+    .map((entry) => ({
+      ...entry,
+      resultCount: Number.isFinite(entry.resultCount) ? entry.resultCount : 0,
+      duplicateGroups: Number.isFinite(entry.duplicateGroups) ? entry.duplicateGroups : 0,
+      liveCount: Number.isFinite(entry.liveCount) ? entry.liveCount : 0,
+      movieCount: Number.isFinite(entry.movieCount) ? entry.movieCount : 0,
+      seriesCount: Number.isFinite(entry.seriesCount) ? entry.seriesCount : 0,
+      updatedAt: Number.isFinite(entry.updatedAt) ? entry.updatedAt : 0,
+      status: entry.status || 'empty',
+    }))
+    .sort((left, right) => right.updatedAt - left.updatedAt)
+    .slice(0, 10);
+};
+
+const mergeRecentSearchQueries = (current: RecentSearchQueryEntry[], incoming: RecentSearchQueryEntry[]) => {
+  const merged = [...current, ...incoming].reduce<Record<string, RecentSearchQueryEntry>>((acc, entry) => {
+    const dedupeKey = `${entry.providerId}:${entry.normalizedQuery}`;
+    const existing = acc[dedupeKey];
+    if (!existing || entry.updatedAt >= existing.updatedAt) {
+      acc[dedupeKey] = entry;
+    }
+    return acc;
+  }, {});
+
+  return Object.values(merged)
+    .sort((left, right) => right.updatedAt - left.updatedAt)
+    .slice(0, 10);
+};
+
+const defaultSettingsPreferences = (): StreamDeckSettingsPreferences => ({
+  playback: {
+    autoPlayOnLaunch: true,
+    preferLaunchOwner: true,
+    resumeBehavior: 'resume-if-safe',
+    livePreviewAudio: 'muted-preview',
+  },
+  display: {
+    searchResultsLayout: 'grid',
+    searchDensity: 'comfortable',
+    artworkMotion: 'full',
+    showProviderBadges: true,
+  },
+  updatedAt: 0,
+});
+
+const normalizeSettingsPreferences = (value: unknown): StreamDeckSettingsPreferences => {
+  const defaults = defaultSettingsPreferences();
+  if (!value || typeof value !== 'object') return defaults;
+
+  const raw = value as Partial<StreamDeckSettingsPreferences>;
+  return {
+    playback: {
+      autoPlayOnLaunch: typeof raw.playback?.autoPlayOnLaunch === 'boolean' ? raw.playback.autoPlayOnLaunch : defaults.playback.autoPlayOnLaunch,
+      preferLaunchOwner: typeof raw.playback?.preferLaunchOwner === 'boolean' ? raw.playback.preferLaunchOwner : defaults.playback.preferLaunchOwner,
+      resumeBehavior: raw.playback?.resumeBehavior === 'ask-every-time' ? 'ask-every-time' : defaults.playback.resumeBehavior,
+      livePreviewAudio: raw.playback?.livePreviewAudio === 'follow-stream' ? 'follow-stream' : defaults.playback.livePreviewAudio,
+    },
+    display: {
+      searchResultsLayout: raw.display?.searchResultsLayout === 'list' ? 'list' : defaults.display.searchResultsLayout,
+      searchDensity: raw.display?.searchDensity === 'compact' ? 'compact' : defaults.display.searchDensity,
+      artworkMotion: raw.display?.artworkMotion === 'reduced' ? 'reduced' : defaults.display.artworkMotion,
+      showProviderBadges: typeof raw.display?.showProviderBadges === 'boolean' ? raw.display.showProviderBadges : defaults.display.showProviderBadges,
+    },
+    updatedAt: Number.isFinite(raw.updatedAt) ? Number(raw.updatedAt) : defaults.updatedAt,
+  };
+};
 
 export const storage = {
   getConnections(): SavedConnection[] {
@@ -401,6 +484,19 @@ export const storage = {
     if (!isBrowser()) return {};
     return safeJsonParse(localStorage.getItem(KEYS.searchSnapshots), {});
   },
+  getRecentSearchQueries(): RecentSearchQueryEntry[] {
+    if (!isBrowser()) return [];
+    return normalizeRecentSearchQueries(safeJsonParse<unknown>(localStorage.getItem(KEYS.recentSearchQueries), []));
+  },
+  saveRecentSearchQueries(entries: RecentSearchQueryEntry[]) {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.recentSearchQueries, JSON.stringify(normalizeRecentSearchQueries(entries)));
+  },
+  saveRecentSearchQuery(entry: RecentSearchQueryEntry) {
+    if (!isBrowser()) return;
+    const merged = mergeRecentSearchQueries(storage.getRecentSearchQueries(), [entry]);
+    storage.saveRecentSearchQueries(merged);
+  },
   getSearchIndexes(): Record<string, ProviderSearchIndexSnapshot> {
     if (!isBrowser()) return {};
     return safeJsonParse(localStorage.getItem(KEYS.searchIndexes), {});
@@ -461,6 +557,14 @@ export const storage = {
   saveProviderSwitchContext(context: ProviderSwitchContext) {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.providerSwitchContext, JSON.stringify(context));
+  },
+  getSettingsPreferences(): StreamDeckSettingsPreferences {
+    if (!isBrowser()) return defaultSettingsPreferences();
+    return normalizeSettingsPreferences(safeJsonParse<unknown>(localStorage.getItem(KEYS.settingsPreferences), defaultSettingsPreferences()));
+  },
+  saveSettingsPreferences(preferences: StreamDeckSettingsPreferences) {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.settingsPreferences, JSON.stringify(normalizeSettingsPreferences(preferences)));
   },
   hydrateCanonicalProviderState(): { connections: SavedConnection[]; activeConnectionId: string | null } {
     if (!isBrowser()) return { connections: [], activeConnectionId: null };
@@ -538,6 +642,10 @@ export const storage = {
       }
       return acc;
     }, {});
+    const recentSearchQueries = storage.getRecentSearchQueries().map((entry) => ({
+      ...entry,
+      providerId: aliasMap[entry.providerId] || entry.providerId,
+    }));
 
     localStorage.setItem(KEYS.connections, JSON.stringify(connections));
     if (nextActiveConnectionId) localStorage.setItem(KEYS.activeConnection, nextActiveConnectionId);
@@ -549,6 +657,7 @@ export const storage = {
     localStorage.setItem(KEYS.searchIndexes, JSON.stringify(searchIndexes));
     localStorage.setItem(KEYS.history, JSON.stringify(historyBuckets));
     localStorage.setItem(KEYS.searchSnapshots, JSON.stringify(searchSnapshots));
+    localStorage.setItem(KEYS.recentSearchQueries, JSON.stringify(mergeRecentSearchQueries([], recentSearchQueries)));
     localStorage.setItem(KEYS.collections, JSON.stringify(collections));
     localStorage.setItem(KEYS.providerSessions, JSON.stringify(providerSessions));
 

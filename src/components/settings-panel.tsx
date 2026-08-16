@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { connectionStatusTone, getProviderAccountPressure } from '@/lib/provider-signals';
 import { getProviderSummaryWarning } from '@/lib/provider-recovery';
+import { buildSearchSettingsRuntimeContract } from '@/lib/search-settings-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { MockProviderHealth, MockProviderScenario, ProviderAuthSummary } from '@/lib/types';
 import { ProviderFactGrid } from './provider-fact-grid';
@@ -11,6 +12,7 @@ import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustStack } from './provider-trust-stack';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
+import { usePreferencesStore } from '@/stores/preferences-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { useSearchStore } from '@/stores/search-store';
 
@@ -37,12 +39,22 @@ const getProviderRecoveryWarning = (summary?: { status?: string | null; activeCo
 export function SettingsPanel() {
   const { connections, activeConnection, setActiveConnection, renameConnection, removeConnection, validateConnection, validateAllConnections, connectionStatus, lastSwitchContext } = useAuthStore();
   const getFavoritesForProvider = useFavoritesStore((state) => state.getFavoritesForProvider);
+  const favoriteEntriesByProvider = useFavoritesStore((state) => state.favoriteEntriesByProvider);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const getSearchSnapshot = useSearchStore((state) => state.getSnapshot);
+  const getRecentQueries = useSearchStore((state) => state.getRecentQueries);
+  const preferences = usePreferencesStore((state) => state.preferences);
+  const hydratePreferences = usePreferencesStore((state) => state.hydrate);
+  const updatePlayback = usePreferencesStore((state) => state.updatePlayback);
+  const updateDisplay = usePreferencesStore((state) => state.updateDisplay);
   const [draftNames, setDraftNames] = useState<Record<string, string>>({});
   const [mockHealth, setMockHealth] = useState<MockProviderHealth | null>(null);
   const [scenario, setScenario] = useState<MockProviderScenario>(getSelectedMockProviderScenario());
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
+
+  useEffect(() => {
+    hydratePreferences();
+  }, [hydratePreferences]);
 
   useEffect(() => {
     setScenario(getSelectedMockProviderScenario());
@@ -86,6 +98,16 @@ export function SettingsPanel() {
     [activeConnection?.id, connectionStatus, connections]
   );
   const healthiestConnection = savedProviderBoard.recommendedProvider;
+  const searchSettingsRuntime = useMemo(() => buildSearchSettingsRuntimeContract({
+    connections,
+    activeConnectionId: activeConnection?.id,
+    connectionStatus,
+    recentQueries: getRecentQueries(),
+    preferences,
+    watchHistory,
+    favoriteEntriesByProvider,
+    lastSwitchContext,
+  }), [activeConnection?.id, connectionStatus, connections, favoriteEntriesByProvider, getRecentQueries, lastSwitchContext, preferences, watchHistory]);
 
   const applyScenario = (nextScenario: MockProviderScenario) => {
     if (nextScenario === scenario) return;
@@ -349,6 +371,233 @@ export function SettingsPanel() {
           </div>
         </div>
       </div>
+      <div className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
+        <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Playback persistence</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Operator playback defaults</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-300">{searchSettingsRuntime.playbackSummary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-white/80">
+              Shared contract
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3">
+            <label className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div>
+                <p className="text-sm font-medium text-white">Auto-play when trust is good</p>
+                <p className="mt-1 text-xs text-slate-400">Search and continue can launch directly when the runtime still trusts the path.</p>
+              </div>
+              <button onClick={() => updatePlayback({ autoPlayOnLaunch: !preferences.playback.autoPlayOnLaunch })} className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.2em] ${preferences.playback.autoPlayOnLaunch ? 'bg-emerald-500/20 text-emerald-100' : 'bg-white/5 text-slate-300'}`}>
+                {preferences.playback.autoPlayOnLaunch ? 'Enabled' : 'Manual'}
+              </button>
+            </label>
+            <label className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div>
+                <p className="text-sm font-medium text-white">Prefer healthiest launch owner</p>
+                <p className="mt-1 text-xs text-slate-400">Keep the best provider copy first unless continuity or recovery says otherwise.</p>
+              </div>
+              <button onClick={() => updatePlayback({ preferLaunchOwner: !preferences.playback.preferLaunchOwner })} className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.2em] ${preferences.playback.preferLaunchOwner ? 'bg-emerald-500/20 text-emerald-100' : 'bg-white/5 text-slate-300'}`}>
+                {preferences.playback.preferLaunchOwner ? 'Owner first' : 'Shell first'}
+              </button>
+            </label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Resume behavior</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[
+                    { value: 'resume-if-safe', label: 'Resume if safe' },
+                    { value: 'ask-every-time', label: 'Ask every time' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => updatePlayback({ resumeBehavior: option.value as typeof preferences.playback.resumeBehavior })}
+                      className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.2em] ${preferences.playback.resumeBehavior === option.value ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/30 text-slate-300'}`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Live preview audio</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[
+                    { value: 'muted-preview', label: 'Muted preview' },
+                    { value: 'follow-stream', label: 'Follow stream' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => updatePlayback({ livePreviewAudio: option.value as typeof preferences.playback.livePreviewAudio })}
+                      className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.2em] ${preferences.playback.livePreviewAudio === option.value ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/30 text-slate-300'}`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-2 md:grid-cols-2">
+              {searchSettingsRuntime.playbackCards.map((card) => (
+                <div key={card.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{card.label}</p>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/80">{card.value}</p>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-slate-300">{card.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+        <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Display persistence</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Search + settings visual defaults</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-300">{searchSettingsRuntime.displaySummary}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-white/80">
+              Route-owned
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Search layout</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  { value: 'grid', label: 'Poster grid' },
+                  { value: 'list', label: 'Operator list' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => updateDisplay({ searchResultsLayout: option.value as typeof preferences.display.searchResultsLayout })}
+                    className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.2em] ${preferences.display.searchResultsLayout === option.value ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/30 text-slate-300'}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Card density</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  { value: 'comfortable', label: 'Comfortable' },
+                  { value: 'compact', label: 'Compact' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => updateDisplay({ searchDensity: option.value as typeof preferences.display.searchDensity })}
+                    className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.2em] ${preferences.display.searchDensity === option.value ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/30 text-slate-300'}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Artwork motion</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  { value: 'full', label: 'Full motion' },
+                  { value: 'reduced', label: 'Reduced motion' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => updateDisplay({ artworkMotion: option.value as typeof preferences.display.artworkMotion })}
+                    className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.2em] ${preferences.display.artworkMotion === option.value ? 'bg-violet-500 text-white' : 'border border-white/10 bg-black/30 text-slate-300'}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div>
+                <p className="text-sm font-medium text-white">Provider badges</p>
+                <p className="mt-1 text-xs text-slate-400">Keep launch-owner and backup-provider identity visible on route cards.</p>
+              </div>
+              <button onClick={() => updateDisplay({ showProviderBadges: !preferences.display.showProviderBadges })} className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.2em] ${preferences.display.showProviderBadges ? 'bg-emerald-500/20 text-emerald-100' : 'bg-white/5 text-slate-300'}`}>
+                {preferences.display.showProviderBadges ? 'Visible' : 'Minimal'}
+              </button>
+            </label>
+          </div>
+          <div className="mt-4 grid gap-2 md:grid-cols-2">
+            {searchSettingsRuntime.displayCards.map((card) => (
+              <div key={card.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{card.label}</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/80">{card.value}</p>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-300">{card.detail}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
+            <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Recent query carry-forward</p>
+            <p className="mt-2 text-sm text-slate-300">{searchSettingsRuntime.querySummary}</p>
+            <div className="mt-4 space-y-2">
+              {searchSettingsRuntime.recentQueries.length > 0 ? searchSettingsRuntime.recentQueries.map((entry) => (
+                <div key={entry.key} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-white">{entry.query}</p>
+                    <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">{entry.providerName}</span>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-slate-400">{entry.summary}</p>
+                </div>
+              )) : (
+                <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-4 text-sm text-slate-400">
+                  Search recents will appear here after the route persists a few provider-wide queries.
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
+      <section className="rounded-[2rem] border border-white/10 bg-black/30 p-6">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-violet-300">Provider persistence contract</p>
+            <h3 className="mt-2 text-xl font-semibold text-white">What /search and /settings now share per provider</h3>
+            <p className="mt-2 text-sm leading-7 text-slate-300">{searchSettingsRuntime.summary}</p>
+          </div>
+          {searchSettingsRuntime.recommendedRecoveryMove ? (
+            <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-sky-100">
+              Recovery wired
+            </span>
+          ) : null}
+        </div>
+        <div className="mt-4 grid gap-3 xl:grid-cols-3">
+          {searchSettingsRuntime.providerPersistence.map((entry) => (
+            <div
+              key={entry.providerId}
+              className={`rounded-[1.5rem] border p-4 ${
+                entry.tone === 'ready'
+                  ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+                  : entry.tone === 'watch'
+                    ? 'border-amber-400/20 bg-amber-500/10 text-amber-100'
+                    : 'border-rose-400/20 bg-rose-500/10 text-rose-100'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-white">{entry.providerName}</p>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                  {entry.isActive ? 'active' : entry.connectionState}
+                </span>
+              </div>
+              <p className="mt-2 text-xs leading-5">{entry.summary}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.18em] text-white/80">
+                <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1">{entry.savedQueryCount} queries</span>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1">{entry.recentItemCount} recents</span>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1">{entry.favoriteCount} favorites</span>
+              </div>
+              <p className="mt-3 text-[11px] leading-5 text-white/80">{entry.trustLabel}{entry.warning ? ` · ${entry.warning}` : ''}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

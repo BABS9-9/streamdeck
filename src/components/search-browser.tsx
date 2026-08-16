@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildSearchResultActionKey, GlobalSearchRouteContract } from '@/lib/search-action-contracts';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
+import { buildSearchSettingsRuntimeContract } from '@/lib/search-settings-runtime';
 import { describeSeriesCompletenessBand, GroupedSearchResult } from '@/lib/search-continuity';
 import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
 import { getArtwork, getContentId } from '@/lib/xtream-api';
@@ -13,6 +14,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { useLibraryStore } from '@/stores/library-store';
 import { usePlayerStore } from '@/stores/player-store';
+import { usePreferencesStore } from '@/stores/preferences-store';
 import { useSearchStore } from '@/stores/search-store';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
@@ -51,10 +53,15 @@ export function SearchBrowser() {
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const favoriteEntriesByProvider = useFavoritesStore((state) => state.favoriteEntriesByProvider);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const lastSwitchContext = useAuthStore((state) => state.lastSwitchContext);
+  const preferences = usePreferencesStore((state) => state.preferences);
+  const hydratePreferences = usePreferencesStore((state) => state.hydrate);
   const getIndexSnapshot = useSearchStore((state) => state.getIndexSnapshot);
   const getSearchSnapshot = useSearchStore((state) => state.getSnapshot);
+  const getRecentQueries = useSearchStore((state) => state.getRecentQueries);
   const queryGlobalIndex = useSearchStore((state) => state.queryGlobalIndex);
   const saveResultsSnapshot = useSearchStore((state) => state.saveResultsSnapshot);
+  const saveRecentQuery = useSearchStore((state) => state.saveRecentQuery);
   const syncProviderIndexes = useSearchStore((state) => state.syncProviderIndexes);
 
   const [results, setResults] = useState<GroupedSearchResult[]>([]);
@@ -69,6 +76,10 @@ export function SearchBrowser() {
   const [mockManifest, setMockManifest] = useState<MockProviderManifest | null>(null);
   const [scenario, setScenario] = useState<MockProviderScenario>('healthy');
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
+
+  useEffect(() => {
+    hydratePreferences();
+  }, [hydratePreferences]);
 
   useEffect(() => {
     setScenario(getSelectedMockProviderScenario());
@@ -288,13 +299,39 @@ export function SearchBrowser() {
 
   useEffect(() => {
     if (!activeConnection) return;
+    if (query.trim().length < 2) return;
     saveResultsSnapshot({
       providerId: activeConnection.id,
       query,
       results,
       duplicateGroups,
     });
-  }, [activeConnection, duplicateGroups, query, results, saveResultsSnapshot]);
+    saveRecentQuery({
+      providerId: activeConnection.id,
+      providerName: activeConnection.name,
+      query,
+      normalizedQuery: query.trim().toLowerCase(),
+      resultCount: results.length,
+      duplicateGroups,
+      liveCount: runtimeContract?.liveCount ?? 0,
+      movieCount: runtimeContract?.movieCount ?? 0,
+      seriesCount: runtimeContract?.seriesCount ?? 0,
+      status: runtimeContract?.status ?? 'empty',
+      updatedAt: Date.now(),
+    });
+  }, [activeConnection, duplicateGroups, query, results, runtimeContract?.liveCount, runtimeContract?.movieCount, runtimeContract?.seriesCount, runtimeContract?.status, saveRecentQuery, saveResultsSnapshot]);
+
+  const searchSettingsRuntime = useMemo(() => buildSearchSettingsRuntimeContract({
+    connections,
+    activeConnectionId: activeConnection?.id,
+    connectionStatus,
+    searchRouteContract: runtimeContract,
+    recentQueries: getRecentQueries(),
+    preferences,
+    watchHistory,
+    favoriteEntriesByProvider,
+    lastSwitchContext,
+  }), [activeConnection?.id, connectionStatus, connections, favoriteEntriesByProvider, getRecentQueries, lastSwitchContext, preferences, runtimeContract, watchHistory]);
 
   if (connections.length === 0) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No saved providers yet. Connect on the login screen first.</div>;
@@ -326,7 +363,14 @@ export function SearchBrowser() {
             className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 text-base text-white outline-none placeholder:text-slate-500 focus:border-violet-400"
           />
           <div className="flex flex-wrap gap-2">
-            {['sports', 'news', 'movie', 'kids', 'atlas'].map((suggestion) => (
+            {[...new Set([
+              ...searchSettingsRuntime.recentQueries.map((entry) => entry.query),
+              'sports',
+              'news',
+              'movie',
+              'kids',
+              'atlas',
+            ])].slice(0, 6).map((suggestion) => (
               <button
                 key={suggestion}
                 onClick={() => setQuery(suggestion)}
@@ -436,6 +480,63 @@ export function SearchBrowser() {
             </div>
           </div>
         ) : null}
+        <div className="mt-4 grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-violet-300">Recent query persistence</p>
+                <p className="mt-2 text-sm font-semibold text-white">{searchSettingsRuntime.querySummary}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-400">{searchSettingsRuntime.summary}</p>
+              </div>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                {searchSettingsRuntime.recentQueries.length} recent
+              </span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {searchSettingsRuntime.recentQueries.length > 0 ? searchSettingsRuntime.recentQueries.map((entry) => (
+                <button
+                  key={entry.key}
+                  onClick={() => setQuery(entry.query)}
+                  className="flex w-full items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left hover:bg-white/[0.06]"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-white">{entry.query}</p>
+                    <p className="mt-1 text-xs text-slate-400">{entry.summary}</p>
+                  </div>
+                  <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] ${
+                    entry.tone === 'ready'
+                      ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100'
+                      : entry.tone === 'watch'
+                        ? 'border-amber-400/20 bg-amber-500/10 text-amber-100'
+                        : 'border-rose-400/20 bg-rose-500/10 text-rose-100'
+                  }`}>
+                    {entry.providerName}
+                  </span>
+                </button>
+              )) : (
+                <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-4 text-sm text-slate-400">
+                  Run a few provider-wide searches and they will persist here for warm-started route recovery.
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-violet-300">Shared settings posture</p>
+            <p className="mt-2 text-sm font-semibold text-white">{searchSettingsRuntime.playbackSummary}</p>
+            <p className="mt-2 text-xs leading-5 text-slate-400">{searchSettingsRuntime.displaySummary}</p>
+            <div className="mt-3 grid gap-2">
+              {[...searchSettingsRuntime.playbackCards.slice(0, 2), ...searchSettingsRuntime.displayCards.slice(0, 2)].map((card) => (
+                <div key={card.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{card.label}</p>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/80">{card.value}</p>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-slate-300">{card.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       {mockHealth ? (
