@@ -1,15 +1,18 @@
 'use client';
 
 import { create } from 'zustand';
+import { createPlaybackHistoryEntry, hydratePlaybackHistory, updatePlaybackHistoryProgress } from '@/lib/playback-history-runtime';
 import { getArtwork, getCachedSearchCatalog, getContentId } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
 import { StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
+import { useAuthStore } from '@/stores/auth-store';
 
 type PlaybackMeta = {
   seriesId?: number;
   seriesTitle?: string;
   seasonNumber?: number;
   episodeNumber?: number;
+  sourceSurface?: WatchHistoryItem['sourceSurface'];
 };
 
 type PlayerState = {
@@ -58,7 +61,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   streamHealth: defaultStreamHealth,
   dockMode: 'compact',
   hydrate: () => {
-    const history = storage.getHistory().map((item) => {
+    const authState = useAuthStore.getState();
+    const hydratedHistory = hydratePlaybackHistory({
+      history: storage.getHistory(),
+      connections: authState.connections,
+      connectionStatus: authState.connectionStatus,
+      activeConnectionId: authState.activeConnection?.id,
+    });
+    const history = hydratedHistory.map((item) => {
       if (!item.providerId) return item;
       const catalog = getCachedSearchCatalog(item.providerId, Number.MAX_SAFE_INTEGER);
       const match = item.kind === 'live'
@@ -84,25 +94,22 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playStream: (stream, playbackUrl, providerId, meta) => {
     const contentId = getContentId(stream);
     const existing = get().watchHistory.find((item) => item.id === `${providerId}-${contentId}`);
+    const authState = useAuthStore.getState();
+    const providerName = authState.connections.find((connection) => connection.id === providerId)?.name || providerId;
     const nextEntry: WatchHistoryItem = {
-      id: `${providerId}-${contentId}`,
-      kind: stream.stream_type === 'live' ? 'live' : stream.stream_type === 'series' ? 'series' : 'movie',
-      title: stream.name,
-      streamId: contentId,
-      providerId,
+      ...createPlaybackHistoryEntry({
+        stream,
+        playbackUrl,
+        providerId,
+        providerName,
+        meta,
+        existing,
+        lastSwitchContext: authState.lastSwitchContext,
+      }),
       artwork: getArtwork(stream),
       categoryId: stream.category_id,
       categoryName: stream.channel_group,
       year: stream.year,
-      playbackUrl,
-      seriesId: meta?.seriesId ?? existing?.seriesId,
-      seriesTitle: meta?.seriesTitle ?? existing?.seriesTitle ?? (stream.stream_type === 'series' ? stream.name : undefined),
-      seasonNumber: meta?.seasonNumber ?? existing?.seasonNumber,
-      episodeNumber: meta?.episodeNumber ?? existing?.episodeNumber,
-      progress: existing?.progress ?? (stream.stream_type === 'live' ? 1 : 0.02),
-      positionSeconds: existing?.positionSeconds ?? 0,
-      durationSeconds: existing?.durationSeconds ?? undefined,
-      updatedAt: Date.now(),
     };
     const nextProviderHistory: WatchHistoryItem[] = [
       nextEntry,
@@ -130,40 +137,39 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     const contentId = getContentId(currentStream);
     const historyId = `${currentProviderId}-${contentId}`;
-    const isLive = currentStream.stream_type === 'live';
     const existing = watchHistory.find((item) => item.id === historyId);
-    const safeDuration = durationSeconds && Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds : undefined;
-    const progress = isLive
-      ? 1
-      : safeDuration
-        ? Math.max(0.02, Math.min(0.99, positionSeconds / safeDuration))
-        : Math.max(0.02, existing?.progress ?? 0.02);
-
+    if (!existing) return;
+    const authState = useAuthStore.getState();
+    const providerName = authState.connections.find((connection) => connection.id === currentProviderId)?.name || currentProviderId;
     const updatedEntry: WatchHistoryItem = {
-      id: historyId,
-      kind: currentStream.stream_type === 'live' ? 'live' : currentStream.stream_type === 'series' ? 'series' : 'movie',
-      title: currentStream.name,
-      streamId: contentId,
-      providerId: currentProviderId,
+      ...updatePlaybackHistoryProgress({
+        item: {
+          ...existing,
+          title: currentStream.name,
+          playbackUrl: playbackUrl ?? existing.playbackUrl,
+          artwork: getArtwork(currentStream),
+          categoryId: currentStream.category_id,
+          categoryName: existing.categoryName ?? currentStream.channel_group,
+          year: existing.year ?? currentStream.year,
+          seriesTitle: existing.seriesTitle ?? (currentStream.stream_type === 'series' ? currentStream.name : undefined),
+        },
+        positionSeconds,
+        durationSeconds,
+        providerName,
+        connectionStatus: authState.connectionStatus,
+        activeConnectionId: authState.activeConnection?.id,
+      }),
+      playbackUrl: playbackUrl ?? existing.playbackUrl,
       artwork: getArtwork(currentStream),
-      categoryId: currentStream.category_id,
-      categoryName: existing?.categoryName ?? currentStream.channel_group,
-      year: existing?.year ?? currentStream.year,
-      playbackUrl: playbackUrl ?? existing?.playbackUrl,
-      seriesId: existing?.seriesId,
-      seriesTitle: existing?.seriesTitle ?? (currentStream.stream_type === 'series' ? currentStream.name : undefined),
-      seasonNumber: existing?.seasonNumber,
-      episodeNumber: existing?.episodeNumber,
-      progress,
-      positionSeconds: isLive ? undefined : Math.max(0, Math.floor(positionSeconds)),
-      durationSeconds: isLive ? undefined : safeDuration ? Math.floor(safeDuration) : existing?.durationSeconds,
-      updatedAt: Date.now(),
     };
 
     const nextProviderHistory = [updatedEntry, ...storage.getProviderHistory(currentProviderId).filter((item) => item.id !== historyId)].slice(0, 12);
     storage.saveProviderHistory(currentProviderId, nextProviderHistory);
     const nextHistory = mergeProviderHistory(currentProviderId, nextProviderHistory, watchHistory);
-    set({ watchHistory: nextHistory, resumeFromSeconds: isLive ? 0 : updatedEntry.positionSeconds ?? 0 });
+    set({
+      watchHistory: nextHistory,
+      resumeFromSeconds: currentStream.stream_type === 'live' ? 0 : updatedEntry.positionSeconds ?? 0,
+    });
   },
   updateStreamHealth: (health) => set((state) => ({
     streamHealth: {

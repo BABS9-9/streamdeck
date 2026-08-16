@@ -1,4 +1,5 @@
 import { buildMergedFavoriteGroups, buildMergedHistoryGroups, buildProviderNameMap, MergedFavoriteGroup, MergedHistoryGroup } from './merged-library';
+import { buildPlaybackHistoryRuntime, PlaybackHistoryRuntimeContract } from './playback-history-runtime';
 import {
   getAlternateProviderVariants,
   getLiveCategoryRecovery,
@@ -250,25 +251,40 @@ const buildFavoriteResumeContract = ({
 const buildContinueResumeContract = ({
   group,
   providerNameMap,
+  playbackHistoryRuntime,
 }: {
   group: MergedHistoryGroup;
   providerNameMap: Record<string, string>;
+  playbackHistoryRuntime: PlaybackHistoryRuntimeContract;
 }): SavedLibraryResumeContract => {
   const owner = group.activeEntry ?? group.primaryEntry;
   const providerName = providerNameMap[owner.providerId] || owner.providerId;
+  const hydrationItem = playbackHistoryRuntime.itemsByKey[group.key];
+  const checkpoint = hydrationItem?.checkpoint;
+  const staleSession = hydrationItem?.staleSession;
+  const checkpointLabel = checkpoint?.positionLabel
+    ? ` at ${checkpoint.positionLabel}`
+    : checkpoint?.progressPercent
+      ? ` at ${checkpoint.progressPercent}% progress`
+      : '';
+
   return {
     hasResume: true,
     providerId: owner.providerId,
     providerName,
     seasonNumber: owner.seasonNumber ?? null,
     episodeNumber: owner.episodeNumber ?? null,
-    progressPercent: normalizeProgressPercent(group.bestProgress),
+    progressPercent: checkpoint?.progressPercent ?? normalizeProgressPercent(group.bestProgress),
     summary: owner.kind === 'series' && owner.seasonNumber && owner.episodeNumber
-      ? `Continue Watching can reopen S${owner.seasonNumber}E${owner.episodeNumber} from ${providerName}.`
+      ? `Continue Watching can reopen S${owner.seasonNumber}E${owner.episodeNumber} from ${providerName}${checkpointLabel}.${staleSession?.status === 'watch' ? ` ${staleSession.summary}` : ''}`
       : owner.kind === 'movie'
-        ? `Continue Watching can resume this movie from ${providerName}${normalizeProgressPercent(group.bestProgress) ? ` at ${normalizeProgressPercent(group.bestProgress)}% progress` : ''}.`
-        : `Continue Watching is pinned to ${providerName} for this live channel.`,
-    tone: 'ready',
+        ? `Continue Watching can resume this movie from ${providerName}${checkpointLabel}.${staleSession?.status === 'watch' ? ` ${staleSession.summary}` : ''}`
+        : `Continue Watching is pinned to ${providerName} for this live channel.${staleSession?.status === 'watch' ? ` ${staleSession.summary}` : ''}`,
+    tone: staleSession?.status === 'recover'
+      ? 'recover'
+      : staleSession?.status === 'watch'
+        ? 'watch'
+        : 'ready',
   };
 };
 
@@ -541,6 +557,12 @@ export const buildSavedLibraryRuntimeContract = ({
     activeConnectionStatus: activeConnection ? connectionStatus[activeConnection.id] ?? null : null,
   });
   const seriesResumeLookup = buildSeriesResumeLookup(watchHistory);
+  const playbackHistoryRuntime = buildPlaybackHistoryRuntime({
+    history: watchHistory,
+    connections,
+    connectionStatus,
+    activeConnectionId,
+  });
 
   const groups = mode === 'favorites'
     ? buildMergedFavoriteGroups({ favoriteEntriesByProvider, activeConnectionId })
@@ -576,6 +598,7 @@ export const buildSavedLibraryRuntimeContract = ({
       : buildContinueResumeContract({
           group: group as MergedHistoryGroup,
           providerNameMap,
+          playbackHistoryRuntime,
         });
     const activeOwnsVisibleCopy = activeConnectionId === ownerProviderId;
 

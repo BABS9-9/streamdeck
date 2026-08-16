@@ -61,6 +61,7 @@ import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
+import { buildPlaybackHistoryRuntime } from '@/lib/playback-history-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
@@ -253,8 +254,13 @@ export function HomeDashboard() {
   }, [activeConnection, featuredLive, getCoverageReport, home.quickLive]);
   const continueWatching = useMemo(() => {
     if (!activeConnection) return [];
-    return watchHistory.filter((item) => item.providerId === activeConnection.id).slice(0, 4);
-  }, [activeConnection, watchHistory]);
+    return buildPlaybackHistoryRuntime({
+      history: watchHistory.filter((item) => item.providerId === activeConnection.id),
+      connections,
+      connectionStatus,
+      activeConnectionId: activeConnection.id,
+    }).items.slice(0, 4);
+  }, [activeConnection, connectionStatus, connections, watchHistory]);
   const fallbackEquivalence = useMemo(
     () => manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -917,8 +923,11 @@ export function HomeDashboard() {
               <div key={item.id} className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4">
                 <p className="text-base font-medium text-white">{item.title}</p>
                 <p className="mt-1 text-sm text-slate-400">
-                  {item.kind === 'live' ? 'Live channel' : item.kind === 'series' ? 'Series episode' : 'Movie'} · {Math.round(item.progress * 100)}% saved
+                  {item.kind === 'live' ? 'Live channel' : item.kind === 'series' ? 'Series episode' : 'Movie'} · {item.progressPercent ?? 0}% saved
                 </p>
+                <p className="mt-2 text-xs leading-5 text-sky-100">{item.lastOwner.summary}</p>
+                <p className="mt-1 text-xs leading-5 text-emerald-100/90">{item.checkpoint?.summary || 'Resume checkpoint will appear after the first progress update.'}</p>
+                <p className={`mt-1 text-xs leading-5 ${item.staleSession.status === 'recover' ? 'text-amber-200' : item.staleSession.status === 'watch' ? 'text-amber-100/90' : 'text-slate-400'}`}>{item.staleSession.summary}</p>
               </div>
             )) : (
               <div className="rounded-[1.5rem] border border-dashed border-white/10 p-6 text-sm text-slate-400">

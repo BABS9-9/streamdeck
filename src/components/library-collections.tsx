@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { buildMergedFavoriteGroups, buildMergedHistoryGroups, buildProviderNameMap } from '@/lib/merged-library';
 import { fetchMockProviderHealth, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { buildPlaybackHistoryRuntime } from '@/lib/playback-history-runtime';
 import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getLiveCategoryRecovery, getProviderTrustDisplay, normalizeRecoveryKey, ProviderVariant } from '@/lib/provider-recovery';
 import { buildSavedLibraryRouteContract } from '@/lib/saved-library-route-contracts';
 import { buildSavedLibraryRuntimeContract } from '@/lib/saved-library-runtime';
@@ -167,6 +168,12 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     }),
     [activeConnection?.id, watchHistory]
   );
+  const playbackHistoryRuntime = useMemo(() => buildPlaybackHistoryRuntime({
+    history: watchHistory,
+    connections,
+    connectionStatus,
+    activeConnectionId: activeConnection?.id,
+  }), [activeConnection?.id, connectionStatus, connections, watchHistory]);
   const runtimeContract = useMemo(() => buildSavedLibraryRuntimeContract({
     mode,
     connections,
@@ -193,7 +200,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
         ? activeConnection
           ? connectionStatus[activeConnection.id]?.checkedAt ?? mergedFavoriteGroups[0]?.updatedAt ?? null
           : mergedFavoriteGroups[0]?.updatedAt ?? null
-        : mergedContinueGroups[0]?.updatedAt ?? null,
+        : playbackHistoryRuntime.freshestUpdatedAt ?? mergedContinueGroups[0]?.updatedAt ?? null,
     },
   }), [
     activeConnection,
@@ -202,6 +209,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
     mergedContinueGroups,
     mergedFavoriteGroups,
     mode,
+    playbackHistoryRuntime.freshestUpdatedAt,
     providerNameMap,
     runtimeContract,
   ]);

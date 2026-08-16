@@ -244,6 +244,31 @@ export type WatchHistoryItem = {
   progress: number;
   positionSeconds?: number;
   durationSeconds?: number;
+  continuityKey?: string;
+  playbackStartedAt?: number;
+  lastPlayedAt?: number;
+  sourceSurface?: 'home' | 'live' | 'movies' | 'series' | 'search' | 'favorites' | 'continue' | 'player' | 'collections';
+  lastOwner?: {
+    providerId: string;
+    providerName?: string | null;
+    switchedAt?: number | null;
+    reason?: ProviderSwitchContext['reason'];
+    sourceSurface?: 'home' | 'live' | 'movies' | 'series' | 'search' | 'favorites' | 'continue' | 'player' | 'collections' | 'login' | 'settings' | 'system';
+  };
+  resumeCheckpoint?: {
+    positionSeconds: number;
+    durationSeconds?: number | null;
+    progressPercent: number;
+    capturedAt: number;
+  };
+  staleSession?: {
+    status: 'fresh' | 'watch' | 'recover';
+    reason: 'active-owner' | 'provider-mismatch' | 'provider-error' | 'aging-proof' | 'missing-playback-url';
+    summary: string;
+    detail: string;
+    targetProviderId?: string | null;
+    updatedAt: number;
+  };
   updatedAt: number;
 };
 
