@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { buildMediaDetailRuntimeContract, MediaDetailContractTone, MediaDetailRuntimeContract } from '@/lib/media-detail-runtime';
+import { buildMediaDetailRuntimeContract, MediaDetailContractTone } from '@/lib/media-detail-runtime';
+import { buildMediaDetailSurfaceContract, MediaDetailSurfaceContract } from '@/lib/media-detail-route-contracts';
 import { buildProviderVariantsIndex, buildSeriesRecoveryKey, getAlternateProviderVariants, getProviderTrustDisplay, getProviderTrustLabel, ProviderVariant } from '@/lib/provider-recovery';
 import { describeSeriesCompletenessBand } from '@/lib/search-continuity';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
@@ -297,8 +298,6 @@ export function MediaLibrary({
     alternateVariants: movieVariants,
     watchHistory,
   }), [activeConnection, connectionStatus, connections, featuredMovie, movieVariants, watchHistory]);
-  const movieContinuity = movieRuntime.continuity;
-
   const seriesRuntime = useMemo(() => buildMediaDetailRuntimeContract({
     item: selectedSeries,
     kind: 'series',
@@ -309,6 +308,10 @@ export function MediaLibrary({
     watchHistory,
   }), [activeConnection, connectionStatus, connections, selectedSeries, selectedSeriesVariants, watchHistory]);
   const seriesContinuity = seriesRuntime.continuity;
+  const selectedSeriesResumeProviderName = useMemo(
+    () => connections.find((connection) => connection.id === selectedSeriesResume?.providerId)?.name ?? activeConnection?.name ?? 'saved provider',
+    [activeConnection?.name, connections, selectedSeriesResume?.providerId]
+  );
 
   const bannerTone = cacheMode === 'offline'
     ? 'border-amber-400/30 bg-amber-500/10 text-amber-100'
@@ -333,124 +336,46 @@ export function MediaLibrary({
         ? `All ${activeSummary.maxConnections} lines are in use on ${activeConnection?.name}. Use a healthier provider copy if one exists.`
         : null;
   const healthiestSelectedVariant = (kind === 'movies' ? movieVariants[0] : selectedSeriesVariants[0]) || null;
+  const movieSurfaceContract = useMemo(() => buildMediaDetailSurfaceContract({
+    kind: 'movie',
+    runtime: movieRuntime,
+    activeProviderNeedsRecovery,
+    activeRecoveryMessage,
+    surfaceRecoveryPlan,
+    variants: movieVariants,
+  }), [activeProviderNeedsRecovery, activeRecoveryMessage, movieRuntime, movieVariants, surfaceRecoveryPlan]);
+  const seriesSurfaceContract = useMemo(() => buildMediaDetailSurfaceContract({
+    kind: 'series',
+    runtime: seriesRuntime,
+    activeProviderNeedsRecovery,
+    activeRecoveryMessage,
+    surfaceRecoveryPlan,
+    variants: selectedSeriesVariants,
+    variantContinuityNote: seriesContinuity?.seriesCompletenessBand
+      ? describeSeriesCompletenessBand(seriesContinuity.seriesCompletenessBand)
+      : null,
+    variantResumeLabel: selectedSeriesResume
+      ? `Resume available on ${selectedSeriesResumeProviderName} at ${formatPercent(selectedSeriesResume.progress)}${selectedSeriesResume.seasonNumber && selectedSeriesResume.episodeNumber ? ` · S${selectedSeriesResume.seasonNumber}E${selectedSeriesResume.episodeNumber}` : ''}.`
+      : null,
+  }), [activeProviderNeedsRecovery, activeRecoveryMessage, selectedSeriesResume, selectedSeriesResumeProviderName, selectedSeriesVariants, seriesContinuity?.seriesCompletenessBand, seriesRuntime, surfaceRecoveryPlan]);
 
-  const renderDetailTrustCards = (runtime: MediaDetailRuntimeContract | null) => {
-    if (!runtime?.trust) return null;
-
-    const cards = [
-      {
-        key: 'provider-choice',
-        eyebrow: runtime.trust.providerChoice.title,
-        title: runtime.trust.providerChoice.summary,
-        detail: `${runtime.trust.providerChoice.autoChoice} ${runtime.trust.providerChoice.userChoice}`,
-        footnote: runtime.trust.providerChoice.forcedHandoffTrigger,
-        tone: runtime.trust.providerChoice.tone,
-      },
-      {
-        key: 'claim-ceiling',
-        eyebrow: runtime.trust.claimCeiling.title,
-        title: runtime.trust.claimCeiling.strongestPromise,
-        detail: runtime.trust.claimCeiling.reason,
-        footnote: runtime.trust.claimCeiling.suppressedPromise,
-        tone: runtime.trust.claimCeiling.tone,
-      },
-      {
-        key: 'proof-debt',
-        eyebrow: runtime.trust.proofDebt.title,
-        title: runtime.trust.proofDebt.summary,
-        detail: runtime.trust.proofDebt.debtSource,
-        footnote: runtime.trust.proofDebt.repaymentMove,
-        tone: runtime.trust.proofDebt.tone,
-      },
-      {
-        key: 'continuity-boundary',
-        eyebrow: runtime.trust.continuityBoundary.title,
-        title: runtime.trust.continuityBoundary.summary,
-        detail: `${runtime.trust.continuityBoundary.portableContext} ${runtime.trust.continuityBoundary.userOwns}`,
-        footnote: runtime.trust.continuityBoundary.forcedHandoffTrigger,
-        tone: runtime.trust.continuityBoundary.tone,
-      },
-      {
-        key: 'headroom',
-        eyebrow: runtime.trust.connectionHeadroom.title,
-        title: runtime.trust.connectionHeadroom.summary,
-        detail: runtime.trust.connectionHeadroom.warningTrigger,
-        footnote: runtime.trust.connectionHeadroom.recommendedMove,
-        tone: runtime.trust.connectionHeadroom.tone,
-      },
-      {
-        key: 'provider-stability',
-        eyebrow: runtime.trust.providerStability.title,
-        title: runtime.trust.providerStability.summary,
-        detail: `${runtime.trust.providerStability.stabilityThreshold} ${runtime.trust.providerStability.toleratedVolatility}`,
-        footnote: runtime.trust.providerStability.keepRescuePrimaryTrigger,
-        tone: runtime.trust.providerStability.tone,
-      },
-      {
-        key: 'return-cooldown',
-        eyebrow: runtime.trust.returnCooldown.title,
-        title: runtime.trust.returnCooldown.summary,
-        detail: `${runtime.trust.returnCooldown.cooldownWindow} ${runtime.trust.returnCooldown.shrinkingProof}`,
-        footnote: runtime.trust.returnCooldown.resetTrigger,
-        tone: runtime.trust.returnCooldown.tone,
-      },
-      {
-        key: 'action-gate',
-        eyebrow: runtime.trust.actionGate.title,
-        title: runtime.trust.actionGate.summary,
-        detail: `${runtime.trust.actionGate.primaryAction} ${runtime.trust.actionGate.downgradedAction}`,
-        footnote: runtime.trust.actionGate.unlockCondition,
-        tone: runtime.trust.actionGate.tone,
-      },
-      {
-        key: 'confidence-floor',
-        eyebrow: runtime.trust.confidenceFloor.title,
-        title: runtime.trust.confidenceFloor.summary,
-        detail: `${runtime.trust.confidenceFloor.minimumProof} ${runtime.trust.confidenceFloor.downgradeMode}`,
-        footnote: runtime.trust.confidenceFloor.hardStopTrigger,
-        tone: runtime.trust.confidenceFloor.tone,
-      },
-      {
-        key: 'recovery-witness',
-        eyebrow: runtime.trust.recoveryWitness.title,
-        title: runtime.trust.recoveryWitness.summary,
-        detail: `${runtime.trust.recoveryWitness.evidence} ${runtime.trust.recoveryWitness.preservedContext}`,
-        footnote: runtime.trust.recoveryWitness.contradictionTrigger,
-        tone: runtime.trust.recoveryWitness.tone,
-      },
-      {
-        key: 'interruption-budget',
-        eyebrow: runtime.trust.interruptionBudget.title,
-        title: runtime.trust.interruptionBudget.summary,
-        detail: `${runtime.trust.interruptionBudget.acceptableDelay} ${runtime.trust.interruptionBudget.continuityLayer}`,
-        footnote: runtime.trust.interruptionBudget.escalationTrigger,
-        tone: runtime.trust.interruptionBudget.tone,
-      },
-      {
-        key: 'retry-honesty',
-        eyebrow: runtime.trust.retryHonesty.title,
-        title: runtime.trust.retryHonesty.summary,
-        detail: `${runtime.trust.retryHonesty.honestRetryWindow} ${runtime.trust.retryHonesty.preservesContext}`,
-        footnote: runtime.trust.retryHonesty.giveUpTrigger,
-        tone: runtime.trust.retryHonesty.tone,
-      },
-    ];
-
+  const renderDetailTrustCards = (surfaceContract: MediaDetailSurfaceContract | null) => {
+    if (!surfaceContract?.launchScorecard) return null;
     return (
       <div className="mt-5 grid gap-3 lg:grid-cols-2">
         <div className="rounded-[1.2rem] border border-white/10 bg-white/[0.04] p-4 lg:col-span-2">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] uppercase tracking-[0.24em] text-sky-200">Go / Watch / Recover</p>
-              <p className="mt-2 text-sm font-medium text-white">{runtime.trust.launchScorecard.title}</p>
-              <p className="mt-2 text-sm text-white/80">{runtime.trust.launchScorecard.summary}</p>
+              <p className="mt-2 text-sm font-medium text-white">{surfaceContract.launchScorecard.title}</p>
+              <p className="mt-2 text-sm text-white/80">{surfaceContract.launchScorecard.summary}</p>
             </div>
             <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-white/80">
-              {runtime.trust.launchScorecard.metrics.map((metric) => metric.label).join(' / ')}
+              {surfaceContract.launchScorecard.metricLabels}
             </span>
           </div>
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
-            {runtime.trust.launchScorecard.metrics.map((metric) => (
+            {surfaceContract.launchScorecard.metrics.map((metric) => (
               <div key={metric.label} className={`rounded-[1.2rem] border p-4 ${trustToneClasses[metric.tone]}`}>
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{metric.label}</p>
@@ -461,7 +386,7 @@ export function MediaLibrary({
             ))}
           </div>
         </div>
-        {runtime.trust.launchReadiness.map((item) => (
+        {surfaceContract.launchReadiness.map((item) => (
           <div key={item.label} className={`rounded-[1.2rem] border p-4 ${trustToneClasses[item.tone]}`}>
             <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{item.label}</p>
             <p className="mt-2 text-sm font-medium text-white">{item.safeWhen}</p>
@@ -469,7 +394,7 @@ export function MediaLibrary({
             <p className="mt-3 text-xs text-white/70">{item.recoveryMove}</p>
           </div>
         ))}
-        {cards.map((card) => (
+        {surfaceContract.trustCards.map((card) => (
           <div key={card.key} className={`rounded-[1.2rem] border p-4 ${trustToneClasses[card.tone]}`}>
             <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{card.eyebrow}</p>
             <p className="mt-2 text-sm font-medium text-white">{card.title}</p>
@@ -575,38 +500,34 @@ export function MediaLibrary({
 
   const renderProviderVariants = (
     variants: ProviderVariant[],
-    options?: { type: 'movie' | 'series'; resumeLabel?: string | null; runtime?: MediaDetailRuntimeContract | null }
+    options?: { type: 'movie' | 'series'; resumeLabel?: string | null; surfaceContract?: MediaDetailSurfaceContract | null }
   ) => {
-    if (variants.length === 0) return null;
+    if (variants.length === 0 || !options?.surfaceContract?.variantRail) return null;
 
     return (
       <div className="mt-6 space-y-3">
         <ProviderRecoveryRail
-          tone={activeProviderNeedsRecovery ? 'amber' : 'emerald'}
-          eyebrow="Provider variants"
-          title={options?.runtime?.recoveryPlan?.title || (options?.type === 'series' ? 'Series continuity is portable across saved providers.' : 'This title also exists on healthier saved providers.')}
-          detail={options?.runtime?.recoveryPlan?.summary || (options?.type === 'series'
-            ? seriesContinuity?.summary || 'Canonical episode mapping still protects series rescue before playback switches providers.'
-            : movieContinuity?.summary || 'Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first.')}
+          tone={options.surfaceContract.variantRail.tone === 'recover' ? 'amber' : 'emerald'}
+          eyebrow={options.surfaceContract.variantRail.eyebrow}
+          title={options.surfaceContract.variantRail.title}
+          detail={options.surfaceContract.variantRail.detail}
         />
-        {options?.type === 'series' && seriesContinuity?.seriesCompletenessBand ? (
+        {options.surfaceContract.variantRail.continuityNote ? (
           <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-100">
-            {describeSeriesCompletenessBand(seriesContinuity.seriesCompletenessBand)}
+            {options.surfaceContract.variantRail.continuityNote}
           </div>
         ) : null}
-        {variants.map((variant) => {
+        {variants.map((variant, index) => {
           const trust = getProviderTrustDisplay(variant.trustScore, variant.warning);
-          const isSeries = options?.type === 'series';
+          const contract = options.surfaceContract?.variantCards[index];
 
           return (
             <ProviderRecoveryRail
               key={`${variant.providerId}-${variant.streamId}-${variant.kind}`}
               tone={trust.tone}
               eyebrow={variant.providerName}
-              title={trust.label}
-              detail={variant.warning || (isSeries
-                ? options?.resumeLabel || trust.detail
-                : trust.detail)}
+              title={contract?.title || trust.label}
+              detail={contract?.detail || variant.warning || options?.resumeLabel || trust.detail}
               actions={buildProviderVariantActions(variant, options)}
             />
           );
@@ -780,19 +701,16 @@ export function MediaLibrary({
                 </div>
                 <p className="mt-4 text-sm leading-7 text-slate-300">{featuredMovie.plot || featuredMovie.tagline || 'Select a movie card to inspect its richer provider metadata.'}</p>
                 <p className="mt-3 text-sm text-slate-400">{featuredMovie.director ? `Directed by ${featuredMovie.director}` : ''}{featuredMovie.cast ? `${featuredMovie.director ? ' · ' : ''}${featuredMovie.cast}` : ''}</p>
-                {movieContinuity ? (
-                  <div className="mt-5 rounded-[1.2rem] border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-100">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Provider continuity</p>
-                    <p className="mt-2 leading-6">{movieContinuity.summary}</p>
-                  </div>
-                ) : null}
-                {movieRuntime.recoveryPlan ? (
-                  <div className={`mt-5 rounded-[1.2rem] border p-4 ${trustToneClasses[movieRuntime.recoveryPlan.tone]}`}>
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{movieRuntime.recoveryPlan.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-white">{movieRuntime.recoveryPlan.summary}</p>
-                    <p className="mt-2 text-xs text-white/70">Recommended owner: {movieRuntime.recoveryPlan.recommendedProviderName} · {movieRuntime.recoveryPlan.recommendedReason}</p>
-                  </div>
-                ) : null}
+                {movieSurfaceContract.highlights
+                  .filter((highlight) => highlight.id !== 'active-provider')
+                  .map((highlight) => (
+                    <div key={highlight.id} className={`mt-5 rounded-[1.2rem] border p-4 ${trustToneClasses[highlight.tone]}`}>
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{highlight.eyebrow}</p>
+                      <p className="mt-2 text-sm leading-6 text-white">{highlight.title}</p>
+                      <p className="mt-2 text-xs text-white/70">{highlight.summary}</p>
+                      {highlight.detail ? <p className="mt-2 text-xs text-white/70">{highlight.detail}</p> : null}
+                    </div>
+                  ))}
                 {activeProviderNeedsRecovery && activeRecoveryMessage ? (
                   <div className="mt-5 rounded-[1.2rem] border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
                     <p className="text-[11px] uppercase tracking-[0.22em] text-amber-200">Active provider warning</p>
@@ -810,9 +728,9 @@ export function MediaLibrary({
                   <button onClick={() => setSelectedMovieId(filteredItems[0] ? getContentId(filteredItems[0]) : null)} className="rounded-2xl border border-white/10 px-5 py-3 text-sm text-slate-200 hover:bg-white/5">Reset selection</button>
                 </div>
 
-                {renderDetailTrustCards(featuredMovie ? movieRuntime : null)}
+                {renderDetailTrustCards(featuredMovie ? movieSurfaceContract : null)}
 
-                {renderProviderVariants(movieVariants, { type: 'movie', runtime: movieRuntime })}
+                {renderProviderVariants(movieVariants, { type: 'movie', surfaceContract: movieSurfaceContract })}
 
                 {recentItems.length > 0 ? (
                   <div className="mt-8 rounded-[1.3rem] border border-white/10 bg-white/5 p-4">
@@ -985,29 +903,16 @@ export function MediaLibrary({
               </div>
               <p className="mt-3 text-sm leading-7 text-slate-300">{selectedSeries.plot || 'Select a mock series to load the real season and episode payload.'}</p>
               <p className="mt-3 text-sm text-slate-400">{selectedSeries.tagline || ''}{selectedSeries.cast ? `${selectedSeries.tagline ? ' · ' : ''}${selectedSeries.cast}` : ''}</p>
-              {seriesContinuity ? (
-                <div className="mt-4 rounded-[1.2rem] border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-sky-100">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-sky-200">Series continuity</p>
-                  <p className="mt-2 leading-6">{seriesContinuity.summary}</p>
-                  {seriesContinuity.seriesCompletenessBand ? (
-                    <p className="mt-2 text-xs text-sky-50/80">{describeSeriesCompletenessBand(seriesContinuity.seriesCompletenessBand)}</p>
-                  ) : null}
-                  {seriesContinuity.canonicalEpisodeMapping?.preferredSeasonNumber && seriesContinuity.canonicalEpisodeMapping?.preferredEpisodeNumber ? (
-                    <p className="mt-2 text-xs text-sky-50/80">
-                      Resume hook is pinned to S{seriesContinuity.canonicalEpisodeMapping.preferredSeasonNumber}E{seriesContinuity.canonicalEpisodeMapping.preferredEpisodeNumber} before provider handoff.
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-xs text-sky-50/80">Canonical episode mapping still runs through `get_series_info` before rescue playback is claimed as exact.</p>
-                  )}
-                </div>
-              ) : null}
-              {seriesRuntime.recoveryPlan ? (
-                <div className={`mt-5 rounded-[1.2rem] border p-4 ${trustToneClasses[seriesRuntime.recoveryPlan.tone]}`}>
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{seriesRuntime.recoveryPlan.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-white">{seriesRuntime.recoveryPlan.summary}</p>
-                  <p className="mt-2 text-xs text-white/70">Recommended owner: {seriesRuntime.recoveryPlan.recommendedProviderName} · {seriesRuntime.recoveryPlan.recommendedReason}</p>
-                </div>
-              ) : null}
+              {seriesSurfaceContract.highlights
+                .filter((highlight) => highlight.id !== 'active-provider')
+                .map((highlight) => (
+                  <div key={highlight.id} className={`mt-4 rounded-[1.2rem] border p-4 ${trustToneClasses[highlight.tone]}`}>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{highlight.eyebrow}</p>
+                    <p className="mt-2 text-sm leading-6 text-white">{highlight.title}</p>
+                    <p className="mt-2 text-xs text-white/70">{highlight.summary}</p>
+                    {highlight.detail ? <p className="mt-2 text-xs text-white/70">{highlight.detail}</p> : null}
+                  </div>
+                ))}
               {selectedSeriesResume ? (
                 <p className="mt-3 text-xs uppercase tracking-[0.22em] text-violet-200">
                   Resume available · {formatPercent(selectedSeriesResume.progress)}
@@ -1047,7 +952,7 @@ export function MediaLibrary({
                   : highlightedEpisodeId
                     ? 'Resume highlighted episode'
                     : 'Open healthiest provider copy',
-                runtime: seriesRuntime,
+                surfaceContract: seriesSurfaceContract,
               })}
 
               <ProviderTrustStack
@@ -1057,7 +962,7 @@ export function MediaLibrary({
                 columnsClassName="grid gap-3 lg:grid-cols-2"
               />
 
-              {renderDetailTrustCards(selectedSeries ? seriesRuntime : null)}
+              {renderDetailTrustCards(selectedSeries ? seriesSurfaceContract : null)}
 
               <div className="mt-6 space-y-3">
                 {selectedEpisodes.length > 0 ? selectedEpisodes.map((episode) => {
