@@ -38,6 +38,7 @@ import { SurfaceInterruptionBudget } from '@/components/surface-interruption-bud
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
+import { SurfaceLaunchOwnershipInline } from '@/components/surface-launch-ownership-inline';
 import { SurfaceLaunchScorecardInline } from '@/components/surface-launch-scorecard-inline';
 import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarity-inline';
 import { SurfaceInterruptionBudgetInline } from '@/components/surface-interruption-budget-inline';
@@ -465,6 +466,13 @@ export function LiveBrowser() {
                 scorecard={launchScorecard}
                 title="Play launch scorecard"
                 badge="Go / Watch / Recover"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceLaunchOwnershipInline
+                contract={launchOwnership}
+                title="Play launch ownership"
+                badge="Owner truth"
               />
             </div>
             <div className="mt-4">

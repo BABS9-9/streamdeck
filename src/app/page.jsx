@@ -36,6 +36,7 @@ import { SurfaceInterruptionBudget } from '@/components/surface-interruption-bud
 import { SurfaceIntentLock } from '@/components/surface-intent-lock';
 import { SurfaceLaunchOwnership } from '@/components/surface-launch-ownership';
 import { SurfaceLaunchReadinessInline } from '@/components/surface-launch-readiness-inline';
+import { SurfaceLaunchOwnershipInline } from '@/components/surface-launch-ownership-inline';
 import { SurfaceLaunchScorecardInline } from '@/components/surface-launch-scorecard-inline';
 import { SurfaceHandoffClarityInline } from '@/components/surface-handoff-clarity-inline';
 import { SurfaceInterruptionBudgetInline } from '@/components/surface-interruption-budget-inline';
@@ -579,6 +580,14 @@ export default function LoginPage() {
               scorecard={launchScorecard}
               title="Connect launch scorecard"
               badge="Go / Watch / Recover"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceLaunchOwnershipInline
+              contract={launchOwnership}
+              title="Connect launch ownership"
+              badge="Owner truth"
             />
           </div>
 
