@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, connection-headroom truth, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
+  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, connection-headroom truth beside premium CTAs, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
 };
 
 const channelNames = {
@@ -376,7 +376,7 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Connection headroom on login',
-    detail: 'The adapter now publishes how many provider lines are already occupied, when Connect should stop sounding launch-safe, and when saved-provider switching should outrank retrying the same account.',
+    detail: 'The adapter now publishes beside Connect how many provider lines are already occupied, when setup copy must stop sounding launch-safe, and when saved-provider switching should outrank retrying the same account.',
     surface: 'login',
   },
   {
@@ -491,7 +491,7 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Connection headroom on Home',
-    detail: 'The adapter now publishes when hero polish still has real playback headroom behind it and when line pressure should demote launch confidence before the user blames the featured rail.',
+    detail: 'The adapter now publishes beside the hero CTA when cinematic browse polish still has real playback headroom behind it and when line pressure should demote launch confidence before the user blames the featured rail.',
     surface: 'home',
   },
   {
@@ -606,7 +606,7 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Connection headroom on Live',
-    detail: 'The adapter now publishes remaining provider line capacity on the selected channel so motion, preview, and NOW / NEXT do not hide a saturated account behind a smooth surf shell.',
+    detail: 'The adapter now publishes beside Play the remaining provider line capacity on the selected channel so motion, preview, and NOW / NEXT do not hide a saturated account behind a smooth surf shell.',
     surface: 'live',
   },
   {
@@ -872,7 +872,7 @@ const buildCompetitiveDifferentiators = () => ([
     pitch: 'Show how many provider lines are already in use, how much playback room is left, and when line pressure should outrank premium launch copy.',
     competitiveGap: 'Most IPTV players expose active-connection limits only after playback fails, so users blame channels or the app instead of the provider line ceiling.',
     buildPhase: 'Phase 1',
-    architectureNotes: 'Drive Login, Home, and Live from auth-summary plus provider-health line counts so Connect, hero launch, and Play all surface remaining provider headroom before a saturated account causes a misleading failure.',
+    architectureNotes: 'Drive Login, Home, and Live from auth-summary plus provider-health line counts and keep that headroom visible beside Connect, hero launch, and Play before a saturated account causes a misleading failure.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -5029,13 +5029,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, claim ceiling beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, launch ownership, reset-boundary truth, proof provenance, continuity truth, recovery posture, and launch safety stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction or fake reset theater.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, connection-headroom truth, launch ownership, reset-boundary truth, proof provenance, continuity truth, recovery posture, and launch safety stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, hidden line-pressure, or fake reset theater.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -5056,6 +5056,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Connect with the local mock credentials',
         'Switch scenarios without leaving the screen',
         'Provider risk strip updates before Connect overclaims launch safety',
+        'Connection headroom stays visible beside Connect before setup polish hides a saturated account ceiling',
         'Launch scorecard stays visible before Login hides whether Connect is ready, watch-only, or already recovery-led',
         'Guide freshness truth stays visible before saved-provider familiarity sounds like fully current now / next proof',
         'Canonical provider identity stays visible before trimmed URLs or relabeled saved providers pretend they are different accounts',
@@ -5092,6 +5093,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       proof: [
         'Featured live card launches playback directly',
         'Provider risk strip stays aligned with hero trust and the next safe launch',
+        'Connection headroom stays visible beside the hero CTA before browse polish hides a saturated account ceiling',
         'Launch scorecard stays visible before Home hides whether the hero is launch-ready, cache-borrowed, or already recovery-owned',
         'Guide freshness truth stays visible before cached rails or partial guide sync sound like fully current hero continuity',
         'Canonical provider identity stays visible before hero rescue reuses trust under a relabeled or host-variant provider story',
@@ -5129,6 +5131,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       proof: [
         'Filter by category and search without leaving the page',
         'Provider risk strip warns about auth, expiry, or line pressure before Play gets blamed',
+        'Connection headroom stays visible beside Play before preview motion hides a saturated account ceiling',
         'Launch scorecard stays visible before preview motion hides whether Play is exact-channel ready, preview-safe only, or already rescue-led',
         'Guide freshness truth stays visible before partial guide sync or stale cards sound like fully current NOW / NEXT proof',
         'Canonical provider identity stays visible before exact-copy rescue sounds like the same source when the owner actually changed',
