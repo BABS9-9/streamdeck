@@ -57,6 +57,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
+import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
@@ -279,6 +280,10 @@ export default function LoginPage() {
   );
   const rescueReceipt = useMemo(
     () => manifest?.surfaceRescueReceipts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
+  const resetBoundary = useMemo(
+    () => manifest?.surfaceResetBoundaries?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
   const fallbackCost = useMemo(
@@ -708,6 +713,14 @@ export default function LoginPage() {
               contract={rescueReceipt}
               title="Connect rescue receipt"
               badge="What changed"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceResetBoundaryInline
+              contract={resetBoundary}
+              title="Connect reset boundary"
+              badge="Refresh vs reset"
             />
           </div>
 

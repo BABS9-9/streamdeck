@@ -60,6 +60,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
+import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
@@ -362,6 +363,10 @@ export function HomeDashboard() {
   );
   const rescueReceipt = useMemo(
     () => manifest?.surfaceRescueReceipts.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
+  const resetBoundary = useMemo(
+    () => manifest?.surfaceResetBoundaries.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
   const fallbackCost = useMemo(
@@ -782,6 +787,13 @@ export function HomeDashboard() {
                 contract={rescueReceipt}
                 title="Hero rescue receipt"
                 badge="What changed"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceResetBoundaryInline
+                contract={resetBoundary}
+                title="Hero reset boundary"
+                badge="Refresh vs reset"
               />
             </div>
             <div className="mt-4">
