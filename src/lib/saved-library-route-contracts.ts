@@ -1,16 +1,20 @@
 import { MergedFavoriteGroup, MergedHistoryGroup } from './merged-library';
+import { PlaybackHistoryRuntimeContract } from './playback-history-runtime';
 import type { SavedLibraryItemRuntimeContract, SavedLibrarySurfaceMode, SavedLibrarySurfaceRuntimeContract } from './saved-library-runtime';
 import {
   ConnectionStatus,
+  SavedLibraryRouteCheckpointContract,
   SavedLibraryRouteContract,
   SavedLibraryRouteDuplicateCollapseContract,
   SavedLibraryRouteFreshnessContract,
   SavedLibraryRouteItemContract,
   SavedLibraryRouteLaunchOwnerContract,
   SavedLibraryRouteOverviewCard,
+  SavedLibraryRoutePlaybackOwnerContract,
   SavedLibraryRouteRankingEntry,
   SavedLibraryRouteRecoveryContract,
   SavedLibraryRouteResumeProgressContract,
+  SavedLibraryRouteStaleSessionContract,
   SavedLibraryRouteSwitchPostureContract,
   SavedConnection,
   WatchHistoryItem,
@@ -168,6 +172,79 @@ const buildLaunchOwnerPacket = ({
   tone: itemRuntime.launchOwner.tone,
 });
 
+const buildPlaybackOwnerPacket = ({
+  mode,
+  group,
+  playbackHistoryRuntime,
+}: {
+  mode: SavedLibrarySurfaceMode;
+  group: MergedFavoriteGroup | MergedHistoryGroup;
+  playbackHistoryRuntime: PlaybackHistoryRuntimeContract;
+}): SavedLibraryRoutePlaybackOwnerContract | null => {
+  if (mode !== 'continue') return null;
+  const hydrationItem = playbackHistoryRuntime.itemsByKey[group.key];
+  if (!hydrationItem) return null;
+
+  return {
+    title: 'Playback owner',
+    providerId: hydrationItem.lastOwner.providerId,
+    providerName: hydrationItem.lastOwner.providerName,
+    summary: hydrationItem.lastOwner.summary,
+    tone: hydrationItem.lastOwner.tone,
+  };
+};
+
+const buildCheckpointPacket = ({
+  mode,
+  group,
+  playbackHistoryRuntime,
+}: {
+  mode: SavedLibrarySurfaceMode;
+  group: MergedFavoriteGroup | MergedHistoryGroup;
+  playbackHistoryRuntime: PlaybackHistoryRuntimeContract;
+}): SavedLibraryRouteCheckpointContract | null => {
+  if (mode !== 'continue') return null;
+  const hydrationItem = playbackHistoryRuntime.itemsByKey[group.key];
+  if (!hydrationItem?.checkpoint) return null;
+
+  return {
+    title: 'Checkpoint witness',
+    summary: hydrationItem.checkpoint.summary,
+    progressPercent: hydrationItem.checkpoint.progressPercent,
+    positionLabel: hydrationItem.checkpoint.positionLabel,
+    capturedAt: hydrationItem.checkpoint.capturedAt,
+    tone: hydrationItem.staleSession.status === 'recover'
+      ? 'recover'
+      : hydrationItem.staleSession.status === 'watch'
+        ? 'watch'
+        : 'ready',
+  };
+};
+
+const buildStaleSessionPacket = ({
+  mode,
+  group,
+  playbackHistoryRuntime,
+}: {
+  mode: SavedLibrarySurfaceMode;
+  group: MergedFavoriteGroup | MergedHistoryGroup;
+  playbackHistoryRuntime: PlaybackHistoryRuntimeContract;
+}): SavedLibraryRouteStaleSessionContract | null => {
+  if (mode !== 'continue') return null;
+  const hydrationItem = playbackHistoryRuntime.itemsByKey[group.key];
+  if (!hydrationItem) return null;
+
+  return {
+    title: 'Stale-session posture',
+    summary: hydrationItem.staleSession.summary,
+    detail: hydrationItem.staleSession.detail,
+    status: hydrationItem.staleSession.status,
+    reason: hydrationItem.staleSession.reason,
+    targetProviderId: hydrationItem.staleSession.targetProviderId,
+    tone: hydrationItem.staleSession.tone,
+  };
+};
+
 const buildSwitchPosturePacket = ({
   itemRuntime,
 }: {
@@ -294,6 +371,9 @@ const buildOverviewCards = ({
     item.ownerRanking.some((entry) => entry.rank === 1 && !entry.isActive)
   ).length;
   const borrowedLaunchOwnerCount = itemContracts.filter((item) => item.launchOwner.tone !== 'ready').length;
+  const borrowedPlaybackOwnerCount = itemContracts.filter((item) => item.playbackOwner?.tone && item.playbackOwner.tone !== 'ready').length;
+  const checkpointCount = itemContracts.filter((item) => item.checkpointWitness?.progressPercent !== null || item.checkpointWitness?.positionLabel).length;
+  const staleSessionCount = itemContracts.filter((item) => item.staleSession?.status && item.staleSession.status !== 'fresh').length;
   const switchPressureCount = itemContracts.filter((item) => item.switchPosture.reason !== 'none').length;
   const duplicateCount = itemContracts.filter((item) => item.duplicateCollapse.visibleProviderCount > 1).length;
   const resumeAttachedCount = itemContracts.filter((item) => item.resumeProgress.progressPercent !== null).length;
@@ -316,6 +396,49 @@ const buildOverviewCards = ({
       value: borrowedLaunchOwnerCount > 0 ? `${borrowedLaunchOwnerCount} rows borrow launch truth` : 'Launch truth settled',
       detail: 'Tracks when visible rows can no longer promise the same next move from the active provider without naming a different owner.',
       tone: borrowedLaunchOwnerCount > 0 ? 'watch' : 'ready',
+    },
+    {
+      id: 'playback-owner',
+      label: 'Playback owner',
+      value: mode === 'continue'
+        ? borrowedPlaybackOwnerCount > 0
+          ? `${borrowedPlaybackOwnerCount} rows borrow playback owner truth`
+          : 'Playback owner settled'
+        : 'Not used on favorites',
+      detail: mode === 'continue'
+        ? 'Separates the provider that still owns the last trusted resume witness from the provider that currently renders the row.'
+        : 'Favorites do not carry persisted playback-owner packets yet.',
+      tone: mode === 'continue' && borrowedPlaybackOwnerCount > 0 ? 'watch' : 'ready',
+    },
+    {
+      id: 'checkpoint',
+      label: 'Checkpoint',
+      value: mode === 'continue'
+        ? checkpointCount > 0
+          ? `${checkpointCount}/${groups.length} rows keep a checkpoint witness`
+          : 'No checkpoint witness'
+        : 'Not used on favorites',
+      detail: mode === 'continue'
+        ? 'Counts rows with a persisted progress or position witness that the route can render directly.'
+        : 'Favorites do not carry continue-watching checkpoints.',
+      tone: mode === 'continue' && checkpointCount > 0 ? 'ready' : 'watch',
+    },
+    {
+      id: 'stale-session',
+      label: 'Stale session',
+      value: mode === 'continue'
+        ? staleSessionCount > 0
+          ? `${staleSessionCount} rows need stale-session language`
+          : 'No stale-session downgrade'
+        : 'Not used on favorites',
+      detail: mode === 'continue'
+        ? 'Shows when continue rows owe explicit provider mismatch, aging-proof, or recovery language before promising a clean resume.'
+        : 'Favorites do not carry continue-watching stale-session posture.',
+      tone: mode === 'continue' && itemContracts.some((item) => item.staleSession?.tone === 'recover')
+        ? 'recover'
+        : mode === 'continue' && staleSessionCount > 0
+          ? 'watch'
+          : 'ready',
     },
     {
       id: 'switch-posture',
@@ -367,6 +490,7 @@ export const buildSavedLibraryRouteContract = ({
   connectionStatus,
   activeConnectionId,
   freshnessInput,
+  playbackHistoryRuntime,
 }: {
   mode: SavedLibrarySurfaceMode;
   runtimeContract: SavedLibrarySurfaceRuntimeContract;
@@ -375,6 +499,7 @@ export const buildSavedLibraryRouteContract = ({
   connectionStatus: Record<string, ConnectionStatus>;
   activeConnectionId?: string | null;
   freshnessInput: SavedLibraryRouteFreshnessInput;
+  playbackHistoryRuntime: PlaybackHistoryRuntimeContract;
 }): SavedLibraryRouteContract => {
   const itemsByKey = groups.reduce<Record<string, SavedLibraryRouteItemContract>>((acc, group) => {
     const itemRuntime = runtimeContract.itemsByKey[group.key];
@@ -391,6 +516,21 @@ export const buildSavedLibraryRouteContract = ({
       }),
       launchOwner: buildLaunchOwnerPacket({
         itemRuntime,
+      }),
+      playbackOwner: buildPlaybackOwnerPacket({
+        mode,
+        group,
+        playbackHistoryRuntime,
+      }),
+      checkpointWitness: buildCheckpointPacket({
+        mode,
+        group,
+        playbackHistoryRuntime,
+      }),
+      staleSession: buildStaleSessionPacket({
+        mode,
+        group,
+        playbackHistoryRuntime,
       }),
       switchPosture: buildSwitchPosturePacket({
         itemRuntime,
@@ -422,7 +562,7 @@ export const buildSavedLibraryRouteContract = ({
   const itemContracts = Object.values(itemsByKey);
   const summary = mode === 'favorites'
     ? 'Favorites route contracts now publish owner ranking, launch-owner truth, switch posture, duplicate collapse, resume witness, freshness, and recovery without relying on UI heuristics.'
-    : 'Continue Watching route contracts now publish owner ranking, launch-owner truth, switch posture, duplicate collapse, resume progress, freshness, and recovery without relying on UI heuristics.';
+    : 'Continue Watching route contracts now publish owner ranking, launch-owner truth, playback-owner truth, checkpoint witness, stale-session posture, switch posture, duplicate collapse, resume progress, freshness, and recovery without relying on UI heuristics.';
 
   return {
     mode,

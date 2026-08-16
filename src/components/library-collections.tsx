@@ -202,6 +202,7 @@ export function LibraryCollections({ mode }: CollectionsProps) {
           : mergedFavoriteGroups[0]?.updatedAt ?? null
         : playbackHistoryRuntime.freshestUpdatedAt ?? mergedContinueGroups[0]?.updatedAt ?? null,
     },
+    playbackHistoryRuntime,
   }), [
     activeConnection,
     cacheState,
@@ -777,7 +778,13 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                     <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">{formatEpisodeLabel(item)}</p>
                   </div>
                   <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300">
-                    {itemRuntime?.duplicateProviderCount > 1 ? `${itemRuntime.duplicateProviderCount} copies` : `${Math.round(item.progress * 100)}%`}
+                    {itemRuntime?.duplicateProviderCount > 1
+                      ? `${itemRuntime.duplicateProviderCount} copies`
+                      : routeItem?.checkpointWitness?.progressPercent !== null && routeItem?.checkpointWitness?.progressPercent !== undefined
+                        ? `${routeItem.checkpointWitness.progressPercent}%`
+                        : routeItem?.resumeProgress.progressPercent !== null && routeItem?.resumeProgress.progressPercent !== undefined
+                          ? `${routeItem.resumeProgress.progressPercent}%`
+                          : `${Math.round(item.progress * 100)}%`}
                   </span>
                 </div>
                 {item.kind === 'series' && item.seriesTitle ? (
@@ -785,23 +792,45 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                 ) : null}
                 {renderProviderIdentity(group.providerEntries, activeConnection.id)}
                 <div className="mt-4 h-2 rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-violet-400" style={{ width: `${Math.max(8, group.bestProgress * 100)}%` }} />
+                  <div
+                    className="h-full rounded-full bg-violet-400"
+                    style={{
+                      width: `${Math.max(
+                        8,
+                        routeItem?.checkpointWitness?.progressPercent
+                          ?? routeItem?.resumeProgress.progressPercent
+                          ?? group.bestProgress * 100
+                      )}%`,
+                    }}
+                  />
                 </div>
-                <p className="mt-3 text-sm text-slate-400">{formatResume(item.positionSeconds)}{item.durationSeconds ? ` • ${Math.round(item.progress * 100)}% of ${Math.floor(item.durationSeconds / 60)} min` : ''}</p>
+                <p className="mt-3 text-sm text-slate-400">
+                  {routeItem?.checkpointWitness?.positionLabel
+                    ? `Resume ${routeItem.checkpointWitness.positionLabel}`
+                    : formatResume(item.positionSeconds)}
+                  {routeItem?.checkpointWitness?.progressPercent !== null && routeItem?.checkpointWitness?.progressPercent !== undefined
+                    ? ` • ${routeItem.checkpointWitness.progressPercent}% progress saved`
+                    : item.durationSeconds
+                      ? ` • ${Math.round(item.progress * 100)}% of ${Math.floor(item.durationSeconds / 60)} min`
+                      : ''}
+                </p>
                 <p className="mt-2 text-xs leading-5 text-slate-300">{itemRuntime?.continuitySummary}</p>
                 {routeItem ? (
                   <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{routeItem.routeLabel}</p>
                     <p className="mt-2 text-xs leading-5 text-sky-100">{routeItem.ownerRanking[0]?.summary}</p>
                     <p className="mt-2 text-xs leading-5 text-sky-200">{routeItem.launchOwner.summary}</p>
+                    {routeItem.playbackOwner ? <p className="mt-2 text-xs leading-5 text-sky-100/90">{routeItem.playbackOwner.summary}</p> : null}
                     <p className="mt-2 text-xs leading-5 text-sky-100/80">{routeItem.launchOwner.strongestPromise}</p>
                     <p className="mt-2 text-xs leading-5 text-slate-300">{routeItem.duplicateCollapse.summary}</p>
                     <p className="mt-2 text-xs leading-5 text-emerald-100/90">
                       {routeItem.resumeProgress.summary}
-                      {routeItem.resumeProgress.positionLabel ? ` Resume point ${routeItem.resumeProgress.positionLabel}.` : ''}
+                      {routeItem.checkpointWitness?.positionLabel ? ` Resume point ${routeItem.checkpointWitness.positionLabel}.` : routeItem.resumeProgress.positionLabel ? ` Resume point ${routeItem.resumeProgress.positionLabel}.` : ''}
                     </p>
+                    {routeItem.checkpointWitness ? <p className="mt-2 text-xs leading-5 text-emerald-100/80">{routeItem.checkpointWitness.summary}</p> : null}
                     <p className="mt-2 text-xs leading-5 text-slate-400">{routeItem.freshness.summary} {routeItem.freshness.detail}</p>
                     <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.recoveryPacket.summary}</p>
+                    {routeItem.staleSession ? <p className="mt-2 text-xs leading-5 text-amber-100/80">{routeItem.staleSession.summary} {routeItem.staleSession.detail}</p> : null}
                     {routeItem.switchPosture.reason !== 'none' ? <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.switchPosture.summary}</p> : null}
                   </div>
                 ) : null}
@@ -812,9 +841,14 @@ export function LibraryCollections({ mode }: CollectionsProps) {
                     <p className="text-sky-200/70">{routeItem.launchOwner.suppressedPromise}</p>
                   </div>
                 ) : null}
+                {routeItem?.playbackOwner ? <p className="mt-2 text-xs leading-5 text-sky-100/80">{routeItem.playbackOwner.summary}</p> : null}
+                {routeItem?.checkpointWitness ? <p className="mt-2 text-xs leading-5 text-emerald-100/80">{routeItem.checkpointWitness.summary}</p> : null}
+                {routeItem?.staleSession && routeItem.staleSession.status !== 'fresh' ? <p className="mt-2 text-xs leading-5 text-amber-100/80">{routeItem.staleSession.summary}</p> : null}
                 {itemRuntime?.recovery.alternateProviderCount || itemRuntime?.recovery.sameCategoryFallback ? <p className="mt-2 text-xs leading-5 text-amber-200">{itemRuntime.recovery.summary}</p> : null}
                 {routeItem?.switchPosture.reason !== 'none' ? <p className="mt-2 text-xs leading-5 text-amber-100/90">{routeItem.switchPosture.summary}</p> : null}
-                <p className="mt-1 text-sm text-slate-500">Last touched {new Date(item.updatedAt).toLocaleString()}</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Last touched {new Date(routeItem?.checkpointWitness?.capturedAt ?? item.updatedAt).toLocaleString()}
+                </p>
                 {(() => {
                   const variants = variantSummary[`continue:${item.id}`] || [];
                   const categoryFallback = item.kind === 'live' ? getLiveCategoryFallback(item.categoryName, variants) : null;

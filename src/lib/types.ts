@@ -357,6 +357,33 @@ export type SavedLibraryRouteLaunchOwnerContract = {
   tone: SavedLibraryRouteTone;
 };
 
+export type SavedLibraryRoutePlaybackOwnerContract = {
+  title: string;
+  providerId: string;
+  providerName: string;
+  summary: string;
+  tone: SavedLibraryRouteTone;
+};
+
+export type SavedLibraryRouteCheckpointContract = {
+  title: string;
+  summary: string;
+  progressPercent: number | null;
+  positionLabel: string | null;
+  capturedAt: number | null;
+  tone: SavedLibraryRouteTone;
+};
+
+export type SavedLibraryRouteStaleSessionContract = {
+  title: string;
+  summary: string;
+  detail: string;
+  status: 'fresh' | 'watch' | 'recover' | null;
+  reason: 'active-owner' | 'provider-mismatch' | 'provider-error' | 'aging-proof' | 'missing-playback-url' | null;
+  targetProviderId: string | null;
+  tone: SavedLibraryRouteTone;
+};
+
 export type SavedLibraryRouteSwitchPostureContract = {
   title: string;
   summary: string;
@@ -371,6 +398,9 @@ export type SavedLibraryRouteItemContract = {
   routeLabel: string;
   ownerRanking: SavedLibraryRouteRankingEntry[];
   launchOwner: SavedLibraryRouteLaunchOwnerContract;
+  playbackOwner: SavedLibraryRoutePlaybackOwnerContract | null;
+  checkpointWitness: SavedLibraryRouteCheckpointContract | null;
+  staleSession: SavedLibraryRouteStaleSessionContract | null;
   switchPosture: SavedLibraryRouteSwitchPostureContract;
   duplicateCollapse: SavedLibraryRouteDuplicateCollapseContract;
   resumeProgress: SavedLibraryRouteResumeProgressContract;
@@ -379,7 +409,7 @@ export type SavedLibraryRouteItemContract = {
 };
 
 export type SavedLibraryRouteOverviewCard = {
-  id: 'owner-ranking' | 'launch-owner' | 'switch-posture' | 'duplicate-collapse' | 'resume-progress' | 'freshness' | 'recovery';
+  id: 'owner-ranking' | 'launch-owner' | 'playback-owner' | 'checkpoint' | 'stale-session' | 'switch-posture' | 'duplicate-collapse' | 'resume-progress' | 'freshness' | 'recovery';
   label: string;
   value: string;
   detail: string;
