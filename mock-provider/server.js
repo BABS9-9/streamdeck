@@ -365,6 +365,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Launch ownership on login',
+    detail: 'The adapter now publishes beside Connect which provider or rescue lane currently owns the next Home handoff so setup polish cannot imply the current source is still primary after ownership changed.',
+    surface: 'login',
+  },
+  {
     title: 'Connection headroom on login',
     detail: 'The adapter now publishes how many provider lines are already occupied, when Connect should stop sounding launch-safe, and when saved-provider switching should outrank retrying the same account.',
     surface: 'login',
@@ -470,6 +475,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Launch ownership on Home',
+    detail: 'The adapter now publishes beside the hero CTA which provider or rescue lane currently owns the featured launch so cinematic browse polish cannot imply the current source is still primary after ownership changed.',
+    surface: 'home',
+  },
+  {
     title: 'Connection headroom on Home',
     detail: 'The adapter now publishes when hero polish still has real playback headroom behind it and when line pressure should demote launch confidence before the user blames the featured rail.',
     surface: 'home',
@@ -572,6 +582,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Claim ceiling on Live',
     detail: 'The adapter now publishes the strongest surf promise Live can still make, the playback overclaim it must suppress, and the proof that earns premium play language back.',
+    surface: 'live',
+  },
+  {
+    title: 'Launch ownership on Live',
+    detail: 'The adapter now publishes beside Play which provider or rescue lane currently owns the next watch handoff so preview motion cannot imply the selected source is still primary after ownership changed.',
     surface: 'live',
   },
   {
@@ -4990,7 +5005,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, claim ceiling beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, launch ownership, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, claim ceiling beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
@@ -5024,7 +5039,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Fallback equivalence stays visible before a saved-provider shortcut pretends every rescue path is the same Home move',
         'Fallback expiry truth stays visible before an aging rescue keeps selling itself as the same Home move after its proof window has gone soft',
         'Jump to the healthiest saved provider when trust degrades',
-        'Launch ownership stays visible before Connect implies the current provider still owns Home',
+        'Launch ownership stays visible beside Connect before setup polish implies the current provider still owns Home',
         'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
         'Login intent lock stays visible before trust noise makes setup feel like a fresh restart',
         'Login explanation boundary stays visible before degraded provider truth hides behind premium setup polish',
@@ -5060,7 +5075,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Fallback expiry truth stays visible before an aging rescue keeps calling itself the same discovery story after proof has gone soft',
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
-        'Hero launch ownership stays visible before fallback silently takes the featured CTA',
+        'Hero launch ownership stays visible beside the hero CTA before fallback silently takes the featured launch',
         'Hero proof provenance stays visible before cache or rescue sounds like live provider browse proof',
         'Hero intent lock stays visible before trust drift makes the same browse story feel reset',
         'Hero explanation boundary stays visible before cached or rescue-owned browse keeps sounding fully live',
@@ -5096,7 +5111,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Fallback expiry truth stays visible before an aging rescue keeps calling itself the same watch target after exact proof has gone soft',
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
-        'Selected-card launch ownership stays visible before Play silently changes hands',
+        'Selected-card launch ownership stays visible beside Play before surf polish silently changes hands',
         'Selected-card proof provenance stays visible before same-category rescue sounds like exact-channel proof',
         'Selected-card intent lock stays visible before guide or rescue drift makes the surf target feel reset',
         'Selected-card explanation boundary stays visible before preview mood outruns launch truth',
