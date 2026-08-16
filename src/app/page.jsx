@@ -10,6 +10,7 @@ import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceClaimCeilingInline } from '@/components/surface-claim-ceiling-inline';
+import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
@@ -746,6 +747,16 @@ export default function LoginPage() {
               contract={claimCeiling}
               title="Connect claim ceiling"
               badge="Copy guardrail"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceConnectionHeadroomInline
+              contract={connectionHeadroom}
+              authSummary={activeConnection?.lastAuthSummary ?? null}
+              health={health}
+              title="Connect connection headroom"
+              badge="Capacity truth"
             />
           </div>
 

@@ -15,6 +15,7 @@ import { MultiConnectionGuideRuntime } from '@/components/multi-connection-guide
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-canonical-provider-identity-inline';
+import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
@@ -816,6 +817,15 @@ export function HomeDashboard() {
                 contract={claimCeiling}
                 title="Hero claim ceiling"
                 badge="Copy guardrail"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceConnectionHeadroomInline
+                contract={connectionHeadroom}
+                authSummary={activeConnection.lastAuthSummary ?? null}
+                health={health}
+                title="Hero connection headroom"
+                badge="Capacity truth"
               />
             </div>
             <div className="mt-4">
