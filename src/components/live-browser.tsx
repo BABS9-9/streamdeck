@@ -69,6 +69,7 @@ import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-fr
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
 import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-identity-anchor-runtime';
+import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-launch-ownership-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
@@ -225,7 +226,7 @@ export function LiveBrowser() {
   const fallbackRanking = manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === 'live') ?? null;
   const fallbackEquivalence = manifest?.surfaceFallbackEquivalenceContracts.find((item) => item.screenId === 'live') ?? null;
   const fallbackExpiry = manifest?.surfaceFallbackExpiryContracts.find((item) => item.screenId === 'live') ?? null;
-  const launchOwnership = manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'live') ?? null;
+  const launchOwnershipContract = manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'live') ?? null;
   const holdReceipt = manifest?.surfaceHoldReceipts.find((item) => item.screenId === 'live') ?? null;
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
@@ -295,6 +296,13 @@ export function LiveBrowser() {
       board: savedProviderBoard,
     }),
     [holdReceipt, savedProviderBoard]
+  );
+  const launchOwnershipRuntime = useMemo(
+    () => buildSavedProviderLaunchOwnershipRuntime({
+      contract: launchOwnershipContract,
+      board: savedProviderBoard,
+    }),
+    [launchOwnershipContract, savedProviderBoard]
   );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
@@ -412,7 +420,7 @@ export function LiveBrowser() {
       <SurfaceFallbackEquivalence runtime={fallbackEquivalenceRuntime} badge="Fallback equivalence" />
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Play confidence" />
       <SurfaceLaunchScorecard scorecard={launchScorecard} badge="Launch scorecard" />
-      <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
+      <SurfaceLaunchOwnership runtime={launchOwnershipRuntime} badge="Launch owner" />
       <SurfaceExitCriteria criteria={exitCriteria} badge="Playback exit criteria" />
       <SurfaceContinuityWindow contract={continuityWindow} badge="Surf continuity" />
       <SurfaceHandoffMap handoff={handoffMap} badge="Playback handoff map" />
@@ -470,7 +478,7 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceLaunchOwnershipInline
-                contract={launchOwnership}
+                runtime={launchOwnershipRuntime}
                 title="Play launch ownership"
                 badge="Owner truth"
               />

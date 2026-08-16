@@ -608,6 +608,27 @@ export type SurfaceHoldReceiptRuntimeContract = {
   holds: SurfaceHoldReceiptRuntimeHold[];
 };
 
+export type SurfaceLaunchOwnershipRuntimeEntry = {
+  label: string;
+  currentOwner: string;
+  ownershipProof: string;
+  transferTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  ownershipStatus: string;
+};
+
+export type SurfaceLaunchOwnershipRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  owners: SurfaceLaunchOwnershipRuntimeEntry[];
+};
+
 export type SurfaceFreshnessBoardRuntimeBudget = {
   label: string;
   liveWindow: string;

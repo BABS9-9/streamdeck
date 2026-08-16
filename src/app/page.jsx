@@ -67,6 +67,7 @@ import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-fr
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
 import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-identity-anchor-runtime';
+import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-launch-ownership-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
@@ -196,7 +197,7 @@ export default function LoginPage() {
     () => manifest?.surfaceFallbackRankingContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
-  const launchOwnership = useMemo(
+  const launchOwnershipContract = useMemo(
     () => manifest?.surfaceLaunchOwnerships?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
@@ -347,6 +348,13 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [holdReceipt, savedProviderBoard]
+  );
+  const launchOwnershipRuntime = useMemo(
+    () => buildSavedProviderLaunchOwnershipRuntime({
+      contract: launchOwnershipContract,
+      board: savedProviderBoard,
+    }),
+    [launchOwnershipContract, savedProviderBoard]
   );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
@@ -585,7 +593,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceLaunchOwnershipInline
-              contract={launchOwnership}
+              runtime={launchOwnershipRuntime}
               title="Connect launch ownership"
               badge="Owner truth"
             />
@@ -758,7 +766,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
+            <SurfaceLaunchOwnership runtime={launchOwnershipRuntime} badge="Launch owner" />
           </div>
 
           <div className="mt-6">

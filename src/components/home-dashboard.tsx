@@ -71,6 +71,7 @@ import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-fr
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-receipt-runtime';
 import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-identity-anchor-runtime';
+import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-launch-ownership-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
@@ -279,7 +280,7 @@ export function HomeDashboard() {
     () => manifest?.surfaceFallbackRankingContracts.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
-  const launchOwnership = useMemo(
+  const launchOwnershipContract = useMemo(
     () => manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
@@ -430,6 +431,13 @@ export function HomeDashboard() {
       board: savedProviderBoard,
     }),
     [holdReceipt, savedProviderBoard]
+  );
+  const launchOwnershipRuntime = useMemo(
+    () => buildSavedProviderLaunchOwnershipRuntime({
+      contract: launchOwnershipContract,
+      board: savedProviderBoard,
+    }),
+    [launchOwnershipContract, savedProviderBoard]
   );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
@@ -673,7 +681,7 @@ export function HomeDashboard() {
             </div>
             <div className="mt-4">
               <SurfaceLaunchOwnershipInline
-                contract={launchOwnership}
+                runtime={launchOwnershipRuntime}
                 title="Hero launch ownership"
                 badge="Owner truth"
               />
@@ -842,7 +850,7 @@ export function HomeDashboard() {
 
       <SurfaceLaunchReadiness contract={launchReadiness} badge="Hero launch safety" />
       <SurfaceLaunchScorecard scorecard={launchScorecard} badge="Launch scorecard" />
-      <SurfaceLaunchOwnership contract={launchOwnership} badge="Launch owner" />
+      <SurfaceLaunchOwnership runtime={launchOwnershipRuntime} badge="Launch owner" />
       <SurfaceExitCriteria criteria={exitCriteria} badge="Live exit criteria" />
       <SurfaceContinuityWindow contract={continuityWindow} badge="Browse continuity" />
       <SurfaceHandoffMap handoff={handoffMap} badge="Live handoff map" />
