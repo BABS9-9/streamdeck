@@ -5,6 +5,7 @@ import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProv
 import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
+import { SurfaceClaimCeilingInline } from '@/components/surface-claim-ceiling-inline';
 import { MockDemoBoard } from '@/components/mock-demo-board';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
@@ -577,6 +578,13 @@ export function LiveBrowser() {
                 handoff={handoffMap}
                 title="Play handoff clarity"
                 badge="Next-screen truth"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceClaimCeilingInline
+                contract={claimCeiling}
+                title="Play claim ceiling"
+                badge="Copy guardrail"
               />
             </div>
             <div className="mt-4">
