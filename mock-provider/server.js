@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, connection-headroom truth, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, fallback-expiry truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
+  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty, claim-ceiling discipline, connection-headroom truth, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, and provider-stability truth.',
 };
 
 const channelNames = {
@@ -340,6 +340,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Reset boundary on login',
+    detail: 'The adapter now publishes beside Connect what trust changes can refresh inside the current setup shell, what setup context must stay visible, and what event truly forces Login into a fresh start.',
+    surface: 'login',
+  },
+  {
     title: 'Proof provenance on login',
     detail: 'The adapter now publishes whether Connect is backed by fresh auth proof, saved-provider continuity, or rescue-owned logic before setup polish outruns the real trust source.',
     surface: 'login',
@@ -450,6 +455,11 @@ const buildDifferentiators = () => ([
     surface: 'home',
   },
   {
+    title: 'Reset boundary on Home',
+    detail: 'The adapter now publishes beside the hero CTA what browse truth can refresh in place, what featured and rail context must survive, and what event truly justifies rebuilding Home from scratch.',
+    surface: 'home',
+  },
+  {
     title: 'Proof provenance on Home',
     detail: 'The adapter now publishes whether the hero is backed by live provider browse proof, cached continuity, or rescue-owned launch logic before Home keeps sounding current.',
     surface: 'home',
@@ -557,6 +567,11 @@ const buildDifferentiators = () => ([
   {
     title: 'Rescue receipt on Live',
     detail: 'The adapter now publishes what surf context survived fallback, what playback ownership changed under the hood, and what the user should reconfirm before preview or Play feels seamless again.',
+    surface: 'live',
+  },
+  {
+    title: 'Reset boundary on Live',
+    detail: 'The adapter now publishes beside Play what selected-card truth can refresh inside the current grid, what surf context must stay visible, and what event truly forces Live into a hard reset.',
     surface: 'live',
   },
   {
@@ -966,6 +981,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually make fallback feel seamless by hiding the delta, so users only discover a provider swap, cached browse path, or approximate rescue after they already committed to the CTA.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one rescue-receipt contract so preserved context, hidden change, and reconfirmation truth stay aligned right beside Connect, the hero CTA, and Play.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'reset-boundary',
+    feature: 'Reset boundary',
+    pitch: 'Tell users what trust changes can refresh in place, what context must stay visible during that refresh, and what event truly forces a reset.',
+    competitiveGap: 'Competitors usually treat any degraded trust change like a restart, so users lose confidence and context even when the honest move was an in-place refresh.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one reset-boundary contract so in-place refresh truth, preserved context, and hard-reset triggers stay aligned right beside Connect, the hero CTA, and Play.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -5005,13 +5029,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, claim ceiling beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, claim ceiling beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, proof provenance, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, proof-debt visibility, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, launch ownership, proof provenance, continuity truth, recovery posture, and launch safety stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, launch ownership, reset-boundary truth, proof provenance, continuity truth, recovery posture, and launch safety stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction or fake reset theater.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -5038,6 +5062,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Fallback ranking stays visible before Login silently auto-picks the fastest rescue without proving it is still the best current move',
         'Fallback equivalence stays visible before a saved-provider shortcut pretends every rescue path is the same Home move',
         'Fallback expiry truth stays visible before an aging rescue keeps selling itself as the same Home move after its proof window has gone soft',
+        'Reset boundary stays visible before degraded auth or trust jitter gets turned into a fake fresh-start requirement',
         'Jump to the healthiest saved provider when trust degrades',
         'Launch ownership stays visible beside Connect before setup polish implies the current provider still owns Home',
         'Proof provenance stays visible before Login implies fresh auth is still backing Connect',
@@ -5073,6 +5098,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Fallback ranking stays visible before Home lets cinematic hero polish outrun which rescue really owns the safest next launch',
         'Fallback equivalence stays visible before hero rescue pretends every preserved rail is still the same discovery path',
         'Fallback expiry truth stays visible before an aging rescue keeps calling itself the same discovery story after proof has gone soft',
+        'Reset boundary stays visible before a hero refresh gets mistaken for a full Home rebuild',
         'Quick actions cover Live, Favorites, Collections, Continue, Search, and Settings',
         'Scenario toggles refresh Home in place',
         'Hero launch ownership stays visible beside the hero CTA before fallback silently takes the featured launch',
@@ -5109,6 +5135,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         'Fallback ranking stays visible before Live lets same-category rescue outrank an exact-channel save without saying why',
         'Fallback equivalence stays visible before same-category rescue pretends it preserved the exact selected channel',
         'Fallback expiry truth stays visible before an aging rescue keeps calling itself the same watch target after exact proof has gone soft',
+        'Reset boundary stays visible before preview or guide turbulence gets treated like a forced hard reset of Live',
         'Hover/focus updates the preview player',
         'Exact-provider fallback or same-category rescue stays on-card',
         'Selected-card launch ownership stays visible beside Play before surf polish silently changes hands',
