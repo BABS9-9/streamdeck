@@ -1,5 +1,6 @@
 import { MediaDetailContractTone, MediaDetailRuntimeContract } from './media-detail-runtime';
 import { getProviderTrustDisplay, ProviderVariant } from './provider-recovery';
+import { buildSearchContinuityDisplayContract } from './search-continuity-contracts';
 
 type MediaDetailSurfaceRecoveryPlan = {
   title: string;
@@ -203,22 +204,20 @@ export const buildMediaDetailSurfaceContract = ({
   variantResumeLabel?: string | null;
 }): MediaDetailSurfaceContract => {
   const highlights: MediaDetailSurfaceHighlight[] = [];
+  const continuityDisplay = buildSearchContinuityDisplayContract({
+    continuity: runtime.continuity,
+    kind,
+  });
 
   if (runtime.continuity) {
-    const detail = kind === 'series'
-      ? runtime.continuity.canonicalEpisodeMapping?.preferredSeasonNumber && runtime.continuity.canonicalEpisodeMapping?.preferredEpisodeNumber
-        ? `Resume hook is pinned to S${runtime.continuity.canonicalEpisodeMapping.preferredSeasonNumber}E${runtime.continuity.canonicalEpisodeMapping.preferredEpisodeNumber} before provider handoff.`
-        : 'Canonical episode mapping still runs through `get_series_info` before rescue playback is claimed as exact.'
-      : null;
-
     highlights.push({
       id: 'continuity',
       eyebrow: kind === 'series' ? 'Series continuity' : 'Provider continuity',
-      title: runtime.continuity.summary,
-      summary: kind === 'series' && runtime.continuity.seriesCompletenessBand
-        ? runtime.continuity.seriesCompletenessBand
-        : 'Keep title context intact while provider ownership moves underneath the detail rail.',
-      detail,
+      title: continuityDisplay?.summary || runtime.continuity.summary,
+      summary: continuityDisplay?.modeLabel
+        || (kind === 'series' && runtime.continuity.seriesCompletenessBand)
+        || 'Keep title context intact while provider ownership moves underneath the detail rail.',
+      detail: continuityDisplay?.episodeMappingLabel || continuityDisplay?.detail || null,
       tone: runtime.recoveryPlan?.tone || 'watch',
     });
   }
@@ -276,10 +275,10 @@ export const buildMediaDetailSurfaceContract = ({
               : 'This title also exists on healthier saved providers.'),
           detail: runtime.recoveryPlan?.summary
             || (kind === 'series'
-              ? 'Canonical episode mapping still protects series rescue before playback switches providers.'
+              ? continuityDisplay?.episodeMappingLabel || 'Canonical episode mapping still protects series rescue before playback switches providers.'
               : 'Keep the premium detail rail useful even when the active provider is expired, saturated, or shaky. The healthiest alternate copy ranks first.'),
           tone: variantTone,
-          continuityNote: variantContinuityNote || null,
+          continuityNote: variantContinuityNote || continuityDisplay?.seriesCompletenessLabel || null,
         }
       : null,
     variantCards: variants.map((variant) => {

@@ -477,6 +477,10 @@ export type ProviderSearchSnapshot = {
   selectedKind?: 'live' | 'movie' | 'series' | null;
   selectedProviderCount?: number | null;
   continuityMode?: 'single-source' | 'provider-choice' | 'series-resume' | 'episode-map-required' | null;
+  continuityReasonCodes?: string[] | null;
+  launchOwnerProviderId?: string | null;
+  launchOwnerProviderName?: string | null;
+  seriesCompletenessBand?: 'complete' | 'strong' | 'partial' | 'thin' | null;
   selectedSeriesId?: number | null;
   preferredSeasonNumber?: number | null;
   preferredEpisodeNumber?: number | null;

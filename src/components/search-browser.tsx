@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { buildSearchResultActionKey, GlobalSearchRouteContract } from '@/lib/search-action-contracts';
+import { buildSearchContinuityDisplayContract } from '@/lib/search-continuity-contracts';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
 import { buildSearchSettingsRuntimeContract } from '@/lib/search-settings-runtime';
-import { describeSeriesCompletenessBand, GroupedSearchResult } from '@/lib/search-continuity';
+import { GroupedSearchResult } from '@/lib/search-continuity';
 import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
 import { getArtwork, getContentId } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, MockProviderScenario, ProviderCatalog, SavedConnection } from '@/lib/types';
@@ -738,6 +739,10 @@ export function SearchBrowser() {
             const switchIntent = actionContract?.switchIntent ?? null;
             const trustContract = actionContract?.trust ?? null;
             const rankingContract = runtimeContract?.indexing.rankingByResultKey[result.canonicalKey] ?? null;
+            const continuityDisplay = buildSearchContinuityDisplayContract({
+              continuity: result.continuity,
+              kind: result.kind,
+            });
             return (
               <article key={`${result.provider.id}-${result.kind}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
                 <div className="aspect-video rounded-2xl bg-cover bg-center bg-no-repeat" style={{ backgroundImage: artwork ? `url(${artwork})` : undefined }} />
@@ -770,7 +775,7 @@ export function SearchBrowser() {
                   ) : null}
                   {result.providerCount > 1 ? (
                     <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-emerald-100">
-                      Also on {result.providerCount - 1} more provider{result.providerCount - 1 === 1 ? '' : 's'} · {result.continuity.launchOwnerProviderName} owns launch
+                      Also on {result.providerCount - 1} more provider{result.providerCount - 1 === 1 ? '' : 's'} · {continuityDisplay?.launchOwnerLabel || result.continuity.launchOwnerProviderName} owns launch
                     </span>
                   ) : null}
                   {result.kind === 'series' && result.continuity.seriesCompletenessBand ? (
@@ -778,22 +783,28 @@ export function SearchBrowser() {
                       Series continuity · {result.continuity.seriesCompletenessBand}
                     </span>
                   ) : null}
+                  {continuityDisplay ? (
+                    <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2">
+                      {continuityDisplay.modeLabel}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
                   <p className="uppercase tracking-[0.2em] text-slate-500">Continuity contract</p>
-                  <p className="mt-2 leading-5 text-slate-300">{actionContract?.summary || result.continuity.summary}</p>
-                  {result.kind === 'series' && result.continuity.seriesCompletenessBand ? (
+                  <p className="mt-2 leading-5 text-slate-300">{actionContract?.summary || continuityDisplay?.summary || result.continuity.summary}</p>
+                  {continuityDisplay?.detail ? (
                     <p className="mt-2 text-[11px] leading-5 text-sky-100">
-                      {describeSeriesCompletenessBand(result.continuity.seriesCompletenessBand)}
+                      {continuityDisplay.detail}
                     </p>
                   ) : null}
-                  {result.continuity.canonicalEpisodeMapping ? (
+                  {continuityDisplay?.episodeMappingLabel ? (
                     <p className="mt-2 text-[11px] leading-5 text-slate-400">
-                      Episode mapping hook: `get_series_info` on {result.continuity.canonicalEpisodeMapping.providerIds.length} provider
-                      {result.continuity.canonicalEpisodeMapping.providerIds.length === 1 ? '' : 's'}
-                      {result.continuity.canonicalEpisodeMapping.preferredSeasonNumber && result.continuity.canonicalEpisodeMapping.preferredEpisodeNumber
-                        ? ` using S${result.continuity.canonicalEpisodeMapping.preferredSeasonNumber}E${result.continuity.canonicalEpisodeMapping.preferredEpisodeNumber} as the preferred resume target.`
-                        : ' before claiming an exact resume point.'}
+                      {continuityDisplay.episodeMappingLabel}
+                    </p>
+                  ) : null}
+                  {continuityDisplay && continuityDisplay.reasonList.length > 0 ? (
+                    <p className="mt-2 text-[11px] leading-5 text-slate-400">
+                      Reason codes: {continuityDisplay.reasonList.map((reason) => reason.label).join(' · ')}
                     </p>
                   ) : null}
                   {continueWatching ? (
