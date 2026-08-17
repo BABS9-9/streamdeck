@@ -835,6 +835,58 @@ export type StreamHealth = {
   message?: string | null;
 };
 
+export type PlaybackResilienceTone = 'ready' | 'watch' | 'recover';
+
+export type PlaybackResilienceProviderState = {
+  providerId: string;
+  providerName: string;
+  state: ConnectionStatus['state'];
+  tone: PlaybackResilienceTone;
+  summary: string;
+  detail: string;
+  isActive: boolean;
+  isPlaybackOwner: boolean;
+};
+
+export type PlaybackResilienceSignal = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: PlaybackResilienceTone;
+};
+
+export type PlaybackResilienceWitness = {
+  label: string;
+  summary: string;
+  detail: string;
+  tone: PlaybackResilienceTone;
+};
+
+export type PlaybackResilienceRecoveryStep = {
+  label: string;
+  detail: string;
+  tone: PlaybackResilienceTone;
+};
+
+export type PlaybackResilienceContract = {
+  screenId: 'live' | 'search';
+  title: string;
+  summary: string;
+  detail: string;
+  tone: PlaybackResilienceTone;
+  activeProviderId: string | null;
+  playbackOwnerProviderId: string | null;
+  cachedResultCount: number;
+  droppedProviderCount: number;
+  degradedProviderCount: number;
+  actionLabel: string;
+  actionDetail: string;
+  playbackWitness: PlaybackResilienceWitness | null;
+  signals: PlaybackResilienceSignal[];
+  recoverySteps: PlaybackResilienceRecoveryStep[];
+  providers: PlaybackResilienceProviderState[];
+};
+
 export type MockProviderCategorySummary = {
   id: string;
   name: string;

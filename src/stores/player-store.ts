@@ -27,6 +27,8 @@ type PlayerState = {
   playStream: (stream: XtreamStream, playbackUrl: string, providerId: string, meta?: PlaybackMeta) => void;
   updatePlaybackProgress: (positionSeconds: number, durationSeconds?: number | null) => void;
   updateStreamHealth: (health: Partial<StreamHealth>) => void;
+  markProviderDrop: (providerId: string, message: string) => void;
+  invalidateProvider: (providerId: string, reason?: string) => void;
   resetStreamHealth: () => void;
   setDockMode: (mode: 'expanded' | 'compact') => void;
   closePlayback: () => void;
@@ -178,6 +180,41 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       updatedAt: Date.now(),
     },
   })),
+  markProviderDrop: (providerId, message) => set((state) => (
+    state.currentProviderId !== providerId
+      ? state
+      : {
+          streamHealth: {
+            ...state.streamHealth,
+            status: 'error',
+            updatedAt: Date.now(),
+            message,
+          },
+        }
+  )),
+  invalidateProvider: (providerId, reason) => {
+    storage.removeProviderHistory(providerId);
+    set((state) => {
+      const watchHistory = state.watchHistory.filter((item) => item.providerId !== providerId);
+      if (state.currentProviderId !== providerId) {
+        return { watchHistory };
+      }
+
+      return {
+        currentStream: null,
+        playbackUrl: null,
+        currentProviderId: null,
+        resumeFromSeconds: 0,
+        watchHistory,
+        streamHealth: {
+          ...defaultStreamHealth,
+          status: 'error',
+          updatedAt: Date.now(),
+          message: reason || 'The active provider was removed from playback state.',
+        },
+      };
+    });
+  },
   resetStreamHealth: () => set({ streamHealth: defaultStreamHealth }),
   setDockMode: (mode) => {
     storage.savePlayerDockMode(mode);

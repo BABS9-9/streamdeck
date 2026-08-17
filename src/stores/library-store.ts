@@ -27,6 +27,7 @@ type LibraryState = {
   hydrate: () => void;
   getCatalogSnapshot: (providerId: string, maxAgeMs?: number) => ProviderCatalog | null;
   markCatalogFromCache: (providerId: string) => void;
+  invalidateProvider: (providerId: string) => void;
   refreshProviderCatalog: (provider: SavedConnection) => Promise<ProviderCatalog>;
   refreshProviderCatalogs: (providers: SavedConnection[]) => Promise<RefreshCatalogResult[]>;
 };
@@ -72,6 +73,16 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         },
       },
     }));
+  },
+  invalidateProvider: (providerId) => {
+    storage.removeProviderCatalog(providerId);
+    set((state) => {
+      const catalogsByProvider = { ...state.catalogsByProvider };
+      const catalogSyncByProvider = { ...state.catalogSyncByProvider };
+      delete catalogsByProvider[providerId];
+      delete catalogSyncByProvider[providerId];
+      return { catalogsByProvider, catalogSyncByProvider };
+    });
   },
   refreshProviderCatalog: async (provider) => {
     const existingRequest = inflightCatalogRefreshes.get(provider.id);

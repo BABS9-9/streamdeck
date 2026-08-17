@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildSearchResultActionKey, GlobalSearchRouteContract } from '@/lib/search-action-contracts';
 import { buildSearchContinuityDisplayContract } from '@/lib/search-continuity-contracts';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { buildPlaybackResilienceContract } from '@/lib/playback-resilience-runtime';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
 import { buildSearchSettingsRuntimeContract } from '@/lib/search-settings-runtime';
 import { GroupedSearchResult } from '@/lib/search-continuity';
@@ -17,6 +18,7 @@ import { useLibraryStore } from '@/stores/library-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { useSearchStore } from '@/stores/search-store';
+import { PlaybackResiliencePanel } from './playback-resilience-panel';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { ProviderTrustBadge } from './provider-trust-badge';
@@ -333,6 +335,30 @@ export function SearchBrowser() {
     favoriteEntriesByProvider,
     lastSwitchContext,
   }), [activeConnection?.id, connectionStatus, connections, favoriteEntriesByProvider, getRecentQueries, lastSwitchContext, preferences, runtimeContract, watchHistory]);
+  const activeSearchSnapshot = activeConnection ? getSearchSnapshot(activeConnection.id) : null;
+  const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
+    screenId: 'search',
+    connections,
+    activeConnectionId: activeConnection?.id ?? null,
+    connectionStatus,
+    watchHistory,
+    selectedLabel: query.trim() || null,
+    cachedResultCount: usingCache
+      ? Math.max(results.length, activeSearchSnapshot?.resultCount ?? 0)
+      : activeSearchSnapshot?.resultCount ?? 0,
+    droppedProviderIds: degradedProviders.map(({ provider }) => provider.id),
+    degradedProviderCount: degradedProviders.length,
+  }), [
+    activeConnection?.id,
+    activeSearchSnapshot?.resultCount,
+    connectionStatus,
+    connections,
+    degradedProviders,
+    query,
+    results.length,
+    usingCache,
+    watchHistory,
+  ]);
 
   if (connections.length === 0) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No saved providers yet. Connect on the login screen first.</div>;
@@ -416,6 +442,7 @@ export function SearchBrowser() {
         {runtimeContract?.summary ? (
           <p className="mt-4 text-sm text-slate-400">{runtimeContract.summary}</p>
         ) : null}
+        <PlaybackResiliencePanel contract={playbackResilience} className="mt-4" />
         {runtimeContract?.indexing ? (
           <div className="mt-4 rounded-[1.5rem] border border-sky-400/20 bg-sky-500/10 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">

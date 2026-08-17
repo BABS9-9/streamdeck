@@ -65,7 +65,9 @@ import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-
 import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
+import { PlaybackResiliencePanel } from '@/components/playback-resilience-panel';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
+import { buildPlaybackResilienceContract } from '@/lib/playback-resilience-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
@@ -98,6 +100,7 @@ export function LiveBrowser() {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const playStream = usePlayerStore((state) => state.playStream);
   const streamHealth = usePlayerStore((state) => state.streamHealth);
+  const watchHistory = usePlayerStore((state) => state.watchHistory);
   const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
   const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
   const prefetchStreams = useLiveGuideStore((state) => state.prefetchStreams);
@@ -405,6 +408,32 @@ export function LiveBrowser() {
   const handoffMap = runtimeSurfaceContracts.handoffMap;
   const autonomyBoundary = runtimeSurfaceContracts.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = connectionHeadroomRuntime || null;
+  const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
+    screenId: 'live',
+    connections,
+    activeConnectionId: activeConnection?.id ?? null,
+    connectionStatus,
+    watchHistory,
+    streamHealth,
+    selectedLabel: selectedStream?.name || null,
+    cachedResultCount: filteredStreams.length,
+    droppedProviderIds: providerStatus?.state === 'error' || streamHealth.status === 'error'
+      ? [activeConnection.id]
+      : [],
+    degradedProviderCount: connections.filter((connection) => {
+      const state = connectionStatus[connection.id]?.state;
+      return state === 'degraded' || state === 'error';
+    }).length,
+  }), [
+    activeConnection?.id,
+    connectionStatus,
+    connections,
+    filteredStreams.length,
+    providerStatus?.state,
+    selectedStream?.name,
+    streamHealth,
+    watchHistory,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -421,6 +450,7 @@ export function LiveBrowser() {
         />
       ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="live" /> : null}
+      <PlaybackResiliencePanel contract={playbackResilience} />
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
         badge="Connection headroom"

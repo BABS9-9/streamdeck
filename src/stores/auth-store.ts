@@ -7,6 +7,9 @@ import { authenticate } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
 import { ConnectionStatus, ProviderAuthSummary, ProviderSwitchContext, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
 import { useLiveGuideStore } from '@/stores/live-guide-store';
+import { useLibraryStore } from '@/stores/library-store';
+import { usePlayerStore } from '@/stores/player-store';
+import { useSearchStore } from '@/stores/search-store';
 
 type SwitchConnectionOptions = Omit<ProviderSwitchContext, 'fromProviderId' | 'toProviderId' | 'switchedAt'>;
 
@@ -208,6 +211,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     storage.removeProviderCollections(id);
     storage.removeProviderSession(id);
     useLiveGuideStore.getState().clearProvider(id);
+    useLibraryStore.getState().invalidateProvider(id);
+    useSearchStore.getState().invalidateProvider(id);
+    usePlayerStore.getState().invalidateProvider(id, 'This provider was removed, so playback continuity was cleared out of the active runtime.');
     if (nextActive) {
       storage.setActiveConnectionId(nextActive.id);
       storage.saveProviderSwitchContext(buildProviderSwitchContext(nextActive.id, id, {
@@ -256,7 +262,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }));
       return true;
     } catch (error) {
+      storage.removeProviderSession(id);
+      useLibraryStore.getState().invalidateProvider(id);
+      useSearchStore.getState().invalidateProvider(id);
+      usePlayerStore.getState().markProviderDrop(id, error instanceof Error ? error.message : 'Health check failed');
       set((state) => ({
+        session: get().activeConnection?.id === id ? null : state.session,
         connectionStatus: {
           ...state.connectionStatus,
           [id]: buildErrorStatus(error instanceof Error ? error.message : 'Health check failed'),

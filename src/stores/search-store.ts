@@ -21,6 +21,7 @@ type SearchState = {
   syncProviderIndex: (providerId: string, catalog: ProviderCatalog, updatedAt?: number) => ProviderSearchIndexSnapshot;
   syncProviderIndexes: (entries: Array<{ providerId: string; catalog: ProviderCatalog; updatedAt?: number }>) => Record<string, ProviderSearchIndexSnapshot>;
   removeProviderIndex: (providerId: string) => void;
+  invalidateProvider: (providerId: string) => void;
   queryGlobalIndex: (payload: {
     connections: SavedConnection[];
     query: string;
@@ -107,6 +108,25 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       const indexesByProvider = { ...state.indexesByProvider };
       delete indexesByProvider[providerId];
       return { indexesByProvider };
+    });
+  },
+  invalidateProvider: (providerId) => {
+    storage.removeProviderSearchIndex(providerId);
+    storage.removeProviderSearchSnapshot(providerId);
+    const nextRecentQueries = storage.getRecentSearchQueries().filter((entry) => entry.providerId !== providerId);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('streamdeck.recent-search-queries', JSON.stringify(nextRecentQueries));
+    }
+    set((state) => {
+      const indexesByProvider = { ...state.indexesByProvider };
+      const snapshotsByProvider = { ...state.snapshotsByProvider };
+      delete indexesByProvider[providerId];
+      delete snapshotsByProvider[providerId];
+      return {
+        indexesByProvider,
+        snapshotsByProvider,
+        recentQueries: nextRecentQueries,
+      };
     });
   },
   queryGlobalIndex: ({
