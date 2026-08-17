@@ -67,6 +67,7 @@ import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildPlaybackHistoryRuntime } from '@/lib/playback-history-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
@@ -445,6 +446,13 @@ export function HomeDashboard() {
     }),
     [launchOwnershipContract, savedProviderBoard]
   );
+  const connectionHeadroomRuntime = useMemo(
+    () => buildSavedProviderConnectionHeadroomRuntime({
+      contract: manifestConnectionHeadroom,
+      board: savedProviderBoard,
+    }),
+    [manifestConnectionHeadroom, savedProviderBoard]
+  );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
       contract: identityAnchor,
@@ -526,7 +534,7 @@ export function HomeDashboard() {
   const exitCriteria = runtimeSurfaceContracts?.exitCriteria || manifest?.surfaceExitCriteria.find((item) => item.screenId === 'home') || null;
   const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs.find((item) => item.screenId === 'home') || null;
   const autonomyBoundary = runtimeSurfaceContracts?.autonomyBoundary || manifestAutonomyBoundary;
-  const connectionHeadroom = runtimeSurfaceContracts?.connectionHeadroom || manifestConnectionHeadroom;
+  const connectionHeadroom = connectionHeadroomRuntime || null;
 
   if (!activeConnection) {
     return (
@@ -552,9 +560,7 @@ export function HomeDashboard() {
       ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="home" /> : null}
       <SurfaceConnectionHeadroom
-        contract={connectionHeadroom}
-        authSummary={activeConnection.lastAuthSummary ?? null}
-        health={health}
+        runtime={connectionHeadroom}
         badge="Connection headroom"
       />
       <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
@@ -821,9 +827,7 @@ export function HomeDashboard() {
             </div>
             <div className="mt-4">
               <SurfaceConnectionHeadroomInline
-                contract={connectionHeadroom}
-                authSummary={activeConnection.lastAuthSummary ?? null}
-                health={health}
+                runtime={connectionHeadroom}
                 title="Hero connection headroom"
                 badge="Capacity truth"
               />

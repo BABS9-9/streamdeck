@@ -673,6 +673,31 @@ export type SurfaceLaunchOwnershipRuntimeContract = {
   owners: SurfaceLaunchOwnershipRuntimeEntry[];
 };
 
+export type SurfaceConnectionHeadroomRuntimeLane = {
+  label: string;
+  currentWindow: string;
+  warningTrigger: string;
+  blockedState: string;
+  recommendedMove: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  capacityStatus: string;
+  activeConnections: number | null;
+  maxConnections: number | null;
+  remainingConnections: number | null;
+};
+
+export type SurfaceConnectionHeadroomRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  lanes: SurfaceConnectionHeadroomRuntimeLane[];
+};
+
 export type SurfaceFreshnessBoardRuntimeBudget = {
   label: string;
   liveWindow: string;

@@ -65,6 +65,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
@@ -307,6 +308,13 @@ export function LiveBrowser() {
     }),
     [launchOwnershipContract, savedProviderBoard]
   );
+  const connectionHeadroomRuntime = useMemo(
+    () => buildSavedProviderConnectionHeadroomRuntime({
+      contract: manifestConnectionHeadroom,
+      board: savedProviderBoard,
+    }),
+    [manifestConnectionHeadroom, savedProviderBoard]
+  );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
       contract: identityAnchor,
@@ -386,7 +394,7 @@ export function LiveBrowser() {
   const exitCriteria = runtimeSurfaceContracts.exitCriteria;
   const handoffMap = runtimeSurfaceContracts.handoffMap;
   const autonomyBoundary = runtimeSurfaceContracts.autonomyBoundary || manifestAutonomyBoundary;
-  const connectionHeadroom = runtimeSurfaceContracts.connectionHeadroom || manifestConnectionHeadroom;
+  const connectionHeadroom = connectionHeadroomRuntime || null;
 
   return (
     <div className="space-y-6">
@@ -404,9 +412,7 @@ export function LiveBrowser() {
       ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="live" /> : null}
       <SurfaceConnectionHeadroom
-        contract={connectionHeadroom}
-        authSummary={activeConnection.lastAuthSummary ?? null}
-        health={health}
+        runtime={connectionHeadroom}
         badge="Connection headroom"
       />
       <SurfaceCanonicalProviderIdentity contract={canonicalProviderIdentity} badge="Canonical provider" />
@@ -615,9 +621,7 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceConnectionHeadroomInline
-                contract={connectionHeadroom}
-                authSummary={activeConnection.lastAuthSummary ?? null}
-                health={health}
+                runtime={connectionHeadroom}
                 title="Play connection headroom"
                 badge="Capacity truth"
               />

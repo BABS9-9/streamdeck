@@ -1,6 +1,7 @@
 'use client';
 
-import { MockProviderHealth, MockProviderManifest, ProviderAuthSummary } from '@/lib/types';
+import { connectionStatusTone } from '@/lib/provider-signals';
+import { SurfaceConnectionHeadroomRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -15,29 +16,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceConnectionHeadroomInlineProps = {
-  contract: MockProviderManifest['surfaceConnectionHeadrooms'][number] | null;
-  authSummary?: ProviderAuthSummary | null;
-  health?: MockProviderHealth | null;
+  runtime: SurfaceConnectionHeadroomRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceConnectionHeadroomInline({
-  contract,
-  authSummary,
-  health,
+  runtime,
   title,
   badge,
 }: SurfaceConnectionHeadroomInlineProps) {
-  const lane = contract?.lanes?.[0];
+  const lane = runtime?.lanes?.[0];
 
-  if (!contract || !lane) return null;
-
-  const activeConnections = authSummary?.activeConnections ?? health?.accountProfile?.activeConnections ?? null;
-  const maxConnections = authSummary?.maxConnections ?? health?.accountProfile?.maxConnections ?? null;
-  const remainingConnections = activeConnections !== null && maxConnections !== null
-    ? Math.max(maxConnections - activeConnections, 0)
-    : null;
+  if (!runtime || !lane) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[lane.tone]}`}>
@@ -50,16 +41,31 @@ export function SurfaceConnectionHeadroomInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
+      {lane.owner ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] ${connectionStatusTone[lane.owner.status]}`}>
+            {lane.owner.status}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {lane.owner.providerName}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {lane.capacityStatus}
+          </span>
+        </div>
+      ) : null}
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[lane.tone]}</p>
       <p className="mt-2 text-sm leading-6 text-white">
-        Provider lines: {activeConnections !== null && maxConnections !== null ? `${activeConnections}/${maxConnections} in use` : 'Waiting on fresh line proof'}
+        Provider lines: {lane.activeConnections !== null && lane.maxConnections !== null ? `${lane.activeConnections}/${lane.maxConnections} in use` : 'Waiting on fresh line proof'}
       </p>
       <p className="mt-3 text-sm leading-6 text-white/85">
-        Launch room: {remainingConnections === null ? 'Pending fresh capacity proof.' : `${remainingConnections} line${remainingConnections === 1 ? '' : 's'} still open.`}
+        Launch room: {lane.remainingConnections === null ? 'Pending fresh capacity proof.' : `${lane.remainingConnections} line${lane.remainingConnections === 1 ? '' : 's'} still open.`}
       </p>
+      <p className="mt-3 text-sm leading-6 text-white/85">Current window: {lane.currentWindow}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Pressure trigger: {lane.warningTrigger}</p>
       <p className="mt-3 text-sm leading-6 text-white/75">Next move: {lane.recommendedMove}</p>
+      <p className="mt-3 text-sm leading-6 text-white/75">Runtime capacity posture: {lane.ownerStatusLabel}</p>
     </div>
   );
 }

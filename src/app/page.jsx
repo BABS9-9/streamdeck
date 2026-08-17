@@ -63,6 +63,7 @@ import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
+import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
@@ -362,6 +363,13 @@ export default function LoginPage() {
     }),
     [launchOwnershipContract, savedProviderBoard]
   );
+  const connectionHeadroomRuntime = useMemo(
+    () => buildSavedProviderConnectionHeadroomRuntime({
+      contract: manifestConnectionHeadroom,
+      board: savedProviderBoard,
+    }),
+    [manifestConnectionHeadroom, savedProviderBoard]
+  );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
       contract: identityAnchor,
@@ -424,7 +432,7 @@ export default function LoginPage() {
   const exitCriteria = runtimeSurfaceContracts?.exitCriteria || manifest?.surfaceExitCriteria?.find((item) => item.screenId === 'login') || null;
   const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs?.find((item) => item.screenId === 'login') || null;
   const autonomyBoundary = runtimeSurfaceContracts?.autonomyBoundary || manifestAutonomyBoundary;
-  const connectionHeadroom = runtimeSurfaceContracts?.connectionHeadroom || manifestConnectionHeadroom;
+  const connectionHeadroom = connectionHeadroomRuntime || null;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -752,9 +760,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceConnectionHeadroomInline
-              contract={connectionHeadroom}
-              authSummary={activeConnection?.lastAuthSummary ?? null}
-              health={health}
+              runtime={connectionHeadroom}
               title="Connect connection headroom"
               badge="Capacity truth"
             />
