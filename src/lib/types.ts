@@ -719,6 +719,27 @@ export type SurfaceProofDebtRuntimeContract = {
   debts: SurfaceProofDebtRuntimeEntry[];
 };
 
+export type SurfaceProofProvenanceRuntimeEntry = {
+  label: string;
+  currentSource: string;
+  honestyReason: string;
+  disclosureTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  sourceStatus: string;
+};
+
+export type SurfaceProofProvenanceRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  sources: SurfaceProofProvenanceRuntimeEntry[];
+};
+
 export type SurfaceFreshnessBoardRuntimeBudget = {
   label: string;
   liveWindow: string;

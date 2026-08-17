@@ -1,6 +1,7 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { connectionStatusTone } from '@/lib/provider-signals';
+import { SurfaceProofProvenanceRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -15,19 +16,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceProofProvenanceInlineProps = {
-  contract: MockProviderManifest['surfaceProofProvenances'][number] | null;
+  runtime: SurfaceProofProvenanceRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceProofProvenanceInline({
-  contract,
+  runtime,
   title,
   badge,
 }: SurfaceProofProvenanceInlineProps) {
-  const source = contract?.sources?.[0];
+  const source = runtime?.sources?.[0];
 
-  if (!contract || !source) return null;
+  if (!runtime || !source) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[source.tone]}`}>
@@ -40,11 +41,25 @@ export function SurfaceProofProvenanceInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
+      {source.owner ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] ${connectionStatusTone[source.owner.status]}`}>
+            {source.owner.status}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {source.owner.providerName}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {source.sourceStatus}
+          </span>
+        </div>
+      ) : null}
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[source.tone]}</p>
       <p className="mt-2 text-sm leading-6 text-white">Current proof source: {source.currentSource}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Why it is still honest: {source.honestyReason}</p>
       <p className="mt-3 text-sm leading-6 text-white/75">Disclosure trigger: {source.disclosureTrigger}</p>
+      <p className="mt-3 text-sm leading-6 text-white/75">Runtime owner posture: {source.ownerStatusLabel}</p>
     </div>
   );
 }

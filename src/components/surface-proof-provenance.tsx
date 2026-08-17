@@ -1,6 +1,6 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { SurfaceProofProvenanceRuntimeContract } from '@/lib/types';
 
 const toneClasses = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -9,20 +9,20 @@ const toneClasses = {
 } as const;
 
 type SurfaceProofProvenanceProps = {
-  contract: MockProviderManifest['surfaceProofProvenances'][number] | null;
+  runtime: SurfaceProofProvenanceRuntimeContract | null;
   badge?: string;
 };
 
-export function SurfaceProofProvenance({ contract, badge = 'Proof provenance' }: SurfaceProofProvenanceProps) {
-  if (!contract) return null;
+export function SurfaceProofProvenance({ runtime, badge = 'Proof provenance' }: SurfaceProofProvenanceProps) {
+  if (!runtime) return null;
 
   return (
     <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-sky-300">{badge}</p>
-          <h2 className="mt-3 text-2xl font-semibold text-white">{contract.title}</h2>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">{contract.summary}</p>
+          <h2 className="mt-3 text-2xl font-semibold text-white">{runtime.title}</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">{runtime.summary}</p>
         </div>
         <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
           Where the trust comes from
@@ -30,10 +30,14 @@ export function SurfaceProofProvenance({ contract, badge = 'Proof provenance' }:
       </div>
 
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
-        {contract.sources.map((source) => (
+        {runtime.sources.map((source) => (
           <article key={source.label} className={`rounded-2xl border p-5 ${toneClasses[source.tone]}`}>
             <p className="text-sm font-medium text-white">{source.label}</p>
             <div className="mt-4 space-y-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Source status</p>
+                <p className="mt-2 text-sm leading-6 text-white">{source.sourceStatus}</p>
+              </div>
               <div>
                 <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Current proof source</p>
                 <p className="mt-2 text-sm leading-6 text-white">{source.currentSource}</p>
@@ -45,6 +49,10 @@ export function SurfaceProofProvenance({ contract, badge = 'Proof provenance' }:
               <div>
                 <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Disclosure trigger</p>
                 <p className="mt-2 text-sm leading-6 text-white/85">{source.disclosureTrigger}</p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Runtime owner</p>
+                <p className="mt-2 text-sm leading-6 text-white/85">{source.ownerStatusLabel}</p>
               </div>
             </div>
           </article>

@@ -75,6 +75,7 @@ import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-id
 import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-launch-ownership-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-debt-runtime';
+import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-proof-provenance-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -380,6 +381,13 @@ export default function LoginPage() {
     }),
     [proofDebt, savedProviderBoard]
   );
+  const proofProvenanceRuntime = useMemo(
+    () => buildSavedProviderProofProvenanceRuntime({
+      contract: proofProvenance,
+      board: savedProviderBoard,
+    }),
+    [proofProvenance, savedProviderBoard]
+  );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
       contract: identityAnchor,
@@ -633,7 +641,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProofProvenanceInline
-              contract={proofProvenance}
+              runtime={proofProvenanceRuntime}
               title="Connect proof provenance"
               badge="Trust source"
             />
@@ -870,7 +878,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
+            <SurfaceProofProvenance runtime={proofProvenanceRuntime} badge="Proof provenance" />
           </div>
 
           <div className="mt-6">

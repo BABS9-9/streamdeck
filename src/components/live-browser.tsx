@@ -79,6 +79,7 @@ import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-id
 import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-launch-ownership-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-debt-runtime';
+import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-proof-provenance-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamCategory, XtreamStream } from '@/lib/types';
@@ -328,6 +329,13 @@ export function LiveBrowser() {
     }),
     [proofDebt, savedProviderBoard]
   );
+  const proofProvenanceRuntime = useMemo(
+    () => buildSavedProviderProofProvenanceRuntime({
+      contract: proofProvenance,
+      board: savedProviderBoard,
+    }),
+    [proofProvenance, savedProviderBoard]
+  );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
       contract: identityAnchor,
@@ -489,7 +497,7 @@ export function LiveBrowser() {
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard runtime={freshnessBoardRuntime} badge="Freshness truth" />
       <SurfaceProofDebt runtime={proofDebtRuntime} badge="Proof debt" />
-      <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
+      <SurfaceProofProvenance runtime={proofProvenanceRuntime} badge="Proof provenance" />
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
       <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
@@ -541,7 +549,7 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceProofProvenanceInline
-                contract={proofProvenance}
+                runtime={proofProvenanceRuntime}
                 title="Play proof provenance"
                 badge="Trust source"
               />
