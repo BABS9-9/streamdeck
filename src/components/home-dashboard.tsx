@@ -49,6 +49,7 @@ import { SurfaceReturnCooldownInline } from '@/components/surface-return-cooldow
 import { SurfaceRetryHonestyInline } from '@/components/surface-retry-honesty-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
+import { SurfaceProofDebtInline } from '@/components/surface-proof-debt-inline';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceProviderPodium } from '@/components/surface-provider-podium';
@@ -696,6 +697,13 @@ export function HomeDashboard() {
                 runtime={launchOwnershipRuntime}
                 title="Hero launch ownership"
                 badge="Owner truth"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceProofDebtInline
+                contract={proofDebt}
+                title="Hero proof debt"
+                badge="Borrowed confidence"
               />
             </div>
             <div className="mt-4">

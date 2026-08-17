@@ -46,6 +46,7 @@ import { SurfaceReturnCooldownInline } from '@/components/surface-return-cooldow
 import { SurfaceRetryHonestyInline } from '@/components/surface-retry-honesty-inline';
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
+import { SurfaceProofDebtInline } from '@/components/surface-proof-debt-inline';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceProviderPodium } from '@/components/surface-provider-podium';
@@ -610,6 +611,14 @@ export default function LoginPage() {
               runtime={launchOwnershipRuntime}
               title="Connect launch ownership"
               badge="Owner truth"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceProofDebtInline
+              contract={proofDebt}
+              title="Connect proof debt"
+              badge="Borrowed confidence"
             />
           </div>
 
