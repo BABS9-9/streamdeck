@@ -730,6 +730,13 @@ export function HomeDashboard() {
               />
             </div>
             <div className="mt-4">
+              <SurfaceProviderChoiceInline
+                contract={providerChoice}
+                title="Hero provider choice"
+                badge="Launch choice"
+              />
+            </div>
+            <div className="mt-4">
               <SurfaceProofDebtInline
                 runtime={proofDebtRuntime}
                 title="Hero proof debt"
@@ -875,13 +882,6 @@ export function HomeDashboard() {
                 runtime={connectionHeadroom}
                 title="Hero connection headroom"
                 badge="Capacity truth"
-              />
-            </div>
-            <div className="mt-4">
-              <SurfaceProviderChoiceInline
-                contract={providerChoice}
-                title="Hero provider choice"
-                badge="Launch choice"
               />
             </div>
           </div>

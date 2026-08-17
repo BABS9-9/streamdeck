@@ -554,6 +554,13 @@ export function LiveBrowser() {
               />
             </div>
             <div className="mt-4">
+              <SurfaceProviderChoiceInline
+                contract={providerChoice}
+                title="Play provider choice"
+                badge="Launch choice"
+              />
+            </div>
+            <div className="mt-4">
               <SurfaceProofDebtInline
                 runtime={proofDebtRuntime}
                 title="Play proof debt"
@@ -699,13 +706,6 @@ export function LiveBrowser() {
                 runtime={connectionHeadroom}
                 title="Play connection headroom"
                 badge="Capacity truth"
-              />
-            </div>
-            <div className="mt-4">
-              <SurfaceProviderChoiceInline
-                contract={providerChoice}
-                title="Selected-channel choice"
-                badge="Launch choice"
               />
             </div>
           </div>

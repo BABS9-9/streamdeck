@@ -645,6 +645,14 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
+            <SurfaceProviderChoiceInline
+              contract={providerChoice}
+              title="Connect provider choice"
+              badge="Launch choice"
+            />
+          </div>
+
+          <div className="mt-6">
             <SurfaceProofDebtInline
               runtime={proofDebtRuntime}
               title="Connect proof debt"
@@ -960,14 +968,6 @@ export default function LoginPage() {
                 Open home
               </button>
             ) : null}
-          </div>
-
-          <div className="mt-6">
-            <SurfaceProviderChoiceInline
-              contract={providerChoice}
-              title="Provider choice truth"
-              badge="Connect choice"
-            />
           </div>
 
           <form onSubmit={handleConnect} className="mt-8 space-y-4">
