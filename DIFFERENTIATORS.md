@@ -19,6 +19,7 @@ StreamDeck should feel like a premium streaming product first and an IPTV utilit
 | Search across all providers | Search one query across every saved Xtream provider and rank results together. | Competitors usually search only the active provider, which breaks the multi-provider promise. | Phase 2 | Maintain provider catalogs per connection, build cross-provider ranking and duplicate grouping, preserve selected-query context during provider switches, and show result provenance clearly. |
 | Provider risk strip | Keep one compact cross-surface strip that says when the current provider is healthy, pressured, expired, or unstable before users blame the wrong layer. | Most IPTV players hide provider risk in settings or let playback/search errors explain it too late. | Phase 1 | Reuse one provider-health model across Login, Home, and Live with operator headline, trust signals, and explicit recovery CTA so the same risk story survives surface changes. |
 | Proof debt | Publish what confidence is still borrowed from cache, saved-provider memory, preview continuity, or rescue logic before premium copy sounds fresher than the proof behind it. | Competitors usually present cached or rescued states with the same confidence as fresh provider proof, so users cannot tell when polish is floating on borrowed certainty. | Phase 1 | Keep one surface-specific proof-debt contract across Login, Home, and Live and keep that borrowed-confidence story visible beside Connect, the hero CTA, and Play so premium posture never hides how much certainty is still on credit. |
+| Proof provenance | Publish whether Connect, the hero CTA, or Play is currently backed by fresh provider proof, saved continuity, or rescue logic before premium reassurance sounds more live than its source. | Competitors usually let cached continuity or fallback logic speak with the same authority as fresh provider proof, so users cannot tell what actually earned the current confidence. | Phase 1 | Keep one surface-specific proof-provenance contract across Login, Home, and Live and keep that source-of-truth story visible beside Connect, the hero CTA, and Play so premium reassurance never hides what layer is really backing the next move. |
 | Claim ceiling | Publish the strongest promise each surface can still make, the overclaim it must suppress, and the proof that earns premium language back. | Competitors usually keep cinematic or premium copy unchanged even after provider truth has degraded, so users cannot tell when the shell is overselling the next move. | Phase 1 | Keep one surface-specific claim-ceiling contract across Login, Home, and Live and keep that cap visible beside Connect, the hero CTA, and Play so premium language is capped by current proof instead of drifting into confidence theater. |
 | Confidence floor | Publish the minimum proof each surface still needs before premium connect, browse, or play posture remains honest, the downgrade mode that takes over when proof slips, and the hard-stop trigger that ends the premium path. | Competitors usually keep the premium CTA posture alive even after the minimum launch proof has collapsed, so users cannot tell when polish is now standing on less than the app itself should accept. | Phase 1 | Reuse one surface-specific confidence-floor contract across Login, Home, and Live so minimum proof, downgrade mode, and hard-stop trigger stay aligned beside the primary CTA. |
 | Connection headroom | Show how many provider lines are already in use, how much playback room is left, and when line pressure should outrank premium launch copy. | Most IPTV players expose active-connection limits only after playback fails, so users blame channels or the app instead of the provider line ceiling. | Phase 1 | Reuse auth-summary and provider-health line counts across Login, Home, and Live and keep that headroom visible in a compact beside-the-CTA panel for Connect, the hero CTA, and Play before a saturated account causes a misleading failure. |
@@ -63,21 +64,23 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
    Provider trouble should be explained on the same surface where the user is making the next move, not discovered after a failed launch.
 6. Proof-debt honesty
    The shell should say when confidence is fresh versus borrowed before cached or rescued states get dressed up like live provider proof.
-7. Claim-ceiling discipline
+7. Proof-provenance honesty
+   The shell should say what source is actually backing confidence before saved continuity or rescue logic gets dressed up like fresh provider proof.
+8. Claim-ceiling discipline
    The shell should cap premium language at what current proof really earns before browse, connect, or play copy outruns runtime truth.
-8. Confidence-floor honesty
+9. Confidence-floor honesty
    The shell should say what minimum proof still keeps premium connect, browse, or play posture honest before the CTA keeps its confidence after the floor has collapsed.
-9. Connection headroom honesty
+10. Connection headroom honesty
    The shell should surface remaining provider line capacity in a compact beside-the-CTA panel before Connect, hero launch, or Play gets blamed for a saturated account.
-10. Interruption-budget honesty
+11. Interruption-budget honesty
    The shell should say how much waiting still preserves the same move and when delay must escalate into an explicit recovery, switch, or hold state.
-11. Retry honesty
+12. Retry honesty
    The shell should say when retry still preserves the same provider-owned move, what context survives that retry, and what trigger means recovery should replace one more attempt.
-12. Fallback-cost honesty
+13. Fallback-cost honesty
    The shell should say what polish, certainty, or exactness fallback already consumed so preserved momentum does not masquerade as a free save.
-13. Provider-choice honesty
+14. Provider-choice honesty
    The shell should say when it is still safe to auto-pick the healthiest equivalent provider, when equivalence has weakened, and when the user must take ownership of the next move explicitly.
-14. Autonomy-boundary honesty
+15. Autonomy-boundary honesty
    The shell should say what trust work can stay automatic, what provider or playback decision still belongs to the user, and what event forces an explicit handoff before recovery turns into hidden automation.
 15. Launch-readiness honesty
    The shell should show whether the next move is genuinely ready, only watch-safe, or already recovery-owned before cinematic polish outruns proof.
@@ -153,6 +156,8 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must keep that fallback-expiry truth visible beside Connect so the user can see when rescue sameness is about to age out before shortcut polish keeps selling it as current.
 - Must keep the current claim ceiling visible beside Connect so setup copy cannot promise a fresh Home launch after proof has already downgraded into watch-only or recovery-led posture.
 - Must keep the current borrowed-confidence story visible beside Connect so setup copy cannot hide what trust is still on credit before a saved-provider shortcut feels fresher than the proof behind it.
+- Must say whether Connect is currently backed by fresh auth proof, saved-provider continuity, or rescue logic before setup reassurance sounds fresher than the proof source behind it.
+- Must keep that proof-provenance story visible beside Connect so the user can see what layer is actually backing setup confidence before saved continuity or rescue logic impersonates live provider proof.
 - Must state the hold condition that blocks Home advancement and the exact handoff context that should survive once Login clears the user forward.
 - Must publish how fresh the tracked guide snapshot really is, which channels are already stale or missing, and whether Connect should still lean on the active provider or the recovery owner for the next Home truth.
 
@@ -165,6 +170,8 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must say when hero confidence is still borrowed from cached browse state or rescue ownership and what fresh provider proof repays that debt before Home sounds fully live again.
 - Must cap cinematic hero copy at the strongest browse promise current provider, rail, and guide proof actually earn before Home sells a fresher story than it has proven.
 - Must keep the current borrowed-confidence story visible beside the hero CTA so the user can see what Home still knows, what certainty is still on credit, and what proof repays that debt before cinematic launch polish overclaims freshness.
+- Must say whether the hero CTA is currently backed by live provider browse proof, cached continuity, or rescue logic before cinematic reassurance sounds more live than its source.
+- Must keep that proof-provenance story visible beside the hero CTA so the user can see what layer is actually carrying featured-launch confidence before cache or rescue impersonates fresh browse truth.
 - Must say what minimum browse, guide, or rescue proof still keeps the hero in premium launch posture, what downgrade mode takes over when that floor slips, and what trigger ends the premium browse story outright.
 - Must surface provider line headroom near the hero so launch polish does not hide when the account is nearly full or already saturated.
 - Must keep a compact connection-headroom panel beside the hero CTA so featured launch copy says how many lines are already occupied, how much playback room is left, and when a healthier saved provider or wait state should outrank cinematic momentum.
@@ -207,6 +214,8 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must say when surf confidence is still borrowed from preview continuity, same-category rescue, or cached guide posture and what proof repays that debt before Play sounds exact again.
 - Must cap playback language at the strongest launch promise current preview, guide, and provider proof actually earn before Play sounds safer than the selected card can prove.
 - Must keep the current borrowed-confidence story visible beside Play so the user can see what Live still knows, what certainty is still on credit, and what proof repays that debt before preview motion overclaims exact-channel safety.
+- Must say whether Play is currently backed by live preview-plus-guide proof, same-category continuity, or rescue logic before preview reassurance sounds more exact than its source.
+- Must keep that proof-provenance story visible beside Play so the user can see what layer is actually carrying selected-card confidence before continuity or rescue impersonates exact-channel proof.
 - Must say what minimum preview, guide, or rescue proof still keeps Play in premium posture, what downgrade mode takes over when that floor slips, and what trigger ends the premium launch claim entirely.
 - Must show remaining provider line headroom before preview motion makes a saturated account look like a channel-quality problem.
 - Must keep a compact connection-headroom panel beside Play so the selected card says how many provider lines are already occupied, how much launch room is left, and when a healthier saved provider or wait state should outrank another play attempt.
@@ -259,6 +268,6 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 
 ## Implementation Priorities Right Now
 
-1. Keep Phase 1 strongest on multi-connection switching, saved-provider podium, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, claim ceiling, confidence floor, connection headroom, interruption budget, retry honesty, fallback cost, provider choice truth, autonomy boundary, launch readiness, launch ownership, launch scorecard, hold receipt, browse launch scorecard, handoff clarity, provider stability truth, return cooldown truth, recovery witness, rescue receipt, reset boundary, identity anchor, canonical provider identity, fallback ranking, fallback equivalence, fallback expiry truth, and stream-health HUD, with proof debt, claim ceiling, connection headroom, launch ownership, rescue receipt, reset boundary, identity anchor, canonical provider identity, fallback ranking, fallback equivalence, and fallback expiry truth visible in compact beside-the-CTA panels instead of only in deeper trust stacks.
+1. Keep Phase 1 strongest on multi-connection switching, saved-provider podium, smart EPG overlay, guide freshness board, continue watching, instant preview, collections, provider risk strip, proof debt, proof provenance, claim ceiling, confidence floor, connection headroom, interruption budget, retry honesty, fallback cost, provider choice truth, autonomy boundary, launch readiness, launch ownership, launch scorecard, hold receipt, browse launch scorecard, handoff clarity, provider stability truth, return cooldown truth, recovery witness, rescue receipt, reset boundary, identity anchor, canonical provider identity, fallback ranking, fallback equivalence, fallback expiry truth, and stream-health HUD, with proof debt, proof provenance, claim ceiling, connection headroom, launch ownership, rescue receipt, reset boundary, identity anchor, canonical provider identity, fallback ranking, fallback equivalence, and fallback expiry truth visible in compact beside-the-CTA panels instead of only in deeper trust stacks.
 2. Treat cross-provider search as the next major product unlock once provider catalogs are stable.
 3. Leave recording, watch party, and per-profile parental controls scaffold-friendly in the architecture, but do not let them dilute the Phase 1 browser, playback, and continuity bar.
