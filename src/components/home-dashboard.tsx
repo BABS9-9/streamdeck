@@ -77,6 +77,7 @@ import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-
 import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-identity-anchor-runtime';
 import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-launch-ownership-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
+import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-debt-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamStream } from '@/lib/types';
@@ -454,6 +455,13 @@ export function HomeDashboard() {
     }),
     [manifestConnectionHeadroom, savedProviderBoard]
   );
+  const proofDebtRuntime = useMemo(
+    () => buildSavedProviderProofDebtRuntime({
+      contract: proofDebt,
+      board: savedProviderBoard,
+    }),
+    [proofDebt, savedProviderBoard]
+  );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
       contract: identityAnchor,
@@ -701,7 +709,7 @@ export function HomeDashboard() {
             </div>
             <div className="mt-4">
               <SurfaceProofDebtInline
-                contract={proofDebt}
+                runtime={proofDebtRuntime}
                 title="Hero proof debt"
                 badge="Borrowed confidence"
               />
@@ -895,7 +903,7 @@ export function HomeDashboard() {
       <SurfaceProviderStabilityContract contract={providerStabilityContract} badge="Stability truth" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard runtime={freshnessBoardRuntime} badge="Freshness truth" />
-      <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+      <SurfaceProofDebt runtime={proofDebtRuntime} badge="Proof debt" />
       <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />

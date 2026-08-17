@@ -75,6 +75,7 @@ import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-
 import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-identity-anchor-runtime';
 import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-launch-ownership-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
+import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-debt-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamCategory, XtreamStream } from '@/lib/types';
@@ -316,6 +317,13 @@ export function LiveBrowser() {
     }),
     [manifestConnectionHeadroom, savedProviderBoard]
   );
+  const proofDebtRuntime = useMemo(
+    () => buildSavedProviderProofDebtRuntime({
+      contract: proofDebt,
+      board: savedProviderBoard,
+    }),
+    [proofDebt, savedProviderBoard]
+  );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
       contract: identityAnchor,
@@ -449,7 +457,7 @@ export function LiveBrowser() {
       <SurfaceProviderStabilityContract contract={providerStabilityContract} badge="Stability truth" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard runtime={freshnessBoardRuntime} badge="Freshness truth" />
-      <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+      <SurfaceProofDebt runtime={proofDebtRuntime} badge="Proof debt" />
       <SurfaceProofProvenance contract={proofProvenance} badge="Proof provenance" />
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
@@ -495,7 +503,7 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceProofDebtInline
-                contract={proofDebt}
+                runtime={proofDebtRuntime}
                 title="Play proof debt"
                 badge="Borrowed confidence"
               />

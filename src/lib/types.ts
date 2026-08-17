@@ -698,6 +698,27 @@ export type SurfaceConnectionHeadroomRuntimeContract = {
   lanes: SurfaceConnectionHeadroomRuntimeLane[];
 };
 
+export type SurfaceProofDebtRuntimeEntry = {
+  label: string;
+  carriedUncertainty: string;
+  borrowedConfidence: string;
+  repaymentTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  debtStatus: string;
+};
+
+export type SurfaceProofDebtRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  debts: SurfaceProofDebtRuntimeEntry[];
+};
+
 export type SurfaceFreshnessBoardRuntimeBudget = {
   label: string;
   liveWindow: string;

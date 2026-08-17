@@ -73,6 +73,7 @@ import { buildSavedProviderHoldReceiptRuntime } from '@/lib/saved-provider-hold-
 import { buildSavedProviderIdentityAnchorRuntime } from '@/lib/saved-provider-identity-anchor-runtime';
 import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-launch-ownership-runtime';
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
+import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-debt-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -371,6 +372,13 @@ export default function LoginPage() {
     }),
     [manifestConnectionHeadroom, savedProviderBoard]
   );
+  const proofDebtRuntime = useMemo(
+    () => buildSavedProviderProofDebtRuntime({
+      contract: proofDebt,
+      board: savedProviderBoard,
+    }),
+    [proofDebt, savedProviderBoard]
+  );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
       contract: identityAnchor,
@@ -616,7 +624,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProofDebtInline
-              contract={proofDebt}
+              runtime={proofDebtRuntime}
               title="Connect proof debt"
               badge="Borrowed confidence"
             />
@@ -849,7 +857,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceProofDebt contract={proofDebt} badge="Proof debt" />
+            <SurfaceProofDebt runtime={proofDebtRuntime} badge="Proof debt" />
           </div>
 
           <div className="mt-6">
