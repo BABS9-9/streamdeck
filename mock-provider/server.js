@@ -822,6 +822,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home'],
   },
   {
+    slug: 'saved-provider-podium',
+    feature: 'Saved-provider podium',
+    pitch: 'Keep a compact podium beside premium CTAs so provider ownership, standby recovery, and blocked shortcuts are readable before the next move changes hands.',
+    competitiveGap: 'Most IPTV players hide saved-provider ranking in settings or deeper dialogs, so users only discover who really owned the next move after browse or playback already drifted.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Reuse one provider podium contract across Login, Home, and Live, and surface that same owner, standby, and blocked-provider truth both in deeper strategy boards and in compact CTA-side panels beside Connect, the hero CTA, and Play.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'smart-epg-overlay',
     feature: 'Smart EPG overlay',
     pitch: 'Show NOW and NEXT inline on live cards and preview rails instead of burying guide data in a separate mode.',
@@ -4937,22 +4946,22 @@ const buildSurfaceProviderPodiums = (scenario = 'healthy') => ([
     screenId: 'login',
     title: 'Saved-provider podium',
     summary: scenario === 'healthy'
-      ? 'Login should show which saved provider owns the next Home launch, which standby source can take over cleanly, and which risky source must stay visible without being auto-promoted.'
-      : 'Login should keep saved providers visible, but rank who can still own Home honestly, who can recover it next, and who must stay blocked until trust or line posture improves.',
+      ? 'Login should show a compact CTA-side podium that says which saved provider owns the next Home launch, which standby source can take over cleanly, and which risky source must stay visible without being auto-promoted.'
+      : 'Login should keep saved providers visible in a compact CTA-side podium that ranks who can still own Home honestly, who can recover it next, and who must stay blocked until trust or line posture improves.',
     slots: [
       {
         label: 'Owns next Home move',
         qualification: scenario === 'healthy'
-          ? 'This slot belongs to the saved provider with the clearest auth proof, spare line headroom, and safest path into Home right now.'
-          : 'This slot belongs to the saved provider that still keeps Login honest even while the active source is degraded, saturated, expired, or unstable.',
+          ? 'This CTA-side owner slot belongs to the saved provider with the clearest auth proof, spare line headroom, and safest path into Home right now.'
+          : 'This CTA-side owner slot belongs to the saved provider that still keeps Login honest even while the active source is degraded, saturated, expired, or unstable.',
         downgradeTrigger: 'Downgrade this owner the moment auth trust softens, line pressure removes launch headroom, or another saved provider clearly becomes safer.',
         tone: scenario === 'healthy' ? 'ready' : 'watch',
       },
       {
         label: 'Standby recovery owner',
         qualification: scenario === 'healthy'
-          ? 'Keep one healthier saved provider visibly warmed up so recovery feels like a guided handoff instead of a fresh setup ritual.'
-          : 'Standby should already look plausible enough that one tap can recover the flow without hiding who changed under the hood.',
+          ? 'Keep one healthier saved provider visibly warmed up beside Connect so recovery feels like a guided handoff instead of a fresh setup ritual.'
+          : 'Standby should already look plausible enough beside Connect that one tap can recover the flow without hiding who changed under the hood.',
         downgradeTrigger: 'Downgrade standby when the alternate source no longer preserves the same Home destination or loses the spare capacity that made it safe.',
         tone: 'watch',
       },
@@ -4970,22 +4979,22 @@ const buildSurfaceProviderPodiums = (scenario = 'healthy') => ([
     screenId: 'home',
     title: 'Featured-provider podium',
     summary: scenario === 'healthy'
-      ? 'Home should rank which saved provider truly owns the hero and quick-rail launch story, which standby copy can keep browse continuity alive, and which source must stay visible but secondary.'
-      : 'Home should preserve the same browse shell, but make provider ranking obvious before a degraded, cached, or rescue-owned hero keeps sounding fully current.',
+      ? 'Home should rank which saved provider truly owns the hero and quick-rail launch story in a compact CTA-side podium, which standby copy can keep browse continuity alive, and which source must stay visible but secondary.'
+      : 'Home should preserve the same browse shell, but make provider ranking obvious in a compact CTA-side podium before a degraded, cached, or rescue-owned hero keeps sounding fully current.',
     slots: [
       {
         label: 'Owns featured launch',
         qualification: scenario === 'healthy'
-          ? 'This slot owns the hero only while featured browse proof, guide posture, and launch headroom still agree on the same provider-backed next move.'
-          : 'This slot owns the hero when it is still the safest provider-backed browse owner, even if rescue or cache is doing more visible work underneath.',
+          ? 'This CTA-side owner slot owns the hero only while featured browse proof, guide posture, and launch headroom still agree on the same provider-backed next move.'
+          : 'This CTA-side owner slot owns the hero when it is still the safest provider-backed browse owner, even if rescue or cache is doing more visible work underneath.',
         downgradeTrigger: 'Downgrade the hero owner when cached rails outrun fresh provider proof or another saved provider becomes the safer launch owner.',
         tone: scenario === 'healthy' ? 'ready' : 'watch',
       },
       {
         label: 'Standby browse owner',
         qualification: scenario === 'healthy'
-          ? 'Keep one alternate provider close enough to inherit featured browse, quick rails, and live continuity without throwing the user into Settings.'
-          : 'Standby should preserve the same discovery posture when the hero needs to change owners without pretending that nothing changed.',
+          ? 'Keep one alternate provider close enough beside the hero CTA to inherit featured browse, quick rails, and live continuity without throwing the user into Settings.'
+          : 'Standby should preserve the same discovery posture beside the hero CTA when the hero needs to change owners without pretending that nothing changed.',
         downgradeTrigger: 'Downgrade standby when it cannot preserve the same featured intent, the same live lane, or enough line headroom to stay credible.',
         tone: 'watch',
       },
@@ -5003,22 +5012,22 @@ const buildSurfaceProviderPodiums = (scenario = 'healthy') => ([
     screenId: 'live',
     title: 'Play-owner podium',
     summary: scenario === 'healthy'
-      ? 'Live should rank which saved provider owns the next Play on the selected card, which standby source can preserve category-surf momentum, and which risky source must stay visible without taking over.'
-      : 'Live should keep the same selected-card story visible, but publish which provider still owns Play, which fallback can keep the category alive, and which source is blocked from a silent handoff.',
+      ? 'Live should rank which saved provider owns the next Play on the selected card in a compact CTA-side podium, which standby source can preserve category-surf momentum, and which risky source must stay visible without taking over.'
+      : 'Live should keep the same selected-card story visible, but publish which provider still owns Play in a compact CTA-side podium, which fallback can keep the category alive, and which source is blocked from a silent handoff.',
     slots: [
       {
         label: 'Owns Play now',
         qualification: scenario === 'healthy'
-          ? 'This slot owns Play only while preview, guide posture, and line headroom still back the same exact-channel decision.'
-          : 'This slot owns Play when it is still the safest exact-channel or same-surface provider-backed launch available on the selected card.',
+          ? 'This CTA-side owner slot owns Play only while preview, guide posture, and line headroom still back the same exact-channel decision.'
+          : 'This CTA-side owner slot owns Play when it is still the safest exact-channel or same-surface provider-backed launch available on the selected card.',
         downgradeTrigger: 'Downgrade the Play owner when preview stability slips, NOW / NEXT proof weakens, or another saved provider clearly outranks it on launch safety.',
         tone: scenario === 'healthy' ? 'ready' : 'watch',
       },
       {
         label: 'Category-safe rescue',
         qualification: scenario === 'healthy'
-          ? 'Keep one standby provider close enough to preserve the same live lane when exact-channel proof softens.'
-          : 'Standby should keep channel-surf momentum alive even when the original provider loses exact-channel ownership and rescue becomes the honest next move.',
+          ? 'Keep one standby provider close enough beside Play to preserve the same live lane when exact-channel proof softens.'
+          : 'Standby should keep channel-surf momentum alive beside Play even when the original provider loses exact-channel ownership and rescue becomes the honest next move.',
         downgradeTrigger: 'Downgrade standby when it can no longer preserve the same category flow, same launch meaning, or enough capacity to stay believable.',
         tone: 'watch',
       },
@@ -5038,13 +5047,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, compact saved-provider podiums beside premium CTAs, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth, recovery-witness proof, action-gated CTAs, fallback-cost truth, provider-choice clarity, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, connection-headroom truth, launch ownership, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, hidden line-pressure, or fake reset theater.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, compact CTA-side saved-provider podiums, connection-headroom truth, launch ownership, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, hidden line-pressure, fake reset theater, or invisible provider-rank changes.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -5064,6 +5073,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       proof: [
         'Connect with the local mock credentials',
         'Switch scenarios without leaving the screen',
+        'Saved-provider podium stays visible beside Connect before setup polish hides who owns the next Home move',
         'Provider risk strip updates before Connect overclaims launch safety',
         'Connection headroom stays visible beside Connect before setup polish hides a saturated account ceiling',
         'Launch scorecard stays visible before Login hides whether Connect is ready, watch-only, or already recovery-led',
@@ -5101,6 +5111,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       detail: 'Shows featured live browse, provider trust cockpit, provider-risk strip, quick-launch rails, and mock-provider recovery guidance.',
       proof: [
         'Featured live card launches playback directly',
+        'Saved-provider podium stays visible beside the hero CTA before cinematic browse polish hides who owns the featured launch',
         'Provider risk strip stays aligned with hero trust and the next safe launch',
         'Connection headroom stays visible beside the hero CTA before browse polish hides a saturated account ceiling',
         'Launch scorecard stays visible before Home hides whether the hero is launch-ready, cache-borrowed, or already recovery-owned',
@@ -5139,6 +5150,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       detail: 'Delivers category browse, provider-risk strip, inline guide, preview fallback, favorites, and healthier-provider recovery from each channel card.',
       proof: [
         'Filter by category and search without leaving the page',
+        'Saved-provider podium stays visible beside Play before preview motion hides who owns the next watch handoff',
         'Provider risk strip warns about auth, expiry, or line pressure before Play gets blamed',
         'Connection headroom stays visible beside Play before preview motion hides a saturated account ceiling',
         'Launch scorecard stays visible before preview motion hides whether Play is exact-channel ready, preview-safe only, or already rescue-led',
