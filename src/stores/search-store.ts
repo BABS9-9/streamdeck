@@ -7,7 +7,7 @@ import { buildSearchRouteActionContract, GlobalSearchRouteContract } from '@/lib
 import { buildGroupedSearchResultsFromHits } from '@/lib/search-continuity';
 import { buildSearchSnapshotFromResults } from '@/lib/search-snapshot-contracts';
 import { storage } from '@/lib/storage';
-import { ConnectionStatus, FavoriteEntry, ProviderCatalog, ProviderSearchIndexSnapshot, ProviderSearchSnapshot, RecentSearchQueryEntry, SavedConnection, WatchHistoryItem } from '@/lib/types';
+import { ConnectionStatus, FavoriteEntry, ProviderCatalog, ProviderSearchIndexSnapshot, ProviderSearchSnapshot, RecentSearchQueryEntry, SavedConnection, SearchFocusMemorySnapshot, WatchHistoryItem } from '@/lib/types';
 
 type SearchState = {
   hydrated: boolean;
@@ -40,6 +40,7 @@ type SearchState = {
     query: string;
     results: ReturnType<typeof buildGroupedSearchResultsFromHits>;
     duplicateGroups: number;
+    focusMemory?: SearchFocusMemorySnapshot | null;
     updatedAt?: number;
   }) => void;
   saveRecentQuery: (entry: RecentSearchQueryEntry) => void;
@@ -196,12 +197,13 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       },
     }));
   },
-  saveResultsSnapshot: ({ providerId, query, results, duplicateGroups, updatedAt }) => {
+  saveResultsSnapshot: ({ providerId, query, results, duplicateGroups, focusMemory, updatedAt }) => {
     const snapshot = buildSearchSnapshotFromResults({
       providerId,
       query,
       results,
       duplicateGroups,
+      focusMemory,
       updatedAt,
     });
     storage.saveProviderSearchSnapshot(providerId, snapshot);

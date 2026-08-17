@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { buildSearchResultActionKey, GlobalSearchRouteContract } from '@/lib/search-action-contracts';
 import { buildSearchContinuityDisplayContract } from '@/lib/search-continuity-contracts';
+import { buildSearchFocusMemorySnapshot, buildSearchFocusRuntimeContract } from '@/lib/search-focus-runtime';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildPlaybackResilienceContract } from '@/lib/playback-resilience-runtime';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
@@ -79,6 +80,7 @@ export function SearchBrowser() {
   const [mockManifest, setMockManifest] = useState<MockProviderManifest | null>(null);
   const [scenario, setScenario] = useState<MockProviderScenario>('healthy');
   const [scenarioRefreshing, setScenarioRefreshing] = useState(false);
+  const [selectedResultKey, setSelectedResultKey] = useState<string | null>(null);
 
   useEffect(() => {
     hydratePreferences();
@@ -93,7 +95,18 @@ export function SearchBrowser() {
     if (!activeConnection) return;
     const snapshot = getSearchSnapshot(activeConnection.id);
     setQuery(snapshot?.query || 'sports');
+    setSelectedResultKey(snapshot?.selectedResultKey ?? null);
   }, [activeConnection?.id, getSearchSnapshot]);
+
+  useEffect(() => {
+    if (!runtimeContract?.results.length) {
+      setSelectedResultKey(null);
+      return;
+    }
+
+    if (selectedResultKey && runtimeContract.actionsByResultKey[selectedResultKey]) return;
+    setSelectedResultKey(buildSearchResultActionKey(runtimeContract.results[0]));
+  }, [runtimeContract, selectedResultKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -300,6 +313,23 @@ export function SearchBrowser() {
     setSelectedMockProviderScenario(nextScenario);
   };
 
+  const activeSearchSnapshot = activeConnection ? getSearchSnapshot(activeConnection.id) : null;
+  const focusMemory = useMemo(() => buildSearchFocusMemorySnapshot({
+    query,
+    runtimeContract,
+    snapshot: activeSearchSnapshot,
+    recentQueries: getRecentQueries(),
+    preferences,
+    activeProviderId: activeConnection?.id,
+    degradedProviderCount: degradedProviders.length,
+    selectedResultKey,
+  }), [activeConnection?.id, activeSearchSnapshot, degradedProviders.length, getRecentQueries, preferences, query, runtimeContract, selectedResultKey]);
+  const focusRuntime = useMemo(() => buildSearchFocusRuntimeContract({
+    memory: focusMemory,
+    recentQueries: getRecentQueries(),
+    runtimeContract,
+  }), [focusMemory, getRecentQueries, runtimeContract]);
+
   useEffect(() => {
     if (!activeConnection) return;
     if (query.trim().length < 2) return;
@@ -308,6 +338,7 @@ export function SearchBrowser() {
       query,
       results,
       duplicateGroups,
+      focusMemory,
     });
     saveRecentQuery({
       providerId: activeConnection.id,
@@ -320,9 +351,10 @@ export function SearchBrowser() {
       movieCount: runtimeContract?.movieCount ?? 0,
       seriesCount: runtimeContract?.seriesCount ?? 0,
       status: runtimeContract?.status ?? 'empty',
+      focusMemory,
       updatedAt: Date.now(),
     });
-  }, [activeConnection, duplicateGroups, query, results, runtimeContract?.liveCount, runtimeContract?.movieCount, runtimeContract?.seriesCount, runtimeContract?.status, saveRecentQuery, saveResultsSnapshot]);
+  }, [activeConnection, duplicateGroups, focusMemory, query, results, runtimeContract?.liveCount, runtimeContract?.movieCount, runtimeContract?.seriesCount, runtimeContract?.status, saveRecentQuery, saveResultsSnapshot]);
 
   const searchSettingsRuntime = useMemo(() => buildSearchSettingsRuntimeContract({
     connections,
@@ -335,7 +367,6 @@ export function SearchBrowser() {
     favoriteEntriesByProvider,
     lastSwitchContext,
   }), [activeConnection?.id, connectionStatus, connections, favoriteEntriesByProvider, getRecentQueries, lastSwitchContext, preferences, runtimeContract, watchHistory]);
-  const activeSearchSnapshot = activeConnection ? getSearchSnapshot(activeConnection.id) : null;
   const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
     screenId: 'search',
     connections,
@@ -442,6 +473,45 @@ export function SearchBrowser() {
         {runtimeContract?.summary ? (
           <p className="mt-4 text-sm text-slate-400">{runtimeContract.summary}</p>
         ) : null}
+        <div className={`mt-4 rounded-[1.5rem] border p-4 ${
+          focusRuntime.tone === 'ready'
+            ? 'border-emerald-400/20 bg-emerald-500/10'
+            : focusRuntime.tone === 'watch'
+              ? 'border-amber-400/20 bg-amber-500/10'
+              : 'border-rose-400/20 bg-rose-500/10'
+        }`}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-white/80">{focusRuntime.title}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{focusRuntime.summary}</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.18em] text-white/80">
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5">{focusRuntime.entryFocusState}</span>
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5">{focusRuntime.returnFocusState}</span>
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5">{focusRuntime.backLayerState}</span>
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5">{focusRuntime.pointerCompatibilityState}</span>
+            </div>
+          </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-200">
+              <p className="uppercase tracking-[0.2em] text-slate-500">Entry focus</p>
+              <p className="mt-2 leading-5">{focusRuntime.entrySummary}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-200">
+              <p className="uppercase tracking-[0.2em] text-slate-500">Return focus</p>
+              <p className="mt-2 leading-5">{focusRuntime.returnSummary}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-200">
+              <p className="uppercase tracking-[0.2em] text-slate-500">Back layer</p>
+              <p className="mt-2 leading-5">{focusRuntime.backLayerSummary}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-slate-200">
+              <p className="uppercase tracking-[0.2em] text-slate-500">Recovery reason</p>
+              <p className="mt-2 leading-5">{focusRuntime.focusRecoveryReason}</p>
+              <p className="mt-2 leading-5 text-slate-400">{focusRuntime.pointerSummary}</p>
+            </div>
+          </div>
+        </div>
         <PlaybackResiliencePanel contract={playbackResilience} className="mt-4" />
         {runtimeContract?.indexing ? (
           <div className="mt-4 rounded-[1.5rem] border border-sky-400/20 bg-sky-500/10 p-4">
@@ -525,7 +595,11 @@ export function SearchBrowser() {
                 <button
                   key={entry.key}
                   onClick={() => setQuery(entry.query)}
-                  className="flex w-full items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left hover:bg-white/[0.06]"
+                  className={`flex w-full items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left hover:bg-white/[0.06] ${
+                    focusRuntime.highlightedRecentQueryKey === entry.key
+                      ? 'border-violet-400/40 bg-violet-500/10'
+                      : 'border-white/10 bg-white/[0.03]'
+                  }`}
                 >
                   <div>
                     <p className="text-sm font-medium text-white">{entry.query}</p>
@@ -770,8 +844,16 @@ export function SearchBrowser() {
               continuity: result.continuity,
               kind: result.kind,
             });
+            const resultActionKey = buildSearchResultActionKey(result);
             return (
-              <article key={`${result.provider.id}-${result.kind}-${contentId}`} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
+              <article
+                key={`${result.provider.id}-${result.kind}-${contentId}`}
+                className={`rounded-[1.6rem] border p-4 ${
+                  focusRuntime.highlightedResultKey === resultActionKey
+                    ? 'border-violet-400/40 bg-violet-500/10'
+                    : 'border-white/10 bg-white/5'
+                }`}
+              >
                 <div className="aspect-video rounded-2xl bg-cover bg-center bg-no-repeat" style={{ backgroundImage: artwork ? `url(${artwork})` : undefined }} />
                 <div className="mt-4 flex items-start justify-between gap-4">
                   <div>
@@ -779,14 +861,17 @@ export function SearchBrowser() {
                     <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500">{result.kind} · {result.provider.name}</p>
                   </div>
                   <button
-                    onClick={() => setActiveConnection(result.provider.id, {
-                      sourceSurface: 'search',
-                      reason: 'variant',
-                      preservedQuery: query,
-                      preservedResultCount: results.length,
-                      preservedDuplicateGroups: duplicateGroups,
-                      preservedTitle: result.item.name,
-                    })}
+                    onClick={() => {
+                      setSelectedResultKey(resultActionKey);
+                      setActiveConnection(result.provider.id, {
+                        sourceSurface: 'search',
+                        reason: 'variant',
+                        preservedQuery: query,
+                        preservedResultCount: results.length,
+                        preservedDuplicateGroups: duplicateGroups,
+                        preservedTitle: result.item.name,
+                      });
+                    }}
                     className={`rounded-full px-3 py-1 text-xs ${activeConnection?.id === result.provider.id ? 'bg-violet-500/20 text-violet-200' : 'bg-black/20 text-slate-300 hover:bg-white/5'}`}
                   >
                     {activeConnection?.id === result.provider.id ? 'Active' : 'Switch'}
@@ -1094,14 +1179,17 @@ export function SearchBrowser() {
                               {result.kind === 'series' ? (
                                 <Link
                                   href={variantAction?.href || '#'}
-                                  onClick={() => setActiveConnection(variant.provider.id, {
-                                    sourceSurface: 'search',
-                                    reason: 'variant',
-                                    preservedQuery: query,
-                                    preservedResultCount: results.length,
-                                    preservedDuplicateGroups: duplicateGroups,
-                                    preservedTitle: variant.item.name,
-                                  })}
+                                  onClick={() => {
+                                    setSelectedResultKey(resultActionKey);
+                                    setActiveConnection(variant.provider.id, {
+                                      sourceSurface: 'search',
+                                      reason: 'variant',
+                                      preservedQuery: query,
+                                      preservedResultCount: results.length,
+                                      preservedDuplicateGroups: duplicateGroups,
+                                      preservedTitle: variant.item.name,
+                                    });
+                                  }}
                                   className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white hover:bg-white/10"
                                 >
                                   {variantAction?.label || 'Browse series'}
@@ -1109,6 +1197,7 @@ export function SearchBrowser() {
                               ) : (
                                 <button
                                   onClick={() => {
+                                    setSelectedResultKey(resultActionKey);
                                     setActiveConnection(variant.provider.id, {
                                       sourceSurface: 'search',
                                       reason: 'launch',
@@ -1127,14 +1216,17 @@ export function SearchBrowser() {
                                 </button>
                               )}
                               <button
-                                onClick={() => setActiveConnection(variant.provider.id, {
-                                  sourceSurface: 'search',
-                                  reason: 'manual',
-                                  preservedQuery: query,
-                                  preservedResultCount: results.length,
-                                  preservedDuplicateGroups: duplicateGroups,
-                                  preservedTitle: variant.item.name,
-                                })}
+                                onClick={() => {
+                                  setSelectedResultKey(resultActionKey);
+                                  setActiveConnection(variant.provider.id, {
+                                    sourceSurface: 'search',
+                                    reason: 'manual',
+                                    preservedQuery: query,
+                                    preservedResultCount: results.length,
+                                    preservedDuplicateGroups: duplicateGroups,
+                                    preservedTitle: variant.item.name,
+                                  });
+                                }}
                                 className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/80 hover:bg-white/10"
                               >
                                 Switch only
@@ -1150,6 +1242,7 @@ export function SearchBrowser() {
                   {isPlayable && primaryAction ? (
                     <button
                       onClick={() => {
+                        setSelectedResultKey(resultActionKey);
                         setActiveConnection(primaryAction.providerId, {
                           sourceSurface: 'search',
                           reason: 'launch',
@@ -1169,14 +1262,17 @@ export function SearchBrowser() {
                   ) : primaryAction ? (
                     <Link
                       href={primaryAction.href || '#'}
-                      onClick={() => setActiveConnection(primaryAction.providerId, {
-                        sourceSurface: 'search',
-                        reason: 'variant',
-                        preservedQuery: query,
-                        preservedResultCount: results.length,
-                        preservedDuplicateGroups: duplicateGroups,
-                        preservedTitle: result.item.name,
-                      })}
+                      onClick={() => {
+                        setSelectedResultKey(resultActionKey);
+                        setActiveConnection(primaryAction.providerId, {
+                          sourceSurface: 'search',
+                          reason: 'variant',
+                          preservedQuery: query,
+                          preservedResultCount: results.length,
+                          preservedDuplicateGroups: duplicateGroups,
+                          preservedTitle: result.item.name,
+                        });
+                      }}
                       className="flex-1 rounded-2xl border border-white/10 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/5"
                     >
                       {primaryAction.label}

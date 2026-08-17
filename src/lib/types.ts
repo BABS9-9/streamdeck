@@ -484,6 +484,33 @@ export type ProviderSearchSnapshot = {
   selectedSeriesId?: number | null;
   preferredSeasonNumber?: number | null;
   preferredEpisodeNumber?: number | null;
+  selectedResultKey?: string | null;
+  focusMemory?: SearchFocusMemorySnapshot | null;
+};
+
+export type SearchEntryFocusState = 'query-input' | 'recent-replay' | 'results-grid' | 'recovery-rail';
+export type SearchReturnFocusState = 'query-input' | 'recent-replay' | 'results-grid' | 'primary-action' | 'alternate-action';
+export type SearchBackLayerState = 'query-entry' | 'recent-replay' | 'results-grid' | 'provider-recovery';
+export type SearchRecentReplayState = 'warm' | 'stale' | 'empty';
+export type SearchPointerCompatibilityState = 'remote-first' | 'hybrid' | 'pointer-priority';
+export type SearchFocusRecoveryReason =
+  | 'fresh-entry'
+  | 'query-restored'
+  | 'result-return'
+  | 'provider-recovery'
+  | 'cached-replay'
+  | 'degraded-provider'
+  | 'short-query';
+
+export type SearchFocusMemorySnapshot = {
+  entryFocusState: SearchEntryFocusState;
+  returnFocusState: SearchReturnFocusState;
+  backLayerState: SearchBackLayerState;
+  recentReplayState: SearchRecentReplayState;
+  pointerCompatibilityState: SearchPointerCompatibilityState;
+  focusRecoveryReason: SearchFocusRecoveryReason;
+  selectedResultKey?: string | null;
+  updatedAt: number;
 };
 
 export type RecentSearchQueryEntry = {
@@ -497,6 +524,7 @@ export type RecentSearchQueryEntry = {
   movieCount: number;
   seriesCount: number;
   status: 'ready' | 'partial' | 'stale' | 'empty';
+  focusMemory?: SearchFocusMemorySnapshot | null;
   updatedAt: number;
 };
 

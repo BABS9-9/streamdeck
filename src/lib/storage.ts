@@ -11,6 +11,7 @@ import {
   ProviderSearchSnapshot,
   ProviderSwitchContext,
   SavedConnection,
+  SearchFocusMemorySnapshot,
   StreamDeckSettingsPreferences,
   WatchHistoryItem,
   XtreamAuthResponse,
@@ -227,6 +228,7 @@ const normalizeRecentSearchQueries = (value: unknown) => {
       liveCount: Number.isFinite(entry.liveCount) ? entry.liveCount : 0,
       movieCount: Number.isFinite(entry.movieCount) ? entry.movieCount : 0,
       seriesCount: Number.isFinite(entry.seriesCount) ? entry.seriesCount : 0,
+      focusMemory: normalizeSearchFocusMemory(entry.focusMemory),
       updatedAt: Number.isFinite(entry.updatedAt) ? entry.updatedAt : 0,
       status: entry.status || 'empty',
     }))
@@ -248,6 +250,60 @@ const mergeRecentSearchQueries = (current: RecentSearchQueryEntry[], incoming: R
     .sort((left, right) => right.updatedAt - left.updatedAt)
     .slice(0, 10);
 };
+
+const normalizeSearchFocusMemory = (value: unknown): SearchFocusMemorySnapshot | null => {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Partial<SearchFocusMemorySnapshot>;
+
+  return {
+    entryFocusState: raw.entryFocusState === 'recent-replay' || raw.entryFocusState === 'results-grid' || raw.entryFocusState === 'recovery-rail'
+      ? raw.entryFocusState
+      : 'query-input',
+    returnFocusState: raw.returnFocusState === 'recent-replay' || raw.returnFocusState === 'results-grid' || raw.returnFocusState === 'primary-action' || raw.returnFocusState === 'alternate-action'
+      ? raw.returnFocusState
+      : 'query-input',
+    backLayerState: raw.backLayerState === 'recent-replay' || raw.backLayerState === 'results-grid' || raw.backLayerState === 'provider-recovery'
+      ? raw.backLayerState
+      : 'query-entry',
+    recentReplayState: raw.recentReplayState === 'warm' || raw.recentReplayState === 'stale'
+      ? raw.recentReplayState
+      : 'empty',
+    pointerCompatibilityState: raw.pointerCompatibilityState === 'hybrid' || raw.pointerCompatibilityState === 'pointer-priority'
+      ? raw.pointerCompatibilityState
+      : 'remote-first',
+    focusRecoveryReason: raw.focusRecoveryReason === 'query-restored'
+      || raw.focusRecoveryReason === 'result-return'
+      || raw.focusRecoveryReason === 'provider-recovery'
+      || raw.focusRecoveryReason === 'cached-replay'
+      || raw.focusRecoveryReason === 'degraded-provider'
+      || raw.focusRecoveryReason === 'short-query'
+      ? raw.focusRecoveryReason
+      : 'fresh-entry',
+    selectedResultKey: typeof raw.selectedResultKey === 'string' ? raw.selectedResultKey : null,
+    updatedAt: Number.isFinite(raw.updatedAt) ? Number(raw.updatedAt) : 0,
+  };
+};
+
+const normalizeSearchSnapshot = (snapshot: ProviderSearchSnapshot, providerId: string): ProviderSearchSnapshot => ({
+  providerId,
+  query: typeof snapshot.query === 'string' ? snapshot.query : '',
+  resultCount: Number.isFinite(snapshot.resultCount) ? snapshot.resultCount : 0,
+  duplicateGroups: Number.isFinite(snapshot.duplicateGroups) ? snapshot.duplicateGroups : 0,
+  updatedAt: Number.isFinite(snapshot.updatedAt) ? snapshot.updatedAt : 0,
+  selectedTitle: snapshot.selectedTitle ?? null,
+  selectedKind: snapshot.selectedKind ?? null,
+  selectedProviderCount: Number.isFinite(snapshot.selectedProviderCount) ? snapshot.selectedProviderCount : null,
+  continuityMode: snapshot.continuityMode ?? null,
+  continuityReasonCodes: Array.isArray(snapshot.continuityReasonCodes) ? snapshot.continuityReasonCodes : null,
+  launchOwnerProviderId: snapshot.launchOwnerProviderId ?? null,
+  launchOwnerProviderName: snapshot.launchOwnerProviderName ?? null,
+  seriesCompletenessBand: snapshot.seriesCompletenessBand ?? null,
+  selectedSeriesId: Number.isFinite(snapshot.selectedSeriesId) ? Number(snapshot.selectedSeriesId) : null,
+  preferredSeasonNumber: Number.isFinite(snapshot.preferredSeasonNumber) ? Number(snapshot.preferredSeasonNumber) : null,
+  preferredEpisodeNumber: Number.isFinite(snapshot.preferredEpisodeNumber) ? Number(snapshot.preferredEpisodeNumber) : null,
+  selectedResultKey: typeof snapshot.selectedResultKey === 'string' ? snapshot.selectedResultKey : null,
+  focusMemory: normalizeSearchFocusMemory(snapshot.focusMemory),
+});
 
 const defaultSettingsPreferences = (): StreamDeckSettingsPreferences => ({
   playback: {
@@ -482,7 +538,11 @@ export const storage = {
   },
   getSearchSnapshots(): Record<string, ProviderSearchSnapshot> {
     if (!isBrowser()) return {};
-    return safeJsonParse(localStorage.getItem(KEYS.searchSnapshots), {});
+    const snapshots = safeJsonParse<Record<string, ProviderSearchSnapshot>>(localStorage.getItem(KEYS.searchSnapshots), {});
+    return Object.entries(snapshots).reduce<Record<string, ProviderSearchSnapshot>>((acc, [providerId, snapshot]) => {
+      acc[providerId] = normalizeSearchSnapshot(snapshot, providerId);
+      return acc;
+    }, {});
   },
   getRecentSearchQueries(): RecentSearchQueryEntry[] {
     if (!isBrowser()) return [];
@@ -522,7 +582,7 @@ export const storage = {
   saveProviderSearchSnapshot(providerId: string, snapshot: ProviderSearchSnapshot) {
     if (!isBrowser()) return;
     const snapshots = storage.getSearchSnapshots();
-    snapshots[providerId] = { ...snapshot, providerId };
+    snapshots[providerId] = normalizeSearchSnapshot({ ...snapshot, providerId }, providerId);
     localStorage.setItem(KEYS.searchSnapshots, JSON.stringify(snapshots));
   },
   removeProviderSearchSnapshot(providerId: string) {
