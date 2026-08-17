@@ -58,6 +58,7 @@ import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceRecoveryWitnessInline } from '@/components/surface-recovery-witness-inline';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
+import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
 import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
@@ -628,6 +629,18 @@ export default function LoginPage() {
               runtime={launchOwnershipRuntime}
               title="Connect launch ownership"
               badge="Owner truth"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceProviderPodiumInline
+              runtime={providerPodiumRuntime}
+              title="Connect saved-provider podium"
+              badge="Saved-provider podium"
+              onSelectProvider={(providerId) => setActiveConnection(providerId, {
+                sourceSurface: 'login',
+                reason: 'manual',
+              })}
             />
           </div>
 
