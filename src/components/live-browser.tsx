@@ -49,6 +49,7 @@ import { SurfaceRetryHonestyInline } from '@/components/surface-retry-honesty-in
 import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebtInline } from '@/components/surface-proof-debt-inline';
+import { SurfaceProofProvenanceInline } from '@/components/surface-proof-provenance-inline';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceProviderPodium } from '@/components/surface-provider-podium';
@@ -506,6 +507,13 @@ export function LiveBrowser() {
                 runtime={proofDebtRuntime}
                 title="Play proof debt"
                 badge="Borrowed confidence"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceProofProvenanceInline
+                contract={proofProvenance}
+                title="Play proof provenance"
+                badge="Trust source"
               />
             </div>
             <div className="mt-4">
