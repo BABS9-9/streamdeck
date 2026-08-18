@@ -71,6 +71,7 @@ import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection
 import { buildPlaybackHistoryRuntime } from '@/lib/playback-history-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
+import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
@@ -416,6 +417,13 @@ export function HomeDashboard() {
     }),
     [providerPodium, savedProviderBoard]
   );
+  const providerChoiceRuntime = useMemo(
+    () => buildSavedProviderChoiceRuntime({
+      contract: providerChoice,
+      board: savedProviderBoard,
+    }),
+    [providerChoice, savedProviderBoard]
+  );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
       contract: fallbackRanking,
@@ -731,7 +739,7 @@ export function HomeDashboard() {
             </div>
             <div className="mt-4">
               <SurfaceProviderChoiceInline
-                contract={providerChoice}
+                runtime={providerChoiceRuntime}
                 title="Hero provider choice"
                 badge="Launch choice"
               />
@@ -926,7 +934,7 @@ export function HomeDashboard() {
       <SurfaceContinuityWindow contract={continuityWindow} badge="Browse continuity" />
       <SurfaceHandoffMap handoff={handoffMap} badge="Live handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
-      <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
+      <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
       <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
       <SurfaceProviderReturnContract contract={providerReturnContract} badge="Return truth" />
       <SurfaceProviderStabilityContract contract={providerStabilityContract} badge="Stability truth" />

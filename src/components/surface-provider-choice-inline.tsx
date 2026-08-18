@@ -1,6 +1,6 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { SurfaceProviderChoiceRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-sky-400/20 bg-sky-500/10 text-sky-100',
@@ -15,19 +15,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceProviderChoiceInlineProps = {
-  contract: MockProviderManifest['surfaceProviderChoiceContracts'][number] | null;
+  runtime: SurfaceProviderChoiceRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceProviderChoiceInline({
-  contract,
+  runtime,
   title,
   badge,
 }: SurfaceProviderChoiceInlineProps) {
-  const choice = contract?.choices?.[0];
+  const choice = runtime?.choices?.[0];
 
-  if (!contract || !choice) return null;
+  if (!runtime || !choice) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[choice.tone]}`}>
@@ -40,9 +40,11 @@ export function SurfaceProviderChoiceInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[choice.tone]}</p>
-      <p className="mt-2 text-sm leading-6 text-white">{choice.autoPickTrigger}</p>
+      <p className="mt-2 text-sm leading-6 text-white">{choice.choiceStatus}</p>
+      <p className="mt-3 text-sm leading-6 text-white/85">{choice.ownerStatusLabel}</p>
+      <p className="mt-3 text-sm leading-6 text-white/85">Auto-pick trigger: {choice.autoPickTrigger}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Proof: {choice.equivalenceProof}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Ask the user when: {choice.userChoiceTrigger}</p>
     </div>

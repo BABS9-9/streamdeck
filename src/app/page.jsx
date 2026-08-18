@@ -67,6 +67,7 @@ import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
+import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
@@ -332,6 +333,13 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [providerPodium, savedProviderBoard]
+  );
+  const providerChoiceRuntime = useMemo(
+    () => buildSavedProviderChoiceRuntime({
+      contract: providerChoice,
+      board: savedProviderBoard,
+    }),
+    [providerChoice, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -646,7 +654,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProviderChoiceInline
-              contract={providerChoice}
+              runtime={providerChoiceRuntime}
               title="Connect provider choice"
               badge="Launch choice"
             />
@@ -871,7 +879,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
+            <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
           </div>
 
           <div className="mt-6">

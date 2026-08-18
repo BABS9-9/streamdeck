@@ -71,6 +71,7 @@ import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection
 import { buildPlaybackResilienceContract } from '@/lib/playback-resilience-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
+import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
@@ -281,6 +282,13 @@ export function LiveBrowser() {
     }),
     [providerPodium, savedProviderBoard]
   );
+  const providerChoiceRuntime = useMemo(
+    () => buildSavedProviderChoiceRuntime({
+      contract: providerChoice,
+      board: savedProviderBoard,
+    }),
+    [providerChoice, savedProviderBoard]
+  );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
       contract: fallbackRanking,
@@ -483,7 +491,7 @@ export function LiveBrowser() {
       <SurfaceContinuityWindow contract={continuityWindow} badge="Surf continuity" />
       <SurfaceHandoffMap handoff={handoffMap} badge="Playback handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
-      <SurfaceProviderChoice contract={providerChoice} badge="Choice honesty" />
+      <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
       <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
       <MultiConnectionGuideRuntime
         contract={multiConnectionGuideRuntime}
@@ -555,7 +563,7 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceProviderChoiceInline
-                contract={providerChoice}
+                runtime={providerChoiceRuntime}
                 title="Play provider choice"
                 badge="Launch choice"
               />
@@ -748,7 +756,7 @@ export function LiveBrowser() {
 
             <div className="mt-4">
               <SurfaceProviderChoiceInline
-                contract={providerChoice}
+                runtime={providerChoiceRuntime}
                 title="Playback provider choice"
                 badge="Play choice"
               />

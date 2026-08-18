@@ -768,6 +768,27 @@ export type SurfaceProofProvenanceRuntimeContract = {
   sources: SurfaceProofProvenanceRuntimeEntry[];
 };
 
+export type SurfaceProviderChoiceRuntimeEntry = {
+  label: string;
+  autoPickTrigger: string;
+  equivalenceProof: string;
+  userChoiceTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  choiceStatus: string;
+};
+
+export type SurfaceProviderChoiceRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  choices: SurfaceProviderChoiceRuntimeEntry[];
+};
+
 export type SurfaceFreshnessBoardRuntimeBudget = {
   label: string;
   liveWindow: string;
