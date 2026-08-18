@@ -1,6 +1,7 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { connectionStatusTone } from '@/lib/provider-signals';
+import { SurfaceProviderStabilityRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -15,19 +16,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceProviderStabilityInlineProps = {
-  contract: MockProviderManifest['surfaceProviderStabilityContracts'][number] | null;
+  runtime: SurfaceProviderStabilityRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceProviderStabilityInline({
-  contract,
+  runtime,
   title,
   badge,
 }: SurfaceProviderStabilityInlineProps) {
-  const stability = contract?.stabilities?.[0];
+  const stability = runtime?.stabilities?.[0];
 
-  if (!contract || !stability) return null;
+  if (!runtime || !stability) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[stability.tone]}`}>
@@ -40,11 +41,23 @@ export function SurfaceProviderStabilityInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
+      {stability.owner ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] ${connectionStatusTone[stability.owner.status]}`}>
+            {stability.owner.status}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {stability.owner.providerName}
+          </span>
+        </div>
+      ) : null}
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[stability.tone]}</p>
-      <p className="mt-2 text-sm leading-6 text-white">{stability.stabilityThreshold}</p>
+      <p className="mt-2 text-sm leading-6 text-white">{stability.stabilityStatus}</p>
+      <p className="mt-3 text-sm leading-6 text-white/85">Threshold: {stability.stabilityThreshold}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Normal volatility: {stability.toleratedVolatility}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Keep rescue primary when: {stability.keepRescuePrimaryTrigger}</p>
+      <p className="mt-3 text-sm leading-6 text-white/75">Runtime owner posture: {stability.ownerStatusLabel}</p>
     </div>
   );
 }

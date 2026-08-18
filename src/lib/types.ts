@@ -789,6 +789,48 @@ export type SurfaceProviderChoiceRuntimeContract = {
   choices: SurfaceProviderChoiceRuntimeEntry[];
 };
 
+export type SurfaceProviderStabilityRuntimeEntry = {
+  label: string;
+  stabilityThreshold: string;
+  toleratedVolatility: string;
+  keepRescuePrimaryTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  stabilityStatus: string;
+};
+
+export type SurfaceProviderStabilityRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  stabilities: SurfaceProviderStabilityRuntimeEntry[];
+};
+
+export type SurfaceReturnCooldownRuntimeEntry = {
+  label: string;
+  cooldownWindow: string;
+  shrinkingProof: string;
+  resetTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  cooldownStatus: string;
+};
+
+export type SurfaceReturnCooldownRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  cooldowns: SurfaceReturnCooldownRuntimeEntry[];
+};
+
 export type SurfaceFreshnessBoardRuntimeBudget = {
   label: string;
   liveWindow: string;

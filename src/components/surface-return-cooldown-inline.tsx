@@ -1,6 +1,7 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { connectionStatusTone } from '@/lib/provider-signals';
+import { SurfaceReturnCooldownRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -15,19 +16,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceReturnCooldownInlineProps = {
-  contract: MockProviderManifest['surfaceReturnCooldownContracts'][number] | null;
+  runtime: SurfaceReturnCooldownRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceReturnCooldownInline({
-  contract,
+  runtime,
   title,
   badge,
 }: SurfaceReturnCooldownInlineProps) {
-  const cooldown = contract?.cooldowns?.[0];
+  const cooldown = runtime?.cooldowns?.[0];
 
-  if (!contract || !cooldown) return null;
+  if (!runtime || !cooldown) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[cooldown.tone]}`}>
@@ -40,11 +41,23 @@ export function SurfaceReturnCooldownInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
+      {cooldown.owner ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] ${connectionStatusTone[cooldown.owner.status]}`}>
+            {cooldown.owner.status}
+          </span>
+          <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+            {cooldown.owner.providerName}
+          </span>
+        </div>
+      ) : null}
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[cooldown.tone]}</p>
-      <p className="mt-2 text-sm leading-6 text-white">{cooldown.cooldownWindow}</p>
+      <p className="mt-2 text-sm leading-6 text-white">{cooldown.cooldownStatus}</p>
+      <p className="mt-3 text-sm leading-6 text-white/85">Cooldown window: {cooldown.cooldownWindow}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Cooldown shrinks when: {cooldown.shrinkingProof}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Restart cooldown when: {cooldown.resetTrigger}</p>
+      <p className="mt-3 text-sm leading-6 text-white/75">Runtime owner posture: {cooldown.ownerStatusLabel}</p>
     </div>
   );
 }

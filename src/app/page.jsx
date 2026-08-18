@@ -78,6 +78,8 @@ import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-l
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-debt-runtime';
 import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-proof-provenance-runtime';
+import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-return-cooldown-runtime';
+import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -396,6 +398,20 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [proofProvenance, savedProviderBoard]
+  );
+  const providerStabilityRuntime = useMemo(
+    () => buildSavedProviderStabilityRuntime({
+      contract: providerStabilityContract,
+      board: savedProviderBoard,
+    }),
+    [providerStabilityContract, savedProviderBoard]
+  );
+  const returnCooldownRuntime = useMemo(
+    () => buildSavedProviderReturnCooldownRuntime({
+      contract: returnCooldownContract,
+      board: savedProviderBoard,
+    }),
+    [returnCooldownContract, savedProviderBoard]
   );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
@@ -726,7 +742,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProviderStabilityInline
-              contract={providerStabilityContract}
+              runtime={providerStabilityRuntime}
               title="Connect provider stability"
               badge="Stability truth"
             />
@@ -734,7 +750,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceReturnCooldownInline
-              contract={returnCooldownContract}
+              runtime={returnCooldownRuntime}
               title="Connect return cooldown"
               badge="Return runway"
             />
@@ -891,7 +907,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceProviderStabilityContract contract={providerStabilityContract} badge="Stability truth" />
+            <SurfaceProviderStabilityContract runtime={providerStabilityRuntime} badge="Stability truth" />
           </div>
 
           <div className="mt-6">

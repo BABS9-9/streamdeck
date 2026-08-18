@@ -82,6 +82,8 @@ import { buildSavedProviderLaunchOwnershipRuntime } from '@/lib/saved-provider-l
 import { buildSavedProviderPodiumRuntime } from '@/lib/saved-provider-podium-runtime';
 import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-debt-runtime';
 import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-proof-provenance-runtime';
+import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-return-cooldown-runtime';
+import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamStream } from '@/lib/types';
@@ -480,6 +482,20 @@ export function HomeDashboard() {
     }),
     [proofProvenance, savedProviderBoard]
   );
+  const providerStabilityRuntime = useMemo(
+    () => buildSavedProviderStabilityRuntime({
+      contract: providerStabilityContract,
+      board: savedProviderBoard,
+    }),
+    [providerStabilityContract, savedProviderBoard]
+  );
+  const returnCooldownRuntime = useMemo(
+    () => buildSavedProviderReturnCooldownRuntime({
+      contract: returnCooldownContract,
+      board: savedProviderBoard,
+    }),
+    [returnCooldownContract, savedProviderBoard]
+  );
   const identityAnchorRuntime = useMemo(
     () => buildSavedProviderIdentityAnchorRuntime({
       contract: identityAnchor,
@@ -808,18 +824,18 @@ export function HomeDashboard() {
               />
             </div>
             <div className="mt-4">
-              <SurfaceProviderStabilityInline
-                contract={providerStabilityContract}
-                title="Hero provider stability"
-                badge="Stability truth"
-              />
+                <SurfaceProviderStabilityInline
+                  runtime={providerStabilityRuntime}
+                  title="Hero provider stability"
+                  badge="Stability truth"
+                />
             </div>
             <div className="mt-4">
-              <SurfaceReturnCooldownInline
-                contract={returnCooldownContract}
-                title="Hero return cooldown"
-                badge="Return runway"
-              />
+                <SurfaceReturnCooldownInline
+                  runtime={returnCooldownRuntime}
+                  title="Hero return cooldown"
+                  badge="Return runway"
+                />
             </div>
             <div className="mt-4">
               <SurfaceFallbackEquivalenceInline
@@ -937,7 +953,7 @@ export function HomeDashboard() {
       <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
       <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
       <SurfaceProviderReturnContract contract={providerReturnContract} badge="Return truth" />
-      <SurfaceProviderStabilityContract contract={providerStabilityContract} badge="Stability truth" />
+      <SurfaceProviderStabilityContract runtime={providerStabilityRuntime} badge="Stability truth" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />
       <SurfaceFreshnessBoard runtime={freshnessBoardRuntime} badge="Freshness truth" />
       <SurfaceProofDebt runtime={proofDebtRuntime} badge="Proof debt" />
