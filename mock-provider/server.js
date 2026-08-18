@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty beside premium CTAs, claim-ceiling discipline, connection-headroom truth beside premium CTAs, provider-choice truth beside premium CTAs, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, provider-stability truth beside premium CTAs, and return-cooldown truth beside premium CTAs.',
+  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty beside premium CTAs, claim-ceiling discipline, connection-headroom truth beside premium CTAs, provider-choice truth beside premium CTAs, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, and recovery-witness proof beside premium CTAs.',
 };
 
 const channelNames = {
@@ -411,7 +411,7 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Recovery witness on login',
-    detail: 'The adapter now publishes what visible proof must survive on Login, what setup context that proof carries forward, and what missing evidence means fallback is no longer trustworthy.',
+    detail: 'The adapter now publishes beside Connect what visible proof must survive on Login, what setup context that proof carries forward, and what missing evidence means fallback is no longer trustworthy.',
     surface: 'login',
   },
   {
@@ -526,7 +526,7 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Recovery witness on Home',
-    detail: 'The adapter now publishes what visible browse proof must survive on Home, what discovery context that proof carries forward, and what missing evidence means the hero has turned into confidence theater.',
+    detail: 'The adapter now publishes beside the hero CTA what visible browse proof must survive on Home, what discovery context that proof carries forward, and what missing evidence means the hero has turned into confidence theater.',
     surface: 'home',
   },
   {
@@ -641,7 +641,7 @@ const buildDifferentiators = () => ([
   },
   {
     title: 'Recovery witness on Live',
-    detail: 'The adapter now publishes what visible surf proof must survive on the selected card, what launch context that proof carries forward, and what missing evidence means rescue has become a disguised restart.',
+    detail: 'The adapter now publishes beside Play what visible surf proof must survive on the selected card, what launch context that proof carries forward, and what missing evidence means rescue has become a disguised restart.',
     surface: 'live',
   },
   {
@@ -986,10 +986,10 @@ const buildCompetitiveDifferentiators = () => ([
   {
     slug: 'recovery-witness',
     feature: 'Recovery witness',
-    pitch: 'Tell users what exact evidence proves rescue preserved the same destination, what context still carries forward, and what contradiction breaks that trust immediately.',
+    pitch: 'Tell users beside Connect, the hero CTA, and Play what exact evidence proves rescue preserved the same destination, what context still carries forward, and what contradiction breaks that trust immediately.',
     competitiveGap: 'Competitors usually ask users to trust fallback on vibes alone, so rescue feels magical until the destination, provider, or launch meaning quietly drifts.',
     buildPhase: 'Phase 1',
-    architectureNotes: 'Drive Login, Home, and Live from one recovery-witness contract so required evidence, preserved context, and trust-break triggers stay aligned beside the CTA.',
+    architectureNotes: 'Drive Login, Home, and Live from one recovery-witness contract so required evidence, preserved context, and trust-break triggers stay aligned beside Connect, the hero CTA, and Play before rescue copy can overclaim sameness.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -5047,13 +5047,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, compact saved-provider podiums beside premium CTAs, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, provider-choice truth beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, recovery-witness proof, action-gated CTAs, fallback-cost truth, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, compact saved-provider podiums beside premium CTAs, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, provider-choice truth beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, recovery-witness proof beside premium CTAs, action-gated CTAs, fallback-cost truth, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, compact CTA-side saved-provider podiums, provider-choice truth, provider-stability truth, return-cooldown runway, connection-headroom truth, launch ownership, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, fake provider comeback stories, hidden line-pressure, fake reset theater, invisible provider-rank changes, or silent auto-picks that should have come back to the user.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, compact CTA-side saved-provider podiums, provider-choice truth, provider-stability truth, return-cooldown runway, connection-headroom truth, launch ownership, recovery-witness proof beside premium CTAs, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, fake provider comeback stories, hidden line-pressure, fake reset theater, invisible provider-rank changes, recovery-without-proof theater, or silent auto-picks that should have come back to the user.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then choose or recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
