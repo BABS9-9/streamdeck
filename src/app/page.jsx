@@ -725,6 +725,22 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
+            <SurfaceProviderStabilityInline
+              contract={providerStabilityContract}
+              title="Connect provider stability"
+              badge="Stability truth"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceReturnCooldownInline
+              contract={returnCooldownContract}
+              title="Connect return cooldown"
+              badge="Return runway"
+            />
+          </div>
+
+          <div className="mt-6">
             <SurfaceFallbackRankingInline
               runtime={fallbackRankingRuntime}
               title="Connect fallback ranking"
@@ -753,22 +769,6 @@ export default function LoginPage() {
               runtime={holdReceiptRuntime}
               title="Connect hold receipt"
               badge="Hold truth"
-            />
-          </div>
-
-          <div className="mt-6">
-            <SurfaceProviderStabilityInline
-              contract={providerStabilityContract}
-              title="Connect provider stability"
-              badge="Stability truth"
-            />
-          </div>
-
-          <div className="mt-6">
-            <SurfaceReturnCooldownInline
-              contract={returnCooldownContract}
-              title="Connect return cooldown"
-              badge="Return runway"
             />
           </div>
 

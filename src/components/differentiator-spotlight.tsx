@@ -23,15 +23,15 @@ const surfaceCopy: Record<ScreenId, { eyebrow: string; title: string; detail: st
 };
 
 const spotlightPriority: Record<ScreenId, string[]> = {
-  login: ['saved-provider-podium', 'provider-choice-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
-  home: ['saved-provider-podium', 'provider-choice-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
-  live: ['saved-provider-podium', 'provider-choice-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
+  login: ['saved-provider-podium', 'provider-stability-truth', 'return-cooldown-truth', 'provider-choice-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
+  home: ['saved-provider-podium', 'provider-stability-truth', 'return-cooldown-truth', 'provider-choice-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
+  live: ['saved-provider-podium', 'provider-stability-truth', 'return-cooldown-truth', 'provider-choice-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
 };
 
 export function DifferentiatorSpotlight({
   manifest,
   screenId,
-  limit = 3,
+  limit = 4,
 }: {
   manifest: MockProviderManifest | null;
   screenId: ScreenId;

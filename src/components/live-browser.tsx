@@ -639,20 +639,6 @@ export function LiveBrowser() {
               />
             </div>
             <div className="mt-4">
-              <SurfaceFallbackExpiryInline
-                runtime={fallbackExpiryRuntime}
-                title="Play fallback expiry"
-                badge="Sameness window"
-              />
-            </div>
-            <div className="mt-4">
-              <SurfaceHoldReceiptInline
-                runtime={holdReceiptRuntime}
-                title="Play hold receipt"
-                badge="Hold truth"
-              />
-            </div>
-            <div className="mt-4">
               <SurfaceProviderStabilityInline
                 contract={providerStabilityContract}
                 title="Play provider stability"
@@ -664,6 +650,20 @@ export function LiveBrowser() {
                 contract={returnCooldownContract}
                 title="Play return cooldown"
                 badge="Return runway"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceFallbackExpiryInline
+                runtime={fallbackExpiryRuntime}
+                title="Play fallback expiry"
+                badge="Sameness window"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceHoldReceiptInline
+                runtime={holdReceiptRuntime}
+                title="Play hold receipt"
+                badge="Hold truth"
               />
             </div>
             <div className="mt-4">

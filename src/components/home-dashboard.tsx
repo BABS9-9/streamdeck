@@ -808,6 +808,20 @@ export function HomeDashboard() {
               />
             </div>
             <div className="mt-4">
+              <SurfaceProviderStabilityInline
+                contract={providerStabilityContract}
+                title="Hero provider stability"
+                badge="Stability truth"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceReturnCooldownInline
+                contract={returnCooldownContract}
+                title="Hero return cooldown"
+                badge="Return runway"
+              />
+            </div>
+            <div className="mt-4">
               <SurfaceFallbackEquivalenceInline
                 runtime={fallbackEquivalenceRuntime}
                 title="Hero fallback equivalence"
@@ -826,20 +840,6 @@ export function HomeDashboard() {
                 runtime={holdReceiptRuntime}
                 title="Hero hold receipt"
                 badge="Hold truth"
-              />
-            </div>
-            <div className="mt-4">
-              <SurfaceProviderStabilityInline
-                contract={providerStabilityContract}
-                title="Hero provider stability"
-                badge="Stability truth"
-              />
-            </div>
-            <div className="mt-4">
-              <SurfaceReturnCooldownInline
-                contract={returnCooldownContract}
-                title="Hero return cooldown"
-                badge="Return runway"
               />
             </div>
             <div className="mt-4">
