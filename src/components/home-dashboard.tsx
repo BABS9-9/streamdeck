@@ -838,6 +838,13 @@ export function HomeDashboard() {
                 />
             </div>
             <div className="mt-4">
+              <SurfaceRecoveryWitnessInline
+                contract={recoveryWitness}
+                title="Hero recovery witness"
+                badge="Recovery proof"
+              />
+            </div>
+            <div className="mt-4">
               <SurfaceFallbackEquivalenceInline
                 runtime={fallbackEquivalenceRuntime}
                 title="Hero fallback equivalence"
@@ -856,13 +863,6 @@ export function HomeDashboard() {
                 runtime={holdReceiptRuntime}
                 title="Hero hold receipt"
                 badge="Hold truth"
-              />
-            </div>
-            <div className="mt-4">
-              <SurfaceRecoveryWitnessInline
-                contract={recoveryWitness}
-                title="Hero recovery witness"
-                badge="Recovery proof"
               />
             </div>
             <div className="mt-4">

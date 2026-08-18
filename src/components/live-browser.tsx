@@ -669,6 +669,13 @@ export function LiveBrowser() {
                 />
             </div>
             <div className="mt-4">
+              <SurfaceRecoveryWitnessInline
+                contract={recoveryWitness}
+                title="Play recovery witness"
+                badge="Recovery proof"
+              />
+            </div>
+            <div className="mt-4">
               <SurfaceFallbackExpiryInline
                 runtime={fallbackExpiryRuntime}
                 title="Play fallback expiry"
@@ -680,13 +687,6 @@ export function LiveBrowser() {
                 runtime={holdReceiptRuntime}
                 title="Play hold receipt"
                 badge="Hold truth"
-              />
-            </div>
-            <div className="mt-4">
-              <SurfaceRecoveryWitnessInline
-                contract={recoveryWitness}
-                title="Play recovery witness"
-                badge="Recovery proof"
               />
             </div>
             <div className="mt-4">

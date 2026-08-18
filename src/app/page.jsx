@@ -757,6 +757,14 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
+            <SurfaceRecoveryWitnessInline
+              contract={recoveryWitness}
+              title="Connect recovery witness"
+              badge="Recovery proof"
+            />
+          </div>
+
+          <div className="mt-6">
             <SurfaceFallbackRankingInline
               runtime={fallbackRankingRuntime}
               title="Connect fallback ranking"
@@ -785,14 +793,6 @@ export default function LoginPage() {
               runtime={holdReceiptRuntime}
               title="Connect hold receipt"
               badge="Hold truth"
-            />
-          </div>
-
-          <div className="mt-6">
-            <SurfaceRecoveryWitnessInline
-              contract={recoveryWitness}
-              title="Connect recovery witness"
-              badge="Recovery proof"
             />
           </div>
 
