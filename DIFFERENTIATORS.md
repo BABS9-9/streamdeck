@@ -20,6 +20,7 @@ The original three-assignment baseline is already broader than a login page plus
 | --- | --- | --- | --- | --- |
 | Multi-connection switching | Save multiple Xtream providers and hot-swap between them without re-entering credentials. | TiviMate, IPTV Smarters Pro, Flix IPTV, and iMPlayer all make provider switching feel heavier than it should. | Phase 1 | Canonical provider IDs, persisted provider sessions, saved auth summaries, provider-specific favorites/history/search caches, and visible active-provider ownership across Login, Home, Live, Search, Favorites, Continue Watching, and Player. |
 | Saved-provider podium | Rank who owns the next launch, who is the standby recovery path, and which risky provider must stay visible but blocked. | Competitors usually hide saved-provider ranking in Settings, so users only learn who should have owned the next move after playback or browse already fails. | Phase 1 | Reuse one provider podium contract across Login, Home, and Live, backed by canonical provider IDs, auth summaries, line headroom, provider health, and explicit switch actions on the premium surfaces themselves, with a compact CTA-side podium beside Connect, the hero CTA, and Play instead of only a deeper strategy board. |
+| Remote-first control model | Teach Login, Home, and Live what OK, Back, and Left/Right should do in plain sight so the product feels TV-native instead of like a web form stretched onto a big screen. | Most IPTV players either hide control doctrine completely or inherit messy pointer-first behavior, so moving between setup, browse, and playback never feels as calm as Roku-simple streaming products. | Phase 1 | Drive Login, Home, and Live from one remote-path contract so connect, browse, and surf flows share explicit button cadence, preserved context, and recovery posture instead of inventing surface-local focus rules. |
 | Smart EPG overlay | Show NOW and NEXT directly on live channel cards and preview rails instead of burying guide data on a separate screen. | Most players make guide info a separate mode or a low-context overlay. | Phase 1 | Fetch short EPG per selected or visible live stream, normalize NOW/NEXT state, cache lightly, and degrade honestly when guide data is stale or missing. |
 | Guide freshness board | Publish how many tracked channels are fresh, refreshing, stale, missing, or erroring directly beside premium launch areas before guide-driven browse and launch claims sound more current than they are. | Competitors usually show guide data as present or absent, with no honest middle state for partial freshness, cache-backed continuity, or operator recovery. | Phase 1 | Reuse one provider-scoped guide coverage report across Login, Home, and Live so freshness counts, stale callouts, recovery ownership, and safest next move stay aligned both in the deeper guide strip and beside Connect, hero launch, and Play. |
 | Continue Watching across live + VOD | Keep one resume system for live channels, movies, and series so the next launch always starts from user intent. | Competitors split resume by content type or ignore live continuity entirely. | Phase 1 -> Phase 2 polish | Unified watch-history model with provider-aware entries, playback progress updates, live-channel recall, series episode context, and provider-safe recovery when the original source fails. |
@@ -66,23 +67,25 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 
 1. Provider flexibility
    Users with backup providers should feel supported, not punished.
-2. Inline confidence
+2. Remote-first calm
+   Users should understand what OK, Back, and Left/Right do on Login, Home, and Live without discovering the control model by accident.
+3. Inline confidence
    Browse and playback surfaces should explain NOW, NEXT, health, trust, and fallback without making users visit Settings.
-3. Intent continuity
+4. Intent continuity
    Retry, rescue, provider switching, and resume should preserve the same user mission for as long as that is still honest.
-4. Premium shell quality
+5. Premium shell quality
    The app should feel like a modern streaming product, not a reseller console with posters.
-5. Risk clarity
+6. Risk clarity
    Provider trouble should be explained on the same surface where the user is making the next move, not discovered after a failed launch.
-6. Proof-debt honesty
+7. Proof-debt honesty
    The shell should say when confidence is fresh versus borrowed before cached or rescued states get dressed up like live provider proof.
-7. Proof-provenance honesty
+8. Proof-provenance honesty
    The shell should say what source is actually backing confidence before saved continuity or rescue logic gets dressed up like fresh provider proof.
-8. Claim-ceiling discipline
+9. Claim-ceiling discipline
    The shell should cap premium language at what current proof really earns before browse, connect, or play copy outruns runtime truth.
-9. Confidence-floor honesty
+10. Confidence-floor honesty
    The shell should say what minimum proof still keeps premium connect, browse, or play posture honest before the CTA keeps its confidence after the floor has collapsed.
-10. Connection headroom honesty
+11. Connection headroom honesty
    The shell should surface remaining provider line capacity in a compact beside-the-CTA panel before Connect, hero launch, or Play gets blamed for a saturated account.
 11. Interruption-budget honesty
    The shell should say how much waiting still preserves the same move and when delay must escalate into an explicit recovery, switch, or hold state.
@@ -131,6 +134,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 
 ### Login
 - Must make multi-connection switching feel native, saved, and safe.
+- Must make OK, Back, and directional travel obvious enough that setup feels TV-native even before the first successful connection.
 - Must rank saved providers directly on the screen so the user can see who owns the next Home move, who is warm standby, and which risky shortcut is blocked.
 - Must keep a compact saved-provider podium beside Connect so the current owner, standby recovery lane, and blocked shortcut are readable before setup polish hides who really owns the next Home move.
 - Must expose which provider currently owns the next Home launch.
@@ -182,6 +186,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must publish how fresh the tracked guide snapshot really is, which channels are already stale or missing, and whether Connect should still lean on the active provider or the recovery owner for the next Home truth.
 
 ### Home
+- Must keep hero focus, quick-action travel, and Back behavior calm enough that Home feels like a streaming destination instead of a dashboard.
 - Must show that StreamDeck is a content product, not a credential tool.
 - Must rank saved providers near the hero so the user can see which source owns the featured launch, which standby copy keeps browse continuity alive, and which risky source is held back.
 - Must keep a compact saved-provider podium beside the hero CTA so featured-launch ownership, standby browse continuity, and blocked providers stay readable before cinematic polish overclaims who owns the next move.
@@ -234,6 +239,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must show whether Home guide continuity is fresh enough to back hero confidence, which tracked rails are already stale or missing, and what recovery owner currently keeps the browse story honest.
 
 ### Live
+- Must keep category hops, card preview, and Play entry on a single remote rhythm so Live feels like channel surfing instead of grid administration.
 - Must deliver instant preview, inline NOW/NEXT, favorites, and category surf speed.
 - Must rank saved providers near Play so the selected card shows who owns the next launch, which standby source preserves the same live lane, and which risky provider is blocked from taking over silently.
 - Must keep a compact saved-provider podium beside Play so the selected-card owner, category-safe standby, and blocked shortcut stay readable before preview motion hides who really owns the next watch handoff.
