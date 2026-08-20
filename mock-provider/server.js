@@ -41,7 +41,7 @@ const liveCategories = [
 const providerDescriptor = {
   providerName: 'NorthStar Mock Xtream',
   region: 'Ontario demo cluster',
-  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty beside premium CTAs, claim-ceiling discipline, connection-headroom truth beside premium CTAs, provider-choice truth beside premium CTAs, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, and recovery-witness proof beside premium CTAs.',
+  operatorNote: 'Built for StreamDeck login, home, live, search, movies, series, EPG, favorites, playback, guide-freshness truth, proof-debt honesty beside premium CTAs, claim-ceiling discipline, connection-headroom truth beside premium CTAs, provider-choice truth beside premium CTAs, provider-switch truth beside premium CTAs, launch-scorecard truth, browse-launch-scorecard truth, fallback-cost honesty, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth, interruption-budget demos, retry-honesty rehearsals, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, and recovery-witness proof beside premium CTAs.',
 };
 
 const channelNames = {
@@ -795,6 +795,21 @@ const buildDifferentiators = () => ([
     surface: 'live',
   },
   {
+    title: 'Provider-switch truth on Login',
+    detail: 'The adapter now publishes beside Connect when another saved provider should inherit the next Home move, what setup context survives that handoff, and what proof still lets the current provider stay in charge.',
+    surface: 'login',
+  },
+  {
+    title: 'Provider-switch truth on Home',
+    detail: 'The adapter now publishes beside the hero CTA when the featured launch should move to another saved provider, what hero and rail context survives that handoff, and what proof still lets the current provider keep browse ownership.',
+    surface: 'home',
+  },
+  {
+    title: 'Provider-switch truth on Live',
+    detail: 'The adapter now publishes beside Play when the selected card should move to another saved provider, what category and preview context survives that handoff, and what proof still lets the current provider keep watch ownership.',
+    surface: 'live',
+  },
+  {
     title: 'Identity anchor on Login',
     detail: 'The adapter now publishes beside Connect which provider owns setup, which rescue provider would take over, and what setup meaning must stay visible before fallback turns into anonymous momentum.',
     surface: 'login',
@@ -927,6 +942,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually blur silent provider rescue and real user choice together, so cross-provider recovery feels convenient until it quietly changes the destination or trade-off.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one provider-choice contract so auto-pick triggers, equivalence proof, and forced user-choice triggers stay aligned before recovery copy overclaims sameness.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'provider-switch-truth',
+    feature: 'Provider switch truth',
+    pitch: 'Tell users exactly when the current provider should lose the next move, what setup, browse, or selected-channel context survives the handoff, and what proof still lets the current provider stay in charge.',
+    competitiveGap: 'Competitors usually bury provider switching in settings or only explain it after failure, so ownership changes feel abrupt, suspicious, or already too late to trust.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one provider-switch contract so switch triggers, preserved context, and stay-proof stay aligned beside Connect, the hero CTA, and Play before a saved-provider handoff quietly changes ownership.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -5047,13 +5071,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, compact saved-provider podiums beside premium CTAs, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, provider-choice truth beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-switch truth, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, recovery-witness proof beside premium CTAs, action-gated CTAs, fallback-cost truth, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, compact saved-provider podiums beside premium CTAs, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, provider-choice truth beside premium CTAs, provider-switch truth beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, recovery-witness proof beside premium CTAs, action-gated CTAs, fallback-cost truth, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, compact CTA-side saved-provider podiums, provider-choice truth, provider-stability truth, return-cooldown runway, connection-headroom truth, launch ownership, recovery-witness proof beside premium CTAs, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, fake provider comeback stories, hidden line-pressure, fake reset theater, invisible provider-rank changes, recovery-without-proof theater, or silent auto-picks that should have come back to the user.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, compact CTA-side saved-provider podiums, provider-choice truth, provider-switch truth, provider-stability truth, return-cooldown runway, connection-headroom truth, launch ownership, recovery-witness proof beside premium CTAs, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, fake provider comeback stories, hidden line-pressure, fake reset theater, invisible provider-rank changes, recovery-without-proof theater, silent provider switches, or auto-picks that should have come back to the user.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then choose or recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
