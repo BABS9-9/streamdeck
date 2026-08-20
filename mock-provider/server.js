@@ -972,6 +972,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'remote-first-control',
+    feature: 'Remote-first control model',
+    pitch: 'Teach Login, Home, and Live what OK, Back, and Left/Right should do in plain sight so the product feels TV-native instead of like a web form stretched onto a big screen.',
+    competitiveGap: 'Most IPTV players either hide control doctrine completely or inherit messy pointer-first behavior, so moving between setup, browse, and playback never feels as calm as Roku-simple streaming products.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one remote-path contract so connect, browse, and surf flows share explicit button cadence, preserved context, and recovery posture instead of inventing surface-local focus rules.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'launch-readiness',
     feature: 'Launch readiness',
     pitch: 'Publish whether Connect, hero launch, or Play is actually ready now, only watch-safe, or already recovery-led before polish implies more certainty than runtime proof owns.',
@@ -5080,13 +5089,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, compact saved-provider podiums beside premium CTAs, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, provider-choice truth beside premium CTAs, provider-switch truth beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, recovery-witness proof beside premium CTAs, action-gated CTAs, fallback-cost truth, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, compact saved-provider podiums beside premium CTAs, remote-first path doctrine, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, provider-choice truth beside premium CTAs, provider-switch truth beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, recovery-witness proof beside premium CTAs, action-gated CTAs, fallback-cost truth, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, compact CTA-side saved-provider podiums, provider-choice truth, provider-switch truth, provider-stability truth, return-cooldown runway, connection-headroom truth, launch ownership, recovery-witness proof beside premium CTAs, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, fake provider comeback stories, hidden line-pressure, fake reset theater, invisible provider-rank changes, recovery-without-proof theater, silent provider switches, or auto-picks that should have come back to the user.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, compact CTA-side saved-provider podiums, remote-first control doctrine, provider-choice truth, provider-switch truth, provider-stability truth, return-cooldown runway, connection-headroom truth, launch ownership, recovery-witness proof beside premium CTAs, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, fake provider comeback stories, hidden line-pressure, fake reset theater, invisible provider-rank changes, remote-path confusion, recovery-without-proof theater, silent provider switches, or auto-picks that should have come back to the user.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then choose or recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -5102,9 +5111,10 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       id: 'login',
       title: 'Login shell',
       status: 'ready',
-      detail: 'Supports sample credentials, saved-connection switching, scenario rehearsal, provider-risk strips, and trust-led recovery into Home.',
+      detail: 'Supports sample credentials, saved-connection switching, scenario rehearsal, remote-first setup travel, provider-risk strips, and trust-led recovery into Home.',
       proof: [
         'Connect with the local mock credentials',
+        'Remote-first setup path stays visible so OK, Back, and Left/Right are obvious before the screen feels like a web form',
         'Switch scenarios without leaving the screen',
         'Saved-provider podium stays visible beside Connect before setup polish hides who owns the next Home move',
         'Provider choice truth stays visible beside Connect before a saved-provider shortcut quietly changes who owns the next Home launch',
@@ -5143,9 +5153,10 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       id: 'home',
       title: 'Home dashboard',
       status: 'ready',
-      detail: 'Shows featured live browse, provider trust cockpit, provider-risk strip, quick-launch rails, and mock-provider recovery guidance.',
+      detail: 'Shows featured live browse, provider trust cockpit, remote-first hero travel, provider-risk strip, quick-launch rails, and mock-provider recovery guidance.',
       proof: [
         'Featured live card launches playback directly',
+        'Remote-first hero path stays visible so the featured rail, library pivots, and Back behavior read like a TV destination instead of a dashboard',
         'Saved-provider podium stays visible beside the hero CTA before cinematic browse polish hides who owns the featured launch',
         'Provider choice truth stays visible beside the hero CTA before Home quietly swaps the featured launch onto a healthier provider without saying so',
         'Provider risk strip stays aligned with hero trust and the next safe launch',
@@ -5184,9 +5195,10 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       id: 'live',
       title: 'Live browser',
       status: 'rehearsal-friendly',
-      detail: 'Delivers category browse, provider-risk strip, inline guide, preview fallback, favorites, and healthier-provider recovery from each channel card.',
+      detail: 'Delivers category browse, remote-first surf cadence, provider-risk strip, inline guide, preview fallback, favorites, and healthier-provider recovery from each channel card.',
       proof: [
         'Filter by category and search without leaving the page',
+        'Remote-first surf path stays visible so category hops, preview confidence, and Back return feel calm on a TV remote',
         'Saved-provider podium stays visible beside Play before preview motion hides who owns the next watch handoff',
         'Provider choice truth stays visible beside Play before same-category rescue quietly changes the watch decision under preview momentum',
         'Provider risk strip warns about auth, expiry, or line pressure before Play gets blamed',
@@ -5388,6 +5400,86 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
           label: 'Playback resilience rehearsal',
           status: 'wired',
           detail: 'The live shell keeps provider-switch, fallback, and hold-state truth visible beside Play instead of hiding recovery behind a blank player jump.',
+        },
+      ],
+    },
+  ],
+  surfaceRemotePaths: [
+    {
+      screenId: 'login',
+      eyebrow: 'Remote-first setup',
+      title: 'Login should feel like a couch flow, not a web form',
+      summary: 'The connection shell needs one calm remote path: move across fields fast, connect once, and back out without losing which provider currently owns the next Home move.',
+      paths: [
+        {
+          label: 'Fast connect',
+          buttons: ['Up / Down', 'OK', 'OK'],
+          result: 'Move through Server, Username, and Password, then fire Connect without the shell feeling pointer-dependent.',
+          tone: 'ready',
+        },
+        {
+          label: 'Saved provider hop',
+          buttons: ['Left', 'Down', 'OK'],
+          result: 'Slide into saved providers, choose the healthiest standby, and keep the Connect truth stack on-screen.',
+          tone: 'ready',
+        },
+        {
+          label: 'Trust-first retreat',
+          buttons: ['Back'],
+          result: 'Stay inside the login shell with the current provider risk, headroom, and recovery owner still visible instead of wiping setup context.',
+          tone: scenario === 'healthy' ? 'watch' : 'recover',
+        },
+      ],
+    },
+    {
+      screenId: 'home',
+      eyebrow: 'Remote-first browse',
+      title: 'Home should travel like a streaming destination',
+      summary: 'The hero, quick rails, and library pivots need a single remote cadence so the user can launch or explore without hunting for pointer-only controls.',
+      paths: [
+        {
+          label: 'Hero launch',
+          buttons: ['OK'],
+          result: 'Launch the featured card immediately while the hero scorecard, ownership, and provider podium stay readable beside the CTA.',
+          tone: 'ready',
+        },
+        {
+          label: 'Rail-to-rail travel',
+          buttons: ['Down', 'Left / Right', 'OK'],
+          result: 'Drop from the hero into quick actions or content rails, move laterally, and open the next destination without losing browse posture.',
+          tone: 'ready',
+        },
+        {
+          label: 'Back to safe origin',
+          buttons: ['Back'],
+          result: 'Return focus to the hero and preserve the featured-provider story instead of dumping the user into a generic top-of-page reset.',
+          tone: scenario === 'healthy' ? 'watch' : 'recover',
+        },
+      ],
+    },
+    {
+      screenId: 'live',
+      eyebrow: 'Remote-first surf',
+      title: 'Live should browse like channel surfing, not grid admin',
+      summary: 'Category changes, preview updates, and playback entry all need a one-press rhythm so Live feels fast from the card itself before Play even opens.',
+      paths: [
+        {
+          label: 'Category surf',
+          buttons: ['Left / Right', 'Down'],
+          result: 'Hop categories, drop back into the channel grid, and keep the last good preview target attached to the selected card.',
+          tone: 'ready',
+        },
+        {
+          label: 'Preview to play',
+          buttons: ['Left / Right', 'OK'],
+          result: 'Move card to card, let preview and NOW / NEXT update in place, then enter playback from the same selected channel.',
+          tone: 'ready',
+        },
+        {
+          label: 'Back with context',
+          buttons: ['Back'],
+          result: 'Leave playback or preview states while preserving category focus, provider owner, and same-card recovery truth.',
+          tone: scenario === 'healthy' ? 'watch' : 'recover',
         },
       ],
     },

@@ -1236,6 +1236,18 @@ export type MockProviderManifest = {
       detail: string;
     }>;
   }>;
+  surfaceRemotePaths: Array<{
+    screenId: 'login' | 'home' | 'live';
+    eyebrow: string;
+    title: string;
+    summary: string;
+    paths: Array<{
+      label: string;
+      buttons: string[];
+      result: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceLaunchReadinessContracts: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;
