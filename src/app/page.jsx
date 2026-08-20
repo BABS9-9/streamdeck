@@ -58,6 +58,7 @@ import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceRecoveryWitnessInline } from '@/components/surface-recovery-witness-inline';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
+import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
@@ -673,6 +674,14 @@ export default function LoginPage() {
               runtime={providerChoiceRuntime}
               title="Connect provider choice"
               badge="Launch choice"
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceProviderSwitchInline
+              contract={providerSwitchContract}
+              title="Connect provider switch"
+              badge="Switch truth"
             />
           </div>
 

@@ -60,6 +60,7 @@ import { SurfaceRecoveryWitness } from '@/components/surface-recovery-witness';
 import { SurfaceRecoveryWitnessInline } from '@/components/surface-recovery-witness-inline';
 import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
+import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
@@ -582,6 +583,13 @@ export function LiveBrowser() {
                 runtime={providerChoiceRuntime}
                 title="Play provider choice"
                 badge="Launch choice"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceProviderSwitchInline
+                contract={providerSwitchContract}
+                title="Play provider switch"
+                badge="Switch truth"
               />
             </div>
             <div className="mt-4">
