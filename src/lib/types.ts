@@ -1112,6 +1112,17 @@ export type MockProviderManifest = {
     userPromise: string;
     commandChips: string[];
   }>;
+  surfaceShipLanes: Array<{
+    screenId: 'login' | 'home' | 'live';
+    eyebrow: string;
+    title: string;
+    summary: string;
+    lanes: Array<{
+      label: string;
+      status: 'shipped' | 'wired' | 'rehearsal-ready';
+      detail: string;
+    }>;
+  }>;
   surfaceLaunchReadinessContracts: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;

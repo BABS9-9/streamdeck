@@ -7,6 +7,7 @@ import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary'
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceClaimCeilingInline } from '@/components/surface-claim-ceiling-inline';
 import { MockDemoBoard } from '@/components/mock-demo-board';
+import { PhaseOneShipRail } from '@/components/phase-one-ship-rail';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
@@ -501,6 +502,7 @@ export function LiveBrowser() {
         />
       ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="live" /> : null}
+      {isMockConnection ? <PhaseOneShipRail manifest={manifest} screenId="live" /> : null}
       <PlaybackResiliencePanel contract={playbackResilience} />
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}

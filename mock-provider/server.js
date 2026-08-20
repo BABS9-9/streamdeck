@@ -5321,6 +5321,77 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       commandChips: ['Preview first', 'NOW / NEXT', 'On-card recovery'],
     },
   ],
+  surfaceShipLanes: [
+    {
+      screenId: 'login',
+      eyebrow: 'Assignment 1 to 3, made visible',
+      title: 'Login is shipping the real connection shell',
+      summary: 'The first screen is already more than credential entry: it proves saved-provider reuse, mock-provider rehearsal, and whether Connect still owns a clean handoff into Home.',
+      lanes: [
+        {
+          label: 'Saved provider reconnect',
+          status: 'shipped',
+          detail: 'Multiple Xtream connections persist locally and can be reactivated without retyping credentials.',
+        },
+        {
+          label: 'Mock Xtream rehearsal',
+          status: 'wired',
+          detail: 'The local adapter publishes demo credentials, scenario flips, and proof surfaces so setup can be validated before a live customer provider exists.',
+        },
+        {
+          label: 'Launch truth beside Connect',
+          status: 'shipped',
+          detail: 'Provider ownership, launch scorecard, explanation boundary, and guide freshness stay on-screen before Connect advances into Home.',
+        },
+      ],
+    },
+    {
+      screenId: 'home',
+      eyebrow: 'Assignment 3, product-first shell',
+      title: 'Home is already behaving like a streaming product',
+      summary: 'The shipped home surface is not a utility dashboard. It keeps hero launch, continue watching, saved-provider posture, and live quick-launch context together so the app feels like content first.',
+      lanes: [
+        {
+          label: 'Hero + quick launch',
+          status: 'shipped',
+          detail: 'Featured content, quick live lanes, and launch-readiness truth are wired to the active Xtream provider.',
+        },
+        {
+          label: 'Continue watching continuity',
+          status: 'wired',
+          detail: 'Resume state for live and on-demand items is preserved locally and surfaced directly in the home shell.',
+        },
+        {
+          label: 'Provider-aware browse truth',
+          status: 'rehearsal-ready',
+          detail: 'Mock-provider scenarios can downgrade the shell in place so Home keeps the premium story honest when browse confidence softens.',
+        },
+      ],
+    },
+    {
+      screenId: 'live',
+      eyebrow: 'Assignment 3, browse + play lane',
+      title: 'Live is shipping the real TV browser',
+      summary: 'The live surface already covers the core Phase 1 promise: category browsing, inline preview, NOW/NEXT guide posture, favorites, and immediate playback without leaving the product shell.',
+      lanes: [
+        {
+          label: 'Category surf speed',
+          status: 'shipped',
+          detail: 'Live groups and search filtering keep fast remote-style channel browsing intact before playback.',
+        },
+        {
+          label: 'Preview + NOW/NEXT',
+          status: 'shipped',
+          detail: 'Selected channels load instant preview with inline guide context so the user gets confidence before pressing Play.',
+        },
+        {
+          label: 'Playback resilience rehearsal',
+          status: 'wired',
+          detail: 'The live shell keeps provider-switch, fallback, and hold-state truth visible beside Play instead of hiding recovery behind a blank player jump.',
+        },
+      ],
+    },
+  ],
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),

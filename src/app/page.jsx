@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { MockDemoBoard } from '@/components/mock-demo-board';
+import { PhaseOneShipRail } from '@/components/phase-one-ship-rail';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceActionGate } from '@/components/surface-action-gate';
@@ -614,6 +615,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <DifferentiatorSpotlight manifest={manifest} screenId="login" />
+          </div>
+
+          <div className="mt-6">
+            <PhaseOneShipRail manifest={manifest} screenId="login" />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (

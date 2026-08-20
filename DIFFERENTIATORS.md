@@ -4,6 +4,16 @@
 
 StreamDeck should feel like a premium streaming product first and an IPTV utility second. The competitive gap is not just visual polish. It is faster provider switching, better inline trust signals, stronger continuity across browse and playback, and features that treat multi-provider IPTV households like a real product use case instead of an edge case.
 
+## Phase 1 Ship Lanes
+
+The original three-assignment baseline is already broader than a login page plus some catalog lists. Phase 1 should stay framed as three visible product lanes that the shell itself must prove:
+
+| Surface | What ships now | Why it matters |
+| --- | --- | --- |
+| Login | Saved-provider reconnect, mock Xtream rehearsal, and CTA-side launch truth beside Connect. | Setup should already feel premium and trustworthy before the user reaches Home. |
+| Home | Hero launch, quick live lanes, continue-watching continuity, and provider-aware browse posture. | Home needs to feel like a streaming product, not a reseller control panel with posters on top. |
+| Live | Category surf speed, inline preview, NOW / NEXT guide posture, favorites, and immediate playback. | Live is the Phase 1 proof that StreamDeck can browse and play faster than generic IPTV shells. |
+
 ## Competitive Differentiator Matrix
 
 | Feature | One-line pitch | Competitive gap | Build phase | Architecture notes |
