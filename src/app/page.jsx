@@ -62,6 +62,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
+import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
 import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
@@ -619,6 +620,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <PhaseOneShipRail manifest={manifest} screenId="login" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceRemotePathInline manifest={manifest} screenId="login" />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (

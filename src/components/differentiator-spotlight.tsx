@@ -8,24 +8,24 @@ const surfaceCopy: Record<ScreenId, { eyebrow: string; title: string; detail: st
   login: {
     eyebrow: 'Phase 1 edge',
     title: 'Why this login is worth building around',
-    detail: 'Saved-provider switching, profile-safe expansion, and cross-provider search all start with the connection shell telling the truth about who owns the next launch.',
+    detail: 'Saved-provider switching, remote-first setup cadence, and profile-safe expansion all start with the connection shell telling the truth about who owns the next launch.',
   },
   home: {
     eyebrow: 'Home advantage',
     title: 'The product bets visible on Home',
-    detail: 'Home should prove collections, resume continuity, and provider-aware browsing together before the user ever reaches a utility-style screen.',
+    detail: 'Home should prove collections, resume continuity, provider-aware browsing, and calm remote-first travel together before the user ever reaches a utility-style screen.',
   },
   live: {
     eyebrow: 'Live advantage',
     title: 'The live-browser features that should feel different',
-    detail: 'Live has to surface preview, NOW / NEXT, and stream-health truth without slowing channel surfing down.',
+    detail: 'Live has to surface preview, NOW / NEXT, stream-health truth, and one-press surf confidence without slowing channel surfing down.',
   },
 };
 
 const spotlightPriority: Record<ScreenId, string[]> = {
-  login: ['saved-provider-podium', 'provider-stability-truth', 'return-cooldown-truth', 'recovery-witness', 'provider-choice-truth', 'provider-switch-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'explanation-boundary', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
-  home: ['saved-provider-podium', 'provider-stability-truth', 'return-cooldown-truth', 'recovery-witness', 'provider-choice-truth', 'provider-switch-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'explanation-boundary', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
-  live: ['saved-provider-podium', 'provider-stability-truth', 'return-cooldown-truth', 'recovery-witness', 'provider-choice-truth', 'provider-switch-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'explanation-boundary', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
+  login: ['remote-first-control', 'saved-provider-podium', 'provider-stability-truth', 'return-cooldown-truth', 'recovery-witness', 'provider-choice-truth', 'provider-switch-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'explanation-boundary', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
+  home: ['remote-first-control', 'saved-provider-podium', 'provider-stability-truth', 'return-cooldown-truth', 'recovery-witness', 'provider-choice-truth', 'provider-switch-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'explanation-boundary', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
+  live: ['remote-first-control', 'saved-provider-podium', 'provider-stability-truth', 'return-cooldown-truth', 'recovery-witness', 'provider-choice-truth', 'provider-switch-truth', 'launch-readiness', 'launch-scorecard', 'proof-debt', 'proof-provenance', 'explanation-boundary', 'hold-receipt', 'claim-ceiling', 'connection-headroom', 'rescue-receipt', 'reset-boundary', 'identity-anchor', 'canonical-provider-identity', 'fallback-ranking', 'fallback-equivalence', 'fallback-expiry-truth', 'guide-freshness-board'],
 };
 
 export function DifferentiatorSpotlight({

@@ -64,6 +64,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
+import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
 import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
@@ -503,6 +504,7 @@ export function LiveBrowser() {
       ) : null}
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="live" /> : null}
       {isMockConnection ? <PhaseOneShipRail manifest={manifest} screenId="live" /> : null}
+      {isMockConnection ? <SurfaceRemotePathInline manifest={manifest} screenId="live" /> : null}
       <PlaybackResiliencePanel contract={playbackResilience} />
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
