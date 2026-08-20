@@ -73,6 +73,7 @@ import { buildPlaybackHistoryRuntime } from '@/lib/playback-history-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
+import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
@@ -482,6 +483,13 @@ export function HomeDashboard() {
       board: savedProviderBoard,
     }),
     [proofProvenance, savedProviderBoard]
+  );
+  const explanationBoundaryRuntime = useMemo(
+    () => buildSavedProviderExplanationBoundaryRuntime({
+      contract: explanationBoundary,
+      board: savedProviderBoard,
+    }),
+    [explanationBoundary, savedProviderBoard]
   );
   const providerStabilityRuntime = useMemo(
     () => buildSavedProviderStabilityRuntime({
@@ -968,7 +976,7 @@ export function HomeDashboard() {
       <SurfaceProofProvenance runtime={proofProvenanceRuntime} badge="Proof provenance" />
       <SurfaceIntentLock contract={intentLock} badge="Intent lock" />
       <SurfaceActionGate contract={actionGate} badge="Action gate" />
-      <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
+      <SurfaceExplanationBoundary runtime={explanationBoundaryRuntime} badge="Explanation boundary" />
       <SurfaceAutonomyBoundary contract={autonomyBoundary} badge="Autonomy boundary" />
       <SurfaceInterruptionBudget contract={interruptionBudget} badge="Interruption budget" />
       <SurfaceRetryContract contract={retryContract} badge="Retry honesty" />

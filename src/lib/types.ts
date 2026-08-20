@@ -768,6 +768,27 @@ export type SurfaceProofProvenanceRuntimeContract = {
   sources: SurfaceProofProvenanceRuntimeEntry[];
 };
 
+export type SurfaceExplanationBoundaryRuntimeEntry = {
+  label: string;
+  mustSayExplicitly: string;
+  canStayImplied: string;
+  forcedDisclosureTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  boundaryStatus: string;
+};
+
+export type SurfaceExplanationBoundaryRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  boundaries: SurfaceExplanationBoundaryRuntimeEntry[];
+};
+
 export type SurfaceProviderChoiceRuntimeEntry = {
   label: string;
   autoPickTrigger: string;

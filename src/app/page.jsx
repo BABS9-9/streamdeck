@@ -69,6 +69,7 @@ import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
+import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
 import { buildSavedProviderFreshnessBoardRuntime } from '@/lib/saved-provider-freshness-board-runtime';
@@ -399,6 +400,13 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [proofProvenance, savedProviderBoard]
+  );
+  const explanationBoundaryRuntime = useMemo(
+    () => buildSavedProviderExplanationBoundaryRuntime({
+      contract: explanationBoundary,
+      board: savedProviderBoard,
+    }),
+    [explanationBoundary, savedProviderBoard]
   );
   const providerStabilityRuntime = useMemo(
     () => buildSavedProviderStabilityRuntime({
@@ -944,7 +952,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceExplanationBoundary contract={explanationBoundary} badge="Explanation boundary" />
+            <SurfaceExplanationBoundary runtime={explanationBoundaryRuntime} badge="Explanation boundary" />
           </div>
 
           <div className="mt-6">
