@@ -882,6 +882,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'explanation-boundary',
+    feature: 'Explanation boundary',
+    pitch: 'Publish what degraded truth must now be said explicitly, what can still stay implied, and what trigger forces the premium shell to stop being elegantly vague.',
+    competitiveGap: 'Competitors usually keep premium copy smooth even after provider truth degrades, so users cannot tell when the product is hiding the real caveat behind tone instead of stating it plainly.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one explanation-boundary contract and keep that explicit-versus-implied line visible beside Connect, the hero CTA, and Play so degraded truth gets spoken at the right moment instead of disappearing behind polish.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'claim-ceiling',
     feature: 'Claim ceiling',
     pitch: 'Publish the strongest promise each surface can still make, the overclaim it must suppress, and the proof that earns premium language back.',
