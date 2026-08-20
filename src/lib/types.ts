@@ -810,6 +810,27 @@ export type SurfaceProviderChoiceRuntimeContract = {
   choices: SurfaceProviderChoiceRuntimeEntry[];
 };
 
+export type SurfaceProviderSwitchRuntimeEntry = {
+  label: string;
+  switchTrigger: string;
+  preservesContext: string;
+  stayProof: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  switchStatus: string;
+};
+
+export type SurfaceProviderSwitchRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  switches: SurfaceProviderSwitchRuntimeEntry[];
+};
+
 export type SurfaceProviderStabilityRuntimeEntry = {
   label: string;
   stabilityThreshold: string;

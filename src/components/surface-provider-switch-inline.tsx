@@ -1,6 +1,6 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { SurfaceProviderSwitchRuntimeContract } from '@/lib/types';
 
 const toneStyles = {
   ready: 'border-sky-400/20 bg-sky-500/10 text-sky-100',
@@ -15,19 +15,19 @@ const toneLabels = {
 } as const;
 
 type SurfaceProviderSwitchInlineProps = {
-  contract: MockProviderManifest['surfaceProviderSwitchContracts'][number] | null;
+  runtime: SurfaceProviderSwitchRuntimeContract | null;
   title: string;
   badge: string;
 };
 
 export function SurfaceProviderSwitchInline({
-  contract,
+  runtime,
   title,
   badge,
 }: SurfaceProviderSwitchInlineProps) {
-  const switchLane = contract?.switches?.[0];
+  const switchLane = runtime?.switches?.[0];
 
-  if (!contract || !switchLane) return null;
+  if (!runtime || !switchLane) return null;
 
   return (
     <div className={`rounded-[1.75rem] border p-6 ${toneStyles[switchLane.tone]}`}>
@@ -40,9 +40,11 @@ export function SurfaceProviderSwitchInline({
           {badge}
         </span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-100">{contract.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-100">{runtime.summary}</p>
       <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/70">{toneLabels[switchLane.tone]}</p>
-      <p className="mt-2 text-sm leading-6 text-white">Switch when: {switchLane.switchTrigger}</p>
+      <p className="mt-2 text-sm leading-6 text-white">{switchLane.switchStatus}</p>
+      <p className="mt-3 text-sm leading-6 text-white/85">{switchLane.ownerStatusLabel}</p>
+      <p className="mt-3 text-sm leading-6 text-white/85">Switch when: {switchLane.switchTrigger}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Keeps: {switchLane.preservesContext}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Stay only if: {switchLane.stayProof}</p>
     </div>

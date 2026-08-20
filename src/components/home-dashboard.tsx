@@ -87,6 +87,7 @@ import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-d
 import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-proof-provenance-runtime';
 import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-return-cooldown-runtime';
 import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
+import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamStream } from '@/lib/types';
@@ -428,6 +429,13 @@ export function HomeDashboard() {
       board: savedProviderBoard,
     }),
     [providerChoice, savedProviderBoard]
+  );
+  const providerSwitchRuntime = useMemo(
+    () => buildSavedProviderSwitchRuntime({
+      contract: providerSwitchContract,
+      board: savedProviderBoard,
+    }),
+    [providerSwitchContract, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -772,7 +780,7 @@ export function HomeDashboard() {
             </div>
             <div className="mt-4">
               <SurfaceProviderSwitchInline
-                contract={providerSwitchContract}
+                runtime={providerSwitchRuntime}
                 title="Hero provider switch"
                 badge="Switch truth"
               />
@@ -975,7 +983,7 @@ export function HomeDashboard() {
       <SurfaceHandoffMap handoff={handoffMap} badge="Live handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
-      <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
+      <SurfaceProviderSwitchContract runtime={providerSwitchRuntime} badge="Switch honesty" />
       <SurfaceProviderReturnContract contract={providerReturnContract} badge="Return truth" />
       <SurfaceProviderStabilityContract runtime={providerStabilityRuntime} badge="Stability truth" />
       <SurfaceRecoveryPlan contract={recoveryPlan} badge="Recovery route" />

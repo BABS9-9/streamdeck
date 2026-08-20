@@ -83,6 +83,7 @@ import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-d
 import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-proof-provenance-runtime';
 import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-return-cooldown-runtime';
 import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
+import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -345,6 +346,13 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [providerChoice, savedProviderBoard]
+  );
+  const providerSwitchRuntime = useMemo(
+    () => buildSavedProviderSwitchRuntime({
+      contract: providerSwitchContract,
+      board: savedProviderBoard,
+    }),
+    [providerSwitchContract, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -688,7 +696,7 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProviderSwitchInline
-              contract={providerSwitchContract}
+              runtime={providerSwitchRuntime}
               title="Connect provider switch"
               badge="Switch truth"
             />
@@ -925,7 +933,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
+            <SurfaceProviderSwitchContract runtime={providerSwitchRuntime} badge="Switch honesty" />
           </div>
 
           <div className="mt-6">

@@ -87,6 +87,7 @@ import { buildSavedProviderProofDebtRuntime } from '@/lib/saved-provider-proof-d
 import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-proof-provenance-runtime';
 import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-return-cooldown-runtime';
 import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
+import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamCategory, XtreamStream } from '@/lib/types';
@@ -293,6 +294,13 @@ export function LiveBrowser() {
       board: savedProviderBoard,
     }),
     [providerChoice, savedProviderBoard]
+  );
+  const providerSwitchRuntime = useMemo(
+    () => buildSavedProviderSwitchRuntime({
+      contract: providerSwitchContract,
+      board: savedProviderBoard,
+    }),
+    [providerSwitchContract, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -518,7 +526,7 @@ export function LiveBrowser() {
       <SurfaceHandoffMap handoff={handoffMap} badge="Playback handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
       <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
-      <SurfaceProviderSwitchContract contract={providerSwitchContract} badge="Switch honesty" />
+      <SurfaceProviderSwitchContract runtime={providerSwitchRuntime} badge="Switch honesty" />
       <MultiConnectionGuideRuntime
         contract={multiConnectionGuideRuntime}
         onSelectProvider={(providerId) => setActiveConnection(providerId, {
@@ -596,7 +604,7 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceProviderSwitchInline
-                contract={providerSwitchContract}
+                runtime={providerSwitchRuntime}
                 title="Play provider switch"
                 badge="Switch truth"
               />
