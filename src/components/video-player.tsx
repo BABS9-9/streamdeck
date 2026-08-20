@@ -23,7 +23,9 @@ export function VideoPlayer({
   const lastProgressRef = useRef(0);
   const updateStreamHealth = usePlayerStore((state) => state.updateStreamHealth);
   const updatePlaybackProgress = usePlayerStore((state) => state.updatePlaybackProgress);
+  const updateControlTelemetry = usePlayerStore((state) => state.updateControlTelemetry);
   const resetStreamHealth = usePlayerStore((state) => state.resetStreamHealth);
+  const resetControlTelemetry = usePlayerStore((state) => state.resetControlTelemetry);
 
   useEffect(() => {
     const video = ref.current;
@@ -31,6 +33,7 @@ export function VideoPlayer({
     if (!src) {
       onStateChange?.('idle');
       resetStreamHealth();
+      resetControlTelemetry();
       if (video) video.removeAttribute('src');
       return;
     }
@@ -41,6 +44,18 @@ export function VideoPlayer({
     let metricsTimer: ReturnType<typeof setInterval> | null = null;
     let resumed = false;
     onStateChange?.('loading');
+    updateControlTelemetry({
+      playbackState: 'loading',
+      isMuted: muted,
+      volumeLevel: null,
+      audioTrackCount: 0,
+      subtitleTrackCount: 0,
+      hasSelectedAudioTrack: false,
+      hasSelectedSubtitleTrack: false,
+      seekableWindowSeconds: null,
+      durationSeconds: null,
+      atLiveEdge: null,
+    });
 
     const getBufferSeconds = () => {
       const currentTime = video.currentTime;
@@ -52,6 +67,51 @@ export function VideoPlayer({
         }
       }
       return 0;
+    };
+
+    const getAudioTracks = () => {
+      const mediaWithAudioTracks = video as HTMLVideoElement & {
+        audioTracks?: ArrayLike<{ enabled?: boolean }>;
+      };
+      return mediaWithAudioTracks.audioTracks ?? null;
+    };
+
+    const getSelectedAudioTrack = () => {
+      const audioTracks = getAudioTracks();
+      if (!audioTracks) return false;
+      return Array.from({ length: audioTracks.length }).some((_, index) => Boolean(audioTracks[index]?.enabled));
+    };
+
+    const getSelectedSubtitleTrack = () =>
+      Array.from(video.textTracks || []).some((track) => track.mode === 'showing');
+
+    const getSeekableWindowSeconds = () => {
+      if (!video.seekable || video.seekable.length === 0) return null;
+      const start = video.seekable.start(0);
+      const end = video.seekable.end(video.seekable.length - 1);
+      return Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, Number((end - start).toFixed(1))) : null;
+    };
+
+    const getAtLiveEdge = () => {
+      if (!video.seekable || video.seekable.length === 0) return null;
+      const liveEdge = video.seekable.end(video.seekable.length - 1);
+      return liveEdge - video.currentTime <= 8;
+    };
+
+    const pushControlTelemetry = (playbackState?: 'idle' | 'loading' | 'playing' | 'paused' | 'buffering' | 'error') => {
+      const audioTracks = getAudioTracks();
+      updateControlTelemetry({
+        playbackState: playbackState ?? (video.paused ? 'paused' : 'playing'),
+        isMuted: video.muted,
+        volumeLevel: Number.isFinite(video.volume) ? Number(video.volume.toFixed(2)) : null,
+        audioTrackCount: audioTracks?.length ?? 0,
+        subtitleTrackCount: video.textTracks?.length ?? 0,
+        hasSelectedAudioTrack: getSelectedAudioTrack(),
+        hasSelectedSubtitleTrack: getSelectedSubtitleTrack(),
+        seekableWindowSeconds: getSeekableWindowSeconds(),
+        durationSeconds: Number.isFinite(video.duration) ? Number(video.duration.toFixed(1)) : null,
+        atLiveEdge: getAtLiveEdge(),
+      });
     };
 
     const pushVideoMetrics = (status?: 'healthy' | 'buffering' | 'degraded') => {
@@ -68,6 +128,7 @@ export function VideoPlayer({
       video.src = src;
       onStateChange?.('loading');
       updateStreamHealth({ status: 'loading', codec: 'native', message: 'Starting native HLS playback' });
+      pushControlTelemetry('loading');
     };
 
     const maybeResume = () => {
@@ -79,23 +140,37 @@ export function VideoPlayer({
     const handleWaiting = () => {
       onStateChange?.('buffering');
       pushVideoMetrics('buffering');
+      pushControlTelemetry('buffering');
     };
     const handlePlaying = () => {
       onStateChange?.('playing');
       pushVideoMetrics('healthy');
+      pushControlTelemetry('playing');
     };
-    const handleLoadedMetadata = () => maybeResume();
+    const handleLoadedMetadata = () => {
+      maybeResume();
+      pushControlTelemetry(video.paused ? 'paused' : 'playing');
+    };
     const handleTimeUpdate = () => {
       const now = Date.now();
       if (now - lastProgressRef.current < 3000) return;
       lastProgressRef.current = now;
       updatePlaybackProgress(video.currentTime, Number.isFinite(video.duration) ? video.duration : null);
+      pushControlTelemetry(video.paused ? 'paused' : 'playing');
     };
-    const handleEnded = () => updatePlaybackProgress(Number.isFinite(video.duration) ? video.duration : video.currentTime, Number.isFinite(video.duration) ? video.duration : null);
+    const handleEnded = () => {
+      updatePlaybackProgress(Number.isFinite(video.duration) ? video.duration : video.currentTime, Number.isFinite(video.duration) ? video.duration : null);
+      pushControlTelemetry('paused');
+    };
     const handleError = () => {
       onStateChange?.('error');
       updateStreamHealth({ status: 'error', message: 'Playback error detected' });
+      pushControlTelemetry('error');
     };
+    const handlePause = () => {
+      if (!video.ended) pushControlTelemetry('paused');
+    };
+    const handleVolumeChange = () => pushControlTelemetry(video.paused ? 'paused' : 'playing');
 
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('playing', handlePlaying);
@@ -103,6 +178,8 @@ export function VideoPlayer({
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('ended', handleEnded);
     video.addEventListener('error', handleError);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('volumechange', handleVolumeChange);
 
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       setNativeSource();
@@ -123,6 +200,7 @@ export function VideoPlayer({
           bitrateKbps: level?.bitrate ? Math.round(level.bitrate / 1000) : null,
           message: 'Stream ready',
         });
+        pushControlTelemetry(video.paused ? 'paused' : 'playing');
       });
 
       hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
@@ -139,14 +217,19 @@ export function VideoPlayer({
           status: data.fatal ? 'error' : 'degraded',
           message: data.details,
         });
+        pushControlTelemetry(data.fatal ? 'error' : 'buffering');
       });
     } else {
       onStateChange?.('error');
       updateStreamHealth({ status: 'error', message: 'HLS is not supported in this browser' });
+      pushControlTelemetry('error');
     }
 
     metricsTimer = setInterval(() => {
-      if (!video.paused && !video.ended) pushVideoMetrics();
+      if (!video.paused && !video.ended) {
+        pushVideoMetrics();
+        pushControlTelemetry('playing');
+      }
     }, 2000);
 
     return () => {
@@ -158,9 +241,11 @@ export function VideoPlayer({
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('ended', handleEnded);
       video.removeEventListener('error', handleError);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('volumechange', handleVolumeChange);
       if (hls) hls.destroy();
     };
-  }, [allowResume, onStateChange, poster, resetStreamHealth, resumeFromSeconds, src, updatePlaybackProgress, updateStreamHealth]);
+  }, [allowResume, muted, onStateChange, poster, resetControlTelemetry, resetStreamHealth, resumeFromSeconds, src, updateControlTelemetry, updatePlaybackProgress, updateStreamHealth]);
 
   return (
     <video

@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { createPlaybackHistoryEntry, hydratePlaybackHistory, updatePlaybackHistoryProgress } from '@/lib/playback-history-runtime';
 import { getArtwork, getCachedSearchCatalog, getContentId } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
-import { StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
+import { PlayerControlTelemetry, StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 
 type PlaybackMeta = {
@@ -22,14 +22,17 @@ type PlayerState = {
   resumeFromSeconds: number;
   watchHistory: WatchHistoryItem[];
   streamHealth: StreamHealth;
+  controlTelemetry: PlayerControlTelemetry;
   dockMode: 'expanded' | 'compact';
   hydrate: () => void;
   playStream: (stream: XtreamStream, playbackUrl: string, providerId: string, meta?: PlaybackMeta) => void;
   updatePlaybackProgress: (positionSeconds: number, durationSeconds?: number | null) => void;
   updateStreamHealth: (health: Partial<StreamHealth>) => void;
+  updateControlTelemetry: (telemetry: Partial<PlayerControlTelemetry>) => void;
   markProviderDrop: (providerId: string, message: string) => void;
   invalidateProvider: (providerId: string, reason?: string) => void;
   resetStreamHealth: () => void;
+  resetControlTelemetry: () => void;
   setDockMode: (mode: 'expanded' | 'compact') => void;
   closePlayback: () => void;
 };
@@ -43,6 +46,20 @@ const defaultStreamHealth: StreamHealth = {
   codec: null,
   updatedAt: null,
   message: null,
+};
+
+const defaultControlTelemetry: PlayerControlTelemetry = {
+  playbackState: 'idle',
+  isMuted: false,
+  volumeLevel: null,
+  audioTrackCount: 0,
+  subtitleTrackCount: 0,
+  hasSelectedAudioTrack: false,
+  hasSelectedSubtitleTrack: false,
+  seekableWindowSeconds: null,
+  durationSeconds: null,
+  atLiveEdge: null,
+  updatedAt: null,
 };
 
 const mergeProviderHistory = (
@@ -61,6 +78,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   resumeFromSeconds: 0,
   watchHistory: [],
   streamHealth: defaultStreamHealth,
+  controlTelemetry: defaultControlTelemetry,
   dockMode: 'compact',
   hydrate: () => {
     const authState = useAuthStore.getState();
@@ -131,6 +149,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         updatedAt: Date.now(),
         message: `Loading ${stream.name}`,
       },
+      controlTelemetry: {
+        ...defaultControlTelemetry,
+        playbackState: 'loading',
+        updatedAt: Date.now(),
+      },
     });
   },
   updatePlaybackProgress: (positionSeconds, durationSeconds) => {
@@ -180,6 +203,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       updatedAt: Date.now(),
     },
   })),
+  updateControlTelemetry: (telemetry) => set((state) => ({
+    controlTelemetry: {
+      ...state.controlTelemetry,
+      ...telemetry,
+      updatedAt: Date.now(),
+    },
+  })),
   markProviderDrop: (providerId, message) => set((state) => (
     state.currentProviderId !== providerId
       ? state
@@ -189,6 +219,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
             status: 'error',
             updatedAt: Date.now(),
             message,
+          },
+          controlTelemetry: {
+            ...state.controlTelemetry,
+            playbackState: 'error',
+            updatedAt: Date.now(),
           },
         }
   )),
@@ -212,10 +247,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           updatedAt: Date.now(),
           message: reason || 'The active provider was removed from playback state.',
         },
+        controlTelemetry: {
+          ...defaultControlTelemetry,
+          playbackState: 'error',
+          updatedAt: Date.now(),
+        },
       };
     });
   },
   resetStreamHealth: () => set({ streamHealth: defaultStreamHealth }),
+  resetControlTelemetry: () => set({ controlTelemetry: defaultControlTelemetry }),
   setDockMode: (mode) => {
     storage.savePlayerDockMode(mode);
     set({ dockMode: mode });
@@ -226,5 +267,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     currentProviderId: null,
     resumeFromSeconds: 0,
     streamHealth: defaultStreamHealth,
+    controlTelemetry: defaultControlTelemetry,
   }),
 }));

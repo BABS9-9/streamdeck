@@ -3,10 +3,12 @@
 import { useEffect, useMemo } from 'react';
 import { getContentId } from '@/lib/xtream-api';
 import { getLiveCategoryRecovery, getLiveProviderVariants } from '@/lib/provider-recovery';
+import { buildLivePlayerControlRuntime } from '@/lib/live-player-control-runtime';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatGuideUpdatedAge, getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { VideoPlayer } from './video-player';
 import { usePlayerStore } from '@/stores/player-store';
+import { LivePlayerControlPanel } from './live-player-control-panel';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 
@@ -25,6 +27,7 @@ export function PlayerDock() {
   const currentProviderId = usePlayerStore((state) => state.currentProviderId);
   const resumeFromSeconds = usePlayerStore((state) => state.resumeFromSeconds);
   const streamHealth = usePlayerStore((state) => state.streamHealth);
+  const controlTelemetry = usePlayerStore((state) => state.controlTelemetry);
   const dockMode = usePlayerStore((state) => state.dockMode);
   const setDockMode = usePlayerStore((state) => state.setDockMode);
   const closePlayback = usePlayerStore((state) => state.closePlayback);
@@ -32,6 +35,7 @@ export function PlayerDock() {
   const connections = useAuthStore((state) => state.connections);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const setActiveConnection = useAuthStore((state) => state.setActiveConnection);
+  const lastSwitchContext = useAuthStore((state) => state.lastSwitchContext);
   const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
   const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
   const refreshGuideEntry = useLiveGuideStore((state) => state.refreshGuideEntry);
@@ -83,6 +87,46 @@ export function PlayerDock() {
       }),
     };
   }, [connectionStatus, connections, currentProviderId, currentStream, historyItem?.categoryName]);
+
+  const livePlayerControlRuntime = useMemo(() => buildLivePlayerControlRuntime({
+    currentStream,
+    currentProviderId,
+    activeConnectionId: currentProviderId,
+    connections,
+    connectionStatus,
+    watchHistory,
+    controlTelemetry,
+    streamHealthStatus: streamHealth.status,
+    dockMode,
+    currentGuideCoverage,
+    guideContinuity: null,
+    lastSwitchContext,
+    recoveryTarget: liveRecovery.topVariant
+      ? {
+          providerId: liveRecovery.topVariant.providerId,
+          providerName: liveRecovery.topVariant.providerName,
+        }
+      : liveRecovery.categoryFallback
+        ? {
+            providerId: liveRecovery.categoryFallback.providerId,
+            providerName: liveRecovery.categoryFallback.providerName,
+            categoryName: liveRecovery.categoryFallback.categoryName,
+          }
+        : null,
+  }), [
+    connectionStatus,
+    connections,
+    controlTelemetry,
+    currentGuideCoverage,
+    currentProviderId,
+    currentStream,
+    dockMode,
+    lastSwitchContext,
+    liveRecovery.categoryFallback,
+    liveRecovery.topVariant,
+    streamHealth.status,
+    watchHistory,
+  ]);
 
   useEffect(() => {
     if (!currentProvider || !currentStream || currentStream.stream_type !== 'live' || !contentId) return;
@@ -176,6 +220,8 @@ export function PlayerDock() {
                 </div>
               </div>
 
+              <LivePlayerControlPanel contract={livePlayerControlRuntime} />
+
               {currentStream.stream_type === 'live' ? (
                 <div className="rounded-[1.2rem] border border-white/10 bg-white/5 p-4">
                   <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Player now / next</p>
@@ -228,14 +274,24 @@ export function PlayerDock() {
                       {
                         label: 'Play on healthiest provider',
                         onClick: () => {
-                          setActiveConnection(liveRecovery.topVariant!.providerId);
-                          playStream(liveRecovery.topVariant!.stream!, liveRecovery.topVariant!.playbackUrl!, liveRecovery.topVariant!.providerId);
+                          setActiveConnection(liveRecovery.topVariant!.providerId, {
+                            sourceSurface: 'player',
+                            reason: 'recovery',
+                            preservedTitle: currentStream.name,
+                          });
+                          playStream(liveRecovery.topVariant!.stream!, liveRecovery.topVariant!.playbackUrl!, liveRecovery.topVariant!.providerId, {
+                            sourceSurface: 'player',
+                          });
                         },
                       },
                       {
                         label: 'Switch only',
                         tone: 'secondary',
-                        onClick: () => setActiveConnection(liveRecovery.topVariant!.providerId),
+                        onClick: () => setActiveConnection(liveRecovery.topVariant!.providerId, {
+                          sourceSurface: 'player',
+                          reason: 'recovery',
+                          preservedTitle: currentStream.name,
+                        }),
                       },
                     ]}
                   />
@@ -249,14 +305,24 @@ export function PlayerDock() {
                       {
                         label: 'Open same category',
                         onClick: () => {
-                          setActiveConnection(liveRecovery.categoryFallback!.providerId);
-                          playStream(liveRecovery.categoryFallback!.stream, liveRecovery.categoryFallback!.playbackUrl, liveRecovery.categoryFallback!.providerId);
+                          setActiveConnection(liveRecovery.categoryFallback!.providerId, {
+                            sourceSurface: 'player',
+                            reason: 'recovery',
+                            preservedTitle: currentStream.name,
+                          });
+                          playStream(liveRecovery.categoryFallback!.stream, liveRecovery.categoryFallback!.playbackUrl, liveRecovery.categoryFallback!.providerId, {
+                            sourceSurface: 'player',
+                          });
                         },
                       },
                       {
                         label: 'Switch only',
                         tone: 'secondary',
-                        onClick: () => setActiveConnection(liveRecovery.categoryFallback!.providerId),
+                        onClick: () => setActiveConnection(liveRecovery.categoryFallback!.providerId, {
+                          sourceSurface: 'player',
+                          reason: 'recovery',
+                          preservedTitle: currentStream.name,
+                        }),
                       },
                     ]}
                   />

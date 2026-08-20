@@ -989,6 +989,22 @@ export type StreamHealth = {
   message?: string | null;
 };
 
+export type PlayerPlaybackState = 'idle' | 'loading' | 'playing' | 'paused' | 'buffering' | 'error';
+
+export type PlayerControlTelemetry = {
+  playbackState: PlayerPlaybackState;
+  isMuted: boolean;
+  volumeLevel: number | null;
+  audioTrackCount: number;
+  subtitleTrackCount: number;
+  hasSelectedAudioTrack: boolean;
+  hasSelectedSubtitleTrack: boolean;
+  seekableWindowSeconds: number | null;
+  durationSeconds: number | null;
+  atLiveEdge: boolean | null;
+  updatedAt: number | null;
+};
+
 export type PlaybackResilienceTone = 'ready' | 'watch' | 'recover';
 
 export type PlaybackResilienceProviderState = {
@@ -1039,6 +1055,103 @@ export type PlaybackResilienceContract = {
   signals: PlaybackResilienceSignal[];
   recoverySteps: PlaybackResilienceRecoveryStep[];
   providers: PlaybackResilienceProviderState[];
+};
+
+export type LivePlayerControlTone = 'ready' | 'watch' | 'recover';
+
+export type LivePlayerPlayPauseState =
+  | 'idle'
+  | 'loading'
+  | 'playing'
+  | 'paused'
+  | 'buffering'
+  | 'error';
+
+export type LivePlayerSeekWindowState =
+  | 'unavailable'
+  | 'live-edge'
+  | 'timeshift-ready'
+  | 'timeshift-active'
+  | 'resume-window';
+
+export type LivePlayerInfoBarVisibilityState =
+  | 'compact-hidden'
+  | 'details-open'
+  | 'guide-led'
+  | 'recovery-forced';
+
+export type LivePlayerSubtitleAudioOptionState =
+  | 'none'
+  | 'audio-only'
+  | 'subtitles-only'
+  | 'audio-and-subtitles'
+  | 'selection-active';
+
+export type LivePlayerFocusReturnState =
+  | 'live-grid'
+  | 'provider-switch'
+  | 'same-category'
+  | 'recovery-rail'
+  | 'resume-history';
+
+export type LivePlayerPlaybackContinuityState =
+  | 'same-provider'
+  | 'switch-preserved'
+  | 'category-preserved'
+  | 'degraded'
+  | 'broken';
+
+export type LivePlayerControlCard = {
+  id:
+    | 'play-pause'
+    | 'seek-window'
+    | 'info-bar'
+    | 'subtitle-audio'
+    | 'focus-return'
+    | 'playback-continuity';
+  label: string;
+  state:
+    | LivePlayerPlayPauseState
+    | LivePlayerSeekWindowState
+    | LivePlayerInfoBarVisibilityState
+    | LivePlayerSubtitleAudioOptionState
+    | LivePlayerFocusReturnState
+    | LivePlayerPlaybackContinuityState;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerControlSignal = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerControlRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  activeProviderId: string | null;
+  playbackOwnerProviderId: string | null;
+  recommendedProviderId: string | null;
+  playPauseState: LivePlayerPlayPauseState;
+  seekWindowState: LivePlayerSeekWindowState;
+  infoBarVisibilityState: LivePlayerInfoBarVisibilityState;
+  subtitleAudioOptionState: LivePlayerSubtitleAudioOptionState;
+  focusReturnState: LivePlayerFocusReturnState;
+  playbackContinuityState: LivePlayerPlaybackContinuityState;
+  cards: LivePlayerControlCard[];
+  signals: LivePlayerControlSignal[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    targetProviderId: string | null;
+  };
 };
 
 export type MockProviderCategorySummary = {
