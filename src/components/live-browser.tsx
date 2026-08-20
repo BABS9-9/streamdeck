@@ -50,6 +50,7 @@ import { SurfaceLaunchReadiness } from '@/components/surface-launch-readiness';
 import { SurfaceLaunchScorecard } from '@/components/surface-launch-scorecard';
 import { SurfaceProofDebtInline } from '@/components/surface-proof-debt-inline';
 import { SurfaceProofProvenanceInline } from '@/components/surface-proof-provenance-inline';
+import { SurfaceExplanationBoundaryInline } from '@/components/surface-explanation-boundary-inline';
 import { SurfaceProofDebt } from '@/components/surface-proof-debt';
 import { SurfaceProofProvenance } from '@/components/surface-proof-provenance';
 import { SurfaceProviderPodium } from '@/components/surface-provider-podium';
@@ -612,6 +613,13 @@ export function LiveBrowser() {
                 runtime={proofProvenanceRuntime}
                 title="Play proof provenance"
                 badge="Trust source"
+              />
+            </div>
+            <div className="mt-4">
+              <SurfaceExplanationBoundaryInline
+                runtime={explanationBoundaryRuntime}
+                title="Play explanation boundary"
+                badge="Say this out loud"
               />
             </div>
             <div className="mt-4">
