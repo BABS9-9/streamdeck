@@ -11,6 +11,7 @@ import { PhaseOneShipRail } from '@/components/phase-one-ship-rail';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
+import { LiveMarketRuntimePanel } from '@/components/live-market-runtime-panel';
 import { MultiConnectionGuideRuntime } from '@/components/multi-connection-guide-runtime';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
@@ -95,6 +96,7 @@ import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stabili
 import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
+import { buildLiveMarketResolver } from '@/lib/live-market-resolver';
 import { MockProviderHealth, MockProviderManifest, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
@@ -524,6 +526,25 @@ export function LiveBrowser() {
     streamHealth,
     watchHistory,
   ]);
+  const liveMarketRuntime = useMemo(() => buildLiveMarketResolver({
+    activeConnection,
+    providerStatus: providerStatus ?? null,
+    selectedStream,
+    selectedGuide,
+    selectedGuideState,
+    liveGuideCoverage,
+    scenario,
+    lastSwitchContext,
+  }), [
+    activeConnection,
+    lastSwitchContext,
+    liveGuideCoverage,
+    providerStatus,
+    scenario,
+    selectedGuide,
+    selectedGuideState,
+    selectedStream,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -545,6 +566,7 @@ export function LiveBrowser() {
       {isMockConnection ? <SurfaceFocusReturnInline manifest={manifest} screenId="live" runtime={liveFocusReturnRuntime} /> : null}
       {isMockConnection ? <SurfaceSelectionCustodyInline manifest={manifest} screenId="live" runtime={liveSelectionCustodyRuntime} /> : null}
       {isMockConnection ? <SurfaceFirstPictureInline manifest={manifest} screenId="live" runtime={liveFirstPictureRuntime} /> : null}
+      <LiveMarketRuntimePanel contract={liveMarketRuntime} />
       <PlaybackResiliencePanel contract={playbackResilience} />
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
@@ -862,6 +884,22 @@ export function LiveBrowser() {
                 streamLabels={Object.fromEntries(filteredStreams.slice(0, 8).map((stream) => [getContentId(stream), stream.name]))}
                 continuity={liveGuideContinuity}
               />
+            </div>
+
+            <div className="mt-4 rounded-[1.5rem] border border-sky-400/20 bg-sky-500/10 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-sky-200">Live market launch truth</p>
+                  <p className="mt-2 text-base font-medium text-white">{liveMarketRuntime.nextMove.label}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/80">
+                  {liveMarketRuntime.launchPromiseState}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-200">{liveMarketRuntime.copyState}</p>
+              <p className="mt-3 text-sm leading-6 text-sky-100">
+                {liveMarketRuntime.homeMarketLabel} home area · {liveMarketRuntime.currentPlaybackMarketLabel} playback area · {liveMarketRuntime.affiliateLabel}
+              </p>
             </div>
 
             <div className="mt-4 grid gap-4 md:grid-cols-4">

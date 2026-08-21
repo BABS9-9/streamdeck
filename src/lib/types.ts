@@ -1273,6 +1273,135 @@ export type LivePlayerContinuityRuntimeContract = {
   };
 };
 
+export type LiveMarketAuthorityState =
+  | 'account-home-zip'
+  | 'home-network'
+  | 'verified-device-location'
+  | 'partner-assertion'
+  | 'stale-cache'
+  | 'unknown';
+
+export type LiveMarketConfidenceState =
+  | 'verified'
+  | 'inferred'
+  | 'stale'
+  | 'conflicted'
+  | 'denied'
+  | 'unknown';
+
+export type LiveEventRightsRegionState =
+  | 'national'
+  | 'regional-sports'
+  | 'local-affiliate'
+  | 'out-of-market'
+  | 'unknown';
+
+export type LiveLineupRegionState =
+  | 'home-lineup'
+  | 'playback-lineup'
+  | 'travel-lineup'
+  | 'channel-only'
+  | 'unresolved';
+
+export type LiveAffiliateResolutionState =
+  | 'exact-affiliate'
+  | 'alternate-affiliate'
+  | 'parent-network-fallback'
+  | 'alternate-carrier'
+  | 'unresolved';
+
+export type LiveTravelModeState =
+  | 'home'
+  | 'traveling-domestic'
+  | 'traveling-restricted'
+  | 'outside-supported-area'
+  | 'unknown';
+
+export type LiveRestartRecordingScopeState =
+  | 'exact-live'
+  | 'start-from-beginning-blocked-until-end'
+  | 'dvr-available-after-airing'
+  | 'unsupported';
+
+export type LiveLocationPermissionState =
+  | 'granted'
+  | 'denied'
+  | 'unavailable'
+  | 'not-requested'
+  | 'no-longer-fresh';
+
+export type LiveMarketExportEligibilityState =
+  | 'safe-for-feed-page-and-recommendation-export'
+  | 'safe-only-for-catalog-surfaces'
+  | 'not-safe-for-promotion';
+
+export type LiveMarketLaunchPromiseState =
+  | 'exact-local-launch'
+  | 'alternate-affiliate-launch'
+  | 'channel-only-launch'
+  | 'blocked-pending-verification'
+  | 'replay-only';
+
+export type LiveMarketRuntimeEntry = {
+  id: 'home-market' | 'playback-market' | 'affiliate-resolution' | 'travel-mode' | 'restart-scope' | 'export-posture';
+  label: string;
+  state:
+    | LiveMarketAuthorityState
+    | LiveMarketConfidenceState
+    | LiveAffiliateResolutionState
+    | LiveTravelModeState
+    | LiveRestartRecordingScopeState
+    | LiveMarketExportEligibilityState
+    | LiveMarketLaunchPromiseState
+    | LiveLineupRegionState
+    | LiveEventRightsRegionState
+    | LiveLocationPermissionState;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LiveMarketRuntimeSignal = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LiveMarketRuntimeContract = {
+  screenId: 'live';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  activeProviderId: string | null;
+  homeMarketLabel: string;
+  currentPlaybackMarketLabel: string;
+  authorityState: LiveMarketAuthorityState;
+  confidenceState: LiveMarketConfidenceState;
+  rightsRegionState: LiveEventRightsRegionState;
+  lineupRegionState: LiveLineupRegionState;
+  affiliateResolutionState: LiveAffiliateResolutionState;
+  travelModeState: LiveTravelModeState;
+  restartRecordingScopeState: LiveRestartRecordingScopeState;
+  locationPermissionState: LiveLocationPermissionState;
+  exportEligibilityState: LiveMarketExportEligibilityState;
+  launchPromiseState: LiveMarketLaunchPromiseState;
+  eventLabel: string;
+  networkLabel: string;
+  affiliateLabel: string;
+  authorityLabel: string;
+  copyState: string;
+  entries: LiveMarketRuntimeEntry[];
+  signals: LiveMarketRuntimeSignal[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+  };
+};
+
 export type LivePlayerControlRuntimeContract = {
   screenId: 'player';
   title: string;
