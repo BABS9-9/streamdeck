@@ -68,6 +68,7 @@ import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podiu
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
+import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
@@ -500,6 +501,27 @@ export function LiveBrowser() {
       ? 'Live should keep the shortest honest route to picture attached to the selected card so surfing still feels fast even when guide or provider truth softens.'
       : 'The grid should make it obvious which selected card will reach picture fastest once the user earns a channel anchor.',
   }), [selectedStream?.name]);
+  const liveResumeEntry = useMemo(() => {
+    if (!activeConnection) return null;
+    const selectedId = selectedStream ? getContentId(selectedStream) : null;
+    return watchHistory.find((item) => item.providerId === activeConnection.id && (!selectedId || item.streamId === selectedId))
+      ?? watchHistory.find((item) => item.providerId === activeConnection.id && item.kind === 'live')
+      ?? null;
+  }, [activeConnection, selectedStream, watchHistory]);
+  const liveResumeCustodyRuntime = useMemo(() => ({
+    activeResume: liveResumeEntry
+      ? `${liveResumeEntry.title} is the current live return target`
+      : `${selectedStream?.name || 'The selected card'} is still earning the first live return path`,
+    carriesForward: liveResumeEntry
+      ? `${liveResumeEntry.title} stays attached to the selected lane while preview, filter, and provider ownership still agree`
+      : 'The selected lane can become the live return path once Play and history agree on the same target',
+    breaksWhen: liveResumeEntry
+      ? 'A same-category rescue, provider switch, or selected-card drift would break custody if Play stops reopening the same live return target'
+      : 'No live return target exists yet, so Live must not imply exact resume continuity before the first watch history lands',
+    detail: liveResumeEntry
+      ? 'Live should keep the current return channel attached to the selected-card story so surf momentum still points back to what the user actually meant to resume.'
+      : 'Until Live has earned a real return target, the selected card should stay explicit that it is only a current browse anchor, not already a resumable watch path.',
+  }), [liveResumeEntry, selectedStream?.name]);
   const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
     screenId: 'live',
     connections,
@@ -566,6 +588,7 @@ export function LiveBrowser() {
       {isMockConnection ? <SurfaceFocusReturnInline manifest={manifest} screenId="live" runtime={liveFocusReturnRuntime} /> : null}
       {isMockConnection ? <SurfaceSelectionCustodyInline manifest={manifest} screenId="live" runtime={liveSelectionCustodyRuntime} /> : null}
       {isMockConnection ? <SurfaceFirstPictureInline manifest={manifest} screenId="live" runtime={liveFirstPictureRuntime} /> : null}
+      {isMockConnection ? <SurfaceResumeCustodyInline manifest={manifest} screenId="live" runtime={liveResumeCustodyRuntime} /> : null}
       <LiveMarketRuntimePanel contract={liveMarketRuntime} />
       <PlaybackResiliencePanel contract={playbackResilience} />
       <SurfaceConnectionHeadroom

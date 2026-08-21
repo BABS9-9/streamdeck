@@ -68,6 +68,7 @@ import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podiu
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
+import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
@@ -632,6 +633,24 @@ export function HomeDashboard() {
       ? 'Home already knows which live subject reaches a picture fastest, so the hero and quick-live lane should keep that route readable instead of hiding it behind cinematic chrome.'
       : 'When the hero is not a live target, Home should still say whether the hero or the quick-live rail is the shortest honest route to visible playback.',
   }), [featuredLive?.name, home.featured?.name]);
+  const homeResumeEntry = useMemo(
+    () => activeConnection ? watchHistory.find((item) => item.providerId === activeConnection.id) ?? null : null,
+    [activeConnection, watchHistory]
+  );
+  const homeResumeCustodyRuntime = useMemo(() => ({
+    activeResume: homeResumeEntry
+      ? `${homeResumeEntry.title} is still the strongest return target on Home`
+      : `${home.featured?.name || 'The featured hero'} is acting as the current return story until watch history exists`,
+    carriesForward: homeResumeEntry
+      ? `${homeResumeEntry.title} keeps its progress and provider owner while the hero stays a suggestion, not a silent replacement`
+      : 'Home is still building the first explicit resume target, so featured browse must not pretend to be a true return path yet',
+    breaksWhen: homeResumeEntry
+      ? 'A hero refresh, provider rescue, or featured detour would break custody if it stops naming the same saved return target'
+      : 'Without a watch-history target, featured refresh must stay honest that it is only browse momentum',
+    detail: homeResumeEntry
+      ? 'Home should keep the user’s real return target visible even when the hero is selling a different premium story, so resume continuity stays user-owned.'
+      : 'Until Home earns a real resume target, the hero should stay explicit that it is promoting a browse path rather than reviving prior watch intent.',
+  }), [home.featured?.name, homeResumeEntry]);
 
   if (!activeConnection) {
     return (
@@ -661,6 +680,7 @@ export function HomeDashboard() {
       {isMockConnection ? <SurfaceFocusReturnInline manifest={manifest} screenId="home" runtime={homeFocusReturnRuntime} /> : null}
       {isMockConnection ? <SurfaceSelectionCustodyInline manifest={manifest} screenId="home" runtime={homeSelectionCustodyRuntime} /> : null}
       {isMockConnection ? <SurfaceFirstPictureInline manifest={manifest} screenId="home" runtime={homeFirstPictureRuntime} /> : null}
+      {isMockConnection ? <SurfaceResumeCustodyInline manifest={manifest} screenId="home" runtime={homeResumeCustodyRuntime} /> : null}
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
         badge="Connection headroom"

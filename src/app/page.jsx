@@ -65,6 +65,7 @@ import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podiu
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
+import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
@@ -93,6 +94,7 @@ import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
 import { getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
+import { usePlayerStore } from '@/stores/player-store';
 
 const MOCK_SERVER = 'http://localhost:3579';
 
@@ -120,6 +122,7 @@ export default function LoginPage() {
   const prefetchStreams = useLiveGuideStore((state) => state.prefetchStreams);
   const getCoverageReport = useLiveGuideStore((state) => state.getCoverageReport);
   const syncByGuideKey = useLiveGuideStore((state) => state.syncByGuideKey);
+  const watchHistory = usePlayerStore((state) => state.watchHistory);
 
   const [server, setServer] = useState(MOCK_SERVER);
   const [username, setUsername] = useState('demo');
@@ -539,9 +542,27 @@ export default function LoginPage() {
         : 'Missing setup fields keep first picture behind form completion',
       detail: usingSavedProvider
         ? 'The active saved provider already owns the fastest honest setup-to-picture path, so Login should keep reconnect and the first Home launch visibly attached.'
-        : 'Login should make the shortest route to first picture legible before Connect fires so typed setup feels like a launch path, not a utility chore.',
+      : 'Login should make the shortest route to first picture legible before Connect fires so typed setup feels like a launch path, not a utility chore.',
     };
   }, [activeConnection, password, server, username]);
+  const loginResumeEntry = useMemo(
+    () => watchHistory.find((item) => !activeConnection || item.providerId === activeConnection.id) ?? watchHistory[0] ?? null,
+    [activeConnection, watchHistory]
+  );
+  const loginResumeCustodyRuntime = useMemo(() => ({
+    activeResume: loginResumeEntry
+      ? `${loginResumeEntry.title} is the current return target after reconnect`
+      : 'No saved return target yet, so Connect is still establishing the first resume path',
+    carriesForward: loginResumeEntry
+      ? `${loginResumeEntry.title} stays attached to the next Home handoff while provider ownership stays the same`
+      : 'The first successful provider handoff becomes the seed for future resume custody',
+    breaksWhen: loginResumeEntry
+      ? 'A provider switch, stale watch-history owner, or rescue-only launch would detach reconnect from that saved return target'
+      : 'No return target exists yet, so any reconnect claim must stay generic until watch history is earned',
+    detail: loginResumeEntry
+      ? 'Login should keep reconnect pointed at the same believable return target before setup polish turns a user’s comeback into a generic browse reset.'
+      : 'Until the user has earned a real watch-history target, Login should avoid implying that reconnect is already preserving a known return path.',
+  }), [loginResumeEntry]);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -682,6 +703,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceFirstPictureInline manifest={manifest} screenId="login" runtime={loginFirstPictureRuntime} />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceResumeCustodyInline manifest={manifest} screenId="login" runtime={loginResumeCustodyRuntime} />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (
