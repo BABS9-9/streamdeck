@@ -999,6 +999,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'first-picture-fast-path',
+    feature: 'First-picture fast path',
+    pitch: 'Keep the shortest honest route from Connect or the current browse anchor to visible playback readable on-screen so the product feels faster before a stopwatch ever starts.',
+    competitiveGap: 'Competitors usually make "watch something now" feel like guesswork hidden across login, home, and live, so users burn time learning the shell instead of seeing a first picture quickly.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one first-picture contract so the starting point, fastest safe path, and exact break condition stay visible beside Connect, the hero CTA, and Play before retries or rescue add friction.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'launch-readiness',
     feature: 'Launch readiness',
     pitch: 'Publish whether Connect, hero launch, or Play is actually ready now, only watch-safe, or already recovery-led before polish implies more certainty than runtime proof owns.',
@@ -4579,6 +4588,81 @@ const buildSurfaceSelectionCustodyContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceFirstPictureContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    eyebrow: 'First-picture path',
+    title: 'Login should say how fast Connect turns into visible playback',
+    summary: scenario === 'healthy'
+      ? 'Typed credentials, saved reconnect, and the demo lane should all show the shortest honest path from Connect to a visible picture so setup never feels like a blind leap.'
+      : 'Typed credentials, saved reconnect, and recovery should all say what still gets the user to a visible picture fastest once auth or line pressure starts stealing certainty.',
+    checkpoints: [
+      {
+        label: 'Typed connect',
+        startingPoint: 'Server URL, username, and password are already in focus.',
+        firstPicturePath: 'Connect, open Home, then jump into the featured live tile or the first quick-live lane without re-entering setup.',
+        breaksOn: 'Auth failure, full provider lines, or a healthier saved provider becoming the only honest owner.',
+        tone: 'ready',
+      },
+      {
+        label: 'Saved reconnect',
+        startingPoint: 'A warm saved provider already owns one-tap reconnect.',
+        firstPicturePath: 'Reconnect and carry straight into the same Home launch path with cached trust and the active provider already attached.',
+        breaksOn: 'Saved continuity is stale enough that the reconnect path is no longer the fastest honest route.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    eyebrow: 'First-picture path',
+    title: 'Home should reveal the shortest path from browse to picture',
+    summary: scenario === 'healthy'
+      ? 'Hero launch and quick-live rails should show which move gets the user to visible playback fastest so the shell feels like a streaming destination, not an index page.'
+      : 'Hero launch and quick-live rails should still show the shortest honest route to visible playback once cached browse state or provider rescue starts carrying the story.',
+    checkpoints: [
+      {
+        label: 'Hero launch',
+        startingPoint: 'The featured hero is already visible and owns the primary CTA.',
+        firstPicturePath: 'Launch the hero directly when it is live, or use the attached quick-live lane if that reaches motion faster with the same provider owner.',
+        breaksOn: 'A hero refresh, stale provider truth, or rescue-owned fallback means the hero is no longer the fastest honest picture route.',
+        tone: 'ready',
+      },
+      {
+        label: 'Quick-live lane',
+        startingPoint: 'The user already dropped from the hero into a fast live lane.',
+        firstPicturePath: 'Move laterally once or twice, then open the selected live card from the same rail without climbing back through utility chrome.',
+        breaksOn: 'The selected rail loses live readiness or a different provider owns the only safe first picture.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    eyebrow: 'First-picture path',
+    title: 'Live should keep the shortest route from selected card to picture obvious',
+    summary: scenario === 'healthy'
+      ? 'Preview, selected-card Play, and same-category rescue should all say which path gets to visible playback fastest while keeping channel-surf rhythm intact.'
+      : 'Preview, selected-card Play, and recovery should all say which path still gets to visible playback fastest once exact-channel proof starts to soften.',
+    checkpoints: [
+      {
+        label: 'Direct play',
+        startingPoint: 'A selected card already has preview context and NOW / NEXT attached.',
+        firstPicturePath: 'Open Play directly from the selected card when preview, guide, and provider proof still align on the same channel.',
+        breaksOn: 'Preview drift, stale guide proof, or provider pressure means direct Play is no longer the fastest honest route.',
+        tone: 'ready',
+      },
+      {
+        label: 'Same-lane rescue',
+        startingPoint: 'The current selected card is no longer the safest direct launch.',
+        firstPicturePath: 'Stay in the same category lane and take the healthiest exact-copy or near-copy rescue instead of rebuilding the surf path from scratch.',
+        breaksOn: 'Rescue changes the lane or channel family enough that the user is no longer on the same watch mission.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -5657,6 +5741,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   ],
   surfaceFocusReturnContracts: buildSurfaceFocusReturnContracts(scenario),
   surfaceSelectionCustodyContracts: buildSurfaceSelectionCustodyContracts(scenario),
+  surfaceFirstPictureContracts: buildSurfaceFirstPictureContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),
