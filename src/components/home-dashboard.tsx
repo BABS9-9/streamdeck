@@ -65,6 +65,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
+import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
@@ -142,6 +143,7 @@ export function HomeDashboard() {
   const [manifest, setManifest] = useState<MockProviderManifest | null>(null);
   const [health, setHealth] = useState<MockProviderHealth | null>(null);
   const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
+  const [focusAnchor, setFocusAnchor] = useState('Hero launch');
 
   useEffect(() => {
     return subscribeToMockProviderScenario((nextScenario) => {
@@ -598,6 +600,14 @@ export function HomeDashboard() {
   const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs.find((item) => item.screenId === 'home') || null;
   const autonomyBoundary = runtimeSurfaceContracts?.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = connectionHeadroomRuntime || null;
+  const homeFocusReturnRuntime = useMemo(() => ({
+    currentAnchor: focusAnchor,
+    backTarget: focusAnchor.toLowerCase().includes('rail') ? 'Last earned rail' : 'Featured hero lane',
+    recoveryTarget: featuredLive?.name || home.featured?.name || activeConnection?.name || 'Featured launch',
+    detail: focusAnchor.toLowerCase().includes('rail')
+      ? 'Back now returns to the last earned rail so Home preserves the same discovery lane instead of rebuilding from the top.'
+      : 'Back now returns to the featured hero lane so the primary browse anchor stays calm and TV-native.',
+  }), [activeConnection?.name, featuredLive?.name, focusAnchor, home.featured?.name]);
 
   if (!activeConnection) {
     return (
@@ -624,6 +634,7 @@ export function HomeDashboard() {
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="home" /> : null}
       {isMockConnection ? <PhaseOneShipRail manifest={manifest} screenId="home" /> : null}
       {isMockConnection ? <SurfaceRemotePathInline manifest={manifest} screenId="home" /> : null}
+      {isMockConnection ? <SurfaceFocusReturnInline manifest={manifest} screenId="home" runtime={homeFocusReturnRuntime} /> : null}
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
         badge="Connection headroom"
@@ -656,17 +667,18 @@ export function HomeDashboard() {
             <div className="mt-6 flex flex-wrap gap-3">
               {featuredLive ? (
                 <button
+                  onFocus={() => setFocusAnchor('Hero launch')}
                   onClick={() => playStream(featuredLive, buildLiveStreamUrl(activeConnection, featuredLive), activeConnection.id)}
                   className="rounded-full bg-white px-6 py-3 text-sm font-medium text-slate-950 transition hover:bg-slate-200"
                 >
                   Play featured channel
                 </button>
               ) : (
-                <Link href="/live" className="rounded-full bg-white px-6 py-3 text-sm font-medium text-slate-950 transition hover:bg-slate-200">
+                <Link href="/live" onFocus={() => setFocusAnchor('Hero launch')} className="rounded-full bg-white px-6 py-3 text-sm font-medium text-slate-950 transition hover:bg-slate-200">
                   Open live TV
                 </Link>
               )}
-              <Link href="/favorites" className="rounded-full border border-white/15 px-6 py-3 text-sm text-white transition hover:bg-white/5">
+              <Link href="/favorites" onFocus={() => setFocusAnchor('Favorites action')} className="rounded-full border border-white/15 px-6 py-3 text-sm text-white transition hover:bg-white/5">
                 Favorites
               </Link>
             </div>
@@ -1013,13 +1025,17 @@ export function HomeDashboard() {
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Live highlights</p>
             <h2 className="mt-2 text-2xl font-semibold text-white">Fast-launch channels</h2>
           </div>
-          <Link href="/live" className="text-sm text-sky-300 hover:text-sky-200">Browse all live TV</Link>
+          <Link href="/live" onFocus={() => setFocusAnchor('Quick-live rail')} className="text-sm text-sky-300 hover:text-sky-200">Browse all live TV</Link>
         </div>
         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {home.quickLive.map((stream) => (
             <button
               key={getContentId(stream)}
-              onClick={() => playStream(stream, buildLiveStreamUrl(activeConnection, stream), activeConnection.id)}
+              onClick={() => {
+                setFocusAnchor(`Quick-live rail · ${stream.name}`);
+                playStream(stream, buildLiveStreamUrl(activeConnection, stream), activeConnection.id);
+              }}
+              onFocus={() => setFocusAnchor(`Quick-live rail · ${stream.name}`)}
               className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/20 text-left transition hover:-translate-y-0.5 hover:border-sky-400/30 hover:bg-black/30"
             >
               <div
@@ -1056,7 +1072,11 @@ export function HomeDashboard() {
           <h2 className="mt-2 text-2xl font-semibold text-white">Recent movies and series</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {home.spotlight.map((item) => (
-              <div key={`${item.stream_type}-${getContentId(item)}`} className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/20">
+              <div
+                key={`${item.stream_type}-${getContentId(item)}`}
+                onMouseEnter={() => setFocusAnchor(`Spotlight rail · ${item.name}`)}
+                className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/20"
+              >
                 <div
                   className="h-44 bg-cover bg-center"
                   style={{ backgroundImage: `linear-gradient(180deg, rgba(15,23,42,0.15), rgba(15,23,42,0.82)), url(${getArtwork(item) || ''})` }}

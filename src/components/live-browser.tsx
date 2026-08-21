@@ -64,6 +64,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
+import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
@@ -130,6 +131,7 @@ export function LiveBrowser() {
   const [manifest, setManifest] = useState<MockProviderManifest | null>(null);
   const [health, setHealth] = useState<MockProviderHealth | null>(null);
   const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
+  const [focusAnchor, setFocusAnchor] = useState('Selected channel');
 
   useEffect(() => subscribeToMockProviderScenario((nextScenario) => {
     setScenario(nextScenario);
@@ -227,6 +229,7 @@ export function LiveBrowser() {
 
   const selectStream = (stream: XtreamStream) => {
     if (!activeConnection) return;
+    setFocusAnchor(`Selected channel · ${stream.name}`);
     setSelectedStream(stream);
     setPreviewUrl(buildLiveStreamUrl(activeConnection, stream));
   };
@@ -461,6 +464,14 @@ export function LiveBrowser() {
   const handoffMap = runtimeSurfaceContracts.handoffMap;
   const autonomyBoundary = runtimeSurfaceContracts.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = connectionHeadroomRuntime || null;
+  const liveFocusReturnRuntime = useMemo(() => ({
+    currentAnchor: focusAnchor,
+    backTarget: focusAnchor.toLowerCase().includes('filter') ? 'Active filter lane' : 'Selected channel card',
+    recoveryTarget: selectedStream?.name || 'Selected channel',
+    detail: focusAnchor.toLowerCase().includes('filter')
+      ? 'Back now returns to the active filter lane so category and search context stay intact before the grid changes.'
+      : 'Back now returns to the selected channel card so preview and Play preserve the same surf anchor.',
+  }), [focusAnchor, selectedStream?.name]);
   const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
     screenId: 'live',
     connections,
@@ -505,6 +516,7 @@ export function LiveBrowser() {
       {isMockConnection ? <DifferentiatorSpotlight manifest={manifest} screenId="live" /> : null}
       {isMockConnection ? <PhaseOneShipRail manifest={manifest} screenId="live" /> : null}
       {isMockConnection ? <SurfaceRemotePathInline manifest={manifest} screenId="live" /> : null}
+      {isMockConnection ? <SurfaceFocusReturnInline manifest={manifest} screenId="live" runtime={liveFocusReturnRuntime} /> : null}
       <PlaybackResiliencePanel contract={playbackResilience} />
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
@@ -924,13 +936,18 @@ export function LiveBrowser() {
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
+            onFocus={() => setFocusAnchor('Filter lane · Search channels')}
             placeholder="Search channels"
             className="mt-5 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-sky-400/40"
           />
 
           <div className="mt-5 flex flex-wrap gap-2">
             <button
-              onClick={() => setSelectedCategory('all')}
+              onClick={() => {
+                setFocusAnchor('Filter lane · All categories');
+                setSelectedCategory('all');
+              }}
+              onFocus={() => setFocusAnchor('Filter lane · All categories')}
               className={`rounded-full px-4 py-2 text-sm transition ${selectedCategory === 'all' ? 'bg-white text-slate-950' : 'border border-white/10 text-slate-300 hover:bg-white/5'}`}
             >
               All
@@ -938,7 +955,11 @@ export function LiveBrowser() {
             {categories.map((category) => (
               <button
                 key={category.category_id}
-                onClick={() => setSelectedCategory(category.category_id)}
+                onClick={() => {
+                  setFocusAnchor(`Filter lane · ${category.category_name}`);
+                  setSelectedCategory(category.category_id);
+                }}
+                onFocus={() => setFocusAnchor(`Filter lane · ${category.category_name}`)}
                 className={`rounded-full px-4 py-2 text-sm transition ${selectedCategory === category.category_id ? 'bg-white text-slate-950' : 'border border-white/10 text-slate-300 hover:bg-white/5'}`}
               >
                 {category.category_name}

@@ -62,6 +62,7 @@ import { SurfaceProviderChoice } from '@/components/surface-provider-choice';
 import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choice-inline';
 import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
+import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
@@ -125,6 +126,7 @@ export default function LoginPage() {
   const [health, setHealth] = useState(null);
   const [scenario, setScenario] = useState('healthy');
   const [loginGuideStreams, setLoginGuideStreams] = useState([]);
+  const [loginFocusAnchor, setLoginFocusAnchor] = useState('Server URL');
 
   useEffect(() => {
     hydrate();
@@ -496,6 +498,17 @@ export default function LoginPage() {
   const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs?.find((item) => item.screenId === 'login') || null;
   const autonomyBoundary = runtimeSurfaceContracts?.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = connectionHeadroomRuntime || null;
+  const loginFocusReturnRuntime = useMemo(() => {
+    const savedLaneActive = loginFocusAnchor.toLowerCase().includes('saved');
+    return {
+      currentAnchor: loginFocusAnchor,
+      backTarget: savedLaneActive ? 'Saved providers' : 'Last trusted setup field',
+      recoveryTarget: activeConnection ? `${activeConnection.name} reconnect lane` : 'Demo connect lane',
+      detail: savedLaneActive
+        ? 'Back now returns to the saved-provider lane because that is the last reconnect anchor the user earned.'
+        : 'Back now returns to the last trusted setup field so Login preserves the same remote-first connect path.',
+    };
+  }, [activeConnection, loginFocusAnchor]);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -624,6 +637,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceRemotePathInline manifest={manifest} screenId="login" />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceFocusReturnInline manifest={manifest} screenId="login" runtime={loginFocusReturnRuntime} />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (
@@ -1030,6 +1047,7 @@ export default function LoginPage() {
             </div>
             {activeConnection ? (
               <button
+                onFocus={() => setLoginFocusAnchor('Open home')}
                 onClick={() => router.push('/home')}
                 className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.24em] text-slate-200 transition hover:bg-white/5"
               >
@@ -1044,6 +1062,7 @@ export default function LoginPage() {
               <input
                 value={server}
                 onChange={(event) => setServer(event.target.value)}
+                onFocus={() => setLoginFocusAnchor('Server URL')}
                 className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-sky-400/50"
                 placeholder="http://provider.example:8080"
               />
@@ -1054,6 +1073,7 @@ export default function LoginPage() {
                 <input
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
+                  onFocus={() => setLoginFocusAnchor('Username')}
                   className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-sky-400/50"
                   placeholder="Username"
                 />
@@ -1064,6 +1084,7 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
+                  onFocus={() => setLoginFocusAnchor('Password')}
                   className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-sky-400/50"
                   placeholder="Password"
                 />
@@ -1074,6 +1095,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
+                onFocus={() => setLoginFocusAnchor('Connect provider')}
                 className="rounded-full bg-sky-400 px-6 py-3 text-sm font-medium text-slate-950 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? 'Connecting...' : 'Connect provider'}
@@ -1085,6 +1107,7 @@ export default function LoginPage() {
                   setUsername('demo');
                   setPassword('demo');
                 }}
+                onFocus={() => setLoginFocusAnchor('Load demo credentials')}
                 className="rounded-full border border-white/10 px-6 py-3 text-sm text-slate-200 transition hover:bg-white/5"
               >
                 Load demo credentials
@@ -1146,15 +1169,18 @@ export default function LoginPage() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => {
+                              setLoginFocusAnchor(`Saved provider ${connection.name}`);
                               setActiveConnection(connection.id);
                               router.push('/home');
                             }}
+                            onFocus={() => setLoginFocusAnchor(`Saved provider ${connection.name}`)}
                             className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${isActive ? 'bg-white text-slate-950' : 'border border-white/10 text-slate-200 hover:bg-white/5'}`}
                           >
                             {isActive ? 'Active' : 'Use'}
                           </button>
                           <button
                             onClick={() => validateConnection(connection.id)}
+                            onFocus={() => setLoginFocusAnchor(`Validate ${connection.name}`)}
                             className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-200 transition hover:bg-white/5"
                           >
                             Validate
