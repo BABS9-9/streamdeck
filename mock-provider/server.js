@@ -1008,6 +1008,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'resume-custody',
+    feature: 'Resume custody',
+    pitch: 'Keep the next resumable watch target visibly attached to setup, hero browse, and live surf so the shell never forgets what the user was most likely trying to get back to.',
+    competitiveGap: 'Competitors usually isolate resume in a separate shelf that loses ownership during reconnects, hero swaps, or live-card travel, so returning to content feels like starting over with prettier chrome.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one resume-custody contract so the active resume target, preserved context, and break condition stay visible beside Connect, the hero CTA, and Play before the shell quietly drops the user’s return path.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'launch-readiness',
     feature: 'Launch readiness',
     pitch: 'Publish whether Connect, hero launch, or Play is actually ready now, only watch-safe, or already recovery-led before polish implies more certainty than runtime proof owns.',
@@ -4663,6 +4672,81 @@ const buildSurfaceFirstPictureContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceResumeCustodyContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    eyebrow: 'Resume custody',
+    title: 'Login should keep the return-to-watch target attached to reconnect',
+    summary: scenario === 'healthy'
+      ? 'Saved reconnect, typed credentials, and the next Home handoff should still name the same resumable watch target so setup feels like returning to content instead of starting cold.'
+      : 'Saved reconnect, typed credentials, and recovery should still name the same resumable watch target so degraded auth does not quietly erase what the user was coming back to watch.',
+    resume: [
+      {
+        label: 'Reconnect resume',
+        resumeTarget: 'The last provider-owned title or live channel that reconnect should still hand back to the user.',
+        preserves: 'Preserve provider owner, watch-history intent, and the shortest safe path from Connect into the resumed launch lane.',
+        breaksWhen: 'Break custody when recovery changes provider ownership or the last-watch target can no longer be resumed honestly after reconnect.',
+        tone: 'ready',
+      },
+      {
+        label: 'Fresh setup fallback',
+        resumeTarget: 'The most recent believable return target, even when typed setup is replacing a stale saved shortcut.',
+        preserves: 'Preserve the idea of returning to something specific instead of dropping the user into a generic Home reset once auth clears.',
+        breaksWhen: 'Break custody when the shell can no longer prove the remembered watch target belongs to the same provider or the same launch family.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    eyebrow: 'Resume custody',
+    title: 'Home should keep the return target attached to the hero story',
+    summary: scenario === 'healthy'
+      ? 'Hero launch, continue watching, and quick-live posture should still name the same resumable target so the featured story does not overwrite what the user was already trying to finish.'
+      : 'Hero launch, continue watching, and recovery should still name the same resumable target so degraded browse truth does not quietly replace the user’s return path with a prettier featured idea.',
+    resume: [
+      {
+        label: 'Continue-watching owner',
+        resumeTarget: 'The exact title or live channel Home still believes the user is most likely returning to.',
+        preserves: 'Preserve progress, provider owner, and the launch lane that gets back to that target fastest from the current hero shell.',
+        breaksWhen: 'Break custody when a hero refresh, fallback, or provider rescue changes the featured path enough that the return target is no longer the same watch mission.',
+        tone: 'ready',
+      },
+      {
+        label: 'Featured versus return path',
+        resumeTarget: 'The return target that must stay legible even when the hero is promoting a different featured title.',
+        preserves: 'Preserve the distinction between a premium featured suggestion and the user-owned resume path before the two stories get blended together.',
+        breaksWhen: 'Break custody when Home cannot still say whether the next launch is a true resume, a featured detour, or a recovery-owned approximation.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    eyebrow: 'Resume custody',
+    title: 'Live should keep the return channel attached to the selected-card story',
+    summary: scenario === 'healthy'
+      ? 'Selected-card Play, preview, and recent live return should still name the same channel family so surf momentum keeps the user attached to what they were actually coming back to watch.'
+      : 'Selected-card Play, preview, and recovery should still name the same return channel family so degraded live proof does not quietly turn a resume into a different rescue lane.',
+    resume: [
+      {
+        label: 'Last live return',
+        resumeTarget: 'The last believable live channel or exact-card watch target the user can still resume from the current selected lane.',
+        preserves: 'Preserve selected-card identity, filter meaning, and the nearest direct path back to that live watch target.',
+        breaksWhen: 'Break custody when retry, same-category rescue, or provider pressure would send Play to a materially different live target.',
+        tone: 'ready',
+      },
+      {
+        label: 'Same-lane recovery',
+        resumeTarget: 'The strongest same-lane return target when the exact selected card is no longer the safest honest resume.',
+        preserves: 'Preserve the user’s surf mission by keeping recovery inside the same lane and naming exactly what changed before playback opens.',
+        breaksWhen: 'Break custody when recovery leaves the current lane or stops being able to describe the next watch move as a real return.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -5742,6 +5826,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceFocusReturnContracts: buildSurfaceFocusReturnContracts(scenario),
   surfaceSelectionCustodyContracts: buildSurfaceSelectionCustodyContracts(scenario),
   surfaceFirstPictureContracts: buildSurfaceFirstPictureContracts(scenario),
+  surfaceResumeCustodyContracts: buildSurfaceResumeCustodyContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),

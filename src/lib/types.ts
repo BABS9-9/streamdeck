@@ -1560,6 +1560,19 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceResumeCustodyContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    eyebrow: string;
+    title: string;
+    summary: string;
+    resume: Array<{
+      label: string;
+      resumeTarget: string;
+      preserves: string;
+      breaksWhen: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceLaunchReadinessContracts: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;
