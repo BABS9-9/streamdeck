@@ -981,6 +981,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'focus-return-memory',
+    feature: 'Focus return memory',
+    pitch: 'Remember which field, hero lane, or selected channel currently owns Back so the user returns to the last earned anchor instead of getting dumped into a generic reset.',
+    competitiveGap: 'Most IPTV players lose navigation memory between setup, browse, and playback layers, so Back feels like a gamble instead of a calm continuation of the same remote path.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one focus-return contract so active anchor, Back target, and recovery target stay visible and survive remote-first travel instead of devolving into surface-local guesses.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'launch-readiness',
     feature: 'Launch readiness',
     pitch: 'Publish whether Connect, hero launch, or Play is actually ready now, only watch-safe, or already recovery-led before polish implies more certainty than runtime proof owns.',
@@ -4411,6 +4420,81 @@ const buildSurfaceReturnCooldownContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceFocusReturnContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    eyebrow: 'Focus return witness',
+    title: 'Login should remember the field or provider lane that earned the next Back step',
+    summary: scenario === 'healthy'
+      ? 'Setup should keep the last trusted field, saved-provider lane, and next-safe recovery target visible so Back never feels like a form reset disguised as convenience.'
+      : 'Setup should keep the last trusted field, saved-provider lane, and recovery target visible so degraded auth or line pressure does not erase where the user last had control.',
+    returns: [
+      {
+        label: 'Field memory',
+        remembers: 'The last focused credential field or CTA that still owns the next Home move.',
+        backTarget: 'Return Back to the last trusted field instead of jumping to the top of the form.',
+        recoveryTarget: 'Keep the healthiest saved provider visible when setup truth downgrades.',
+        tone: 'ready',
+      },
+      {
+        label: 'Saved-provider memory',
+        remembers: 'Which saved provider most recently earned the right to own quick reconnect.',
+        backTarget: 'Return Back to the saved-provider list when the user was already comparing shortcuts.',
+        recoveryTarget: 'Preserve the recommended fallback owner when the current provider loses setup authority.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    eyebrow: 'Focus return witness',
+    title: 'Home should send Back to the last earned browse anchor, not a page reset',
+    summary: scenario === 'healthy'
+      ? 'Hero, quick actions, and rails should remember which browse lane earned control so Back restores the same discovery story instead of dumping the user into a generic top state.'
+      : 'Hero, quick actions, and rails should remember which browse lane earned control so degraded refreshes do not erase the user’s last stable browsing anchor.',
+    returns: [
+      {
+        label: 'Hero memory',
+        remembers: 'Which featured CTA or quick action last owned the premium browse move.',
+        backTarget: 'Return Back to the hero lane when that is still the safest launch anchor.',
+        recoveryTarget: 'Keep the current featured-provider owner visible when rescue is carrying the browse story.',
+        tone: 'ready',
+      },
+      {
+        label: 'Rail memory',
+        remembers: 'Which quick-live or spotlight rail the user last earned through remote travel.',
+        backTarget: 'Return Back to that rail instead of rebuilding Home from the first scroll position.',
+        recoveryTarget: 'Preserve the same title family or live lane when provider recovery interrupts browse.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    eyebrow: 'Focus return witness',
+    title: 'Live should remember the selected channel and filter lane that owns Back',
+    summary: scenario === 'healthy'
+      ? 'Category pills, search, preview, and Play should all preserve the same selected-card anchor so Back keeps channel-surf rhythm intact.'
+      : 'Category pills, search, preview, and Play should all preserve the same selected-card anchor so degraded guide or provider conditions do not turn Back into a guess.',
+    returns: [
+      {
+        label: 'Selected-card memory',
+        remembers: 'Which category and selected channel currently own preview and Play.',
+        backTarget: 'Return Back to the same selected card instead of throwing the user at the top of the grid.',
+        recoveryTarget: 'Keep same-card or same-category rescue attached to that selected channel when exact proof weakens.',
+        tone: 'ready',
+      },
+      {
+        label: 'Filter memory',
+        remembers: 'Whether category pills or search currently define the live browse path.',
+        backTarget: 'Return Back to the active filter lane before changing which channels are even in view.',
+        recoveryTarget: 'Preserve the active category or filtered lane when provider recovery changes the safest Play owner.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -5089,13 +5173,13 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   adapterId: 'mock-xtream-codes',
   providerName: 'StreamDeck Mock Xtream Provider',
   providerType: 'Xtream Codes rehearsal adapter',
-  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, compact saved-provider podiums beside premium CTAs, remote-first path doctrine, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, provider-choice truth beside premium CTAs, provider-switch truth beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, recovery-witness proof beside premium CTAs, action-gated CTAs, fallback-cost truth, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
+  projectStatus: 'Login + Home + Live proof scaffolded with provider-risk strips, compact saved-provider podiums beside premium CTAs, remote-first path doctrine, focus-return memory, launch scorecards, proof debt beside premium CTAs, proof provenance beside premium CTAs, claim ceiling beside premium CTAs, connection headroom beside premium CTAs, provider-choice truth beside premium CTAs, provider-switch truth beside premium CTAs, launch ownership beside premium CTAs, canonical provider identity beside premium CTAs, fallback ranking, fallback-equivalence truth, fallback-expiry truth, reset-boundary truth beside premium CTAs, intent-lock continuity, explanation-boundary honesty, autonomy-boundary limits, interruption-budget discipline, retry-honesty contracts, provider-return truth, provider-stability truth beside premium CTAs, return-cooldown truth beside premium CTAs, recovery-witness proof beside premium CTAs, action-gated CTAs, fallback-cost truth, identity-anchor continuity, and browse launch scorecards across Search, Movies, and Series.',
   activeScenario: scenario,
   commandCenter: {
     title: 'Shared launch ops console',
     summary: scenario === 'healthy'
-      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, compact CTA-side saved-provider podiums, remote-first control doctrine, provider-choice truth, provider-switch truth, provider-stability truth, return-cooldown runway, connection-headroom truth, launch ownership, recovery-witness proof beside premium CTAs, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
-      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, fake provider comeback stories, hidden line-pressure, fake reset theater, invisible provider-rank changes, remote-path confusion, recovery-without-proof theater, silent provider switches, or auto-picks that should have come back to the user.',
+      ? 'Login, Home, and Live now read from one adapter-driven operations shell while Search, Movies, and Series publish matching browse launch scorecards, so provider-risk strips, compact CTA-side saved-provider podiums, remote-first control doctrine, focus-return memory, provider-choice truth, provider-switch truth, provider-stability truth, return-cooldown runway, connection-headroom truth, launch ownership, recovery-witness proof beside premium CTAs, reset-boundary truth, proof provenance beside premium CTAs, continuity truth, recovery posture, and launch safety stay aligned in-product.'
+      : 'Login, Home, and Live are now driven by one adapter-fed operations shell while Search, Movies, and Series keep the same browse launch scorecard contract, so degraded rehearsals do not drift into surface-specific launch fiction, fake provider comeback stories, hidden line-pressure, fake reset theater, invisible provider-rank changes, remote-path confusion, lost Back anchors, recovery-without-proof theater, silent provider switches, or auto-picks that should have come back to the user.',
     nextMoveLabel: scenario === 'healthy' ? 'Connect -> choose honestly -> browse' : 'Keep context, then choose or recover fast',
     failureModeLabel: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario receipt rehearsal',
   },
@@ -5111,10 +5195,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       id: 'login',
       title: 'Login shell',
       status: 'ready',
-      detail: 'Supports sample credentials, saved-connection switching, scenario rehearsal, remote-first setup travel, provider-risk strips, and trust-led recovery into Home.',
+      detail: 'Supports sample credentials, saved-connection switching, scenario rehearsal, remote-first setup travel, focus-return memory, provider-risk strips, and trust-led recovery into Home.',
       proof: [
         'Connect with the local mock credentials',
         'Remote-first setup path stays visible so OK, Back, and Left/Right are obvious before the screen feels like a web form',
+        'Focus return memory stays visible so Back returns to the last trusted field or saved-provider lane instead of resetting setup context',
         'Switch scenarios without leaving the screen',
         'Saved-provider podium stays visible beside Connect before setup polish hides who owns the next Home move',
         'Provider choice truth stays visible beside Connect before a saved-provider shortcut quietly changes who owns the next Home launch',
@@ -5153,10 +5238,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       id: 'home',
       title: 'Home dashboard',
       status: 'ready',
-      detail: 'Shows featured live browse, provider trust cockpit, remote-first hero travel, provider-risk strip, quick-launch rails, and mock-provider recovery guidance.',
+      detail: 'Shows featured live browse, provider trust cockpit, remote-first hero travel, focus-return memory, provider-risk strip, quick-launch rails, and mock-provider recovery guidance.',
       proof: [
         'Featured live card launches playback directly',
         'Remote-first hero path stays visible so the featured rail, library pivots, and Back behavior read like a TV destination instead of a dashboard',
+        'Focus return memory stays visible so Back restores the last earned hero or rail anchor instead of resetting Home travel',
         'Saved-provider podium stays visible beside the hero CTA before cinematic browse polish hides who owns the featured launch',
         'Provider choice truth stays visible beside the hero CTA before Home quietly swaps the featured launch onto a healthier provider without saying so',
         'Provider risk strip stays aligned with hero trust and the next safe launch',
@@ -5195,10 +5281,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       id: 'live',
       title: 'Live browser',
       status: 'rehearsal-friendly',
-      detail: 'Delivers category browse, remote-first surf cadence, provider-risk strip, inline guide, preview fallback, favorites, and healthier-provider recovery from each channel card.',
+      detail: 'Delivers category browse, remote-first surf cadence, focus-return memory, provider-risk strip, inline guide, preview fallback, favorites, and healthier-provider recovery from each channel card.',
       proof: [
         'Filter by category and search without leaving the page',
         'Remote-first surf path stays visible so category hops, preview confidence, and Back return feel calm on a TV remote',
+        'Focus return memory stays visible so Back returns to the selected channel or active filter lane instead of dropping surf context',
         'Saved-provider podium stays visible beside Play before preview motion hides who owns the next watch handoff',
         'Provider choice truth stays visible beside Play before same-category rescue quietly changes the watch decision under preview momentum',
         'Provider risk strip warns about auth, expiry, or line pressure before Play gets blamed',
@@ -5484,6 +5571,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       ],
     },
   ],
+  surfaceFocusReturnContracts: buildSurfaceFocusReturnContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),
