@@ -1154,6 +1154,36 @@ export type LivePlayerRemoteSignal = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerFocusReturnAnchorState =
+  | 'current-stream'
+  | 'switched-provider'
+  | 'same-category'
+  | 'resume-checkpoint'
+  | 'live-grid';
+
+export type LivePlayerFocusReturnTargetState =
+  | 'return-to-grid'
+  | 'return-to-switched-provider'
+  | 'return-to-category'
+  | 'return-to-checkpoint'
+  | 'return-to-recovery';
+
+export type LivePlayerFocusReturnEntry = {
+  id: 'anchor' | 'back-target' | 'recovery-target' | 'close-target';
+  label: string;
+  state: LivePlayerFocusReturnAnchorState | LivePlayerFocusReturnTargetState;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerFocusReturnSignal = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerRemoteRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -1171,6 +1201,33 @@ export type LivePlayerRemoteRuntimeContract = {
     label: string;
     detail: string;
     buttons: string[];
+    tone: LivePlayerControlTone;
+    targetProviderId: string | null;
+  };
+};
+
+export type LivePlayerFocusReturnRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  activeProviderId: string | null;
+  playbackOwnerProviderId: string | null;
+  recommendedProviderId: string | null;
+  focusReturnState: LivePlayerFocusReturnState;
+  anchorState: LivePlayerFocusReturnAnchorState;
+  backTargetState: LivePlayerFocusReturnTargetState;
+  recoveryTargetState: LivePlayerFocusReturnTargetState;
+  currentAnchor: string;
+  backTarget: string;
+  recoveryTarget: string;
+  entries: LivePlayerFocusReturnEntry[];
+  signals: LivePlayerFocusReturnSignal[];
+  nextMove: {
+    label: string;
+    detail: string;
     tone: LivePlayerControlTone;
     targetProviderId: string | null;
   };

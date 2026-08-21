@@ -4,12 +4,14 @@ import { useEffect, useMemo } from 'react';
 import { getContentId } from '@/lib/xtream-api';
 import { getLiveCategoryRecovery, getLiveProviderVariants } from '@/lib/provider-recovery';
 import { buildLivePlayerControlRuntime } from '@/lib/live-player-control-runtime';
+import { buildLivePlayerFocusReturnRuntime } from '@/lib/live-player-focus-return-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatGuideUpdatedAge, getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { VideoPlayer } from './video-player';
 import { usePlayerStore } from '@/stores/player-store';
 import { LivePlayerControlPanel } from './live-player-control-panel';
+import { LivePlayerFocusReturnPanel } from './live-player-focus-return-panel';
 import { LivePlayerRemotePanel } from './live-player-remote-panel';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
@@ -173,6 +175,43 @@ export function PlayerDock() {
     watchHistory,
   ]);
 
+  const livePlayerFocusReturnRuntime = useMemo(() => buildLivePlayerFocusReturnRuntime({
+    currentStream,
+    currentProviderId,
+    activeConnectionId: currentProviderId,
+    connections,
+    connectionStatus,
+    watchHistory,
+    focusReturnState: livePlayerControlRuntime.focusReturnState,
+    playbackContinuityState: livePlayerControlRuntime.playbackContinuityState,
+    streamHealthStatus: streamHealth.status,
+    lastSwitchContext,
+    recoveryTarget: liveRecovery.topVariant
+      ? {
+          providerId: liveRecovery.topVariant.providerId,
+          providerName: liveRecovery.topVariant.providerName,
+        }
+      : liveRecovery.categoryFallback
+        ? {
+            providerId: liveRecovery.categoryFallback.providerId,
+            providerName: liveRecovery.categoryFallback.providerName,
+            categoryName: liveRecovery.categoryFallback.categoryName,
+          }
+        : null,
+  }), [
+    connectionStatus,
+    connections,
+    currentProviderId,
+    currentStream,
+    lastSwitchContext,
+    livePlayerControlRuntime.focusReturnState,
+    livePlayerControlRuntime.playbackContinuityState,
+    liveRecovery.categoryFallback,
+    liveRecovery.topVariant,
+    streamHealth.status,
+    watchHistory,
+  ]);
+
   useEffect(() => {
     if (!currentProvider || !currentStream || currentStream.stream_type !== 'live' || !contentId) return;
     markGuideFromCache(currentProvider.id, [contentId]);
@@ -266,6 +305,7 @@ export function PlayerDock() {
               </div>
 
               <LivePlayerControlPanel contract={livePlayerControlRuntime} />
+              <LivePlayerFocusReturnPanel contract={livePlayerFocusReturnRuntime} />
               <LivePlayerRemotePanel contract={livePlayerRemoteRuntime} />
 
               {currentStream.stream_type === 'live' ? (
