@@ -67,6 +67,7 @@ import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switc
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
+import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
 import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
@@ -608,6 +609,16 @@ export function HomeDashboard() {
       ? 'Back now returns to the last earned rail so Home preserves the same discovery lane instead of rebuilding from the top.'
       : 'Back now returns to the featured hero lane so the primary browse anchor stays calm and TV-native.',
   }), [activeConnection?.name, featuredLive?.name, focusAnchor, home.featured?.name]);
+  const homeSelectionCustodyRuntime = useMemo(() => ({
+    activeSubject: home.featured?.name || activeConnection?.name || 'Featured launch',
+    carriesForward: featuredLive?.name
+      ? `${featuredLive.name} stays attached to Play and Live handoff`
+      : `${home.featured?.name || 'Featured title'} stays attached to the hero CTA`,
+    breaksWhen: 'A hero refresh, provider rescue, or rail change makes the featured CTA target a different title or owner',
+    detail: featuredLive
+      ? 'The hero CTA is still naming the same live subject, so the next move should feel like opening that exact channel instead of a vague featured idea.'
+      : 'The hero CTA is still naming the same featured subject, so browse polish does not get to change the launch target silently.',
+  }), [activeConnection?.name, featuredLive?.name, home.featured?.name]);
 
   if (!activeConnection) {
     return (
@@ -635,6 +646,7 @@ export function HomeDashboard() {
       {isMockConnection ? <PhaseOneShipRail manifest={manifest} screenId="home" /> : null}
       {isMockConnection ? <SurfaceRemotePathInline manifest={manifest} screenId="home" /> : null}
       {isMockConnection ? <SurfaceFocusReturnInline manifest={manifest} screenId="home" runtime={homeFocusReturnRuntime} /> : null}
+      {isMockConnection ? <SurfaceSelectionCustodyInline manifest={manifest} screenId="home" runtime={homeSelectionCustodyRuntime} /> : null}
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
         badge="Connection headroom"

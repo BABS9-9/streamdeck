@@ -64,6 +64,7 @@ import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switc
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
+import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
 import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
@@ -509,6 +510,16 @@ export default function LoginPage() {
         : 'Back now returns to the last trusted setup field so Login preserves the same remote-first connect path.',
     };
   }, [activeConnection, loginFocusAnchor]);
+  const loginSelectionCustodyRuntime = useMemo(() => ({
+    activeSubject: activeConnection?.name || `${server} · ${username}`,
+    carriesForward: activeConnection?.name
+      ? `${activeConnection.name} owns the next Home handoff`
+      : 'The typed provider owns the next Home handoff if Connect succeeds',
+    breaksWhen: 'A saved-provider shortcut or rescue path would hand Home to a different provider owner',
+    detail: activeConnection
+      ? 'Connect is currently attached to the active saved provider, so quick reconnect should still name the same owner before Home opens.'
+      : 'Connect is currently attached to the typed provider identity, so setup should not quietly change owners just because a faster shortcut exists.',
+  }), [activeConnection, server, username]);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -641,6 +652,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceFocusReturnInline manifest={manifest} screenId="login" runtime={loginFocusReturnRuntime} />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceSelectionCustodyInline manifest={manifest} screenId="login" runtime={loginSelectionCustodyRuntime} />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (

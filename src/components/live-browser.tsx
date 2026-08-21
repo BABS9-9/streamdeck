@@ -66,6 +66,7 @@ import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switc
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
+import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
 import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
@@ -472,6 +473,16 @@ export function LiveBrowser() {
       ? 'Back now returns to the active filter lane so category and search context stay intact before the grid changes.'
       : 'Back now returns to the selected channel card so preview and Play preserve the same surf anchor.',
   }), [focusAnchor, selectedStream?.name]);
+  const liveSelectionCustodyRuntime = useMemo(() => ({
+    activeSubject: selectedStream?.name || 'Selected channel',
+    carriesForward: focusAnchor.toLowerCase().includes('filter')
+      ? `${selectedCategory === 'all' ? 'All channels' : 'Current filter lane'} still owns the selected watch target`
+      : `${selectedStream?.name || 'Selected channel'} stays attached to Play`,
+    breaksWhen: 'Preview, retry, or provider rescue would send Play to a different channel or a different filter-owned lane',
+    detail: focusAnchor.toLowerCase().includes('filter')
+      ? 'The current filter lane still owns the selected card, so Live should not let recovery quietly change the watch family underneath the user.'
+      : 'Play is still attached to the selected channel itself, so preview motion should not swap the subject without saying so.',
+  }), [focusAnchor, selectedCategory, selectedStream?.name]);
   const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
     screenId: 'live',
     connections,
@@ -517,6 +528,7 @@ export function LiveBrowser() {
       {isMockConnection ? <PhaseOneShipRail manifest={manifest} screenId="live" /> : null}
       {isMockConnection ? <SurfaceRemotePathInline manifest={manifest} screenId="live" /> : null}
       {isMockConnection ? <SurfaceFocusReturnInline manifest={manifest} screenId="live" runtime={liveFocusReturnRuntime} /> : null}
+      {isMockConnection ? <SurfaceSelectionCustodyInline manifest={manifest} screenId="live" runtime={liveSelectionCustodyRuntime} /> : null}
       <PlaybackResiliencePanel contract={playbackResilience} />
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
