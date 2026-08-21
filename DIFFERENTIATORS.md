@@ -22,6 +22,7 @@ The original three-assignment baseline is already broader than a login page plus
 | Saved-provider podium | Rank who owns the next launch, who is the standby recovery path, and which risky provider must stay visible but blocked. | Competitors usually hide saved-provider ranking in Settings, so users only learn who should have owned the next move after playback or browse already fails. | Phase 1 | Reuse one provider podium contract across Login, Home, and Live, backed by canonical provider IDs, auth summaries, line headroom, provider health, and explicit switch actions on the premium surfaces themselves, with a compact CTA-side podium beside Connect, the hero CTA, and Play instead of only a deeper strategy board. |
 | Remote-first control model | Teach Login, Home, and Live what OK, Back, and Left/Right should do in plain sight so the product feels TV-native instead of like a web form stretched onto a big screen. | Most IPTV players either hide control doctrine completely or inherit messy pointer-first behavior, so moving between setup, browse, and playback never feels as calm as Roku-simple streaming products. | Phase 1 | Drive Login, Home, and Live from one remote-path contract so connect, browse, and surf flows share explicit button cadence, preserved context, and recovery posture instead of inventing surface-local focus rules. |
 | Focus return memory | Remember which field, hero lane, or selected channel currently owns Back so the user returns to the last earned anchor instead of getting dumped into a generic reset. | Most IPTV players lose navigation memory between setup, browse, and playback layers, so Back feels like a gamble instead of a calm continuation of the same remote path. | Phase 1 | Drive Login, Home, and Live from one focus-return contract so active anchor, Back target, and recovery target stay visible and survive remote-first travel instead of devolving into surface-local guesses. |
+| Selection custody | Keep the currently chosen provider, featured title, or selected channel visibly attached to the next CTA so setup, browse, and surf transitions never feel anonymous. | Competitors usually preserve motion but drop the chosen object itself during retries, hero swaps, or channel hops, so the next move feels visually premium but semantically slippery. | Phase 1 | Drive Login, Home, and Live from one selection-custody contract so the active subject, carried-forward subject, and break trigger stay visible beside Connect, the hero CTA, and Play before a handoff or refresh quietly changes what the user thinks they chose. |
 | Smart EPG overlay | Show NOW and NEXT directly on live channel cards and preview rails instead of burying guide data on a separate screen. | Most players make guide info a separate mode or a low-context overlay. | Phase 1 | Fetch short EPG per selected or visible live stream, normalize NOW/NEXT state, cache lightly, and degrade honestly when guide data is stale or missing. |
 | Guide freshness board | Publish how many tracked channels are fresh, refreshing, stale, missing, or erroring directly beside premium launch areas before guide-driven browse and launch claims sound more current than they are. | Competitors usually show guide data as present or absent, with no honest middle state for partial freshness, cache-backed continuity, or operator recovery. | Phase 1 | Reuse one provider-scoped guide coverage report across Login, Home, and Live so freshness counts, stale callouts, recovery ownership, and safest next move stay aligned both in the deeper guide strip and beside Connect, hero launch, and Play. |
 | Continue Watching across live + VOD | Keep one resume system for live channels, movies, and series so the next launch always starts from user intent. | Competitors split resume by content type or ignore live continuity entirely. | Phase 1 -> Phase 2 polish | Unified watch-history model with provider-aware entries, playback progress updates, live-channel recall, series episode context, and provider-safe recovery when the original source fails. |
@@ -70,65 +71,67 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
    Users with backup providers should feel supported, not punished.
 2. Remote-first calm
    Users should understand what OK, Back, and Left/Right do on Login, Home, and Live without discovering the control model by accident.
-3. Inline confidence
+3. Selection custody
+   The shell should keep the currently chosen provider, featured title, or selected channel visibly attached to the next CTA before refresh, retry, or rescue changes the subject under the user.
+4. Inline confidence
    Browse and playback surfaces should explain NOW, NEXT, health, trust, and fallback without making users visit Settings.
-4. Intent continuity
+5. Intent continuity
    Retry, rescue, provider switching, and resume should preserve the same user mission for as long as that is still honest.
-5. Premium shell quality
+6. Premium shell quality
    The app should feel like a modern streaming product, not a reseller console with posters.
-6. Risk clarity
+7. Risk clarity
    Provider trouble should be explained on the same surface where the user is making the next move, not discovered after a failed launch.
-7. Proof-debt honesty
+8. Proof-debt honesty
    The shell should say when confidence is fresh versus borrowed before cached or rescued states get dressed up like live provider proof.
-8. Proof-provenance honesty
+9. Proof-provenance honesty
    The shell should say what source is actually backing confidence before saved continuity or rescue logic gets dressed up like fresh provider proof.
-9. Claim-ceiling discipline
+10. Claim-ceiling discipline
    The shell should cap premium language at what current proof really earns before browse, connect, or play copy outruns runtime truth.
-10. Confidence-floor honesty
+11. Confidence-floor honesty
    The shell should say what minimum proof still keeps premium connect, browse, or play posture honest before the CTA keeps its confidence after the floor has collapsed.
-11. Connection headroom honesty
+12. Connection headroom honesty
    The shell should surface remaining provider line capacity in a compact beside-the-CTA panel before Connect, hero launch, or Play gets blamed for a saturated account.
-11. Interruption-budget honesty
+13. Interruption-budget honesty
    The shell should say how much waiting still preserves the same move and when delay must escalate into an explicit recovery, switch, or hold state.
-12. Retry honesty
+14. Retry honesty
    The shell should say when retry still preserves the same provider-owned move, what context survives that retry, and what trigger means recovery should replace one more attempt.
-13. Fallback-cost honesty
+15. Fallback-cost honesty
    The shell should say what polish, certainty, or exactness fallback already consumed so preserved momentum does not masquerade as a free save.
-14. Provider-choice honesty
+16. Provider-choice honesty
    The shell should say when it is still safe to auto-pick the healthiest equivalent provider, when equivalence has weakened, and when the user must take ownership of the next move explicitly.
-15. Autonomy-boundary honesty
+17. Autonomy-boundary honesty
    The shell should say what trust work can stay automatic, what provider or playback decision still belongs to the user, and what event forces an explicit handoff before recovery turns into hidden automation.
-15. Launch-readiness honesty
+18. Launch-readiness honesty
    The shell should show whether the next move is genuinely ready, only watch-safe, or already recovery-owned before cinematic polish outruns proof.
-16. Launch-scorecard honesty
+19. Launch-scorecard honesty
    The shell should keep a compact go / watch / recover board beside the primary CTA so users can read the safest next move at a glance instead of inferring it from mood or motion.
-17. Hold-receipt honesty
+20. Hold-receipt honesty
    The shell should say exactly what is holding the CTA in place, what proof clears that hold, and which fallback already owns recovery before the user gets sent back into retry theater.
-18. Browse-launch-scorecard honesty
+21. Browse-launch-scorecard honesty
    Search, Movies, and Series should keep the same compact go / watch / recover board near result and detail actions so users can read launch safety before browse momentum turns into false confidence.
-19. Handoff clarity
+22. Handoff clarity
    The shell should say what the next screen will preserve, what condition should hold the current surface in place, and what fallback lane takes over before a CTA quietly changes the mission.
-20. Provider-stability honesty
+23. Provider-stability honesty
    The shell should say when the current provider is actually stable enough to own the next move again, what jitter is still acceptable, and what instability keeps rescue in charge.
-21. Return-cooldown honesty
+24. Return-cooldown honesty
    The shell should say how long the original provider still needs to stay calm before it may take the next move back, what proof keeps the cooldown shrinking, and what reset restarts the wait.
-22. Recovery-witness honesty
+25. Recovery-witness honesty
    The shell should show what evidence proves rescue preserved the same destination, what context survives the handoff, and what contradiction breaks that trust immediately.
-23. Rescue-receipt honesty
+26. Rescue-receipt honesty
    The shell should show what context survived the fallback, what changed under the hood, and what the user should reconfirm before rescue gets presented like a seamless save.
-24. Identity-anchor honesty
+27. Identity-anchor honesty
    The shell should keep provider owner, rescue owner, and preserved surface meaning visibly attached to the premium CTA before fallback becomes anonymous momentum under polished motion.
-25. Canonical ownership continuity
+28. Canonical ownership continuity
    Saved-provider aliases, reconnect variants, and rescue paths should still resolve to one clear provider owner before the app reuses trust, history, or favorites.
-26. Honest fallback ranking
+29. Honest fallback ranking
    The shell should explain which rescue currently owns the premium CTA, which rescue is only approximate, and what event would rerank the stack before the next move silently changes hands.
-27. Honest rescue equivalence
+30. Honest rescue equivalence
    The shell should distinguish between the same destination, an acceptable approximation, and a disguised restart beside the premium CTA before “seamless fallback” turns into fiction.
-28. Fallback-expiry honesty
+31. Fallback-expiry honesty
    The shell should say how long rescue may still claim sameness, what proof is aging out that claim, and what contradiction turns the same move into approximation or restart before premium CTA polish overstates continuity.
-29. Guide freshness honesty
+32. Guide freshness honesty
    The shell should show how much guide truth is fresh, cached, stale, or missing beside the premium CTA before NOW / NEXT copy overclaims what the provider has actually proven.
-30. Saved-provider podium honesty
+33. Saved-provider podium honesty
    The shell should rank which provider owns the next move, which source is the clean standby, and which risky shortcut stays blocked in a compact beside-the-CTA podium before switching becomes a hidden afterthought.
 
 ## Phase 1 Surface Implications
@@ -147,6 +150,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must show how many provider lines are already occupied and when line pressure should demote Connect from a premium launch into a watch-or-switch decision.
 - Must keep a compact connection-headroom panel beside Connect so setup copy says how many lines are already occupied, how much launch room is left, and when a healthier saved provider or wait state should outrank another connect attempt.
 - Must keep focus memory visible on Login so Back returns to the last trusted field or saved-provider lane instead of wiping setup context.
+- Must keep selection custody visible on Login so Connect still names which provider and credential set currently own the next Home handoff before quick reconnect or rescue changes the subject.
 - Must say how long Connect may honestly keep waiting on auth, line release, or rescue proof before the setup flow must escalate into a hold, switch, or recovery-owned state.
 - Must say when retrying the same provider still preserves the same Home launch, what saved setup context may survive that retry, and what trigger means recovery should replace another Connect attempt.
 - Must say what fallback already cost the setup flow in launch certainty, provider familiarity, or shortcut comfort before rescue still gets described like a free save.
@@ -196,6 +200,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must make cross-surface continuity visible before the user opens Live or playback.
 - Must keep provider risk attached to the hero and quick-launch story instead of burying it in Settings.
 - Must keep focus memory visible on Home so Back restores the last earned hero or rail anchor instead of resetting browse posture.
+- Must keep selection custody visible on Home so the hero CTA still names which featured title and provider own the next launch before a refresh, rail hop, or rescue quietly swaps the subject.
 - Must say when hero confidence is still borrowed from cached browse state or rescue ownership and what fresh provider proof repays that debt before Home sounds fully live again.
 - Must cap cinematic hero copy at the strongest browse promise current provider, rail, and guide proof actually earn before Home sells a fresher story than it has proven.
 - Must keep the current borrowed-confidence story visible beside the hero CTA so the user can see what Home still knows, what certainty is still on credit, and what proof repays that debt before cinematic launch polish overclaims freshness.
@@ -250,6 +255,7 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
 - Must surface stream-health truth without turning the screen into an engineering dashboard.
 - Must publish provider pressure before users misread auth or capacity trouble as a bad stream.
 - Must keep focus memory visible on Live so Back returns to the active filter lane or selected card instead of resetting the grid.
+- Must keep selection custody visible on Live so Play still names which exact selected channel and filter context own the next watch move before preview, retry, or provider rescue changes the subject.
 - Must say when surf confidence is still borrowed from preview continuity, same-category rescue, or cached guide posture and what proof repays that debt before Play sounds exact again.
 - Must cap playback language at the strongest launch promise current preview, guide, and provider proof actually earn before Play sounds safer than the selected card can prove.
 - Must keep the current borrowed-confidence story visible beside Play so the user can see what Live still knows, what certainty is still on credit, and what proof repays that debt before preview motion overclaims exact-channel safety.
