@@ -1184,6 +1184,22 @@ export type LivePlayerFocusReturnSignal = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerContinuityEntry = {
+  id: 'owner' | 'continuity-path' | 'proof-floor' | 'recovery-owner';
+  label: string;
+  state: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerContinuitySignal = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerRemoteRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -1225,6 +1241,30 @@ export type LivePlayerFocusReturnRuntimeContract = {
   recoveryTarget: string;
   entries: LivePlayerFocusReturnEntry[];
   signals: LivePlayerFocusReturnSignal[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    targetProviderId: string | null;
+  };
+};
+
+export type LivePlayerContinuityRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  activeProviderId: string | null;
+  playbackOwnerProviderId: string | null;
+  recommendedProviderId: string | null;
+  continuityState: LivePlayerPlaybackContinuityState;
+  providerOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  guideState: ProviderGuideCoverageReport['status'] | 'unknown';
+  entries: LivePlayerContinuityEntry[];
+  signals: LivePlayerContinuitySignal[];
   nextMove: {
     label: string;
     detail: string;
