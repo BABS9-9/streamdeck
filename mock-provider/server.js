@@ -990,6 +990,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'selection-custody',
+    feature: 'Selection custody',
+    pitch: 'Keep the currently chosen provider, featured title, or selected channel visibly attached to the next CTA so setup, browse, and surf transitions never feel anonymous.',
+    competitiveGap: 'Competitors usually preserve motion but drop the chosen object itself during retries, hero swaps, or channel hops, so the next move feels visually premium but semantically slippery.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one selection-custody contract so the active subject, carried-forward subject, and break trigger stay visible beside Connect, the hero CTA, and Play before a handoff or refresh quietly changes what the user thinks they chose.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'launch-readiness',
     feature: 'Launch readiness',
     pitch: 'Publish whether Connect, hero launch, or Play is actually ready now, only watch-safe, or already recovery-led before polish implies more certainty than runtime proof owns.',
@@ -4495,6 +4504,81 @@ const buildSurfaceFocusReturnContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceSelectionCustodyContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    eyebrow: 'Selection custody',
+    title: 'Login should keep the chosen provider attached to Connect',
+    summary: scenario === 'healthy'
+      ? 'Saved reconnect, typed credentials, and Connect should keep naming the same provider subject so setup never turns into anonymous momentum.'
+      : 'Saved reconnect, typed credentials, and recovery should keep naming the same provider subject so degraded auth does not quietly swap who owns the next Home handoff.',
+    custody: [
+      {
+        label: 'Typed provider',
+        subject: 'The currently typed server plus credential pair that the user expects Connect to advance.',
+        carriesForward: 'Carry that provider identity into Home ownership, guide rehearsal, and saved-session trust.',
+        breaksWhen: 'Break custody if rescue or quick reconnect would send the user into a materially different provider owner.',
+        tone: 'ready',
+      },
+      {
+        label: 'Saved shortcut',
+        subject: 'The saved provider card that currently owns one-tap reconnect.',
+        carriesForward: 'Carry that shortcut identity into the next Home launch even if auth rechecks or warm cache fill in supporting proof.',
+        breaksWhen: 'Break custody when the healthiest standby has to replace the current saved shortcut as the true next owner.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    eyebrow: 'Selection custody',
+    title: 'Home should keep the featured subject attached to the hero CTA',
+    summary: scenario === 'healthy'
+      ? 'Hero refreshes, rail travel, and quick-launch posture should keep naming the same featured title and provider owner until the subject truly changes.'
+      : 'Hero refreshes, rail travel, and recovery should keep naming the same featured title and provider owner so degraded browse truth does not quietly substitute a new subject.',
+    custody: [
+      {
+        label: 'Featured title',
+        subject: 'The exact hero title or live card the user thinks the featured CTA still targets.',
+        carriesForward: 'Carry that same title into Play, continue watching, and guide-backed hero confidence while the subject remains stable.',
+        breaksWhen: 'Break custody if a refresh, fallback, or rail hop changes the launch target enough that the hero is no longer the same story.',
+        tone: 'ready',
+      },
+      {
+        label: 'Provider-backed feature',
+        subject: 'The provider owner currently backing the featured rail and its promise.',
+        carriesForward: 'Carry that provider-backed subject through rail travel and quick actions while Home is still telling the same browse story.',
+        breaksWhen: 'Break custody when rescue or provider switching makes the hero depend on a new owner or an approximate browse save.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    eyebrow: 'Selection custody',
+    title: 'Live should keep the selected channel attached to Play',
+    summary: scenario === 'healthy'
+      ? 'Preview, NOW / NEXT, and Play should keep naming the same selected channel and filter path so surf confidence stays exact.'
+      : 'Preview, NOW / NEXT, and recovery should keep naming the same selected channel and filter path so degraded live proof does not quietly move the watch target.',
+    custody: [
+      {
+        label: 'Selected channel',
+        subject: 'The exact highlighted channel card the user thinks Play will open.',
+        carriesForward: 'Carry that selected card into preview, guide posture, favorites, and playback entry while surf confidence stays exact.',
+        breaksWhen: 'Break custody if retry, provider rescue, or stale preview would cause Play to open a different channel or only an approximate substitute.',
+        tone: 'ready',
+      },
+      {
+        label: 'Filter-owned lane',
+        subject: 'The current category or search lane that gives the selected channel its meaning.',
+        carriesForward: 'Carry that lane into Back behavior and same-category recovery so the selected card still belongs to the same surf mission.',
+        breaksWhen: 'Break custody when a new category, search reset, or recovery owner changes the watch target family underneath the selected card.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -5572,6 +5656,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
     },
   ],
   surfaceFocusReturnContracts: buildSurfaceFocusReturnContracts(scenario),
+  surfaceSelectionCustodyContracts: buildSurfaceSelectionCustodyContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),
