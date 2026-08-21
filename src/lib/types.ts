@@ -1101,6 +1101,14 @@ export type LivePlayerPlaybackContinuityState =
   | 'degraded'
   | 'broken';
 
+export type LivePlayerRemoteIntentState =
+  | 'play-pause-primary'
+  | 'timeshift-scan'
+  | 'info-layer-open'
+  | 'track-picker-ready'
+  | 'return-to-owner'
+  | 'recovery-handoff';
+
 export type LivePlayerControlCard = {
   id:
     | 'play-pause'
@@ -1127,6 +1135,45 @@ export type LivePlayerControlSignal = {
   value: string;
   detail: string;
   tone: LivePlayerControlTone;
+};
+
+export type LivePlayerRemoteAction = {
+  id: 'ok' | 'back' | 'left-right' | 'up-down' | 'audio-subtitle';
+  label: string;
+  buttons: string[];
+  state: LivePlayerRemoteIntentState;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerRemoteSignal = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerRemoteRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  activeProviderId: string | null;
+  playbackOwnerProviderId: string | null;
+  recommendedProviderId: string | null;
+  primaryIntentState: LivePlayerRemoteIntentState;
+  actions: LivePlayerRemoteAction[];
+  signals: LivePlayerRemoteSignal[];
+  nextMove: {
+    label: string;
+    detail: string;
+    buttons: string[];
+    tone: LivePlayerControlTone;
+    targetProviderId: string | null;
+  };
 };
 
 export type LivePlayerControlRuntimeContract = {
