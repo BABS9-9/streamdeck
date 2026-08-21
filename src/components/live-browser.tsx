@@ -65,6 +65,7 @@ import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choic
 import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
+import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
@@ -483,6 +484,20 @@ export function LiveBrowser() {
       ? 'The current filter lane still owns the selected card, so Live should not let recovery quietly change the watch family underneath the user.'
       : 'Play is still attached to the selected channel itself, so preview motion should not swap the subject without saying so.',
   }), [focusAnchor, selectedCategory, selectedStream?.name]);
+  const liveFirstPictureRuntime = useMemo(() => ({
+    currentPromise: selectedStream?.name
+      ? `${selectedStream.name} is the current shortest route to a visible picture`
+      : 'Pick a channel to reveal the fastest route to picture',
+    fastestPath: selectedStream?.name
+      ? `Keep ${selectedStream.name} selected, confirm preview, then open Play from the same card`
+      : 'Select a live card, let preview settle, then open Play from that card',
+    blockedBy: selectedStream?.name
+      ? 'Preview drift, stale guide proof, or provider pressure can demote this direct play path'
+      : 'No selected card means Live cannot name an honest first-picture path yet',
+    detail: selectedStream?.name
+      ? 'Live should keep the shortest honest route to picture attached to the selected card so surfing still feels fast even when guide or provider truth softens.'
+      : 'The grid should make it obvious which selected card will reach picture fastest once the user earns a channel anchor.',
+  }), [selectedStream?.name]);
   const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
     screenId: 'live',
     connections,
@@ -529,6 +544,7 @@ export function LiveBrowser() {
       {isMockConnection ? <SurfaceRemotePathInline manifest={manifest} screenId="live" /> : null}
       {isMockConnection ? <SurfaceFocusReturnInline manifest={manifest} screenId="live" runtime={liveFocusReturnRuntime} /> : null}
       {isMockConnection ? <SurfaceSelectionCustodyInline manifest={manifest} screenId="live" runtime={liveSelectionCustodyRuntime} /> : null}
+      {isMockConnection ? <SurfaceFirstPictureInline manifest={manifest} screenId="live" runtime={liveFirstPictureRuntime} /> : null}
       <PlaybackResiliencePanel contract={playbackResilience} />
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}

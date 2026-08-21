@@ -66,6 +66,7 @@ import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choic
 import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
+import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
@@ -619,6 +620,18 @@ export function HomeDashboard() {
       ? 'The hero CTA is still naming the same live subject, so the next move should feel like opening that exact channel instead of a vague featured idea.'
       : 'The hero CTA is still naming the same featured subject, so browse polish does not get to change the launch target silently.',
   }), [activeConnection?.name, featuredLive?.name, home.featured?.name]);
+  const homeFirstPictureRuntime = useMemo(() => ({
+    currentPromise: featuredLive?.name
+      ? `${featuredLive.name} is the shortest visible route from Home to motion`
+      : `${home.featured?.name || 'The featured hero'} owns the fastest Home launch`,
+    fastestPath: featuredLive?.name
+      ? `Press Play on ${featuredLive.name} or drop one move into quick live for the same provider-backed picture path`
+      : 'Use the hero CTA, then fall into quick live if the featured launch is not the fastest honest motion path',
+    blockedBy: 'Hero refresh, provider rescue, or line pressure can demote the featured route before playback opens',
+    detail: featuredLive?.name
+      ? 'Home already knows which live subject reaches a picture fastest, so the hero and quick-live lane should keep that route readable instead of hiding it behind cinematic chrome.'
+      : 'When the hero is not a live target, Home should still say whether the hero or the quick-live rail is the shortest honest route to visible playback.',
+  }), [featuredLive?.name, home.featured?.name]);
 
   if (!activeConnection) {
     return (
@@ -647,6 +660,7 @@ export function HomeDashboard() {
       {isMockConnection ? <SurfaceRemotePathInline manifest={manifest} screenId="home" /> : null}
       {isMockConnection ? <SurfaceFocusReturnInline manifest={manifest} screenId="home" runtime={homeFocusReturnRuntime} /> : null}
       {isMockConnection ? <SurfaceSelectionCustodyInline manifest={manifest} screenId="home" runtime={homeSelectionCustodyRuntime} /> : null}
+      {isMockConnection ? <SurfaceFirstPictureInline manifest={manifest} screenId="home" runtime={homeFirstPictureRuntime} /> : null}
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
         badge="Connection headroom"

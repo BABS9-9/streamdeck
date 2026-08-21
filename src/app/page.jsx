@@ -63,6 +63,7 @@ import { SurfaceProviderChoiceInline } from '@/components/surface-provider-choic
 import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switch-inline';
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
+import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
@@ -520,6 +521,27 @@ export default function LoginPage() {
       ? 'Connect is currently attached to the active saved provider, so quick reconnect should still name the same owner before Home opens.'
       : 'Connect is currently attached to the typed provider identity, so setup should not quietly change owners just because a faster shortcut exists.',
   }), [activeConnection, server, username]);
+  const loginFirstPictureRuntime = useMemo(() => {
+    const readyToConnect = Boolean(server.trim() && username.trim() && password.trim());
+    const usingSavedProvider = Boolean(activeConnection);
+
+    return {
+      currentPromise: usingSavedProvider
+        ? `${activeConnection.name} can hand off into Home without retyping setup`
+        : readyToConnect
+          ? 'Connect can move straight from setup into the first playable Home lane'
+          : 'Finish setup fields to unlock the shortest route to picture',
+      fastestPath: usingSavedProvider
+        ? `Reconnect ${activeConnection.name}, open Home, then launch the featured live lane`
+        : 'Connect, land on Home, and open the featured or quick-live launch',
+      blockedBy: readyToConnect
+        ? 'Auth failure, line saturation, or a healthier saved provider taking ownership'
+        : 'Missing setup fields keep first picture behind form completion',
+      detail: usingSavedProvider
+        ? 'The active saved provider already owns the fastest honest setup-to-picture path, so Login should keep reconnect and the first Home launch visibly attached.'
+        : 'Login should make the shortest route to first picture legible before Connect fires so typed setup feels like a launch path, not a utility chore.',
+    };
+  }, [activeConnection, password, server, username]);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -656,6 +678,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceSelectionCustodyInline manifest={manifest} screenId="login" runtime={loginSelectionCustodyRuntime} />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceFirstPictureInline manifest={manifest} screenId="login" runtime={loginFirstPictureRuntime} />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (

@@ -1418,6 +1418,19 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  surfaceFirstPictureContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    eyebrow: string;
+    title: string;
+    summary: string;
+    checkpoints: Array<{
+      label: string;
+      startingPoint: string;
+      firstPicturePath: string;
+      breaksOn: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
   surfaceLaunchReadinessContracts: Array<{
     screenId: 'login' | 'home' | 'live';
     title: string;
