@@ -904,7 +904,16 @@ export function HomeDashboard() {
               <SurfaceMultiConnectionCustodyInline manifest={manifest} screenId="home" runtime={multiConnectionCustodyRuntime} />
             </div>
             <div className="mt-4">
-              <MultiConnectionSwitchInline runtime={multiConnectionSwitchRuntime} title="Hero fast provider switch" badge="Runtime honesty" />
+              <MultiConnectionSwitchInline
+                runtime={multiConnectionSwitchRuntime}
+                title="Hero fast provider switch"
+                badge="Runtime honesty"
+                onSelectProvider={(providerId) => setActiveConnection(providerId, {
+                  sourceSurface: 'home',
+                  reason: 'quick-switch',
+                  preservedTitle: home.featured?.name || null,
+                })}
+              />
             </div>
             <div className="mt-4">
               <SurfaceProviderChoiceInline
@@ -1117,7 +1126,15 @@ export function HomeDashboard() {
       <SurfaceContinuityWindow contract={continuityWindow} badge="Browse continuity" />
       <SurfaceHandoffMap handoff={handoffMap} badge="Live handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
-      <MultiConnectionSwitchPanel runtime={multiConnectionSwitchRuntime} badge="Multi-connection switch runtime" />
+      <MultiConnectionSwitchPanel
+        runtime={multiConnectionSwitchRuntime}
+        badge="Multi-connection switch runtime"
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'home',
+          reason: 'quick-switch',
+          preservedTitle: home.featured?.name || null,
+        })}
+      />
       <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
       <SurfaceProviderSwitchContract runtime={providerSwitchRuntime} badge="Switch honesty" />
       <SurfaceProviderReturnContract contract={providerReturnContract} badge="Return truth" />

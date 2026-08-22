@@ -643,7 +643,7 @@ export type ProviderSwitchContext = {
   preservedRecentItemsCount?: number | null;
   preservedCollectionsCount?: number | null;
   sourceSurface?: 'login' | 'home' | 'live' | 'movies' | 'series' | 'search' | 'favorites' | 'settings' | 'player' | 'collections' | 'system' | null;
-  reason?: 'manual' | 'launch' | 'recovery' | 'variant' | 'validation' | 'remove-connection' | 'auto' | null;
+  reason?: 'manual' | 'launch' | 'recovery' | 'variant' | 'validation' | 'remove-connection' | 'auto' | 'quick-switch' | null;
 };
 
 export type SavedProviderHealthTone = 'healthy' | 'warning';

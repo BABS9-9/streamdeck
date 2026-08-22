@@ -695,7 +695,15 @@ export function LiveBrowser() {
       <SurfaceContinuityWindow contract={continuityWindow} badge="Surf continuity" />
       <SurfaceHandoffMap handoff={handoffMap} badge="Playback handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
-      <MultiConnectionSwitchPanel runtime={multiConnectionSwitchRuntime} badge="Multi-connection switch runtime" />
+      <MultiConnectionSwitchPanel
+        runtime={multiConnectionSwitchRuntime}
+        badge="Multi-connection switch runtime"
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'live',
+          reason: 'quick-switch',
+          preservedTitle: selectedStream?.name || null,
+        })}
+      />
       <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
       <SurfaceProviderSwitchContract runtime={providerSwitchRuntime} badge="Switch honesty" />
       <MultiConnectionGuideRuntime
@@ -770,7 +778,16 @@ export function LiveBrowser() {
               <SurfaceMultiConnectionCustodyInline manifest={manifest} screenId="live" runtime={multiConnectionCustodyRuntime} />
             </div>
             <div className="mt-4">
-              <MultiConnectionSwitchInline runtime={multiConnectionSwitchRuntime} title="Play fast provider switch" badge="Runtime honesty" />
+              <MultiConnectionSwitchInline
+                runtime={multiConnectionSwitchRuntime}
+                title="Play fast provider switch"
+                badge="Runtime honesty"
+                onSelectProvider={(providerId) => setActiveConnection(providerId, {
+                  sourceSurface: 'live',
+                  reason: 'quick-switch',
+                  preservedTitle: selectedStream?.name || null,
+                })}
+              />
             </div>
             <div className="mt-4">
               <SurfaceProviderChoiceInline

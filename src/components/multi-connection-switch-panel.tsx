@@ -17,11 +17,13 @@ const toneLabels = {
 type MultiConnectionSwitchPanelProps = {
   runtime: MultiConnectionSwitchRuntimeContract | null;
   badge?: string;
+  onSelectProvider?: (providerId: string) => void;
 };
 
 export function MultiConnectionSwitchPanel({
   runtime,
   badge = 'Fast provider switching',
+  onSelectProvider,
 }: MultiConnectionSwitchPanelProps) {
   if (!runtime) return null;
 
@@ -66,9 +68,16 @@ export function MultiConnectionSwitchPanel({
                   {provider.isActive ? 'Current authority' : 'Saved standby'}
                 </p>
               </div>
-              <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
-                {toneLabels[provider.tone]}
-              </span>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {runtime.recommendedProviderId === provider.providerId ? (
+                  <span className="rounded-full border border-cyan-300/30 bg-cyan-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-cyan-100">
+                    Healthiest target
+                  </span>
+                ) : null}
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                  {toneLabels[provider.tone]}
+                </span>
+              </div>
             </div>
             <div className="mt-4 space-y-4">
               <div>
@@ -91,6 +100,14 @@ export function MultiConnectionSwitchPanel({
                 <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Line headroom</p>
                 <p className="mt-2 text-sm leading-6 text-white/85">{provider.headroomLabel}</p>
               </div>
+              {!provider.isActive && provider.tone !== 'recover' && onSelectProvider ? (
+                <button
+                  onClick={() => onSelectProvider(provider.providerId)}
+                  className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-[10px] uppercase tracking-[0.22em] text-white transition hover:bg-white/10"
+                >
+                  {runtime.recommendedProviderId === provider.providerId ? 'Switch to healthiest' : 'Switch here'}
+                </button>
+              ) : null}
             </div>
           </article>
         ))}

@@ -143,6 +143,21 @@ export default function LoginPage() {
   const [loginGuideStreams, setLoginGuideStreams] = useState([]);
   const [loginFocusAnchor, setLoginFocusAnchor] = useState('Server URL');
 
+  const selectSavedProvider = (providerId, reason = 'manual') => {
+    const connection = connections.find((item) => item.id === providerId);
+    if (!connection) return;
+    setServer(connection.server);
+    setUsername(connection.username);
+    setPassword(connection.password);
+    setLoginFocusAnchor(`Saved provider ${connection.name}`);
+    const switched = setActiveConnection(providerId, {
+      sourceSurface: 'login',
+      reason,
+      preservedTitle: watchHistory[0]?.title ?? null,
+    });
+    if (switched) router.push('/home');
+  };
+
   useEffect(() => {
     hydrate();
   }, [hydrate]);
@@ -785,7 +800,12 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <MultiConnectionSwitchInline runtime={multiConnectionSwitchRuntime} title="Fast provider switch" badge="Runtime honesty" />
+            <MultiConnectionSwitchInline
+              runtime={multiConnectionSwitchRuntime}
+              title="Fast provider switch"
+              badge="Runtime honesty"
+              onSelectProvider={(providerId) => selectSavedProvider(providerId, 'quick-switch')}
+            />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (
@@ -1109,7 +1129,11 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <MultiConnectionSwitchPanel runtime={multiConnectionSwitchRuntime} badge="Multi-connection switch runtime" />
+            <MultiConnectionSwitchPanel
+              runtime={multiConnectionSwitchRuntime}
+              badge="Multi-connection switch runtime"
+              onSelectProvider={(providerId) => selectSavedProvider(providerId, 'quick-switch')}
+            />
           </div>
 
           <div className="mt-6">
@@ -1318,9 +1342,7 @@ export default function LoginPage() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => {
-                              setLoginFocusAnchor(`Saved provider ${connection.name}`);
-                              setActiveConnection(connection.id);
-                              router.push('/home');
+                              selectSavedProvider(connection.id, 'manual');
                             }}
                             onFocus={() => setLoginFocusAnchor(`Saved provider ${connection.name}`)}
                             className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.22em] transition ${isActive ? 'bg-white text-slate-950' : 'border border-white/10 text-slate-200 hover:bg-white/5'}`}

@@ -18,14 +18,19 @@ type MultiConnectionSwitchInlineProps = {
   runtime: MultiConnectionSwitchRuntimeContract | null;
   title: string;
   badge: string;
+  onSelectProvider?: (providerId: string) => void;
 };
 
 export function MultiConnectionSwitchInline({
   runtime,
   title,
   badge,
+  onSelectProvider,
 }: MultiConnectionSwitchInlineProps) {
   const provider = runtime?.providers[0] ?? null;
+  const recommendedProvider = runtime?.providers.find(
+    (entry) => entry.providerId === runtime.recommendedProviderId && !entry.isActive && entry.tone !== 'recover'
+  ) ?? null;
   if (!runtime || !provider) return null;
 
   return (
@@ -44,6 +49,14 @@ export function MultiConnectionSwitchInline({
       <p className="mt-3 text-sm leading-6 text-white/85">Recent handoff: {runtime.recentHandoff}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Recommended move: {runtime.recommendedAction}</p>
       <p className="mt-3 text-sm leading-6 text-white/85">Fail closed: {provider.failClosedReason}</p>
+      {recommendedProvider && onSelectProvider ? (
+        <button
+          onClick={() => onSelectProvider(recommendedProvider.providerId)}
+          className="mt-4 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-[10px] uppercase tracking-[0.22em] text-white transition hover:bg-white/10"
+        >
+          Switch to {recommendedProvider.providerName}
+        </button>
+      ) : null}
     </div>
   );
 }
