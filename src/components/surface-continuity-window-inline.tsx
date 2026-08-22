@@ -1,16 +1,8 @@
 'use client';
 
-import { MockProviderManifest } from '@/lib/types';
+import { MockProviderManifest, SurfaceContinuityWindowRuntimeContract } from '@/lib/types';
 
 type ScreenId = 'login' | 'home' | 'live';
-
-type ContinuityWindowRuntime = {
-  currentWindow: string;
-  preservesFor: string;
-  downgradeAfter: string;
-  resetTrigger: string;
-  tone: 'ready' | 'watch' | 'recover';
-};
 
 const toneStyles = {
   ready: 'border-sky-400/20 bg-sky-500/10 text-sky-100',
@@ -25,10 +17,10 @@ export function SurfaceContinuityWindowInline({
 }: {
   manifest: MockProviderManifest | null;
   screenId: ScreenId;
-  runtime: ContinuityWindowRuntime;
+  runtime: SurfaceContinuityWindowRuntimeContract | null;
 }) {
   const contract = manifest?.surfaceContinuityWindows.find((item) => item.screenId === screenId) ?? null;
-  if (!contract) return null;
+  if (!contract || !runtime) return null;
 
   return (
     <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-6">
@@ -59,6 +51,7 @@ export function SurfaceContinuityWindowInline({
       </div>
 
       <p className="mt-4 text-sm leading-6 text-slate-300">Reset trigger: {runtime.resetTrigger}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-400">{runtime.detail}</p>
 
       <div className="mt-5 grid gap-3 xl:grid-cols-2">
         {contract.windows.map((item) => (

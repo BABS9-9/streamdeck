@@ -78,6 +78,7 @@ import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
+import { buildSurfaceContinuityWindowRuntime } from '@/lib/surface-continuity-window-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
 import { buildSavedProviderFallbackEquivalenceRuntime, buildSavedProviderFallbackRankingRuntime } from '@/lib/saved-provider-fallback-runtime';
@@ -591,28 +592,12 @@ export default function LoginPage() {
       activeDropCount: loginProviderDropEntries.length,
     };
   }, [activeConnection, loginProviderDropEntries, providerDrops]);
-  const loginContinuityWindowRuntime = useMemo(() => {
-    const primaryWindow = continuityWindow?.windows?.[0] ?? null;
-    const fallbackWindow = continuityWindow?.windows?.[1] ?? null;
-
-    if (loginProviderDropEntries.length > 0) {
-      return {
-        currentWindow: fallbackWindow?.label ?? 'Typed credential continuity',
-        preservesFor: fallbackWindow?.preservesFor ?? 'Keep the typed setup context intact while the app says the same saved-provider shortcut is no longer fully earned.',
-        downgradeAfter: fallbackWindow?.downgradeAfter ?? 'Downgrade once repeated auth or line failures prove the current setup path is only partial continuity.',
-        resetTrigger: fallbackWindow?.resetTrigger ?? 'Reset when a different provider, different credential set, or explicit reconnect explanation becomes the only honest next move.',
-        tone: fallbackWindow?.tone ?? 'recover',
-      };
-    }
-
-    return {
-      currentWindow: primaryWindow?.label ?? 'Saved-provider handoff',
-      preservesFor: primaryWindow?.preservesFor ?? 'Keep the same provider owner and same next Home destination while setup proof still points at one clean handoff.',
-      downgradeAfter: primaryWindow?.downgradeAfter ?? 'Downgrade once auth, expiry, or line posture stop reinforcing one obvious Home owner.',
-      resetTrigger: primaryWindow?.resetTrigger ?? 'Reset when reconnect no longer maps to the same provider owner or next Home destination.',
-      tone: primaryWindow?.tone ?? 'ready',
-    };
-  }, [continuityWindow, loginProviderDropEntries.length]);
+  const loginContinuityWindowRuntime = useMemo(() => buildSurfaceContinuityWindowRuntime({
+    contract: continuityWindow,
+    screenId: 'login',
+    activeDropCount: loginProviderDropEntries.length,
+    activeProviderName: activeConnection?.name ?? null,
+  }), [activeConnection?.name, continuityWindow, loginProviderDropEntries.length]);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">

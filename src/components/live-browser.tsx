@@ -78,6 +78,7 @@ import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { PlaybackResiliencePanel } from '@/components/playback-resilience-panel';
+import { buildSurfaceContinuityWindowRuntime } from '@/lib/surface-continuity-window-runtime';
 import { ProviderDropPanel } from '@/components/provider-drop-panel';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildPlaybackResilienceContract } from '@/lib/playback-resilience-runtime';
@@ -552,28 +553,13 @@ export function LiveBrowser() {
       activeDropCount: liveProviderDropEntries.length,
     };
   }, [activeConnection, liveProviderDropEntries, providerDrops, selectedStream?.name]);
-  const liveContinuityWindowRuntime = useMemo(() => {
-    const primaryWindow = continuityWindow?.windows?.[0] ?? null;
-    const fallbackWindow = continuityWindow?.windows?.[1] ?? null;
-
-    if (liveProviderDropEntries.length > 0) {
-      return {
-        currentWindow: fallbackWindow?.label ?? 'Same-lane rescue continuity',
-        preservesFor: fallbackWindow?.preservesFor ?? 'Keep the same lane, same selected-card meaning, and same surf mission visible while Play is recovery-led.',
-        downgradeAfter: fallbackWindow?.downgradeAfter ?? 'Downgrade once preview, guide, or provider drift prove the selected-card story is only approximate continuity.',
-        resetTrigger: fallbackWindow?.resetTrigger ?? 'Reset when the next honest Play target leaves the current lane or stops mapping to the same selected-card mission.',
-        tone: fallbackWindow?.tone ?? 'recover',
-      };
-    }
-
-    return {
-      currentWindow: primaryWindow?.label ?? 'Selected-card continuity',
-      preservesFor: primaryWindow?.preservesFor ?? 'Keep the same selected channel, same lane meaning, and same direct path to Play while live proof still agrees.',
-      downgradeAfter: primaryWindow?.downgradeAfter ?? 'Downgrade once guide drift, provider instability, or lane rescue weaken the same selected-card claim.',
-      resetTrigger: primaryWindow?.resetTrigger ?? 'Reset when Play can no longer honestly describe the same selected-card launch.',
-      tone: primaryWindow?.tone ?? 'ready',
-    };
-  }, [continuityWindow, liveProviderDropEntries.length]);
+  const liveContinuityWindowRuntime = useMemo(() => buildSurfaceContinuityWindowRuntime({
+    contract: continuityWindow,
+    screenId: 'live',
+    activeDropCount: liveProviderDropEntries.length,
+    selectedTitle: selectedStream?.name ?? null,
+    resumeTitle: liveResumeEntry?.title ?? null,
+  }), [continuityWindow, liveProviderDropEntries.length, liveResumeEntry?.title, selectedStream?.name]);
   const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
     screenId: 'live',
     connections,

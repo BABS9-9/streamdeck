@@ -882,6 +882,20 @@ export type SurfaceProviderSwitchRuntimeContract = {
   switches: SurfaceProviderSwitchRuntimeEntry[];
 };
 
+export type SurfaceContinuityWindowRuntimeState = 'exact' | 'borrowed';
+
+export type SurfaceContinuityWindowRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  currentWindow: string;
+  preservesFor: string;
+  downgradeAfter: string;
+  resetTrigger: string;
+  detail: string;
+  tone: 'ready' | 'watch' | 'recover';
+  state: SurfaceContinuityWindowRuntimeState;
+  activeDropCount: number;
+};
+
 export type SurfaceProviderStabilityRuntimeEntry = {
   label: string;
   stabilityThreshold: string;

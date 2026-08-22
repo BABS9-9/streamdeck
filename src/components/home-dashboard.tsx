@@ -78,6 +78,7 @@ import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
+import { buildSurfaceContinuityWindowRuntime } from '@/lib/surface-continuity-window-runtime';
 import { buildPlaybackHistoryRuntime } from '@/lib/playback-history-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
@@ -679,28 +680,13 @@ export function HomeDashboard() {
       activeDropCount: homeProviderDropEntries.length,
     };
   }, [activeConnection, homeProviderDropEntries, homeResumeEntry, providerDrops]);
-  const homeContinuityWindowRuntime = useMemo(() => {
-    const primaryWindow = continuityWindow?.windows?.[0] ?? null;
-    const fallbackWindow = continuityWindow?.windows?.[1] ?? null;
-
-    if (homeProviderDropEntries.length > 0) {
-      return {
-        currentWindow: fallbackWindow?.label ?? 'Hero rescue continuity',
-        preservesFor: fallbackWindow?.preservesFor ?? 'Keep the same browse mission legible while Home admits the hero is now borrowing time from cache or rescue posture.',
-        downgradeAfter: fallbackWindow?.downgradeAfter ?? 'Downgrade once repeated hero drift or provider pressure prove browse continuity is no longer exact.',
-        resetTrigger: fallbackWindow?.resetTrigger ?? 'Reset when the featured launch no longer maps back to the same discovery story or provider owner.',
-        tone: fallbackWindow?.tone ?? 'recover',
-      };
-    }
-
-    return {
-      currentWindow: primaryWindow?.label ?? 'Featured-launch continuity',
-      preservesFor: primaryWindow?.preservesFor ?? 'Keep the same hero owner, same launch mission, and same quick-live backup while browse proof still points at one story.',
-      downgradeAfter: primaryWindow?.downgradeAfter ?? 'Downgrade once guide drift, provider wobble, or hero refresh weaken the same launch claim.',
-      resetTrigger: primaryWindow?.resetTrigger ?? 'Reset when the hero stops being able to describe the same launch path honestly.',
-      tone: primaryWindow?.tone ?? 'ready',
-    };
-  }, [continuityWindow, homeProviderDropEntries.length]);
+  const homeContinuityWindowRuntime = useMemo(() => buildSurfaceContinuityWindowRuntime({
+    contract: continuityWindow,
+    screenId: 'home',
+    activeDropCount: homeProviderDropEntries.length,
+    featuredTitle: home.featured?.name ?? null,
+    resumeTitle: homeResumeEntry?.title ?? null,
+  }), [continuityWindow, home.featured?.name, homeProviderDropEntries.length, homeResumeEntry?.title]);
 
   if (!activeConnection) {
     return (
