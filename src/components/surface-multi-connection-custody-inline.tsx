@@ -35,7 +35,7 @@ export function SurfaceMultiConnectionCustodyInline({
         </span>
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <article className="rounded-[1.35rem] border border-white/10 bg-black/20 p-4">
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Current owner</p>
           <p className="mt-3 text-sm font-medium text-white">{runtime.currentOwner}</p>
@@ -48,10 +48,13 @@ export function SurfaceMultiConnectionCustodyInline({
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Carries forward</p>
           <p className="mt-3 text-sm font-medium text-white">{runtime.carriesForward}</p>
         </article>
+        <article className="rounded-[1.35rem] border border-white/10 bg-black/20 p-4">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Switch witness</p>
+          <p className="mt-3 text-sm font-medium text-white">{runtime.switchWitness}</p>
+        </article>
       </div>
 
       <p className="mt-4 text-sm leading-6 text-slate-300">Breaks when: {runtime.breaksWhen}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-400">Switch witness: {runtime.switchWitness}</p>
       <p className="mt-2 text-sm leading-6 text-slate-400">{runtime.detail}</p>
 
       <div className="mt-5 grid gap-3 xl:grid-cols-2">
