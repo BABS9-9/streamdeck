@@ -138,6 +138,8 @@ StreamDeck wins by combining four things the current IPTV leaders rarely combine
    The shell should show how much guide truth is fresh, cached, stale, or missing beside the premium CTA before NOW / NEXT copy overclaims what the provider has actually proven.
 33. Saved-provider podium honesty
    The shell should rank which provider owns the next move, which source is the clean standby, and which risky shortcut stays blocked in a compact beside-the-CTA podium before switching becomes a hidden afterthought.
+34. Provider-drop continuity honesty
+   The shell should keep the last dropped provider, the cached witness that survived, and the exact reclaim trigger visible beside the premium CTA before fallback polish turns stale continuity into fake freshness.
 
 ## Phase 1 Surface Implications
 
