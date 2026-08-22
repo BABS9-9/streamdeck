@@ -64,6 +64,7 @@ import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switc
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
+import { SurfaceProviderDropContinuityInline } from '@/components/surface-provider-drop-continuity-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
@@ -123,6 +124,7 @@ export default function LoginPage() {
   const getCoverageReport = useLiveGuideStore((state) => state.getCoverageReport);
   const syncByGuideKey = useLiveGuideStore((state) => state.syncByGuideKey);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
+  const providerDrops = usePlayerStore((state) => state.providerDrops);
 
   const [server, setServer] = useState(MOCK_SERVER);
   const [username, setUsername] = useState('demo');
@@ -563,6 +565,31 @@ export default function LoginPage() {
       ? 'Login should keep reconnect pointed at the same believable return target before setup polish turns a user’s comeback into a generic browse reset.'
       : 'Until the user has earned a real watch-history target, Login should avoid implying that reconnect is already preserving a known return path.',
   }), [loginResumeEntry]);
+  const loginProviderDropEntries = useMemo(
+    () => Object.values(providerDrops).filter((item) => !item.recoveredAt).sort((left, right) => right.happenedAt - left.happenedAt),
+    [providerDrops]
+  );
+  const loginProviderDropRuntime = useMemo(() => {
+    const activeDrop = activeConnection ? providerDrops[activeConnection.id] ?? null : null;
+    const latestDrop = activeDrop ?? loginProviderDropEntries[0] ?? null;
+    return {
+      droppedOwner: latestDrop
+        ? `${latestDrop.providerName} most recently lost fresh setup ownership`
+        : 'No recent provider drop is attached to Connect yet',
+      preserves: latestDrop
+        ? latestDrop.lastPlaybackTitle
+          ? `${latestDrop.lastPlaybackTitle} and saved Home continuity still survive while reconnect stays explicit`
+          : 'Saved Home continuity and provider identity still survive while reconnect stays explicit'
+        : 'Connect currently has no dropped-provider continuity to preserve',
+      reclaimsWhen: latestDrop
+        ? 'Fresh auth, stable line headroom, and a clean Home handoff all agree on the same provider again'
+        : 'A future provider drop would need explicit recovery proof before Connect hands ownership back',
+      detail: latestDrop
+        ? 'Login should keep the dropped provider visible so reconnect can preserve cached continuity without pretending that saved setup proof is already fresh again.'
+        : 'Without a recent provider drop, Login can stay focused on the active saved provider or the typed setup path.',
+      activeDropCount: loginProviderDropEntries.length,
+    };
+  }, [activeConnection, loginProviderDropEntries, providerDrops]);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -707,6 +734,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceResumeCustodyInline manifest={manifest} screenId="login" runtime={loginResumeCustodyRuntime} />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceProviderDropContinuityInline manifest={manifest} screenId="login" runtime={loginProviderDropRuntime} />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (

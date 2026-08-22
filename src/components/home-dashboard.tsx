@@ -67,6 +67,7 @@ import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switc
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
+import { SurfaceProviderDropContinuityInline } from '@/components/surface-provider-drop-continuity-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
@@ -133,6 +134,7 @@ export function HomeDashboard() {
   const lastSwitchContext = useAuthStore((state) => state.lastSwitchContext);
   const favorites = useFavoritesStore((state) => activeConnection ? state.getFavoritesForProvider(activeConnection.id) : []);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
+  const providerDrops = usePlayerStore((state) => state.providerDrops);
   const playStream = usePlayerStore((state) => state.playStream);
   const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
   const markGuideFromCache = useLiveGuideStore((state) => state.markGuideFromCache);
@@ -651,6 +653,31 @@ export function HomeDashboard() {
       ? 'Home should keep the user’s real return target visible even when the hero is selling a different premium story, so resume continuity stays user-owned.'
       : 'Until Home earns a real resume target, the hero should stay explicit that it is promoting a browse path rather than reviving prior watch intent.',
   }), [home.featured?.name, homeResumeEntry]);
+  const homeProviderDropEntries = useMemo(
+    () => Object.values(providerDrops).filter((item) => !item.recoveredAt).sort((left, right) => right.happenedAt - left.happenedAt),
+    [providerDrops]
+  );
+  const homeProviderDropRuntime = useMemo(() => {
+    const activeDrop = activeConnection ? providerDrops[activeConnection.id] ?? null : null;
+    const latestDrop = activeDrop ?? homeProviderDropEntries[0] ?? null;
+    return {
+      droppedOwner: latestDrop
+        ? `${latestDrop.providerName} most recently dropped out of the featured browse story`
+        : 'No recent provider drop is attached to the hero yet',
+      preserves: latestDrop
+        ? homeResumeEntry
+          ? `${homeResumeEntry.title} plus the current hero shell still survive on cached continuity`
+          : 'The current hero shell and quick-live continuity still survive on cached provider proof'
+        : 'Home is currently browsing on fresh or at least non-dropped provider posture',
+      reclaimsWhen: latestDrop
+        ? 'Featured browse, guide posture, and provider health all point back at the same provider owner again'
+        : 'A future dropped provider would need fresh browse proof before the hero could feel fully reclaimed',
+      detail: latestDrop
+        ? 'Home should keep the dropped provider visible so the hero can preserve cached browse or continue-watching continuity without quietly selling it as fresh ownership.'
+        : 'Without a recent provider drop, Home can let the current hero story stand on its active provider posture.',
+      activeDropCount: homeProviderDropEntries.length,
+    };
+  }, [activeConnection, homeProviderDropEntries, homeResumeEntry, providerDrops]);
 
   if (!activeConnection) {
     return (
@@ -681,6 +708,7 @@ export function HomeDashboard() {
       {isMockConnection ? <SurfaceSelectionCustodyInline manifest={manifest} screenId="home" runtime={homeSelectionCustodyRuntime} /> : null}
       {isMockConnection ? <SurfaceFirstPictureInline manifest={manifest} screenId="home" runtime={homeFirstPictureRuntime} /> : null}
       {isMockConnection ? <SurfaceResumeCustodyInline manifest={manifest} screenId="home" runtime={homeResumeCustodyRuntime} /> : null}
+      {isMockConnection ? <SurfaceProviderDropContinuityInline manifest={manifest} screenId="home" runtime={homeProviderDropRuntime} /> : null}
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
         badge="Connection headroom"

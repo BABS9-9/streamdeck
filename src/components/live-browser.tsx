@@ -67,6 +67,7 @@ import { SurfaceProviderSwitchInline } from '@/components/surface-provider-switc
 import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podium-inline';
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
+import { SurfaceProviderDropContinuityInline } from '@/components/surface-provider-drop-continuity-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
@@ -525,6 +526,31 @@ export function LiveBrowser() {
       ? 'Live should keep the current return channel attached to the selected-card story so surf momentum still points back to what the user actually meant to resume.'
       : 'Until Live has earned a real return target, the selected card should stay explicit that it is only a current browse anchor, not already a resumable watch path.',
   }), [liveResumeEntry, selectedStream?.name]);
+  const liveProviderDropEntries = useMemo(
+    () => Object.values(providerDrops).filter((item) => !item.recoveredAt).sort((left, right) => right.happenedAt - left.happenedAt),
+    [providerDrops]
+  );
+  const liveProviderDropRuntimeInline = useMemo(() => {
+    const activeDrop = activeConnection ? providerDrops[activeConnection.id] ?? null : null;
+    const latestDrop = activeDrop ?? liveProviderDropEntries[0] ?? null;
+    return {
+      droppedOwner: latestDrop
+        ? `${latestDrop.providerName} most recently lost selected-card launch ownership`
+        : 'No recent provider drop is attached to Play yet',
+      preserves: latestDrop
+        ? selectedStream?.name
+          ? `${selectedStream.name} stays attached to cached surf continuity while the provider drop is explicit`
+          : 'The current surf lane and last playback witness stay visible while the provider drop is explicit'
+        : 'Live is currently surfing without an active dropped-provider witness',
+      reclaimsWhen: latestDrop
+        ? 'Preview, guide, and provider health all line back up on the same selected-card owner again'
+        : 'A future provider drop would need explicit playback proof before Live could hand Play back cleanly',
+      detail: latestDrop
+        ? 'Live should keep the dropped provider visible so selected-card surf continuity can survive on cached witness without pretending the fallen provider still owns fresh Play.'
+        : 'Without a recent provider drop, Live can keep focus on the current selected-card owner and playback path.',
+      activeDropCount: liveProviderDropEntries.length,
+    };
+  }, [activeConnection, liveProviderDropEntries, providerDrops, selectedStream?.name]);
   const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
     screenId: 'live',
     connections,
@@ -606,6 +632,7 @@ export function LiveBrowser() {
       {isMockConnection ? <SurfaceSelectionCustodyInline manifest={manifest} screenId="live" runtime={liveSelectionCustodyRuntime} /> : null}
       {isMockConnection ? <SurfaceFirstPictureInline manifest={manifest} screenId="live" runtime={liveFirstPictureRuntime} /> : null}
       {isMockConnection ? <SurfaceResumeCustodyInline manifest={manifest} screenId="live" runtime={liveResumeCustodyRuntime} /> : null}
+      {isMockConnection ? <SurfaceProviderDropContinuityInline manifest={manifest} screenId="live" runtime={liveProviderDropRuntimeInline} /> : null}
       <LiveMarketRuntimePanel contract={liveMarketRuntime} />
       <PlaybackResiliencePanel contract={playbackResilience} />
       <ProviderDropPanel contract={providerDropRuntime} />
