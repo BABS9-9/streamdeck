@@ -972,6 +972,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'continuity-window',
+    feature: 'Continuity window',
+    pitch: 'Keep the exact time-boxed version of "this is still the same move" visible beside Connect, the hero CTA, and Play before retries, cache, or rescue quietly turn continuity into approximation.',
+    competitiveGap: 'Competitors usually preserve momentum without naming how long the original launch story still holds, so users cannot tell when the shell is still carrying the same move versus just smoothing over a reset.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one continuity-window contract so preserved context, downgrade threshold, and reset trigger stay visible beside Connect, the hero CTA, and Play before premium continuity copy quietly ages into a different move.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'remote-first-control',
     feature: 'Remote-first control model',
     pitch: 'Teach Login, Home, and Live what OK, Back, and Left/Right should do in plain sight so the product feels TV-native instead of like a web form stretched onto a big screen.',
