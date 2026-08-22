@@ -67,6 +67,8 @@ import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inli
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceProviderDropContinuityInline } from '@/components/surface-provider-drop-continuity-inline';
 import { SurfaceMultiConnectionCustodyInline } from '@/components/surface-multi-connection-custody-inline';
+import { MultiConnectionSwitchInline } from '@/components/multi-connection-switch-inline';
+import { MultiConnectionSwitchPanel } from '@/components/multi-connection-switch-panel';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
@@ -95,6 +97,7 @@ import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-re
 import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
 import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
 import { buildSurfaceMultiConnectionCustodyRuntime } from '@/lib/multi-connection-custody-runtime';
+import { buildMultiConnectionSwitchRuntime } from '@/lib/multi-connection-switch-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -120,6 +123,7 @@ export default function LoginPage() {
   const connections = useAuthStore((state) => state.connections);
   const activeConnection = useAuthStore((state) => state.activeConnection);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const lastSwitchContext = useAuthStore((state) => state.lastSwitchContext);
   const loading = useAuthStore((state) => state.loading);
   const error = useAuthStore((state) => state.error);
   const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
@@ -381,6 +385,15 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [providerSwitchContract, savedProviderBoard]
+  );
+  const multiConnectionSwitchRuntime = useMemo(
+    () => buildMultiConnectionSwitchRuntime({
+      screenId: 'login',
+      board: savedProviderBoard,
+      lastSwitchContext,
+      subjectTitle: watchHistory[0]?.title ?? null,
+    }),
+    [lastSwitchContext, savedProviderBoard, watchHistory]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -771,6 +784,10 @@ export default function LoginPage() {
             <SurfaceMultiConnectionCustodyInline manifest={manifest} screenId="login" runtime={multiConnectionCustodyRuntime} />
           </div>
 
+          <div className="mt-6">
+            <MultiConnectionSwitchInline runtime={multiConnectionSwitchRuntime} title="Fast provider switch" badge="Runtime honesty" />
+          </div>
+
           {connectionHeadroom?.lanes?.[0] ? (
             <div className="mt-6 rounded-[1.75rem] border border-amber-400/20 bg-amber-500/10 p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1089,6 +1106,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProviderSwitchContract runtime={providerSwitchRuntime} badge="Switch honesty" />
+          </div>
+
+          <div className="mt-6">
+            <MultiConnectionSwitchPanel runtime={multiConnectionSwitchRuntime} badge="Multi-connection switch runtime" />
           </div>
 
           <div className="mt-6">

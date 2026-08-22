@@ -70,6 +70,8 @@ import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inli
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceProviderDropContinuityInline } from '@/components/surface-provider-drop-continuity-inline';
 import { SurfaceMultiConnectionCustodyInline } from '@/components/surface-multi-connection-custody-inline';
+import { MultiConnectionSwitchInline } from '@/components/multi-connection-switch-inline';
+import { MultiConnectionSwitchPanel } from '@/components/multi-connection-switch-panel';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
@@ -101,6 +103,7 @@ import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-re
 import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
 import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
 import { buildSurfaceMultiConnectionCustodyRuntime } from '@/lib/multi-connection-custody-runtime';
+import { buildMultiConnectionSwitchRuntime } from '@/lib/multi-connection-switch-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
 import { buildLiveMarketResolver } from '@/lib/live-market-resolver';
@@ -331,6 +334,15 @@ export function LiveBrowser() {
       board: savedProviderBoard,
     }),
     [providerSwitchContract, savedProviderBoard]
+  );
+  const multiConnectionSwitchRuntime = useMemo(
+    () => buildMultiConnectionSwitchRuntime({
+      screenId: 'live',
+      board: savedProviderBoard,
+      lastSwitchContext,
+      subjectTitle: selectedStream?.name ?? watchHistory[0]?.title ?? null,
+    }),
+    [lastSwitchContext, savedProviderBoard, selectedStream?.name, watchHistory]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -683,6 +695,7 @@ export function LiveBrowser() {
       <SurfaceContinuityWindow contract={continuityWindow} badge="Surf continuity" />
       <SurfaceHandoffMap handoff={handoffMap} badge="Playback handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
+      <MultiConnectionSwitchPanel runtime={multiConnectionSwitchRuntime} badge="Multi-connection switch runtime" />
       <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
       <SurfaceProviderSwitchContract runtime={providerSwitchRuntime} badge="Switch honesty" />
       <MultiConnectionGuideRuntime
@@ -755,6 +768,9 @@ export function LiveBrowser() {
             </div>
             <div className="mt-4">
               <SurfaceMultiConnectionCustodyInline manifest={manifest} screenId="live" runtime={multiConnectionCustodyRuntime} />
+            </div>
+            <div className="mt-4">
+              <MultiConnectionSwitchInline runtime={multiConnectionSwitchRuntime} title="Play fast provider switch" badge="Runtime honesty" />
             </div>
             <div className="mt-4">
               <SurfaceProviderChoiceInline

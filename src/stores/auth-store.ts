@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { isMockProviderServer } from '@/lib/mock-provider';
 import { buildCanonicalProviderId, canonicalizeSavedConnection } from '@/lib/provider-identity';
+import { getProviderSwitchSafety } from '@/lib/provider-switch-safety';
 import { authenticate } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
 import { ConnectionStatus, ProviderAuthSummary, ProviderSwitchContext, SavedConnection, XtreamAuthResponse, XtreamCredentials } from '@/lib/types';
@@ -24,7 +25,7 @@ type AuthState = {
   lastSwitchContext: ProviderSwitchContext | null;
   hydrate: () => void;
   connect: (credentials: XtreamCredentials) => Promise<boolean>;
-  setActiveConnection: (id: string, options?: SwitchConnectionOptions) => void;
+  setActiveConnection: (id: string, options?: SwitchConnectionOptions) => boolean;
   renameConnection: (id: string, name: string) => void;
   removeConnection: (id: string) => void;
   validateConnection: (id: string) => Promise<boolean>;
@@ -178,16 +179,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setActiveConnection: (id, options) => {
     const currentActiveConnection = get().activeConnection;
     const activeConnection = get().connections.find((item) => item.id === id) ?? null;
-    if (!activeConnection) return;
-    if (currentActiveConnection?.id === id && !options) return;
+    if (!activeConnection) return false;
+    if (currentActiveConnection?.id === id && !options) return true;
+    if (currentActiveConnection?.id !== id) {
+      const switchSafety = getProviderSwitchSafety({
+        connection: activeConnection,
+        status: get().connectionStatus[id],
+        isActive: false,
+      });
+      if (switchSafety.switchState === 'blocked') {
+        set({
+          error: switchSafety.switchBlockReason || `Cannot switch to ${activeConnection.name} yet.`,
+        });
+        return false;
+      }
+    }
     storage.setActiveConnectionId(id);
     const switchContext = buildProviderSwitchContext(id, currentActiveConnection?.id ?? null, options);
     storage.saveProviderSwitchContext(switchContext);
     set({
       activeConnection,
       session: storage.getProviderSession(id),
+      error: null,
       lastSwitchContext: switchContext,
     });
+    return true;
   },
   renameConnection: (id, name) => {
     const trimmedName = name.trim();

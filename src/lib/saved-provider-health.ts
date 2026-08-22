@@ -1,8 +1,9 @@
 import { getProviderRecoveryWarning, getProviderTrustLabel } from './provider-recovery';
+import { getProviderSwitchSafety } from './provider-switch-safety';
 import { getProviderTrustScore } from './provider-trust';
 import { ConnectionStatus, SavedConnection, SavedProviderHealthBoard, SavedProviderHealthEntry, SavedProviderHealthSignal } from './types';
 
-type RecoverySurface = 'login' | 'home' | 'live' | 'settings';
+type RecoverySurface = 'login' | 'home' | 'live' | 'settings' | 'player';
 
 const getStatusState = (status?: ConnectionStatus | null): ConnectionStatus['state'] => status?.state || 'idle';
 
@@ -17,6 +18,11 @@ const buildProviderHealthEntry = ({
 }): SavedProviderHealthEntry => {
   const trustScore = getProviderTrustScore(connection, status);
   const warning = getProviderRecoveryWarning(connection, status || undefined);
+  const switchSafety = getProviderSwitchSafety({
+    connection,
+    status,
+    isActive: connection.id === activeConnectionId,
+  });
 
   return {
     providerId: connection.id,
@@ -29,8 +35,14 @@ const buildProviderHealthEntry = ({
     statusMessage: status?.message || null,
     activeConnections: connection.lastAuthSummary?.activeConnections ?? null,
     maxConnections: connection.lastAuthSummary?.maxConnections ?? null,
+    remainingConnections: switchSafety.remainingConnections,
     expiresAt: connection.lastAuthSummary?.expiresAt ?? null,
     checkedAt: status?.checkedAt ?? null,
+    reconnectTrust: switchSafety.reconnectTrust,
+    reconnectTrustLabel: switchSafety.reconnectTrustLabel,
+    switchState: switchSafety.switchState,
+    switchBlockReason: switchSafety.switchBlockReason,
+    authoritySummary: switchSafety.authoritySummary,
   };
 };
 
@@ -127,6 +139,8 @@ const buildRecoveryRoute = ({
       ? 'Open healthiest Home provider'
       : surface === 'live'
         ? 'Switch Live to healthiest provider'
+        : surface === 'player'
+          ? 'Switch Player provider'
         : 'Switch to healthiest provider';
 
   if (!activeProvider) {
@@ -148,6 +162,8 @@ const buildRecoveryRoute = ({
       ? `Keep the same browse intent visible while ${recommendedProvider.providerName} takes over as the safest saved provider for the next launch.`
       : surface === 'live'
         ? `Preserve channel-surf intent and move playback onto ${recommendedProvider.providerName} before the user blames the selected stream for provider instability.`
+        : surface === 'player'
+          ? `Keep playback continuity explicit while ${recommendedProvider.providerName} takes over as the safest live recovery owner.`
         : `Use ${recommendedProvider.providerName} as the safest saved fallback before provider instability spreads deeper into the shell.`;
 
   return {
@@ -176,9 +192,11 @@ export const buildSavedProviderHealthBoard = ({
   })));
   const byProviderId = Object.fromEntries(providers.map((provider) => [provider.providerId, provider]));
   const activeProvider = providers.find((provider) => provider.isActive) ?? null;
-  const recommendedProvider = providers[0] ?? null;
+  const recommendedProvider = providers.find((provider) => provider.switchState !== 'blocked') ?? providers[0] ?? null;
   const warningProviders = providers.filter((provider) => Boolean(provider.warning));
   const healthyCount = providers.filter((provider) => !provider.warning && (provider.status === 'healthy' || provider.trustScore >= 90)).length;
+  const switchReadyCount = providers.filter((provider) => provider.switchState === 'ready').length;
+  const blockedProviderCount = providers.filter((provider) => provider.switchState === 'blocked').length;
 
   const trustSignals: SavedProviderHealthSignal[] = [];
   if (recommendedProvider) {
@@ -198,6 +216,8 @@ export const buildSavedProviderHealthBoard = ({
     recommendedProvider,
     warningCount: warningProviders.length,
     healthyCount,
+    switchReadyCount,
+    blockedProviderCount,
     headline: buildHeadline({
       activeProvider,
       recommendedProvider,

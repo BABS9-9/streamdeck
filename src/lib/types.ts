@@ -647,6 +647,7 @@ export type ProviderSwitchContext = {
 };
 
 export type SavedProviderHealthTone = 'healthy' | 'warning';
+export type SavedProviderSwitchState = 'ready' | 'watch' | 'blocked';
 
 export type SavedProviderHealthSignal = {
   id: string;
@@ -666,8 +667,14 @@ export type SavedProviderHealthEntry = {
   statusMessage: string | null;
   activeConnections: number | null;
   maxConnections: number | null;
+  remainingConnections: number | null;
   expiresAt: string | null;
   checkedAt: number | null;
+  reconnectTrust: SavedProviderSwitchState;
+  reconnectTrustLabel: string;
+  switchState: SavedProviderSwitchState;
+  switchBlockReason: string | null;
+  authoritySummary: string;
 };
 
 export type SavedProviderHealthBoard = {
@@ -677,6 +684,8 @@ export type SavedProviderHealthBoard = {
   recommendedProvider: SavedProviderHealthEntry | null;
   warningCount: number;
   healthyCount: number;
+  switchReadyCount: number;
+  blockedProviderCount: number;
   headline: {
     tone: SavedProviderHealthTone;
     title: string;
@@ -906,6 +915,35 @@ export type SurfaceMultiConnectionCustodyRuntimeContract = {
   detail: string;
   tone: 'ready' | 'watch' | 'recover';
   providerCount: number;
+};
+
+export type MultiConnectionSwitchRuntimeTone = 'ready' | 'watch' | 'recover';
+
+export type MultiConnectionSwitchRuntimeProviderEntry = {
+  providerId: string;
+  providerName: string;
+  isActive: boolean;
+  authorityLabel: string;
+  reconnectTrust: string;
+  quickSwitchTruth: string;
+  failClosedReason: string;
+  headroomLabel: string;
+  tone: MultiConnectionSwitchRuntimeTone;
+};
+
+export type MultiConnectionSwitchRuntimeContract = {
+  screenId: 'login' | 'home' | 'live' | 'player';
+  title: string;
+  summary: string;
+  detail: string;
+  recentHandoff: string;
+  recommendedAction: string;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  providerCount: number;
+  blockedProviderCount: number;
+  tone: MultiConnectionSwitchRuntimeTone;
+  providers: MultiConnectionSwitchRuntimeProviderEntry[];
 };
 
 export type SurfaceProviderStabilityRuntimeEntry = {

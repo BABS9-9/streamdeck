@@ -70,6 +70,8 @@ import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inli
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceProviderDropContinuityInline } from '@/components/surface-provider-drop-continuity-inline';
 import { SurfaceMultiConnectionCustodyInline } from '@/components/surface-multi-connection-custody-inline';
+import { MultiConnectionSwitchInline } from '@/components/multi-connection-switch-inline';
+import { MultiConnectionSwitchPanel } from '@/components/multi-connection-switch-panel';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
@@ -99,6 +101,7 @@ import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-re
 import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
 import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
 import { buildSurfaceMultiConnectionCustodyRuntime } from '@/lib/multi-connection-custody-runtime';
+import { buildMultiConnectionSwitchRuntime } from '@/lib/multi-connection-switch-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamStream } from '@/lib/types';
@@ -464,6 +467,15 @@ export function HomeDashboard() {
       board: savedProviderBoard,
     }),
     [providerSwitchContract, savedProviderBoard]
+  );
+  const multiConnectionSwitchRuntime = useMemo(
+    () => buildMultiConnectionSwitchRuntime({
+      screenId: 'home',
+      board: savedProviderBoard,
+      lastSwitchContext,
+      subjectTitle: home.featured?.name ?? continueWatching[0]?.title ?? null,
+    }),
+    [continueWatching, home.featured?.name, lastSwitchContext, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -892,6 +904,9 @@ export function HomeDashboard() {
               <SurfaceMultiConnectionCustodyInline manifest={manifest} screenId="home" runtime={multiConnectionCustodyRuntime} />
             </div>
             <div className="mt-4">
+              <MultiConnectionSwitchInline runtime={multiConnectionSwitchRuntime} title="Hero fast provider switch" badge="Runtime honesty" />
+            </div>
+            <div className="mt-4">
               <SurfaceProviderChoiceInline
                 runtime={providerChoiceRuntime}
                 title="Hero provider choice"
@@ -1102,6 +1117,7 @@ export function HomeDashboard() {
       <SurfaceContinuityWindow contract={continuityWindow} badge="Browse continuity" />
       <SurfaceHandoffMap handoff={handoffMap} badge="Live handoff map" />
       <SurfaceDowngradeLadder contract={downgradeLadder} badge="Downgrade truth" />
+      <MultiConnectionSwitchPanel runtime={multiConnectionSwitchRuntime} badge="Multi-connection switch runtime" />
       <SurfaceProviderChoice runtime={providerChoiceRuntime} badge="Choice honesty" />
       <SurfaceProviderSwitchContract runtime={providerSwitchRuntime} badge="Switch honesty" />
       <SurfaceProviderReturnContract contract={providerReturnContract} badge="Return truth" />

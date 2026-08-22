@@ -7,7 +7,9 @@ import { buildLivePlayerControlRuntime } from '@/lib/live-player-control-runtime
 import { buildLivePlayerContinuityRuntime } from '@/lib/live-player-continuity-runtime';
 import { buildLivePlayerFocusReturnRuntime } from '@/lib/live-player-focus-return-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
+import { buildMultiConnectionSwitchRuntime } from '@/lib/multi-connection-switch-runtime';
 import { buildProviderDropRuntime } from '@/lib/provider-drop-runtime';
+import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatGuideUpdatedAge, getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { VideoPlayer } from './video-player';
@@ -16,6 +18,7 @@ import { LivePlayerContinuityPanel } from './live-player-continuity-panel';
 import { LivePlayerControlPanel } from './live-player-control-panel';
 import { LivePlayerFocusReturnPanel } from './live-player-focus-return-panel';
 import { LivePlayerRemotePanel } from './live-player-remote-panel';
+import { MultiConnectionSwitchPanel } from './multi-connection-switch-panel';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderDropPanel } from './provider-drop-panel';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
@@ -62,6 +65,12 @@ export function PlayerDock() {
     () => (currentProviderId && contentId ? getCoverageReport(currentProviderId, [contentId], Number.MAX_SAFE_INTEGER) : null),
     [contentId, currentProviderId, getCoverageReport]
   );
+  const savedProviderBoard = useMemo(() => buildSavedProviderHealthBoard({
+    connections,
+    connectionStatus,
+    activeConnectionId: currentProviderId,
+    surface: 'player',
+  }), [connectionStatus, connections, currentProviderId]);
   const statusTone = streamHealth.status === 'healthy'
     ? 'bg-emerald-400/15 text-emerald-200'
     : streamHealth.status === 'buffering'
@@ -268,6 +277,17 @@ export function PlayerDock() {
     providerDrops,
     watchHistory,
   ]);
+  const multiConnectionSwitchRuntime = useMemo(() => buildMultiConnectionSwitchRuntime({
+    screenId: 'player',
+    board: savedProviderBoard,
+    lastSwitchContext,
+    subjectTitle: currentStream?.name ?? historyItem?.title ?? null,
+  }), [
+    currentStream?.name,
+    historyItem?.title,
+    lastSwitchContext,
+    savedProviderBoard,
+  ]);
 
   useEffect(() => {
     if (!currentProvider || !currentStream || currentStream.stream_type !== 'live' || !contentId) return;
@@ -365,6 +385,7 @@ export function PlayerDock() {
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />
               <LivePlayerFocusReturnPanel contract={livePlayerFocusReturnRuntime} />
               <LivePlayerRemotePanel contract={livePlayerRemoteRuntime} />
+              <MultiConnectionSwitchPanel runtime={multiConnectionSwitchRuntime} badge="Player fast provider switching" />
               <ProviderDropPanel contract={playerProviderDropRuntime} />
 
               {currentStream.stream_type === 'live' ? (
