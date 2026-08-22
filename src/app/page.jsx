@@ -66,6 +66,7 @@ import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podiu
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceProviderDropContinuityInline } from '@/components/surface-provider-drop-continuity-inline';
+import { SurfaceMultiConnectionCustodyInline } from '@/components/surface-multi-connection-custody-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
@@ -93,6 +94,7 @@ import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-p
 import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-return-cooldown-runtime';
 import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
 import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
+import { buildSurfaceMultiConnectionCustodyRuntime } from '@/lib/multi-connection-custody-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { getContentId, getLiveStreams } from '@/lib/xtream-api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -337,6 +339,10 @@ export default function LoginPage() {
     () => manifest?.surfaceProviderPodiums?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
+  const multiConnectionCustody = useMemo(
+    () => manifest?.surfaceMultiConnectionCustodyContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
   const savedProviderBoard = useMemo(
     () => buildSavedProviderHealthBoard({
       connections,
@@ -352,6 +358,15 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [providerPodium, savedProviderBoard]
+  );
+  const multiConnectionCustodyRuntime = useMemo(
+    () => buildSurfaceMultiConnectionCustodyRuntime({
+      contract: multiConnectionCustody,
+      screenId: 'login',
+      board: savedProviderBoard,
+      resumeTitle: watchHistory[0]?.title ?? null,
+    }),
+    [multiConnectionCustody, savedProviderBoard, watchHistory]
   );
   const providerChoiceRuntime = useMemo(
     () => buildSavedProviderChoiceRuntime({
@@ -750,6 +765,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceContinuityWindowInline manifest={manifest} screenId="login" runtime={loginContinuityWindowRuntime} />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceMultiConnectionCustodyInline manifest={manifest} screenId="login" runtime={multiConnectionCustodyRuntime} />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (

@@ -896,6 +896,18 @@ export type SurfaceContinuityWindowRuntimeContract = {
   activeDropCount: number;
 };
 
+export type SurfaceMultiConnectionCustodyRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  currentOwner: string;
+  standbyOwner: string;
+  carriesForward: string;
+  breaksWhen: string;
+  switchWitness: string;
+  detail: string;
+  tone: 'ready' | 'watch' | 'recover';
+  providerCount: number;
+};
+
 export type SurfaceProviderStabilityRuntimeEntry = {
   label: string;
   stabilityThreshold: string;
@@ -1634,6 +1646,19 @@ export type MockProviderManifest = {
       label: string;
       resumeTarget: string;
       preserves: string;
+      breaksWhen: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
+  surfaceMultiConnectionCustodyContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    eyebrow: string;
+    title: string;
+    summary: string;
+    custody: Array<{
+      label: string;
+      owner: string;
+      carriesForward: string;
       breaksWhen: string;
       tone: 'ready' | 'watch' | 'recover';
     }>;

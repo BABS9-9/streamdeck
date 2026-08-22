@@ -1035,6 +1035,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'multi-connection-custody',
+    feature: 'Multi-connection custody',
+    pitch: 'Keep one visibly-owned next move when several saved Xtream providers coexist, so the shell always says who currently owns the user mission, what survives a switch, and what event breaks that custody.',
+    competitiveGap: 'Competitors usually let multi-provider households bounce between active, saved, and rescue providers without naming which one truly owns the current mission, so switching feels convenient until it quietly changes the user’s path.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one multi-connection custody contract so current owner, standby owner, carried-forward context, and break trigger stay visible beside Connect, the hero CTA, and Play before fast switching turns into anonymous momentum.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'launch-readiness',
     feature: 'Launch readiness',
     pitch: 'Publish whether Connect, hero launch, or Play is actually ready now, only watch-safe, or already recovery-led before polish implies more certainty than runtime proof owns.',
@@ -4765,6 +4774,81 @@ const buildSurfaceResumeCustodyContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceMultiConnectionCustodyContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    eyebrow: 'Multi-connection custody',
+    title: 'Login should say which saved provider owns the next Home move',
+    summary: scenario === 'healthy'
+      ? 'When several saved Xtream providers exist, Connect should name the current owner, the warm standby, and what reconnect context survives before setup speed turns into ownership ambiguity.'
+      : 'When auth, expiry, or line pressure are in play, Connect should keep naming which saved provider still owns the next Home move and which standby is only a recovery witness.',
+    custody: [
+      {
+        label: 'Reconnect owner',
+        owner: 'The saved provider that currently owns one-tap reconnect and the next Home handoff.',
+        carriesForward: 'Carry forward the same credential identity, reconnect trust posture, and next Home destination while the provider still owns the move cleanly.',
+        breaksWhen: 'Break custody when a healthier saved provider or forced reconnect explanation becomes the only honest next Home owner.',
+        tone: 'ready',
+      },
+      {
+        label: 'Warm standby',
+        owner: 'The saved provider that can step in fast without pretending it already owns the current reconnect story.',
+        carriesForward: 'Carry forward provider familiarity, saved-label trust, and a visible fallback path without silently rewriting who owned the original move.',
+        breaksWhen: 'Break custody when rescue stops being standby and has to become the named owner of the next Home handoff.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    eyebrow: 'Multi-connection custody',
+    title: 'Home should keep hero ownership attached to the right saved provider',
+    summary: scenario === 'healthy'
+      ? 'Hero launch, continue watching, and quick-live posture should keep naming which saved provider owns the featured move and which provider is only the standby continuity lane.'
+      : 'When browse truth is degraded, Home should keep naming which saved provider still owns the featured move and which provider is only borrowing the hero through rescue or cache continuity.',
+    custody: [
+      {
+        label: 'Featured owner',
+        owner: 'The saved provider that currently owns the featured launch, quick-live rail, and continue-watching route.',
+        carriesForward: 'Carry forward the same provider owner, same featured story, and same quick-launch posture while Home is still telling one browse mission.',
+        breaksWhen: 'Break custody when rescue, hero drift, or a healthier saved provider becomes the only honest owner of the next launch.',
+        tone: 'ready',
+      },
+      {
+        label: 'Standby browse lane',
+        owner: 'The standby provider that may preserve browse continuity without silently inheriting the featured launch.',
+        carriesForward: 'Carry forward the hero shape, continue-watching witness, and same-category browse story while keeping the original featured owner visible.',
+        breaksWhen: 'Break custody when the standby provider has to become the named owner of the hero instead of a warm continuity lane.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    eyebrow: 'Multi-connection custody',
+    title: 'Live should keep selected-card ownership attached to the right saved provider',
+    summary: scenario === 'healthy'
+      ? 'Selected-card Play, preview, and same-lane rescue should keep naming which saved provider owns the current surf mission and which provider is only the standby lane.'
+      : 'When preview, guide, or provider truth degrade, Live should keep naming which saved provider still owns the selected-card mission and which provider is only a recovery-owned substitute.',
+    custody: [
+      {
+        label: 'Selected-card owner',
+        owner: 'The saved provider that currently owns the selected channel, preview truth, and next Play launch.',
+        carriesForward: 'Carry forward the same selected-card meaning, same category lane, and same playback route while live proof still agrees on one owner.',
+        breaksWhen: 'Break custody when preview drift, guide drift, or a healthier saved provider becomes the only honest owner of the next Play.',
+        tone: 'ready',
+      },
+      {
+        label: 'Standby surf lane',
+        owner: 'The standby provider that may preserve same-lane recovery without pretending it already owns the selected-card story.',
+        carriesForward: 'Carry forward category rhythm, selected-card context, and fallback readiness while keeping the original Play owner explicit.',
+        breaksWhen: 'Break custody when same-lane rescue has to become the named owner instead of a visible standby lane.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceProviderDropContinuityContracts = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -5920,6 +6004,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceSelectionCustodyContracts: buildSurfaceSelectionCustodyContracts(scenario),
   surfaceFirstPictureContracts: buildSurfaceFirstPictureContracts(scenario),
   surfaceResumeCustodyContracts: buildSurfaceResumeCustodyContracts(scenario),
+  surfaceMultiConnectionCustodyContracts: buildSurfaceMultiConnectionCustodyContracts(scenario),
   surfaceProviderDropContinuityContracts: buildSurfaceProviderDropContinuityContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),

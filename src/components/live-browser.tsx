@@ -69,6 +69,7 @@ import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podiu
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceProviderDropContinuityInline } from '@/components/surface-provider-drop-continuity-inline';
+import { SurfaceMultiConnectionCustodyInline } from '@/components/surface-multi-connection-custody-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
@@ -99,6 +100,7 @@ import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-p
 import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-return-cooldown-runtime';
 import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
 import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
+import { buildSurfaceMultiConnectionCustodyRuntime } from '@/lib/multi-connection-custody-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
 import { buildLiveMarketResolver } from '@/lib/live-market-resolver';
@@ -263,6 +265,7 @@ export function LiveBrowser() {
   const launchOwnershipContract = manifest?.surfaceLaunchOwnerships.find((item) => item.screenId === 'live') ?? null;
   const holdReceipt = manifest?.surfaceHoldReceipts.find((item) => item.screenId === 'live') ?? null;
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'live') ?? null;
+  const multiConnectionCustody = manifest?.surfaceMultiConnectionCustodyContracts?.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
   const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
   const providerSwitchContract = manifest?.surfaceProviderSwitchContracts.find((item) => item.screenId === 'live') ?? null;
@@ -303,6 +306,17 @@ export function LiveBrowser() {
       board: savedProviderBoard,
     }),
     [providerPodium, savedProviderBoard]
+  );
+  const multiConnectionCustodyRuntime = useMemo(
+    () => buildSurfaceMultiConnectionCustodyRuntime({
+      contract: multiConnectionCustody,
+      screenId: 'live',
+      board: savedProviderBoard,
+      lastSwitchContext,
+      selectedTitle: selectedStream?.name ?? null,
+      resumeTitle: watchHistory[0]?.title ?? null,
+    }),
+    [lastSwitchContext, multiConnectionCustody, savedProviderBoard, selectedStream?.name, watchHistory]
   );
   const providerChoiceRuntime = useMemo(
     () => buildSavedProviderChoiceRuntime({
@@ -738,6 +752,9 @@ export function LiveBrowser() {
                   preservedTitle: selectedStream?.name || null,
                 })}
               />
+            </div>
+            <div className="mt-4">
+              <SurfaceMultiConnectionCustodyInline manifest={manifest} screenId="live" runtime={multiConnectionCustodyRuntime} />
             </div>
             <div className="mt-4">
               <SurfaceProviderChoiceInline

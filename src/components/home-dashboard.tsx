@@ -69,6 +69,7 @@ import { SurfaceProviderPodiumInline } from '@/components/surface-provider-podiu
 import { SurfaceFocusReturnInline } from '@/components/surface-focus-return-inline';
 import { SurfaceFirstPictureInline } from '@/components/surface-first-picture-inline';
 import { SurfaceProviderDropContinuityInline } from '@/components/surface-provider-drop-continuity-inline';
+import { SurfaceMultiConnectionCustodyInline } from '@/components/surface-multi-connection-custody-inline';
 import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline';
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
@@ -97,6 +98,7 @@ import { buildSavedProviderProofProvenanceRuntime } from '@/lib/saved-provider-p
 import { buildSavedProviderReturnCooldownRuntime } from '@/lib/saved-provider-return-cooldown-runtime';
 import { buildSavedProviderStabilityRuntime } from '@/lib/saved-provider-stability-runtime';
 import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-runtime';
+import { buildSurfaceMultiConnectionCustodyRuntime } from '@/lib/multi-connection-custody-runtime';
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getArtwork, getCachedHomeSnapshot, getContentId, getHomeData, saveHomeSnapshot } from '@/lib/xtream-api';
 import { MockProviderHealth, MockProviderManifest, XtreamStream } from '@/lib/types';
@@ -318,6 +320,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const multiConnectionCustody = useMemo(
+    () => manifest?.surfaceMultiConnectionCustodyContracts?.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const downgradeLadder = useMemo(
     () => manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -433,6 +439,17 @@ export function HomeDashboard() {
       board: savedProviderBoard,
     }),
     [providerPodium, savedProviderBoard]
+  );
+  const multiConnectionCustodyRuntime = useMemo(
+    () => buildSurfaceMultiConnectionCustodyRuntime({
+      contract: multiConnectionCustody,
+      screenId: 'home',
+      board: savedProviderBoard,
+      lastSwitchContext,
+      featuredTitle: home.featured?.name ?? null,
+      resumeTitle: continueWatching[0]?.title ?? null,
+    }),
+    [continueWatching, home.featured?.name, lastSwitchContext, multiConnectionCustody, savedProviderBoard]
   );
   const providerChoiceRuntime = useMemo(
     () => buildSavedProviderChoiceRuntime({
@@ -870,6 +887,9 @@ export function HomeDashboard() {
                   preservedTitle: home.featured?.name || null,
                 })}
               />
+            </div>
+            <div className="mt-4">
+              <SurfaceMultiConnectionCustodyInline manifest={manifest} screenId="home" runtime={multiConnectionCustodyRuntime} />
             </div>
             <div className="mt-4">
               <SurfaceProviderChoiceInline
