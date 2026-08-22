@@ -134,6 +134,20 @@ const buildEntry = ({
     : searchSnapshot
       ? `Search continuity is still parked on "${searchSnapshot.query}" while Live recovers.`
       : cachedSearchSummary;
+  const detail = screenId === 'player'
+    ? isActive
+      ? 'Playback failed on the active provider. Keep the current title, checkpoint, and cached witness visible until retry or provider recovery proves a fresh picture again.'
+      : 'The player can still use this saved witness for recovery context, but the dropped provider must not silently reclaim playback ownership until validation clears.'
+    : isActive
+      ? 'Keep cached continuity visible, but stop implying the active provider can still deliver fresh playback until validation recovers.'
+      : 'Saved continuity is still useful here, but this provider should not silently retake launch ownership until validation clears.';
+  const nextActionLabel = screenId === 'player'
+    ? isActive
+      ? 'Retry playback or switch'
+      : 'Keep recovery witness warm'
+    : isActive
+      ? 'Retry or switch provider'
+      : 'Keep cached context warm';
 
   return {
     providerId: notice.providerId,
@@ -144,14 +158,12 @@ const buildEntry = ({
       ? `${reasonLabel} on the active provider`
       : `${reasonLabel} on a saved provider`,
     summary: notice.message,
-    detail: isActive
-      ? 'Keep cached continuity visible, but stop implying the active provider can still deliver fresh playback until validation recovers.'
-      : 'Saved continuity is still useful here, but this provider should not silently retake launch ownership until validation clears.',
+    detail,
     happenedAt: notice.happenedAt,
     cachedCatalogSummary,
     cachedSearchSummary: searchSummary,
     historySummary,
-    nextActionLabel: isActive ? 'Retry or switch provider' : 'Keep cached context warm',
+    nextActionLabel,
   };
 };
 
@@ -197,15 +209,23 @@ export const buildProviderDropRuntime = ({
   return {
     screenId,
     tone,
-    title: screenId === 'live'
-      ? 'Provider-drop continuity'
-      : 'Provider-drop search continuity',
-    summary: activeDropCount > 0
-      ? 'The active provider has dropped, but cached continuity and playback witness still survive on disk.'
-      : 'A saved provider dropped recently, but its cached continuity is still warm enough to keep route truth visible.',
-    detail: screenId === 'live'
-      ? 'Live should keep the selected channel, cached guide posture, and last playback witness visible while retry or saved-provider recovery happens explicitly.'
-      : 'Search should keep ranked results, duplicate-collapse truth, and saved playback witness visible while provider retry or switch ownership is decided explicitly.',
+    title: screenId === 'player'
+      ? 'Provider-drop playback continuity'
+      : screenId === 'live'
+        ? 'Provider-drop continuity'
+        : 'Provider-drop search continuity',
+    summary: screenId === 'player'
+      ? activeDropCount > 0
+        ? 'The active playback provider has dropped, but the current title, checkpoint, and recovery witness still survive on disk.'
+        : 'A saved playback provider dropped recently, but its witness is still warm enough to keep recovery truth visible in the dock.'
+      : activeDropCount > 0
+        ? 'The active provider has dropped, but cached continuity and playback witness still survive on disk.'
+        : 'A saved provider dropped recently, but its cached continuity is still warm enough to keep route truth visible.',
+    detail: screenId === 'player'
+      ? 'Player Dock should keep the current stream, resume checkpoint, and recovery-owner truth visible while retry or saved-provider handoff happens explicitly.'
+      : screenId === 'live'
+        ? 'Live should keep the selected channel, cached guide posture, and last playback witness visible while retry or saved-provider recovery happens explicitly.'
+        : 'Search should keep ranked results, duplicate-collapse truth, and saved playback witness visible while provider retry or switch ownership is decided explicitly.',
     activeDropCount,
     entries,
   };

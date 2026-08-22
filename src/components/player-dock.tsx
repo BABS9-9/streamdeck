@@ -7,6 +7,7 @@ import { buildLivePlayerControlRuntime } from '@/lib/live-player-control-runtime
 import { buildLivePlayerContinuityRuntime } from '@/lib/live-player-continuity-runtime';
 import { buildLivePlayerFocusReturnRuntime } from '@/lib/live-player-focus-return-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
+import { buildProviderDropRuntime } from '@/lib/provider-drop-runtime';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatGuideUpdatedAge, getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { VideoPlayer } from './video-player';
@@ -16,6 +17,7 @@ import { LivePlayerControlPanel } from './live-player-control-panel';
 import { LivePlayerFocusReturnPanel } from './live-player-focus-return-panel';
 import { LivePlayerRemotePanel } from './live-player-remote-panel';
 import { ProviderFactGrid } from './provider-fact-grid';
+import { ProviderDropPanel } from './provider-drop-panel';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 
 const formatSeconds = (value?: number) => {
@@ -30,6 +32,7 @@ export function PlayerDock() {
   const currentStream = usePlayerStore((state) => state.currentStream);
   const playbackUrl = usePlayerStore((state) => state.playbackUrl);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
+  const providerDrops = usePlayerStore((state) => state.providerDrops);
   const currentProviderId = usePlayerStore((state) => state.currentProviderId);
   const resumeFromSeconds = usePlayerStore((state) => state.resumeFromSeconds);
   const streamHealth = usePlayerStore((state) => state.streamHealth);
@@ -251,6 +254,21 @@ export function PlayerDock() {
     watchHistory,
   ]);
 
+  const playerProviderDropRuntime = useMemo(() => buildProviderDropRuntime({
+    screenId: 'player',
+    connections,
+    activeConnectionId: currentProviderId,
+    connectionStatus,
+    providerDrops,
+    watchHistory,
+  }), [
+    connectionStatus,
+    connections,
+    currentProviderId,
+    providerDrops,
+    watchHistory,
+  ]);
+
   useEffect(() => {
     if (!currentProvider || !currentStream || currentStream.stream_type !== 'live' || !contentId) return;
     markGuideFromCache(currentProvider.id, [contentId]);
@@ -347,6 +365,7 @@ export function PlayerDock() {
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />
               <LivePlayerFocusReturnPanel contract={livePlayerFocusReturnRuntime} />
               <LivePlayerRemotePanel contract={livePlayerRemoteRuntime} />
+              <ProviderDropPanel contract={playerProviderDropRuntime} />
 
               {currentStream.stream_type === 'live' ? (
                 <div className="rounded-[1.2rem] border border-white/10 bg-white/5 p-4">

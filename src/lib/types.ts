@@ -530,7 +530,7 @@ export type ProviderDropRuntimeEntry = {
 };
 
 export type ProviderDropRuntimeContract = {
-  screenId: 'live' | 'search';
+  screenId: 'live' | 'search' | 'player';
   tone: ProviderDropRuntimeTone;
   title: string;
   summary: string;
