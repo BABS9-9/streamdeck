@@ -1017,6 +1017,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'provider-drop-continuity',
+    feature: 'Provider-drop continuity',
+    pitch: 'Keep the most recent provider failure visibly attached to Connect, the hero CTA, and Play so the shell can preserve cached continuity without pretending the dropped provider is still fresh.',
+    competitiveGap: 'Competitors usually either erase dropped-provider context entirely or keep stale ownership implied, so users cannot tell whether continuity is genuinely preserved or merely cached debris.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one provider-drop continuity contract so the active drop owner, preserved cache witness, and reclaim trigger stay visible beside Connect, the hero CTA, and Play before recovery polish hides who actually fell out.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'launch-readiness',
     feature: 'Launch readiness',
     pitch: 'Publish whether Connect, hero launch, or Play is actually ready now, only watch-safe, or already recovery-led before polish implies more certainty than runtime proof owns.',
@@ -4747,6 +4756,81 @@ const buildSurfaceResumeCustodyContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceProviderDropContinuityContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    eyebrow: 'Provider-drop continuity',
+    title: 'Login should keep dropped-provider truth attached to reconnect',
+    summary: scenario === 'healthy'
+      ? 'If a saved provider recently fell out, Connect should still name the dropped owner, the cached witness that survived, and the proof required before Home ownership is handed back.'
+      : 'When auth, health, or line posture are already degraded, Login should keep the dropped provider visible so reconnect does not pretend cached continuity is fresh proof.',
+    entries: [
+      {
+        label: 'Reconnect witness',
+        droppedOwner: 'The saved provider that most recently lost fresh setup or launch ownership.',
+        preserves: 'Preserve cached Home posture, saved watch witness, and the user’s idea of where reconnect was headed before the provider fell out.',
+        reclaimsWhen: 'Only let that provider reclaim Connect once fresh auth and line proof say Home ownership is boring again.',
+        tone: 'ready',
+      },
+      {
+        label: 'Fallback honesty',
+        droppedOwner: 'The dropped provider that is still remembered in saved setup but no longer owns the safest next move.',
+        preserves: 'Preserve the saved shortcut as context, not as fake freshness, while rescue or a healthier provider owns the real reconnect path.',
+        reclaimsWhen: 'Reclaim setup ownership only after rescue is no longer primary and the dropped provider stops depending on cached trust alone.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    eyebrow: 'Provider-drop continuity',
+    title: 'Home should keep dropped-provider truth attached to the hero story',
+    summary: scenario === 'healthy'
+      ? 'If the featured provider dropped recently, Home should still name the dropped owner, the cached browse or resume witness that survived, and the proof needed before the hero feels fresh again.'
+      : 'When the hero is leaning on cached rows, resume continuity, or recovery ownership, Home should say that a provider dropped instead of quietly selling featured momentum as fresh browse proof.',
+    entries: [
+      {
+        label: 'Featured continuity',
+        droppedOwner: 'The provider that last owned the hero or continue-watching launch before falling out.',
+        preserves: 'Preserve hero shape, continue-watching witness, and the quick-live lane that still maps back to the same watch story.',
+        reclaimsWhen: 'Only let the dropped provider reclaim the hero once featured browse, guide posture, and provider health all line back up on the same owner.',
+        tone: 'ready',
+      },
+      {
+        label: 'Recovery-owned browse',
+        droppedOwner: 'The provider whose cached rows still explain Home even though recovery or another owner is carrying the live launch risk now.',
+        preserves: 'Preserve the user’s browse context while making it explicit that featured polish is currently riding on cached continuity or rescue logic.',
+        reclaimsWhen: 'Reclaim featured ownership once the dropped provider stops relying on cache-borrowed proof and can earn the same launch path back directly.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    eyebrow: 'Provider-drop continuity',
+    title: 'Live should keep dropped-provider truth attached to the selected-card story',
+    summary: scenario === 'healthy'
+      ? 'If Play is still leaning on cached surf continuity after a provider fell out, Live should name the dropped owner, what selected-card witness survived, and what proof lets that provider own Play again.'
+      : 'When preview, selected-card Play, or same-lane rescue are riding through a provider drop, Live should keep that failure visible instead of letting cached surf context impersonate fresh launch proof.',
+    entries: [
+      {
+        label: 'Selected-card witness',
+        droppedOwner: 'The provider that last owned the current selected-card launch before preview, guide, or playback trust failed.',
+        preserves: 'Preserve lane position, selected channel identity, and the last believable playback witness so surf rhythm does not collapse into a blind reset.',
+        reclaimsWhen: 'Only let the dropped provider reclaim Play once preview, guide, and provider proof all agree on the same selected-card owner again.',
+        tone: 'ready',
+      },
+      {
+        label: 'Same-lane rescue',
+        droppedOwner: 'The dropped provider that still explains the current lane even while rescue or another provider owns the safer playback path.',
+        preserves: 'Preserve same-lane surf continuity while making it explicit that the active launch is now recovery-led instead of fresh provider-backed.',
+        reclaimsWhen: 'Reclaim surf ownership once the dropped provider can back the exact lane and channel story again without borrowed cache or rescue cover.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -5827,6 +5911,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceSelectionCustodyContracts: buildSurfaceSelectionCustodyContracts(scenario),
   surfaceFirstPictureContracts: buildSurfaceFirstPictureContracts(scenario),
   surfaceResumeCustodyContracts: buildSurfaceResumeCustodyContracts(scenario),
+  surfaceProviderDropContinuityContracts: buildSurfaceProviderDropContinuityContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),
