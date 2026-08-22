@@ -18,6 +18,7 @@ import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical
 import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-canonical-provider-identity-inline';
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
+import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceExitCriteria } from '@/components/surface-exit-criteria';
 import { SurfaceHoldReceiptInline } from '@/components/surface-hold-receipt-inline';
@@ -551,6 +552,28 @@ export function LiveBrowser() {
       activeDropCount: liveProviderDropEntries.length,
     };
   }, [activeConnection, liveProviderDropEntries, providerDrops, selectedStream?.name]);
+  const liveContinuityWindowRuntime = useMemo(() => {
+    const primaryWindow = continuityWindow?.windows?.[0] ?? null;
+    const fallbackWindow = continuityWindow?.windows?.[1] ?? null;
+
+    if (liveProviderDropEntries.length > 0) {
+      return {
+        currentWindow: fallbackWindow?.label ?? 'Same-lane rescue continuity',
+        preservesFor: fallbackWindow?.preservesFor ?? 'Keep the same lane, same selected-card meaning, and same surf mission visible while Play is recovery-led.',
+        downgradeAfter: fallbackWindow?.downgradeAfter ?? 'Downgrade once preview, guide, or provider drift prove the selected-card story is only approximate continuity.',
+        resetTrigger: fallbackWindow?.resetTrigger ?? 'Reset when the next honest Play target leaves the current lane or stops mapping to the same selected-card mission.',
+        tone: fallbackWindow?.tone ?? 'recover',
+      };
+    }
+
+    return {
+      currentWindow: primaryWindow?.label ?? 'Selected-card continuity',
+      preservesFor: primaryWindow?.preservesFor ?? 'Keep the same selected channel, same lane meaning, and same direct path to Play while live proof still agrees.',
+      downgradeAfter: primaryWindow?.downgradeAfter ?? 'Downgrade once guide drift, provider instability, or lane rescue weaken the same selected-card claim.',
+      resetTrigger: primaryWindow?.resetTrigger ?? 'Reset when Play can no longer honestly describe the same selected-card launch.',
+      tone: primaryWindow?.tone ?? 'ready',
+    };
+  }, [continuityWindow, liveProviderDropEntries.length]);
   const playbackResilience = useMemo(() => buildPlaybackResilienceContract({
     screenId: 'live',
     connections,
@@ -633,6 +656,7 @@ export function LiveBrowser() {
       {isMockConnection ? <SurfaceFirstPictureInline manifest={manifest} screenId="live" runtime={liveFirstPictureRuntime} /> : null}
       {isMockConnection ? <SurfaceResumeCustodyInline manifest={manifest} screenId="live" runtime={liveResumeCustodyRuntime} /> : null}
       {isMockConnection ? <SurfaceProviderDropContinuityInline manifest={manifest} screenId="live" runtime={liveProviderDropRuntimeInline} /> : null}
+      {isMockConnection ? <SurfaceContinuityWindowInline manifest={manifest} screenId="live" runtime={liveContinuityWindowRuntime} /> : null}
       <LiveMarketRuntimePanel contract={liveMarketRuntime} />
       <PlaybackResiliencePanel contract={playbackResilience} />
       <ProviderDropPanel contract={providerDropRuntime} />

@@ -13,6 +13,7 @@ import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceClaimCeilingInline } from '@/components/surface-claim-ceiling-inline';
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
+import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-canonical-provider-identity-inline';
@@ -590,6 +591,28 @@ export default function LoginPage() {
       activeDropCount: loginProviderDropEntries.length,
     };
   }, [activeConnection, loginProviderDropEntries, providerDrops]);
+  const loginContinuityWindowRuntime = useMemo(() => {
+    const primaryWindow = continuityWindow?.windows?.[0] ?? null;
+    const fallbackWindow = continuityWindow?.windows?.[1] ?? null;
+
+    if (loginProviderDropEntries.length > 0) {
+      return {
+        currentWindow: fallbackWindow?.label ?? 'Typed credential continuity',
+        preservesFor: fallbackWindow?.preservesFor ?? 'Keep the typed setup context intact while the app says the same saved-provider shortcut is no longer fully earned.',
+        downgradeAfter: fallbackWindow?.downgradeAfter ?? 'Downgrade once repeated auth or line failures prove the current setup path is only partial continuity.',
+        resetTrigger: fallbackWindow?.resetTrigger ?? 'Reset when a different provider, different credential set, or explicit reconnect explanation becomes the only honest next move.',
+        tone: fallbackWindow?.tone ?? 'recover',
+      };
+    }
+
+    return {
+      currentWindow: primaryWindow?.label ?? 'Saved-provider handoff',
+      preservesFor: primaryWindow?.preservesFor ?? 'Keep the same provider owner and same next Home destination while setup proof still points at one clean handoff.',
+      downgradeAfter: primaryWindow?.downgradeAfter ?? 'Downgrade once auth, expiry, or line posture stop reinforcing one obvious Home owner.',
+      resetTrigger: primaryWindow?.resetTrigger ?? 'Reset when reconnect no longer maps to the same provider owner or next Home destination.',
+      tone: primaryWindow?.tone ?? 'ready',
+    };
+  }, [continuityWindow, loginProviderDropEntries.length]);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.15),_transparent_28%),linear-gradient(180deg,#06070d_0%,#090b13_48%,#04050a_100%)] px-6 py-8 text-white">
@@ -738,6 +761,10 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <SurfaceProviderDropContinuityInline manifest={manifest} screenId="login" runtime={loginProviderDropRuntime} />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceContinuityWindowInline manifest={manifest} screenId="login" runtime={loginContinuityWindowRuntime} />
           </div>
 
           {connectionHeadroom?.lanes?.[0] ? (
