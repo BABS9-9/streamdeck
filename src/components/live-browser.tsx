@@ -76,6 +76,7 @@ import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
 import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { PlaybackResiliencePanel } from '@/components/playback-resilience-panel';
+import { ProviderDropPanel } from '@/components/provider-drop-panel';
 import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection-guide-runtime';
 import { buildPlaybackResilienceContract } from '@/lib/playback-resilience-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
@@ -98,6 +99,7 @@ import { buildSavedProviderSwitchRuntime } from '@/lib/saved-provider-switch-run
 import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
 import { buildLiveMarketResolver } from '@/lib/live-market-resolver';
+import { buildProviderDropRuntime } from '@/lib/provider-drop-runtime';
 import { MockProviderHealth, MockProviderManifest, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
@@ -116,6 +118,7 @@ export function LiveBrowser() {
   const favorites = useFavoritesStore((state) => activeConnection ? state.getFavoritesForProvider(activeConnection.id) : []);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const playStream = usePlayerStore((state) => state.playStream);
+  const providerDrops = usePlayerStore((state) => state.providerDrops);
   const streamHealth = usePlayerStore((state) => state.streamHealth);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const lookupStreamGuide = useLiveGuideStore((state) => state.lookupStreamGuide);
@@ -567,6 +570,20 @@ export function LiveBrowser() {
     selectedGuideState,
     selectedStream,
   ]);
+  const providerDropRuntime = useMemo(() => buildProviderDropRuntime({
+    screenId: 'live',
+    connections,
+    activeConnectionId: activeConnection?.id,
+    connectionStatus,
+    providerDrops,
+    watchHistory,
+  }), [
+    activeConnection?.id,
+    connectionStatus,
+    connections,
+    providerDrops,
+    watchHistory,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -591,6 +608,7 @@ export function LiveBrowser() {
       {isMockConnection ? <SurfaceResumeCustodyInline manifest={manifest} screenId="live" runtime={liveResumeCustodyRuntime} /> : null}
       <LiveMarketRuntimePanel contract={liveMarketRuntime} />
       <PlaybackResiliencePanel contract={playbackResilience} />
+      <ProviderDropPanel contract={providerDropRuntime} />
       <SurfaceConnectionHeadroom
         runtime={connectionHeadroom}
         badge="Connection headroom"

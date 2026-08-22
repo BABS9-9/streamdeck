@@ -27,6 +27,30 @@ export type ConnectionStatus = {
   serverTime?: string | null;
 };
 
+export type ProviderDropReason =
+  | 'health-check-failed'
+  | 'catalog-refresh-failed'
+  | 'search-refresh-failed'
+  | 'playback-error'
+  | 'provider-removed'
+  | 'manual-reset';
+
+export type ProviderDropNotice = {
+  providerId: string;
+  providerName: string;
+  reason: ProviderDropReason;
+  message: string;
+  happenedAt: number;
+  recoveredAt?: number | null;
+  lastKnownConnectionState?: ConnectionStatus['state'] | null;
+  cachedCatalogUpdatedAt?: number | null;
+  cachedSearchUpdatedAt?: number | null;
+  cachedHistoryCount?: number | null;
+  lastPlaybackTitle?: string | null;
+  lastPlaybackPositionSeconds?: number | null;
+  lastPlaybackProgressPercent?: number | null;
+};
+
 export type XtreamAuthResponse = {
   user_info: {
     username: string;
@@ -486,6 +510,33 @@ export type ProviderSearchSnapshot = {
   preferredEpisodeNumber?: number | null;
   selectedResultKey?: string | null;
   focusMemory?: SearchFocusMemorySnapshot | null;
+};
+
+export type ProviderDropRuntimeTone = 'ready' | 'watch' | 'recover';
+
+export type ProviderDropRuntimeEntry = {
+  providerId: string;
+  providerName: string;
+  isActive: boolean;
+  tone: ProviderDropRuntimeTone;
+  title: string;
+  summary: string;
+  detail: string;
+  happenedAt: number;
+  cachedCatalogSummary: string;
+  cachedSearchSummary: string;
+  historySummary: string;
+  nextActionLabel: string;
+};
+
+export type ProviderDropRuntimeContract = {
+  screenId: 'live' | 'search';
+  tone: ProviderDropRuntimeTone;
+  title: string;
+  summary: string;
+  detail: string;
+  activeDropCount: number;
+  entries: ProviderDropRuntimeEntry[];
 };
 
 export type SearchEntryFocusState = 'query-input' | 'recent-replay' | 'results-grid' | 'recovery-rail';

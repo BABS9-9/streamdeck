@@ -21,6 +21,8 @@ export function VideoPlayer({
 }) {
   const ref = useRef<HTMLVideoElement | null>(null);
   const lastProgressRef = useRef(0);
+  const currentProviderId = usePlayerStore((state) => state.currentProviderId);
+  const markProviderDrop = usePlayerStore((state) => state.markProviderDrop);
   const updateStreamHealth = usePlayerStore((state) => state.updateStreamHealth);
   const updatePlaybackProgress = usePlayerStore((state) => state.updatePlaybackProgress);
   const updateControlTelemetry = usePlayerStore((state) => state.updateControlTelemetry);
@@ -166,6 +168,9 @@ export function VideoPlayer({
       onStateChange?.('error');
       updateStreamHealth({ status: 'error', message: 'Playback error detected' });
       pushControlTelemetry('error');
+      if (currentProviderId) {
+        markProviderDrop(currentProviderId, 'Playback error detected', 'playback-error');
+      }
     };
     const handlePause = () => {
       if (!video.ended) pushControlTelemetry('paused');
@@ -218,6 +223,9 @@ export function VideoPlayer({
           message: data.details,
         });
         pushControlTelemetry(data.fatal ? 'error' : 'buffering');
+        if (data.fatal && currentProviderId) {
+          markProviderDrop(currentProviderId, data.details || 'Fatal playback error detected', 'playback-error');
+        }
       });
     } else {
       onStateChange?.('error');
@@ -245,7 +253,7 @@ export function VideoPlayer({
       video.removeEventListener('volumechange', handleVolumeChange);
       if (hls) hls.destroy();
     };
-  }, [allowResume, muted, onStateChange, poster, resetControlTelemetry, resetStreamHealth, resumeFromSeconds, src, updateControlTelemetry, updatePlaybackProgress, updateStreamHealth]);
+  }, [allowResume, currentProviderId, markProviderDrop, muted, onStateChange, poster, resetControlTelemetry, resetStreamHealth, resumeFromSeconds, src, updateControlTelemetry, updatePlaybackProgress, updateStreamHealth]);
 
   return (
     <video

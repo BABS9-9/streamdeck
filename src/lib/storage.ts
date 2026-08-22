@@ -6,6 +6,7 @@ import {
   ProviderCatalog,
   ProviderEpgSnapshot,
   ProviderHomeSnapshot,
+  ProviderDropNotice,
   ProviderSearchIndexSnapshot,
   RecentSearchQueryEntry,
   ProviderSearchSnapshot,
@@ -34,6 +35,7 @@ const KEYS = {
   playerDockMode: 'streamdeck.player-dock-mode',
   mockScenario: 'streamdeck.mock-scenario',
   providerSessions: 'streamdeck.provider-sessions',
+  providerDrops: 'streamdeck.provider-drops',
 };
 
 const safeJsonParse = <T,>(value: string | null, fallback: T): T => {
@@ -304,6 +306,51 @@ const normalizeSearchSnapshot = (snapshot: ProviderSearchSnapshot, providerId: s
   selectedResultKey: typeof snapshot.selectedResultKey === 'string' ? snapshot.selectedResultKey : null,
   focusMemory: normalizeSearchFocusMemory(snapshot.focusMemory),
 });
+
+const normalizeProviderDropReason = (value: unknown): ProviderDropNotice['reason'] => {
+  switch (value) {
+    case 'catalog-refresh-failed':
+    case 'search-refresh-failed':
+    case 'playback-error':
+    case 'provider-removed':
+    case 'manual-reset':
+      return value;
+    case 'health-check-failed':
+    default:
+      return 'health-check-failed';
+  }
+};
+
+const normalizeProviderDrops = (value: unknown): Record<string, ProviderDropNotice> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+
+  return Object.entries(value as Record<string, unknown>).reduce<Record<string, ProviderDropNotice>>((acc, [providerId, notice]) => {
+    if (!notice || typeof notice !== 'object') return acc;
+    const raw = notice as Partial<ProviderDropNotice>;
+    acc[providerId] = {
+      providerId,
+      providerName: typeof raw.providerName === 'string' && raw.providerName ? raw.providerName : providerId,
+      reason: normalizeProviderDropReason(raw.reason),
+      message: typeof raw.message === 'string' && raw.message ? raw.message : 'Provider validation failed.',
+      happenedAt: Number.isFinite(raw.happenedAt) ? Number(raw.happenedAt) : 0,
+      recoveredAt: Number.isFinite(raw.recoveredAt) ? Number(raw.recoveredAt) : null,
+      lastKnownConnectionState: raw.lastKnownConnectionState === 'idle'
+        || raw.lastKnownConnectionState === 'checking'
+        || raw.lastKnownConnectionState === 'healthy'
+        || raw.lastKnownConnectionState === 'degraded'
+        || raw.lastKnownConnectionState === 'error'
+        ? raw.lastKnownConnectionState
+        : null,
+      cachedCatalogUpdatedAt: Number.isFinite(raw.cachedCatalogUpdatedAt) ? Number(raw.cachedCatalogUpdatedAt) : null,
+      cachedSearchUpdatedAt: Number.isFinite(raw.cachedSearchUpdatedAt) ? Number(raw.cachedSearchUpdatedAt) : null,
+      cachedHistoryCount: Number.isFinite(raw.cachedHistoryCount) ? Number(raw.cachedHistoryCount) : null,
+      lastPlaybackTitle: typeof raw.lastPlaybackTitle === 'string' ? raw.lastPlaybackTitle : null,
+      lastPlaybackPositionSeconds: Number.isFinite(raw.lastPlaybackPositionSeconds) ? Number(raw.lastPlaybackPositionSeconds) : null,
+      lastPlaybackProgressPercent: Number.isFinite(raw.lastPlaybackProgressPercent) ? Number(raw.lastPlaybackProgressPercent) : null,
+    };
+    return acc;
+  }, {});
+};
 
 const defaultSettingsPreferences = (): StreamDeckSettingsPreferences => ({
   playback: {
@@ -609,6 +656,25 @@ export const storage = {
     const sessions = storage.getProviderSessions();
     delete sessions[providerId];
     localStorage.setItem(KEYS.providerSessions, JSON.stringify(sessions));
+  },
+  getProviderDrops(): Record<string, ProviderDropNotice> {
+    if (!isBrowser()) return {};
+    return normalizeProviderDrops(safeJsonParse<unknown>(localStorage.getItem(KEYS.providerDrops), {}));
+  },
+  getProviderDrop(providerId: string): ProviderDropNotice | null {
+    return storage.getProviderDrops()[providerId] ?? null;
+  },
+  saveProviderDrop(providerId: string, notice: ProviderDropNotice) {
+    if (!isBrowser()) return;
+    const notices = storage.getProviderDrops();
+    notices[providerId] = { ...notice, providerId };
+    localStorage.setItem(KEYS.providerDrops, JSON.stringify(notices));
+  },
+  removeProviderDrop(providerId: string) {
+    if (!isBrowser()) return;
+    const notices = storage.getProviderDrops();
+    delete notices[providerId];
+    localStorage.setItem(KEYS.providerDrops, JSON.stringify(notices));
   },
   getProviderSwitchContext(): ProviderSwitchContext | null {
     if (!isBrowser()) return null;

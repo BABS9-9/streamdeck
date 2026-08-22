@@ -7,7 +7,9 @@ import { buildSearchContinuityDisplayContract } from '@/lib/search-continuity-co
 import { buildSearchFocusMemorySnapshot, buildSearchFocusRuntimeContract } from '@/lib/search-focus-runtime';
 import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, setSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { buildPlaybackResilienceContract } from '@/lib/playback-resilience-runtime';
+import { ProviderDropPanel } from '@/components/provider-drop-panel';
 import { formatProviderExpiry, getProviderLinePressure } from '@/lib/provider-signals';
+import { buildProviderDropRuntime } from '@/lib/provider-drop-runtime';
 import { buildSearchSettingsRuntimeContract } from '@/lib/search-settings-runtime';
 import { GroupedSearchResult } from '@/lib/search-continuity';
 import { getHealthiestSavedProvider, getProviderSummaryWarning, getProviderTrustDisplay } from '@/lib/provider-recovery';
@@ -54,6 +56,7 @@ export function SearchBrowser() {
   const markCatalogFromCache = useLibraryStore((state) => state.markCatalogFromCache);
   const refreshProviderCatalogs = useLibraryStore((state) => state.refreshProviderCatalogs);
   const playStream = usePlayerStore((state) => state.playStream);
+  const providerDrops = usePlayerStore((state) => state.providerDrops);
   const watchHistory = usePlayerStore((state) => state.watchHistory);
   const favoriteEntriesByProvider = useFavoritesStore((state) => state.favoriteEntriesByProvider);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
@@ -390,6 +393,32 @@ export function SearchBrowser() {
     usingCache,
     watchHistory,
   ]);
+  const providerDropRuntime = useMemo(() => buildProviderDropRuntime({
+    screenId: 'search',
+    connections,
+    activeConnectionId: activeConnection?.id,
+    connectionStatus,
+    providerDrops,
+    catalogsByProvider: Object.fromEntries(
+      connections
+        .map((connection) => [connection.id, getCatalogSnapshot(connection.id, Number.MAX_SAFE_INTEGER)])
+        .filter((entry): entry is [string, ProviderCatalog] => Boolean(entry[1]))
+    ),
+    searchSnapshotsByProvider: Object.fromEntries(
+      connections
+        .map((connection) => [connection.id, getSearchSnapshot(connection.id)])
+        .filter((entry): entry is [string, NonNullable<ReturnType<typeof getSearchSnapshot>>] => Boolean(entry[1]))
+    ),
+    watchHistory,
+  }), [
+    activeConnection?.id,
+    connectionStatus,
+    connections,
+    getCatalogSnapshot,
+    getSearchSnapshot,
+    providerDrops,
+    watchHistory,
+  ]);
 
   if (connections.length === 0) {
     return <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">No saved providers yet. Connect on the login screen first.</div>;
@@ -513,6 +542,7 @@ export function SearchBrowser() {
           </div>
         </div>
         <PlaybackResiliencePanel contract={playbackResilience} className="mt-4" />
+        <ProviderDropPanel contract={providerDropRuntime} className="mt-4" />
         {runtimeContract?.indexing ? (
           <div className="mt-4 rounded-[1.5rem] border border-sky-400/20 bg-sky-500/10 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">

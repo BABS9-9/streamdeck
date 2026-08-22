@@ -246,6 +246,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set((state) => ({ connectionStatus: { ...state.connectionStatus, [id]: checkingStatus } }));
     try {
       const session = await authenticate(connection);
+      usePlayerStore.getState().clearProviderDrop(id);
       storage.saveProviderSession(id, session);
       const nextConnections = get().connections.map((item) => item.id === id
         ? canonicalizeSavedConnection({ ...item, lastAuthSummary: buildAuthSummary(session) })
@@ -263,9 +264,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return true;
     } catch (error) {
       storage.removeProviderSession(id);
-      useLibraryStore.getState().invalidateProvider(id);
-      useSearchStore.getState().invalidateProvider(id);
-      usePlayerStore.getState().markProviderDrop(id, error instanceof Error ? error.message : 'Health check failed');
+      usePlayerStore.getState().markProviderDrop(id, error instanceof Error ? error.message : 'Health check failed', 'health-check-failed');
       set((state) => ({
         session: get().activeConnection?.id === id ? null : state.session,
         connectionStatus: {
