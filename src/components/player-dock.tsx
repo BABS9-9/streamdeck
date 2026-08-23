@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { getContentId } from '@/lib/xtream-api';
 import { getLiveCategoryRecovery, getLiveProviderVariants } from '@/lib/provider-recovery';
 import { buildLivePlayerControlRuntime } from '@/lib/live-player-control-runtime';
+import { buildLivePlayerLineClearanceRuntime } from '@/lib/live-player-line-clearance-runtime';
 import { buildLivePlayerContinuityRuntime } from '@/lib/live-player-continuity-runtime';
 import { buildLivePlayerFocusReturnRuntime } from '@/lib/live-player-focus-return-runtime';
 import { buildLivePlayerLineReleaseRuntime } from '@/lib/live-player-line-release-runtime';
@@ -18,6 +19,7 @@ import { usePlayerStore } from '@/stores/player-store';
 import { LivePlayerContinuityPanel } from './live-player-continuity-panel';
 import { LivePlayerControlPanel } from './live-player-control-panel';
 import { LivePlayerFocusReturnPanel } from './live-player-focus-return-panel';
+import { LivePlayerLineClearancePanel } from './live-player-line-clearance-panel';
 import { LivePlayerLineReleasePanel } from './live-player-line-release-panel';
 import { LivePlayerRemotePanel } from './live-player-remote-panel';
 import { MultiConnectionSwitchPanel } from './multi-connection-switch-panel';
@@ -350,6 +352,36 @@ export function PlayerDock() {
     liveRecovery.topVariant,
     savedProviderBoard,
   ]);
+  const livePlayerLineClearanceRuntime = useMemo(() => buildLivePlayerLineClearanceRuntime({
+    currentStream,
+    currentProviderId,
+    connections,
+    connectionStatus,
+    board: savedProviderBoard,
+    lastSwitchContext,
+    exactRecoveryTarget: liveRecovery.topVariant
+      ? {
+          providerId: liveRecovery.topVariant.providerId,
+          providerName: liveRecovery.topVariant.providerName,
+        }
+      : null,
+    categoryRecoveryTarget: liveRecovery.categoryFallback
+      ? {
+          providerId: liveRecovery.categoryFallback.providerId,
+          providerName: liveRecovery.categoryFallback.providerName,
+          categoryName: liveRecovery.categoryFallback.categoryName,
+        }
+      : null,
+  }), [
+    connectionStatus,
+    connections,
+    currentProviderId,
+    currentStream,
+    lastSwitchContext,
+    liveRecovery.categoryFallback,
+    liveRecovery.topVariant,
+    savedProviderBoard,
+  ]);
 
   const handleQuickSwitch = (providerId: string) => {
     const switched = setActiveConnection(providerId, {
@@ -413,6 +445,52 @@ export function PlayerDock() {
   const handleLineReleaseSwitchOnly = () => {
     if (!currentStream || !livePlayerLineReleaseRuntime?.nextMove.targetProviderId) return;
     setActiveConnection(livePlayerLineReleaseRuntime.nextMove.targetProviderId, {
+      sourceSurface: 'player',
+      reason: 'recovery',
+      preservedTitle: currentStream.name,
+    });
+  };
+
+  const handleLineClearancePrimaryAction = () => {
+    if (!currentStream || !livePlayerLineClearanceRuntime?.nextMove.targetProviderId) return;
+
+    const targetProviderId = livePlayerLineClearanceRuntime.nextMove.targetProviderId;
+
+    if (liveRecovery.topVariant?.providerId === targetProviderId) {
+      setActiveConnection(targetProviderId, {
+        sourceSurface: 'player',
+        reason: 'recovery',
+        preservedTitle: currentStream.name,
+      });
+      playStream(liveRecovery.topVariant.stream!, liveRecovery.topVariant.playbackUrl!, targetProviderId, {
+        sourceSurface: 'player',
+      });
+      return;
+    }
+
+    if (liveRecovery.categoryFallback?.providerId === targetProviderId) {
+      setActiveConnection(targetProviderId, {
+        sourceSurface: 'player',
+        reason: 'recovery',
+        preservedTitle: currentStream.name,
+      });
+      playStream(liveRecovery.categoryFallback.stream, liveRecovery.categoryFallback.playbackUrl, targetProviderId, {
+        sourceSurface: 'player',
+      });
+      return;
+    }
+
+    setActiveConnection(targetProviderId, {
+      sourceSurface: 'player',
+      reason: 'recovery',
+      preservedTitle: currentStream.name,
+    });
+  };
+
+  const handleLineClearanceSwitchOnly = () => {
+    if (!currentStream || !livePlayerLineClearanceRuntime?.nextMove.targetProviderId) return;
+
+    setActiveConnection(livePlayerLineClearanceRuntime.nextMove.targetProviderId, {
       sourceSurface: 'player',
       reason: 'recovery',
       preservedTitle: currentStream.name,
@@ -514,6 +592,11 @@ export function PlayerDock() {
               <LivePlayerControlPanel contract={livePlayerControlRuntime} />
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />
               <LivePlayerFocusReturnPanel contract={livePlayerFocusReturnRuntime} />
+              <LivePlayerLineClearancePanel
+                contract={livePlayerLineClearanceRuntime}
+                onPrimaryAction={livePlayerLineClearanceRuntime?.nextMove.primaryActionLabel ? handleLineClearancePrimaryAction : undefined}
+                onSecondaryAction={livePlayerLineClearanceRuntime?.nextMove.secondaryActionLabel ? handleLineClearanceSwitchOnly : undefined}
+              />
               <LivePlayerLineReleasePanel
                 contract={livePlayerLineReleaseRuntime}
                 onPrimaryAction={livePlayerLineReleaseRuntime?.nextMove.primaryActionLabel ? handleLineReleasePrimaryAction : undefined}

@@ -1467,6 +1467,49 @@ export type LivePlayerLineReleaseRuntimeContract = {
   };
 };
 
+export type LivePlayerLineClearanceEntry = {
+  id: 'current-claimant' | 'alternate-contender' | 'reclaim-rule' | 'blocked-claimant';
+  label: string;
+  state: 'ready' | 'watch' | 'recover';
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerLineClearanceSignal = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerLineClearanceRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  claimantProviderId: string | null;
+  alternateProviderId: string | null;
+  currentClaimantLabel: string;
+  alternateContenderLabel: string;
+  reclaimRuleLabel: string;
+  blockedClaimantLabel: string;
+  entries: LivePlayerLineClearanceEntry[];
+  signals: LivePlayerLineClearanceSignal[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    targetProviderId: string | null;
+    primaryActionLabel: string | null;
+    secondaryActionLabel: string | null;
+  };
+};
+
 export type LiveMarketAuthorityState =
   | 'account-home-zip'
   | 'home-network'
