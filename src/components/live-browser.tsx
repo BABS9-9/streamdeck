@@ -19,7 +19,7 @@ import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-can
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceLineReleaseWitnessInline } from '@/components/surface-line-release-witness-inline';
 import { SurfaceLineClearancePriorityInline } from '@/components/surface-line-clearance-priority-inline';
-import { SurfaceRecoveryAuthorityInline } from '@/components/surface-recovery-authority-inline';
+import { SavedProviderRecoveryAuthorityPanel } from '@/components/saved-provider-recovery-authority-panel';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
@@ -93,6 +93,7 @@ import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provide
 import { buildSavedProviderLineReleaseRuntime } from '@/lib/saved-provider-line-release-runtime';
 import { buildSavedProviderLineClearancePriorityRuntime } from '@/lib/saved-provider-line-clearance-priority-runtime';
 import { buildSavedProviderRecoveryAuthorityRuntime } from '@/lib/saved-provider-recovery-authority-runtime';
+import { buildSavedProviderRecoveryAuthorityResolver } from '@/lib/saved-provider-recovery-authority-resolver';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
@@ -533,7 +534,26 @@ export function LiveBrowser() {
   const connectionHeadroom = connectionHeadroomRuntime || null;
   const liveLineReleaseWitness = lineReleaseWitnessRuntime || null;
   const liveLineClearancePriority = lineClearancePriorityRuntime || null;
-  const liveRecoveryAuthority = recoveryAuthorityRuntime || null;
+  const liveRecoveryAuthority = useMemo(
+    () => buildSavedProviderRecoveryAuthorityResolver({
+      screenId: 'live',
+      board: savedProviderBoard,
+      subjectTitle: selectedStream?.name ?? watchHistory[0]?.title ?? null,
+      switchRuntime: multiConnectionSwitchRuntime,
+      recoveryAuthorityRuntime,
+      lineReleaseRuntime: lineReleaseWitnessRuntime,
+      lineClearanceRuntime: lineClearancePriorityRuntime,
+    }),
+    [
+      lineClearancePriorityRuntime,
+      lineReleaseWitnessRuntime,
+      multiConnectionSwitchRuntime,
+      recoveryAuthorityRuntime,
+      savedProviderBoard,
+      selectedStream?.name,
+      watchHistory,
+    ]
+  );
   const liveFocusReturnRuntime = useMemo(() => ({
     currentAnchor: focusAnchor,
     backTarget: focusAnchor.toLowerCase().includes('filter') ? 'Active filter lane' : 'Selected channel card',
@@ -757,9 +777,7 @@ export function LiveBrowser() {
           preservedTitle: selectedStream?.name || null,
         })}
       />
-      <SurfaceRecoveryAuthorityInline
-        manifest={manifest}
-        screenId="live"
+      <SavedProviderRecoveryAuthorityPanel
         runtime={liveRecoveryAuthority}
         onSelectProvider={(providerId) => setActiveConnection(providerId, {
           sourceSurface: 'live',

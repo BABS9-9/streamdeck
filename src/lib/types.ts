@@ -998,6 +998,45 @@ export type SurfaceRecoveryAuthorityRuntimeContract = {
   authorityProviderId: string | null;
 };
 
+export type SavedProviderRecoveryAuthoritySupportEntry = {
+  id: 'switch-authority' | 'line-release' | 'line-clearance';
+  label: string;
+  summary: string;
+  detail: string;
+  tone: 'ready' | 'watch' | 'recover';
+  ownerProviderId: string | null;
+  actionProviderId: string | null;
+};
+
+export type SavedProviderRecoveryAuthorityRuntimeContract = {
+  screenId: 'login' | 'home' | 'live' | 'player';
+  eyebrow: string;
+  title: string;
+  summary: string;
+  detail: string;
+  tone: 'ready' | 'watch' | 'recover';
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  authorityProviderId: string | null;
+  fallbackProviderId: string | null;
+  claimantProviderId: string | null;
+  visibleOwnerLabel: string;
+  finalOwnerLabel: string;
+  failClosedReason: string;
+  returnTrigger: string;
+  recentHandoff: string;
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: 'ready' | 'watch' | 'recover';
+    targetProviderId: string | null;
+    primaryActionLabel: string | null;
+    secondaryActionLabel: string | null;
+  };
+  supportEntries: SavedProviderRecoveryAuthoritySupportEntry[];
+};
+
 export type SurfaceProviderStabilityRuntimeEntry = {
   label: string;
   stabilityThreshold: string;

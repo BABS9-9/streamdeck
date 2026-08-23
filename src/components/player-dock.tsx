@@ -11,6 +11,7 @@ import { buildLivePlayerLineReleaseRuntime } from '@/lib/live-player-line-releas
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
 import { buildMultiConnectionSwitchRuntime } from '@/lib/multi-connection-switch-runtime';
 import { buildProviderDropRuntime } from '@/lib/provider-drop-runtime';
+import { buildSavedProviderRecoveryAuthorityResolver } from '@/lib/saved-provider-recovery-authority-resolver';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatGuideUpdatedAge, getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
@@ -26,6 +27,7 @@ import { MultiConnectionSwitchPanel } from './multi-connection-switch-panel';
 import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderDropPanel } from './provider-drop-panel';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
+import { SavedProviderRecoveryAuthorityPanel } from './saved-provider-recovery-authority-panel';
 
 const formatSeconds = (value?: number) => {
   if (!value || value <= 0) return '0:00';
@@ -382,6 +384,21 @@ export function PlayerDock() {
     liveRecovery.topVariant,
     savedProviderBoard,
   ]);
+  const playerRecoveryAuthorityRuntime = useMemo(() => buildSavedProviderRecoveryAuthorityResolver({
+    screenId: 'player',
+    board: savedProviderBoard,
+    subjectTitle: currentStream?.name ?? historyItem?.title ?? null,
+    switchRuntime: multiConnectionSwitchRuntime,
+    lineReleaseRuntime: livePlayerLineReleaseRuntime,
+    lineClearanceRuntime: livePlayerLineClearanceRuntime,
+  }), [
+    currentStream?.name,
+    historyItem?.title,
+    livePlayerLineClearanceRuntime,
+    livePlayerLineReleaseRuntime,
+    multiConnectionSwitchRuntime,
+    savedProviderBoard,
+  ]);
 
   const handleQuickSwitch = (providerId: string) => {
     const switched = setActiveConnection(providerId, {
@@ -592,6 +609,10 @@ export function PlayerDock() {
               <LivePlayerControlPanel contract={livePlayerControlRuntime} />
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />
               <LivePlayerFocusReturnPanel contract={livePlayerFocusReturnRuntime} />
+              <SavedProviderRecoveryAuthorityPanel
+                runtime={playerRecoveryAuthorityRuntime}
+                onSelectProvider={handleQuickSwitch}
+              />
               <LivePlayerLineClearancePanel
                 contract={livePlayerLineClearanceRuntime}
                 onPrimaryAction={livePlayerLineClearanceRuntime?.nextMove.primaryActionLabel ? handleLineClearancePrimaryAction : undefined}
