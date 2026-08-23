@@ -18,6 +18,7 @@ import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical
 import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-canonical-provider-identity-inline';
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceLineReleaseWitnessInline } from '@/components/surface-line-release-witness-inline';
+import { SurfaceLineClearancePriorityInline } from '@/components/surface-line-clearance-priority-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
@@ -87,6 +88,7 @@ import { buildPlaybackHistoryRuntime } from '@/lib/playback-history-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderLineReleaseRuntime } from '@/lib/saved-provider-line-release-runtime';
+import { buildSavedProviderLineClearancePriorityRuntime } from '@/lib/saved-provider-line-clearance-priority-runtime';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
@@ -333,6 +335,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceLineReleaseWitnessContracts?.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const lineClearancePriority = useMemo(
+    () => manifest?.surfaceLineClearancePriorityContracts?.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const downgradeLadder = useMemo(
     () => manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -489,6 +495,13 @@ export function HomeDashboard() {
       board: savedProviderBoard,
     }),
     [lineReleaseWitness, savedProviderBoard]
+  );
+  const lineClearancePriorityRuntime = useMemo(
+    () => buildSavedProviderLineClearancePriorityRuntime({
+      contract: lineClearancePriority,
+      board: savedProviderBoard,
+    }),
+    [lineClearancePriority, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -650,6 +663,7 @@ export function HomeDashboard() {
   const autonomyBoundary = runtimeSurfaceContracts?.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = connectionHeadroomRuntime || null;
   const homeLineReleaseWitness = lineReleaseWitnessRuntime || null;
+  const homeLineClearancePriority = lineClearancePriorityRuntime || null;
   const homeFocusReturnRuntime = useMemo(() => ({
     currentAnchor: focusAnchor,
     backTarget: focusAnchor.toLowerCase().includes('rail') ? 'Last earned rail' : 'Featured hero lane',
@@ -1153,6 +1167,16 @@ export function HomeDashboard() {
         manifest={manifest}
         screenId="home"
         runtime={homeLineReleaseWitness}
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'home',
+          reason: 'quick-switch',
+          preservedTitle: home.featured?.name || null,
+        })}
+      />
+      <SurfaceLineClearancePriorityInline
+        manifest={manifest}
+        screenId="home"
+        runtime={homeLineClearancePriority}
         onSelectProvider={(providerId) => setActiveConnection(providerId, {
           sourceSurface: 'home',
           reason: 'quick-switch',
