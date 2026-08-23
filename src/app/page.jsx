@@ -76,6 +76,7 @@ import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
+import { SurfaceRecoveryAuthorityResolverInline } from '@/components/surface-recovery-authority-resolver-inline';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
 import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
@@ -883,6 +884,15 @@ export default function LoginPage() {
               manifest={manifest}
               screenId="login"
               runtime={loginLineClearancePriority}
+              onSelectProvider={(providerId) => selectSavedProvider(providerId, 'quick-switch')}
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceRecoveryAuthorityResolverInline
+              runtime={loginRecoveryAuthority}
+              title="Connect unified recovery authority"
+              badge="Final owner truth"
               onSelectProvider={(providerId) => selectSavedProvider(providerId, 'quick-switch')}
             />
           </div>

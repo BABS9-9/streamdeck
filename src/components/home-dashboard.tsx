@@ -79,6 +79,7 @@ import { SurfaceRemotePathInline } from '@/components/surface-remote-path-inline
 import { SurfaceResumeCustodyInline } from '@/components/surface-resume-custody-inline';
 import { SurfaceSelectionCustodyInline } from '@/components/surface-selection-custody-inline';
 import { SurfaceRecoveryPlan } from '@/components/surface-recovery-plan';
+import { SurfaceRecoveryAuthorityResolverInline } from '@/components/surface-recovery-authority-resolver-inline';
 import { SurfaceRescueReceiptInline } from '@/components/surface-rescue-receipt-inline';
 import { SurfaceResetBoundaryInline } from '@/components/surface-reset-boundary-inline';
 import { SurfaceRetryContract } from '@/components/surface-retry-contract';
@@ -1211,6 +1212,16 @@ export function HomeDashboard() {
         manifest={manifest}
         screenId="home"
         runtime={homeLineClearancePriority}
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'home',
+          reason: 'quick-switch',
+          preservedTitle: home.featured?.name || null,
+        })}
+      />
+      <SurfaceRecoveryAuthorityResolverInline
+        runtime={homeRecoveryAuthority}
+        title="Hero unified recovery authority"
+        badge="Final owner truth"
         onSelectProvider={(providerId) => setActiveConnection(providerId, {
           sourceSurface: 'home',
           reason: 'quick-switch',
