@@ -1406,6 +1406,49 @@ export type LivePlayerContinuityRuntimeContract = {
   };
 };
 
+export type LivePlayerLineReleaseEntry = {
+  id: 'current-owner' | 'release-witness' | 'fallback-owner' | 'line-headroom';
+  label: string;
+  state: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerLineReleaseSignal = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerLineReleaseRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  activeProviderId: string | null;
+  playbackOwnerProviderId: string | null;
+  recommendedProviderId: string | null;
+  fallbackProviderId: string | null;
+  currentOwnerLabel: string;
+  releaseWitnessLabel: string;
+  fallbackOwnerLabel: string;
+  capState: 'room-available' | 'last-safe-line' | 'line-saturated' | 'proof-pending';
+  entries: LivePlayerLineReleaseEntry[];
+  signals: LivePlayerLineReleaseSignal[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    targetProviderId: string | null;
+    primaryActionLabel: string | null;
+    secondaryActionLabel: string | null;
+  };
+};
+
 export type LiveMarketAuthorityState =
   | 'account-home-zip'
   | 'home-network'
