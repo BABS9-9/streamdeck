@@ -878,6 +878,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'unified-recovery-authority',
+    feature: 'Unified recovery authority',
+    pitch: 'Collapse fast-switch authority, line-release truth, and reclaimed-line priority into one final owner and one explicit next move before premium CTA copy speaks with confidence.',
+    competitiveGap: 'Competitors usually surface several nearby recovery hints without naming one final owner, so users get multiple plausible saved-provider stories and no single honest answer about who owns the next move.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one unified recovery-authority resolver so visible owner, final owner, fail-closed reason, return trigger, and next-move action stay aligned beside Connect, the hero CTA, and Play before recovery truth fragments into competing saved-provider narratives.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'saved-provider-podium',
     feature: 'Saved-provider podium',
     pitch: 'Keep a compact podium beside premium CTAs so provider ownership, standby recovery, and blocked shortcuts are readable before the next move changes hands.',
