@@ -12,6 +12,7 @@ import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary'
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceClaimCeilingInline } from '@/components/surface-claim-ceiling-inline';
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
+import { SurfaceLineReleaseWitnessInline } from '@/components/surface-line-release-witness-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
@@ -80,6 +81,7 @@ import { SurfaceRescueReceipt } from '@/components/surface-rescue-receipt';
 import { GuideCoverageStrip } from '@/components/guide-coverage-strip';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
+import { buildSavedProviderLineReleaseRuntime } from '@/lib/saved-provider-line-release-runtime';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSurfaceContinuityWindowRuntime } from '@/lib/surface-continuity-window-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
@@ -362,6 +364,10 @@ export default function LoginPage() {
     () => manifest?.surfaceMultiConnectionCustodyContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
+  const lineReleaseWitness = useMemo(
+    () => manifest?.surfaceLineReleaseWitnessContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
   const savedProviderBoard = useMemo(
     () => buildSavedProviderHealthBoard({
       connections,
@@ -409,6 +415,13 @@ export default function LoginPage() {
       subjectTitle: watchHistory[0]?.title ?? null,
     }),
     [lastSwitchContext, savedProviderBoard, watchHistory]
+  );
+  const lineReleaseWitnessRuntime = useMemo(
+    () => buildSavedProviderLineReleaseRuntime({
+      contract: lineReleaseWitness,
+      board: savedProviderBoard,
+    }),
+    [lineReleaseWitness, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -550,6 +563,7 @@ export default function LoginPage() {
   const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs?.find((item) => item.screenId === 'login') || null;
   const autonomyBoundary = runtimeSurfaceContracts?.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = connectionHeadroomRuntime || null;
+  const loginLineReleaseWitness = lineReleaseWitnessRuntime || null;
   const loginFocusReturnRuntime = useMemo(() => {
     const savedLaneActive = loginFocusAnchor.toLowerCase().includes('saved');
     return {
@@ -804,6 +818,15 @@ export default function LoginPage() {
               runtime={multiConnectionSwitchRuntime}
               title="Fast provider switch"
               badge="Runtime honesty"
+              onSelectProvider={(providerId) => selectSavedProvider(providerId, 'quick-switch')}
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceLineReleaseWitnessInline
+              manifest={manifest}
+              screenId="login"
+              runtime={loginLineReleaseWitness}
               onSelectProvider={(providerId) => selectSavedProvider(providerId, 'quick-switch')}
             />
           </div>

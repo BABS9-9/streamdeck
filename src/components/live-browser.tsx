@@ -17,6 +17,7 @@ import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-canonical-provider-identity-inline';
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
+import { SurfaceLineReleaseWitnessInline } from '@/components/surface-line-release-witness-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
@@ -87,6 +88,7 @@ import { buildMultiConnectionGuideRuntimeContract } from '@/lib/multi-connection
 import { buildPlaybackResilienceContract } from '@/lib/playback-resilience-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
+import { buildSavedProviderLineReleaseRuntime } from '@/lib/saved-provider-line-release-runtime';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
@@ -269,6 +271,7 @@ export function LiveBrowser() {
   const holdReceipt = manifest?.surfaceHoldReceipts.find((item) => item.screenId === 'live') ?? null;
   const continuityWindow = manifest?.surfaceContinuityWindows.find((item) => item.screenId === 'live') ?? null;
   const multiConnectionCustody = manifest?.surfaceMultiConnectionCustodyContracts?.find((item) => item.screenId === 'live') ?? null;
+  const lineReleaseWitness = manifest?.surfaceLineReleaseWitnessContracts?.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
   const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
   const providerSwitchContract = manifest?.surfaceProviderSwitchContracts.find((item) => item.screenId === 'live') ?? null;
@@ -343,6 +346,13 @@ export function LiveBrowser() {
       subjectTitle: selectedStream?.name ?? watchHistory[0]?.title ?? null,
     }),
     [lastSwitchContext, savedProviderBoard, selectedStream?.name, watchHistory]
+  );
+  const lineReleaseWitnessRuntime = useMemo(
+    () => buildSavedProviderLineReleaseRuntime({
+      contract: lineReleaseWitness,
+      board: savedProviderBoard,
+    }),
+    [lineReleaseWitness, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -501,6 +511,7 @@ export function LiveBrowser() {
   const handoffMap = runtimeSurfaceContracts.handoffMap;
   const autonomyBoundary = runtimeSurfaceContracts.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = connectionHeadroomRuntime || null;
+  const liveLineReleaseWitness = lineReleaseWitnessRuntime || null;
   const liveFocusReturnRuntime = useMemo(() => ({
     currentAnchor: focusAnchor,
     backTarget: focusAnchor.toLowerCase().includes('filter') ? 'Active filter lane' : 'Selected channel card',
@@ -698,6 +709,16 @@ export function LiveBrowser() {
       <MultiConnectionSwitchPanel
         runtime={multiConnectionSwitchRuntime}
         badge="Multi-connection switch runtime"
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'live',
+          reason: 'quick-switch',
+          preservedTitle: selectedStream?.name || null,
+        })}
+      />
+      <SurfaceLineReleaseWitnessInline
+        manifest={manifest}
+        screenId="live"
+        runtime={liveLineReleaseWitness}
         onSelectProvider={(providerId) => setActiveConnection(providerId, {
           sourceSurface: 'live',
           reason: 'quick-switch',

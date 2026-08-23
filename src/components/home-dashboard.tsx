@@ -17,6 +17,7 @@ import { ProviderRiskStrip } from '@/components/provider-risk-strip';
 import { SurfaceCanonicalProviderIdentity } from '@/components/surface-canonical-provider-identity';
 import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-canonical-provider-identity-inline';
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
+import { SurfaceLineReleaseWitnessInline } from '@/components/surface-line-release-witness-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
@@ -85,6 +86,7 @@ import { buildSurfaceContinuityWindowRuntime } from '@/lib/surface-continuity-wi
 import { buildPlaybackHistoryRuntime } from '@/lib/playback-history-runtime';
 import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
+import { buildSavedProviderLineReleaseRuntime } from '@/lib/saved-provider-line-release-runtime';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
@@ -327,6 +329,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceMultiConnectionCustodyContracts?.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const lineReleaseWitness = useMemo(
+    () => manifest?.surfaceLineReleaseWitnessContracts?.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const downgradeLadder = useMemo(
     () => manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -476,6 +482,13 @@ export function HomeDashboard() {
       subjectTitle: home.featured?.name ?? continueWatching[0]?.title ?? null,
     }),
     [continueWatching, home.featured?.name, lastSwitchContext, savedProviderBoard]
+  );
+  const lineReleaseWitnessRuntime = useMemo(
+    () => buildSavedProviderLineReleaseRuntime({
+      contract: lineReleaseWitness,
+      board: savedProviderBoard,
+    }),
+    [lineReleaseWitness, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -636,6 +649,7 @@ export function HomeDashboard() {
   const handoffMap = runtimeSurfaceContracts?.handoffMap || manifest?.surfaceHandoffs.find((item) => item.screenId === 'home') || null;
   const autonomyBoundary = runtimeSurfaceContracts?.autonomyBoundary || manifestAutonomyBoundary;
   const connectionHeadroom = connectionHeadroomRuntime || null;
+  const homeLineReleaseWitness = lineReleaseWitnessRuntime || null;
   const homeFocusReturnRuntime = useMemo(() => ({
     currentAnchor: focusAnchor,
     backTarget: focusAnchor.toLowerCase().includes('rail') ? 'Last earned rail' : 'Featured hero lane',
@@ -1129,6 +1143,16 @@ export function HomeDashboard() {
       <MultiConnectionSwitchPanel
         runtime={multiConnectionSwitchRuntime}
         badge="Multi-connection switch runtime"
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'home',
+          reason: 'quick-switch',
+          preservedTitle: home.featured?.name || null,
+        })}
+      />
+      <SurfaceLineReleaseWitnessInline
+        manifest={manifest}
+        screenId="home"
+        runtime={homeLineReleaseWitness}
         onSelectProvider={(providerId) => setActiveConnection(providerId, {
           sourceSurface: 'home',
           reason: 'quick-switch',
