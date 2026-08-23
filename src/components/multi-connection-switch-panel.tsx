@@ -105,7 +105,7 @@ export function MultiConnectionSwitchPanel({
                   onClick={() => onSelectProvider(provider.providerId)}
                   className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-[10px] uppercase tracking-[0.22em] text-white transition hover:bg-white/10"
                 >
-                  {runtime.recommendedProviderId === provider.providerId ? 'Switch to healthiest' : 'Switch here'}
+                  {provider.actionLabel}
                 </button>
               ) : null}
             </div>

@@ -140,8 +140,10 @@ const buildRecommendedAction = ({
 
 const buildProviderEntry = ({
   board,
+  screenId,
 }: {
   board: SavedProviderHealthBoard;
+  screenId: ScreenId;
 }) => (provider: SavedProviderHealthBoard['providers'][number]): MultiConnectionSwitchRuntimeProviderEntry => {
   const quickSwitchTruth = provider.switchState === 'blocked'
     ? 'Quick switch blocked'
@@ -173,6 +175,13 @@ const buildProviderEntry = ({
     quickSwitchTruth,
     failClosedReason,
     headroomLabel,
+    actionLabel: screenId === 'player'
+      ? isRecommended
+        ? 'Quick-switch playback'
+        : 'Try this playback owner'
+      : isRecommended
+        ? 'Switch to healthiest'
+        : 'Switch here',
     tone: isRecommended && recommendedTone === 'ready'
       ? 'ready'
       : recommendedTone,
@@ -192,7 +201,7 @@ export const buildMultiConnectionSwitchRuntime = ({
 }): MultiConnectionSwitchRuntimeContract | null => {
   if (board.providers.length === 0) return null;
 
-  const providers = board.providers.map(buildProviderEntry({ board }));
+  const providers = board.providers.map(buildProviderEntry({ board, screenId }));
   const tone = providers.reduce<MultiConnectionSwitchRuntimeContract['tone']>((current, provider) => (
     toneRank[provider.tone] > toneRank[current] ? provider.tone : current
   ), getRuntimeTone(board));

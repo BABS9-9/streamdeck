@@ -31,6 +31,36 @@ const formatSeconds = (value?: number) => {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 };
 
+const getQuickSwitchPlaybackTarget = ({
+  currentStream,
+  targetProviderId,
+  currentProviderId,
+  connections,
+  connectionStatus,
+}: {
+  currentStream: NonNullable<ReturnType<typeof usePlayerStore.getState>['currentStream']>;
+  targetProviderId: string;
+  currentProviderId: string;
+  connections: ReturnType<typeof useAuthStore.getState>['connections'];
+  connectionStatus: ReturnType<typeof useAuthStore.getState>['connectionStatus'];
+}) => {
+  if (currentStream.stream_type !== 'live') return null;
+
+  const exactVariant = getLiveProviderVariants({
+    title: currentStream.name,
+    activeConnectionId: currentProviderId,
+    connections,
+    connectionStatus,
+  }).find((variant) => variant.providerId === targetProviderId);
+
+  if (!exactVariant?.stream || !exactVariant.playbackUrl) return null;
+
+  return {
+    stream: exactVariant.stream,
+    playbackUrl: exactVariant.playbackUrl,
+  };
+};
+
 export function PlayerDock() {
   const currentStream = usePlayerStore((state) => state.currentStream);
   const playbackUrl = usePlayerStore((state) => state.playbackUrl);
@@ -288,6 +318,28 @@ export function PlayerDock() {
     lastSwitchContext,
     savedProviderBoard,
   ]);
+  const handleQuickSwitch = (providerId: string) => {
+    const switched = setActiveConnection(providerId, {
+      sourceSurface: 'player',
+      reason: 'quick-switch',
+      preservedTitle: currentStream?.name ?? historyItem?.title ?? null,
+    });
+    if (!switched || !currentStream || !currentProviderId) return;
+
+    const playbackTarget = getQuickSwitchPlaybackTarget({
+      currentStream,
+      targetProviderId: providerId,
+      currentProviderId,
+      connections,
+      connectionStatus,
+    });
+
+    if (!playbackTarget) return;
+
+    playStream(playbackTarget.stream, playbackTarget.playbackUrl, providerId, {
+      sourceSurface: 'player',
+    });
+  };
 
   useEffect(() => {
     if (!currentProvider || !currentStream || currentStream.stream_type !== 'live' || !contentId) return;
@@ -385,7 +437,11 @@ export function PlayerDock() {
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />
               <LivePlayerFocusReturnPanel contract={livePlayerFocusReturnRuntime} />
               <LivePlayerRemotePanel contract={livePlayerRemoteRuntime} />
-              <MultiConnectionSwitchPanel runtime={multiConnectionSwitchRuntime} badge="Player fast provider switching" />
+              <MultiConnectionSwitchPanel
+                runtime={multiConnectionSwitchRuntime}
+                badge="Player fast provider switching"
+                onSelectProvider={handleQuickSwitch}
+              />
               <ProviderDropPanel contract={playerProviderDropRuntime} />
 
               {currentStream.stream_type === 'live' ? (

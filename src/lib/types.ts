@@ -928,6 +928,7 @@ export type MultiConnectionSwitchRuntimeProviderEntry = {
   quickSwitchTruth: string;
   failClosedReason: string;
   headroomLabel: string;
+  actionLabel: string;
   tone: MultiConnectionSwitchRuntimeTone;
 };
 
