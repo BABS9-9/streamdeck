@@ -855,6 +855,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'line-clearance-priority',
+    feature: 'Line-clearance priority',
+    pitch: 'Keep the first rightful claimant to the next freed provider line visible before recovered capacity quietly changes saved-provider ownership.',
+    competitiveGap: 'Competitors usually treat a freed provider line like generic relief, so users never see which saved owner should reclaim the reopened slot, which contender stays secondary, or what exact proof breaks that reclaim order.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one line-clearance priority contract so claimant owner, alternate contender, reclaim rule, and blocked claimant stay visible beside premium CTAs before recovered capacity gets spent by the wrong saved provider.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'saved-provider-podium',
     feature: 'Saved-provider podium',
     pitch: 'Keep a compact podium beside premium CTAs so provider ownership, standby recovery, and blocked shortcuts are readable before the next move changes hands.',
@@ -5017,6 +5026,87 @@ const buildSurfaceLineReleaseWitnessContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceLineClearancePriorityContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    eyebrow: 'Freed-line claimant',
+    title: 'Login should say who rightfully gets the next open line',
+    summary: scenario === 'lineSaturated'
+      ? 'Connect should name which saved owner rightfully reclaims the next freed line, which contender stays secondary, and what proof would break that reclaim order before setup quietly spends recovered capacity.'
+      : 'Connect should keep the next freed-line claimant visible before setup quietly treats recovered capacity like a generic green light.',
+    priorities: [
+      {
+        label: 'Reconnect claimant',
+        claimantOwner: 'The saved provider with the clearest reconnect proof and the strongest right to reclaim the next open line first.',
+        alternateContender: 'A healthier saved fallback may stay visible, but it should remain secondary until the reclaim rule actually breaks.',
+        reclaimRule: 'Only let the claimant retake Connect authority when the reopened slot still points at the same provider owner, same credentials, and same next Home path.',
+        blockedClaimant: 'Block any saved claimant whose auth, expiry, or cap posture still says the reopened slot would be wasted immediately.',
+        tone: scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+      {
+        label: 'Fallback claimant',
+        claimantOwner: 'If the original reconnect owner is still blocked, the healthiest saved provider becomes the rightful claimant for the reopened launch window.',
+        alternateContender: 'The previous owner stays visible as a contender only after fresh proof says it can reclaim setup honestly again.',
+        reclaimRule: 'The fallback claimant only keeps Connect if the reopened line still makes the same setup destination safer than retrying the blocked source.',
+        blockedClaimant: 'A fallback owner must stay blocked if it still inherits the same cap, expiry, or unstable-auth failure posture.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    eyebrow: 'Featured reclaim order',
+    title: 'Home should say who rightfully gets the next open line',
+    summary: scenario === 'lineSaturated'
+      ? 'The hero should name which saved owner rightfully reclaims the next freed line, which contender stays secondary, and what proof breaks that reclaim order before featured launch spends recovered capacity.'
+      : 'The hero should keep the next freed-line claimant visible before cinematic browse treats recovered capacity like generic launch relief.',
+    priorities: [
+      {
+        label: 'Featured launch claimant',
+        claimantOwner: 'The saved provider that still best preserves the current featured story should reclaim the next freed line first.',
+        alternateContender: 'A healthier standby may stay visible, but it should not quietly steal the reopened launch slot without proof that the featured story changed owners.',
+        reclaimRule: 'Only let the claimant retake the hero if the reopened slot still backs the same featured title, same browse promise, and same provider owner.',
+        blockedClaimant: 'Keep any claimant blocked if fresh browse, guide, or cap proof still says the reopened slot would not honestly support the same hero launch.',
+        tone: scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+      {
+        label: 'Browse fallback claimant',
+        claimantOwner: 'If the featured owner is still blocked, the healthiest saved browse owner becomes the rightful claimant for the next open line.',
+        alternateContender: 'The previous featured owner stays secondary until it can reclaim the same launch story without borrowing rescue confidence.',
+        reclaimRule: 'The fallback claimant only keeps the hero if the reopened line still makes the same featured launch safer than waiting on the blocked source.',
+        blockedClaimant: 'A fallback claimant must stay blocked when it would only reopen approximate browse momentum instead of the same featured launch.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    eyebrow: 'Play reclaim order',
+    title: 'Live should say who rightfully gets the next open line',
+    summary: scenario === 'lineSaturated'
+      ? 'Play should name which saved owner rightfully reclaims the next freed line, which contender stays secondary, and what proof breaks that reclaim order before selected-card launch spends recovered capacity.'
+      : 'Play should keep the next freed-line claimant visible before preview momentum treats recovered capacity like a generic go signal.',
+    priorities: [
+      {
+        label: 'Selected-card claimant',
+        claimantOwner: 'The saved provider that still best preserves the exact selected-card watch path should reclaim the next freed line first.',
+        alternateContender: 'A healthier standby may stay visible, but it should remain secondary until the reclaim rule says the exact selected-card owner has changed.',
+        reclaimRule: 'Only let the claimant retake Play when the reopened slot still backs the same selected channel, same preview posture, and same watch target.',
+        blockedClaimant: 'Keep any claimant blocked if preview, guide, or cap posture still says the reopened slot would not honestly support the same selected-card launch.',
+        tone: scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+      {
+        label: 'Same-lane fallback claimant',
+        claimantOwner: 'If the exact selected-card owner is still blocked, the healthiest same-lane fallback becomes the rightful claimant for the reopened line.',
+        alternateContender: 'The previous selected-card owner stays secondary until it can reclaim the same watch target without borrowed preview or rescue proof.',
+        reclaimRule: 'The fallback claimant only keeps Play if the reopened line still makes the same selected-lane watch story safer than waiting on the blocked source.',
+        blockedClaimant: 'A fallback claimant must stay blocked when it would only reopen approximate lane momentum instead of the same selected-card launch.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -6100,6 +6190,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceMultiConnectionCustodyContracts: buildSurfaceMultiConnectionCustodyContracts(scenario),
   surfaceProviderDropContinuityContracts: buildSurfaceProviderDropContinuityContracts(scenario),
   surfaceLineReleaseWitnessContracts: buildSurfaceLineReleaseWitnessContracts(scenario),
+  surfaceLineClearancePriorityContracts: buildSurfaceLineClearancePriorityContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),

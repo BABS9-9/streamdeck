@@ -964,6 +964,24 @@ export type SurfaceLineReleaseWitnessRuntimeContract = {
   fallbackProviderId: string | null;
 };
 
+export type SurfaceLineClearancePriorityRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  currentClaimant: string;
+  alternateContender: string;
+  reclaimRule: string;
+  blockedClaimant: string;
+  detail: string;
+  tone: 'ready' | 'watch' | 'recover';
+  providerCount: number;
+  saturatedProviderCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  claimantProviderId: string | null;
+  alternateProviderId: string | null;
+};
+
 export type SurfaceProviderStabilityRuntimeEntry = {
   label: string;
   stabilityThreshold: string;
@@ -1785,6 +1803,20 @@ export type MockProviderManifest = {
       saturatedOwner: string;
       releaseWitness: string;
       fallbackOwner: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
+  surfaceLineClearancePriorityContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    eyebrow: string;
+    title: string;
+    summary: string;
+    priorities: Array<{
+      label: string;
+      claimantOwner: string;
+      alternateContender: string;
+      reclaimRule: string;
+      blockedClaimant: string;
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
