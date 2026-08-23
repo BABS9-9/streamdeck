@@ -982,6 +982,22 @@ export type SurfaceLineClearancePriorityRuntimeContract = {
   alternateProviderId: string | null;
 };
 
+export type SurfaceRecoveryAuthorityRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  authorityOwner: string;
+  activeOwner: string;
+  fallbackReason: string;
+  returnTrigger: string;
+  detail: string;
+  tone: 'ready' | 'watch' | 'recover';
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  authorityProviderId: string | null;
+};
+
 export type SurfaceProviderStabilityRuntimeEntry = {
   label: string;
   stabilityThreshold: string;
@@ -1860,6 +1876,20 @@ export type MockProviderManifest = {
       alternateContender: string;
       reclaimRule: string;
       blockedClaimant: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
+  surfaceRecoveryAuthorityContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    eyebrow: string;
+    title: string;
+    summary: string;
+    authorities: Array<{
+      label: string;
+      authorityOwner: string;
+      activeOwner: string;
+      fallbackReason: string;
+      returnTrigger: string;
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;

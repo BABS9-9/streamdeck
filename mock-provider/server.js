@@ -320,6 +320,11 @@ const buildDifferentiators = () => ([
     surface: 'login',
   },
   {
+    title: 'Recovery authority ledger on login',
+    detail: 'The adapter now publishes which saved provider currently owns the next honest Home recovery move, why fallback has authority right now, and what exact trigger lets setup hand ownership back.',
+    surface: 'login',
+  },
+  {
     title: 'Recovery route on login',
     detail: 'The adapter now publishes the fastest safe handoff once Login stops being the honest owner of the next Home launch.',
     surface: 'login',
@@ -861,6 +866,15 @@ const buildCompetitiveDifferentiators = () => ([
     competitiveGap: 'Competitors usually treat a freed provider line like generic relief, so users never see which saved owner should reclaim the reopened slot, which contender stays secondary, or what exact proof breaks that reclaim order.',
     buildPhase: 'Phase 1',
     architectureNotes: 'Drive Login, Home, and Live from one line-clearance priority contract so claimant owner, alternate contender, reclaim rule, and blocked claimant stay visible beside premium CTAs before recovered capacity gets spent by the wrong saved provider.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
+    slug: 'recovery-authority-ledger',
+    feature: 'Recovery authority ledger',
+    pitch: 'Keep the final honest recovery owner, the current fallback reason, and the exact return trigger visible before the next move quietly hands ownership back.',
+    competitiveGap: 'Competitors usually blur retry, rescue, and return-to-owner into one vague “try again” story, so users cannot tell who actually owns the next safe move once provider truth starts drifting.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one recovery-authority ledger so authority owner, active owner, fallback reason, and return trigger stay visible beside premium CTAs before recovery copy overclaims that the original provider is already back.',
     surfaces: ['login', 'home', 'live'],
   },
   {
@@ -5107,6 +5121,93 @@ const buildSurfaceLineClearancePriorityContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceRecoveryAuthorityContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    eyebrow: 'Recovery owner ledger',
+    title: 'Login should say who currently owns the honest recovery move',
+    summary: scenario === 'healthy'
+      ? 'Connect should still keep the current recovery owner and return trigger visible so setup cannot quietly overclaim that the typed provider is the only safe next move.'
+      : 'Connect should name who currently owns the honest Home recovery move, why fallback has authority right now, and what exact trigger lets setup hand ownership back.',
+    authorities: [
+      {
+        label: 'Connect recovery owner',
+        authorityOwner: scenario === 'expiredAccount' || scenario === 'authUnstable' || scenario === 'lineSaturated'
+          ? 'The healthiest saved provider currently owns the honest recovery move into Home.'
+          : 'The active setup provider still owns the honest Connect-to-Home move while fallback stays secondary.',
+        activeOwner: 'The provider currently in the form still owns the visible setup shell until recovery outranks it explicitly.',
+        fallbackReason: scenario === 'expiredAccount'
+          ? 'Account expiry broke the original Home promise, so recovery has to own the next move.'
+          : scenario === 'authUnstable'
+            ? 'Auth instability means reconnect can no longer pretend it still owns the clean Home handoff.'
+            : scenario === 'lineSaturated'
+              ? 'Provider line pressure means capacity, not credentials, currently decides who owns the next honest move.'
+              : 'Fallback stays visible because saved-provider trust can still outrank blind reconnect if setup posture softens.',
+        returnTrigger: scenario === 'healthy'
+          ? 'Keep recovery secondary until auth, headroom, and provider trust all still point at the same Home owner.'
+          : 'Hand ownership back only after stable auth, spare line headroom, and the same Home destination all clear together.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    eyebrow: 'Featured recovery owner',
+    title: 'Home should say who currently owns the honest recovery move',
+    summary: scenario === 'healthy'
+      ? 'The hero should still keep the current recovery owner visible so browse confidence cannot quietly hand featured launch back on vibes alone.'
+      : 'The hero should name who currently owns the honest featured recovery move, why fallback has authority right now, and what exact trigger gives featured launch back to the original owner.',
+    authorities: [
+      {
+        label: 'Featured launch recovery owner',
+        authorityOwner: scenario === 'degradedEpg' || scenario === 'degradedLive' || scenario === 'lineSaturated'
+          ? 'The healthiest saved provider or fallback rail currently owns the honest featured-launch recovery move.'
+          : 'The active featured owner still owns the next browse-led launch while fallback stays on deck.',
+        activeOwner: 'The current hero still owns the visible browse story until recovery outranks it explicitly.',
+        fallbackReason: scenario === 'degradedEpg'
+          ? 'Guide drift softened the hero enough that fallback now owns the safer browse-to-launch promise.'
+          : scenario === 'degradedLive'
+            ? 'Live catalog softness means the hero cannot keep sounding fully provider-led without recovery help.'
+            : scenario === 'lineSaturated'
+              ? 'Provider line pressure changed who can honestly own the next featured launch.'
+              : 'Fallback stays visible because the hero may still need a safer launch owner if browse proof softens.',
+        returnTrigger: scenario === 'healthy'
+          ? 'Keep recovery secondary until hero proof, guide confidence, and provider headroom still reinforce the same featured owner.'
+          : 'Hand featured ownership back only after browse proof, guide confidence, and launch headroom all clear on the same hero again.',
+        tone: scenario === 'healthy' ? 'watch' : scenario === 'degradedEpg' || scenario === 'degradedLive' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    eyebrow: 'Play recovery owner',
+    title: 'Live should say who currently owns the honest recovery move',
+    summary: scenario === 'healthy'
+      ? 'Play should still keep the current recovery owner visible so preview motion cannot quietly hand watch authority back on one good moment.'
+      : 'Play should name who currently owns the honest watch recovery move, why fallback has authority right now, and what exact trigger gives exact-channel ownership back.',
+    authorities: [
+      {
+        label: 'Selected-card recovery owner',
+        authorityOwner: scenario === 'degradedLive' || scenario === 'degradedEpg' || scenario === 'lineSaturated'
+          ? 'The healthiest saved provider or same-category rescue currently owns the honest Play recovery move.'
+          : 'The selected-card owner still owns the next Play move while fallback stays visible but secondary.',
+        activeOwner: 'The selected card still owns the visible surf story until recovery outranks it explicitly.',
+        fallbackReason: scenario === 'degradedLive'
+          ? 'Preview and live-catalog softness mean recovery currently owns the safer watch promise.'
+          : scenario === 'degradedEpg'
+            ? 'Guide drift softened exact-channel confidence enough that fallback now owns the safer Play story.'
+            : scenario === 'lineSaturated'
+              ? 'Provider line pressure changed who can honestly own the next Play tap.'
+              : 'Fallback stays visible because the selected card may still need a safer recovery owner if preview proof softens.',
+        returnTrigger: scenario === 'healthy'
+          ? 'Keep recovery secondary until preview, guide proof, and provider headroom still support the same exact-channel owner.'
+          : 'Hand exact-channel ownership back only after preview stability, guide proof, and launch headroom all clear on the same selected card again.',
+        tone: scenario === 'healthy' ? 'watch' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -6191,6 +6292,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceProviderDropContinuityContracts: buildSurfaceProviderDropContinuityContracts(scenario),
   surfaceLineReleaseWitnessContracts: buildSurfaceLineReleaseWitnessContracts(scenario),
   surfaceLineClearancePriorityContracts: buildSurfaceLineClearancePriorityContracts(scenario),
+  surfaceRecoveryAuthorityContracts: buildSurfaceRecoveryAuthorityContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),
