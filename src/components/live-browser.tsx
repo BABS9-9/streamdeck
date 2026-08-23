@@ -19,6 +19,7 @@ import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-can
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceLineReleaseWitnessInline } from '@/components/surface-line-release-witness-inline';
 import { SurfaceLineClearancePriorityInline } from '@/components/surface-line-clearance-priority-inline';
+import { SurfaceRecoveryAuthorityInline } from '@/components/surface-recovery-authority-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
@@ -91,6 +92,7 @@ import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderLineReleaseRuntime } from '@/lib/saved-provider-line-release-runtime';
 import { buildSavedProviderLineClearancePriorityRuntime } from '@/lib/saved-provider-line-clearance-priority-runtime';
+import { buildSavedProviderRecoveryAuthorityRuntime } from '@/lib/saved-provider-recovery-authority-runtime';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
 import { buildSavedProviderFallbackExpiryRuntime } from '@/lib/saved-provider-fallback-expiry-runtime';
@@ -275,6 +277,7 @@ export function LiveBrowser() {
   const multiConnectionCustody = manifest?.surfaceMultiConnectionCustodyContracts?.find((item) => item.screenId === 'live') ?? null;
   const lineReleaseWitness = manifest?.surfaceLineReleaseWitnessContracts?.find((item) => item.screenId === 'live') ?? null;
   const lineClearancePriority = manifest?.surfaceLineClearancePriorityContracts?.find((item) => item.screenId === 'live') ?? null;
+  const recoveryAuthority = manifest?.surfaceRecoveryAuthorityContracts?.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
   const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
   const providerSwitchContract = manifest?.surfaceProviderSwitchContracts.find((item) => item.screenId === 'live') ?? null;
@@ -363,6 +366,13 @@ export function LiveBrowser() {
       board: savedProviderBoard,
     }),
     [lineClearancePriority, savedProviderBoard]
+  );
+  const recoveryAuthorityRuntime = useMemo(
+    () => buildSavedProviderRecoveryAuthorityRuntime({
+      contract: recoveryAuthority,
+      board: savedProviderBoard,
+    }),
+    [recoveryAuthority, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -523,6 +533,7 @@ export function LiveBrowser() {
   const connectionHeadroom = connectionHeadroomRuntime || null;
   const liveLineReleaseWitness = lineReleaseWitnessRuntime || null;
   const liveLineClearancePriority = lineClearancePriorityRuntime || null;
+  const liveRecoveryAuthority = recoveryAuthorityRuntime || null;
   const liveFocusReturnRuntime = useMemo(() => ({
     currentAnchor: focusAnchor,
     backTarget: focusAnchor.toLowerCase().includes('filter') ? 'Active filter lane' : 'Selected channel card',
@@ -740,6 +751,16 @@ export function LiveBrowser() {
         manifest={manifest}
         screenId="live"
         runtime={liveLineClearancePriority}
+        onSelectProvider={(providerId) => setActiveConnection(providerId, {
+          sourceSurface: 'live',
+          reason: 'quick-switch',
+          preservedTitle: selectedStream?.name || null,
+        })}
+      />
+      <SurfaceRecoveryAuthorityInline
+        manifest={manifest}
+        screenId="live"
+        runtime={liveRecoveryAuthority}
         onSelectProvider={(providerId) => setActiveConnection(providerId, {
           sourceSurface: 'live',
           reason: 'quick-switch',

@@ -14,6 +14,7 @@ import { SurfaceClaimCeilingInline } from '@/components/surface-claim-ceiling-in
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceLineReleaseWitnessInline } from '@/components/surface-line-release-witness-inline';
 import { SurfaceLineClearancePriorityInline } from '@/components/surface-line-clearance-priority-inline';
+import { SurfaceRecoveryAuthorityInline } from '@/components/surface-recovery-authority-inline';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
 import { SurfaceConfidenceFloorInline } from '@/components/surface-confidence-floor-inline';
@@ -84,6 +85,7 @@ import { buildProviderGuideContinuity } from '@/lib/provider-guide-continuity';
 import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderLineReleaseRuntime } from '@/lib/saved-provider-line-release-runtime';
 import { buildSavedProviderLineClearancePriorityRuntime } from '@/lib/saved-provider-line-clearance-priority-runtime';
+import { buildSavedProviderRecoveryAuthorityRuntime } from '@/lib/saved-provider-recovery-authority-runtime';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSurfaceContinuityWindowRuntime } from '@/lib/surface-continuity-window-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
@@ -374,6 +376,10 @@ export default function LoginPage() {
     () => manifest?.surfaceLineClearancePriorityContracts?.find((item) => item.screenId === 'login') ?? null,
     [manifest]
   );
+  const recoveryAuthority = useMemo(
+    () => manifest?.surfaceRecoveryAuthorityContracts?.find((item) => item.screenId === 'login') ?? null,
+    [manifest]
+  );
   const savedProviderBoard = useMemo(
     () => buildSavedProviderHealthBoard({
       connections,
@@ -435,6 +441,13 @@ export default function LoginPage() {
       board: savedProviderBoard,
     }),
     [lineClearancePriority, savedProviderBoard]
+  );
+  const recoveryAuthorityRuntime = useMemo(
+    () => buildSavedProviderRecoveryAuthorityRuntime({
+      contract: recoveryAuthority,
+      board: savedProviderBoard,
+    }),
+    [recoveryAuthority, savedProviderBoard]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -578,6 +591,7 @@ export default function LoginPage() {
   const connectionHeadroom = connectionHeadroomRuntime || null;
   const loginLineReleaseWitness = lineReleaseWitnessRuntime || null;
   const loginLineClearancePriority = lineClearancePriorityRuntime || null;
+  const loginRecoveryAuthority = recoveryAuthorityRuntime || null;
   const loginFocusReturnRuntime = useMemo(() => {
     const savedLaneActive = loginFocusAnchor.toLowerCase().includes('saved');
     return {
@@ -850,6 +864,15 @@ export default function LoginPage() {
               manifest={manifest}
               screenId="login"
               runtime={loginLineClearancePriority}
+              onSelectProvider={(providerId) => selectSavedProvider(providerId, 'quick-switch')}
+            />
+          </div>
+
+          <div className="mt-6">
+            <SurfaceRecoveryAuthorityInline
+              manifest={manifest}
+              screenId="login"
+              runtime={loginRecoveryAuthority}
               onSelectProvider={(providerId) => selectSavedProvider(providerId, 'quick-switch')}
             />
           </div>
