@@ -846,6 +846,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'line-release-witness',
+    feature: 'Line-release witness',
+    pitch: 'Keep the exact line-clearance proof and fallback owner visible before a capped provider is allowed to sound launch-ready again.',
+    competitiveGap: 'Competitors usually present active-connection caps as a blunt playback error, so users never see what exact line release or saved-provider fallback would restore honest launch authority.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one line-release witness contract so saturated owner, release proof, fallback owner, and cap posture stay visible beside premium CTAs before line-cap recovery gets mistaken for generic app instability.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'saved-provider-podium',
     feature: 'Saved-provider podium',
     pitch: 'Keep a compact podium beside premium CTAs so provider ownership, standby recovery, and blocked shortcuts are readable before the next move changes hands.',
@@ -4933,6 +4942,81 @@ const buildSurfaceProviderDropContinuityContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceLineReleaseWitnessContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    eyebrow: 'Line-cap truth',
+    title: 'Login should name what reopens a capped provider',
+    summary: scenario === 'lineSaturated'
+      ? 'Connect should say which provider is capped, what exact line-release witness would make it honest again, and which saved owner stays safer until then.'
+      : 'Connect should keep the line-release trigger visible before saved-provider confidence quietly implies that a capped owner is already safe again.',
+    witnesses: [
+      {
+        label: 'Connect authority',
+        saturatedOwner: 'The current login owner stays visibly capped instead of sounding generically broken.',
+        releaseWitness: 'A real provider line must clear or fresh validation must prove a healthier owner before premium Connect language returns.',
+        fallbackOwner: 'The healthiest saved provider stays visible as the honest owner while the capped source is waiting on capacity.',
+        tone: scenario === 'healthy' ? 'watch' : scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+      {
+        label: 'Saved-provider shortcut',
+        saturatedOwner: 'A shortcut cannot reclaim the capped owner just because it was the last successful provider.',
+        releaseWitness: 'The shortcut only becomes premium again after line headroom is genuinely back or a safer saved owner takes over.',
+        fallbackOwner: 'The shell reranks toward the saved provider with real remaining headroom.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    eyebrow: 'Hero cap witness',
+    title: 'Home should name what gives featured launch authority back',
+    summary: scenario === 'lineSaturated'
+      ? 'The hero can stay cinematic while still naming which provider is capped, what exact release witness restores launch honesty, and which saved fallback owner now deserves the CTA.'
+      : 'The hero should keep the line-release witness visible before browse confidence quietly implies that featured launch is already safe again.',
+    witnesses: [
+      {
+        label: 'Featured launch owner',
+        saturatedOwner: 'The featured owner stays visible even when the account ceiling strips direct launch authority away.',
+        releaseWitness: 'One provider line must clear or fresh recovery proof must move authority to a healthier saved owner before the hero sounds launch-ready again.',
+        fallbackOwner: 'The healthiest saved provider becomes the honest featured-launch fallback while the capped owner cools off.',
+        tone: scenario === 'healthy' ? 'watch' : scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+      {
+        label: 'Rail momentum',
+        saturatedOwner: 'Quick rails cannot hide that the current hero owner is out of room.',
+        releaseWitness: 'Rail launch regains premium posture only after real line headroom returns or a fallback owner takes over explicitly.',
+        fallbackOwner: 'Featured browse should still point to the provider with spare capacity instead of replaying stale hero confidence.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    eyebrow: 'Play cap witness',
+    title: 'Live should name what gives Play authority back',
+    summary: scenario === 'lineSaturated'
+      ? 'The selected card should say which provider is capped, what exact line-release witness restores watch authority, and which saved fallback owner is safer right now.'
+      : 'Play should keep the line-release witness visible before preview confidence quietly implies that a capped owner is already safe again.',
+    witnesses: [
+      {
+        label: 'Selected-card owner',
+        saturatedOwner: 'The selected-card owner stays named when line caps, not just the playback failure.',
+        releaseWitness: 'A real provider line must clear or a healthier saved owner must take over before Play sounds exact-channel ready again.',
+        fallbackOwner: 'The healthiest saved provider stays visible as the honest watch fallback while the capped owner is waiting on capacity.',
+        tone: scenario === 'healthy' ? 'watch' : scenario === 'lineSaturated' ? 'recover' : 'watch',
+      },
+      {
+        label: 'Preview momentum',
+        saturatedOwner: 'Preview motion cannot silently reclaim a provider that is still at its account ceiling.',
+        releaseWitness: 'Preview only earns premium Play posture again after live line headroom genuinely returns or a fallback owner becomes explicit.',
+        fallbackOwner: 'The selected card should surface the saved owner with real launch room instead of hiding behind motion.',
+        tone: scenario === 'healthy' ? 'ready' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -6015,6 +6099,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceResumeCustodyContracts: buildSurfaceResumeCustodyContracts(scenario),
   surfaceMultiConnectionCustodyContracts: buildSurfaceMultiConnectionCustodyContracts(scenario),
   surfaceProviderDropContinuityContracts: buildSurfaceProviderDropContinuityContracts(scenario),
+  surfaceLineReleaseWitnessContracts: buildSurfaceLineReleaseWitnessContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),

@@ -947,6 +947,23 @@ export type MultiConnectionSwitchRuntimeContract = {
   providers: MultiConnectionSwitchRuntimeProviderEntry[];
 };
 
+export type SurfaceLineReleaseWitnessRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  currentOwner: string;
+  releaseWitness: string;
+  fallbackOwner: string;
+  capStatus: string;
+  detail: string;
+  tone: 'ready' | 'watch' | 'recover';
+  providerCount: number;
+  saturatedProviderCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  fallbackProviderId: string | null;
+};
+
 export type SurfaceProviderStabilityRuntimeEntry = {
   label: string;
   stabilityThreshold: string;
@@ -1712,6 +1729,19 @@ export type MockProviderManifest = {
       droppedOwner: string;
       preserves: string;
       reclaimsWhen: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
+  surfaceLineReleaseWitnessContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    eyebrow: string;
+    title: string;
+    summary: string;
+    witnesses: Array<{
+      label: string;
+      saturatedOwner: string;
+      releaseWitness: string;
+      fallbackOwner: string;
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
