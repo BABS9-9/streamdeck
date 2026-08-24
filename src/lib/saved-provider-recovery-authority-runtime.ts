@@ -132,7 +132,7 @@ export const buildSavedProviderRecoveryAuthorityRuntime = ({
   contract: SurfaceRecoveryAuthorityDefinition | null;
   board: SavedProviderHealthBoard;
 }): SurfaceRecoveryAuthorityRuntimeContract | null => {
-  if (!contract || board.providers.length === 0) return null;
+  if (!contract || contract.screenId === 'player' || board.providers.length === 0) return null;
 
   const authorityProvider = getAuthorityProvider(board);
 

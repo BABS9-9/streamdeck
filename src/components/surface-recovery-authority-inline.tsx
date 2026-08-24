@@ -1,8 +1,8 @@
 'use client';
 
-import { MockProviderManifest, SurfaceRecoveryAuthorityRuntimeContract } from '@/lib/types';
+import { MockProviderManifest, SavedProviderRecoveryAuthorityRuntimeContract, SurfaceRecoveryAuthorityRuntimeContract } from '@/lib/types';
 
-type ScreenId = 'login' | 'home' | 'live';
+type ScreenId = 'login' | 'home' | 'live' | 'player';
 
 const toneStyles = {
   ready: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
@@ -16,6 +16,14 @@ const toneLabels = {
   recover: 'Recovery owns the next move',
 } as const;
 
+const getActionLabel = (screenId: ScreenId) => (
+  screenId === 'player' ? 'Hand playback to recovery owner' : 'Switch to recovery owner'
+);
+
+const isUnifiedRecoveryAuthorityRuntime = (
+  runtime: SurfaceRecoveryAuthorityRuntimeContract | SavedProviderRecoveryAuthorityRuntimeContract | null
+): runtime is SavedProviderRecoveryAuthorityRuntimeContract => Boolean(runtime && 'finalOwnerLabel' in runtime);
+
 export function SurfaceRecoveryAuthorityInline({
   manifest,
   screenId,
@@ -24,11 +32,21 @@ export function SurfaceRecoveryAuthorityInline({
 }: {
   manifest: MockProviderManifest | null;
   screenId: ScreenId;
-  runtime: SurfaceRecoveryAuthorityRuntimeContract | null;
+  runtime: SurfaceRecoveryAuthorityRuntimeContract | SavedProviderRecoveryAuthorityRuntimeContract | null;
   onSelectProvider?: (providerId: string) => void;
 }) {
   const contract = manifest?.surfaceRecoveryAuthorityContracts?.find((item) => item.screenId === screenId) ?? null;
   if (!contract || !runtime) return null;
+
+  const authorityOwner = isUnifiedRecoveryAuthorityRuntime(runtime)
+    ? runtime.finalOwnerLabel
+    : runtime.authorityOwner;
+  const activeOwner = isUnifiedRecoveryAuthorityRuntime(runtime)
+    ? runtime.visibleOwnerLabel
+    : runtime.activeOwner;
+  const fallbackReason = isUnifiedRecoveryAuthorityRuntime(runtime)
+    ? runtime.failClosedReason
+    : runtime.fallbackReason;
 
   const canSwitchAuthority = onSelectProvider
     && runtime.authorityProviderId
@@ -53,15 +71,15 @@ export function SurfaceRecoveryAuthorityInline({
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <article className="rounded-[1.35rem] border border-white/10 bg-black/20 p-4">
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Recovery owner</p>
-          <p className="mt-3 text-sm font-medium text-white">{runtime.authorityOwner}</p>
+          <p className="mt-3 text-sm font-medium text-white">{authorityOwner}</p>
         </article>
         <article className="rounded-[1.35rem] border border-white/10 bg-black/20 p-4">
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Visible owner</p>
-          <p className="mt-3 text-sm font-medium text-white">{runtime.activeOwner}</p>
+          <p className="mt-3 text-sm font-medium text-white">{activeOwner}</p>
         </article>
         <article className="rounded-[1.35rem] border border-white/10 bg-black/20 p-4">
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Fallback reason</p>
-          <p className="mt-3 text-sm font-medium text-white">{runtime.fallbackReason}</p>
+          <p className="mt-3 text-sm font-medium text-white">{fallbackReason}</p>
         </article>
         <article className="rounded-[1.35rem] border border-white/10 bg-black/20 p-4">
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Return trigger</p>
@@ -76,7 +94,7 @@ export function SurfaceRecoveryAuthorityInline({
           onClick={() => onSelectProvider(runtime.authorityProviderId as string)}
           className="mt-4 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-[10px] uppercase tracking-[0.22em] text-white transition hover:bg-white/10"
         >
-          Switch to recovery owner
+          {getActionLabel(screenId)}
         </button>
       ) : null}
 

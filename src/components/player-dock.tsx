@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { getContentId } from '@/lib/xtream-api';
 import { getLiveCategoryRecovery, getLiveProviderVariants } from '@/lib/provider-recovery';
 import { buildLivePlayerControlRuntime } from '@/lib/live-player-control-runtime';
@@ -13,6 +14,7 @@ import { buildMultiConnectionSwitchRuntime } from '@/lib/multi-connection-switch
 import { buildProviderDropRuntime } from '@/lib/provider-drop-runtime';
 import { buildSavedProviderRecoveryAuthorityResolver } from '@/lib/saved-provider-recovery-authority-resolver';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { MockProviderManifest } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatGuideUpdatedAge, getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { VideoPlayer } from './video-player';
@@ -28,6 +30,9 @@ import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderDropPanel } from './provider-drop-panel';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { SavedProviderRecoveryAuthorityPanel } from './saved-provider-recovery-authority-panel';
+import { SurfaceRecoveryAuthorityInline } from './surface-recovery-authority-inline';
+
+const MOCK_SERVER = 'http://localhost:3579';
 
 const formatSeconds = (value?: number) => {
   if (!value || value <= 0) return '0:00';
@@ -89,6 +94,8 @@ export function PlayerDock() {
   const refreshGuideEntry = useLiveGuideStore((state) => state.refreshGuideEntry);
   const getCoverageReport = useLiveGuideStore((state) => state.getCoverageReport);
   const syncByGuideKey = useLiveGuideStore((state) => state.syncByGuideKey);
+  const [manifest, setManifest] = useState<MockProviderManifest | null>(null);
+  const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
 
   const contentId = currentStream ? (currentStream.stream_id ?? currentStream.series_id ?? 0) : 0;
   const historyItem = currentProviderId ? watchHistory.find((item) => item.id === `${currentProviderId}-${contentId}`) : undefined;
@@ -114,6 +121,26 @@ export function PlayerDock() {
       : streamHealth.status === 'error'
         ? 'bg-rose-400/15 text-rose-200'
         : 'bg-white/10 text-slate-300';
+
+  useEffect(() => subscribeToMockProviderScenario((nextScenario) => {
+    setScenario(nextScenario);
+  }), []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMockProviderManifest(currentProvider ?? MOCK_SERVER, scenario)
+      .then((data) => {
+        if (!cancelled) setManifest(data);
+      })
+      .catch(() => {
+        if (!cancelled) setManifest(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentProvider, scenario]);
 
   const liveRecovery = useMemo(() => {
     if (!currentStream || currentStream.stream_type !== 'live' || !currentProviderId) return { topVariant: null, categoryFallback: null };
@@ -609,6 +636,12 @@ export function PlayerDock() {
               <LivePlayerControlPanel contract={livePlayerControlRuntime} />
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />
               <LivePlayerFocusReturnPanel contract={livePlayerFocusReturnRuntime} />
+              <SurfaceRecoveryAuthorityInline
+                manifest={manifest}
+                screenId="player"
+                runtime={playerRecoveryAuthorityRuntime}
+                onSelectProvider={handleQuickSwitch}
+              />
               <SavedProviderRecoveryAuthorityPanel
                 runtime={playerRecoveryAuthorityRuntime}
                 onSelectProvider={handleQuickSwitch}

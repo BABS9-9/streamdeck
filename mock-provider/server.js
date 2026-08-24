@@ -883,8 +883,8 @@ const buildCompetitiveDifferentiators = () => ([
     pitch: 'Collapse fast-switch authority, line-release truth, and reclaimed-line priority into one final owner and one explicit next move before premium CTA copy speaks with confidence.',
     competitiveGap: 'Competitors usually surface several nearby recovery hints without naming one final owner, so users get multiple plausible saved-provider stories and no single honest answer about who owns the next move.',
     buildPhase: 'Phase 1',
-    architectureNotes: 'Drive Login, Home, and Live from one unified recovery-authority resolver so visible owner, final owner, fail-closed reason, return trigger, and next-move action stay aligned beside Connect, the hero CTA, and Play before recovery truth fragments into competing saved-provider narratives.',
-    surfaces: ['login', 'home', 'live'],
+    architectureNotes: 'Drive Login, Home, Live, and Player Dock from one unified recovery-authority resolver so visible owner, final owner, fail-closed reason, return trigger, and next-move action stay aligned beside Connect, the hero CTA, Play, and active playback before recovery truth fragments into competing saved-provider narratives.',
+    surfaces: ['login', 'home', 'live', 'player'],
   },
   {
     slug: 'saved-provider-podium',
@@ -5212,6 +5212,38 @@ const buildSurfaceRecoveryAuthorityContracts = (scenario = 'healthy') => ([
           ? 'Keep recovery secondary until preview, guide proof, and provider headroom still support the same exact-channel owner.'
           : 'Hand exact-channel ownership back only after preview stability, guide proof, and launch headroom all clear on the same selected card again.',
         tone: scenario === 'healthy' ? 'watch' : scenario === 'degradedLive' || scenario === 'degradedEpg' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'player',
+    eyebrow: 'Playback recovery owner',
+    title: 'Player Dock should say who currently owns the honest playback recovery move',
+    summary: scenario === 'healthy'
+      ? 'Active playback should still keep the current recovery owner visible so one smooth buffer refill cannot quietly hand full authority back to the wrong saved provider.'
+      : 'The dock should name who currently owns the honest playback recovery move, why fallback has authority right now, and what exact trigger gives the active stream back to the original owner.',
+    authorities: [
+      {
+        label: 'Active playback recovery owner',
+        authorityOwner: scenario === 'degradedLive' || scenario === 'authUnstable' || scenario === 'lineSaturated'
+          ? 'The healthiest saved provider or playback fallback currently owns the honest next move for the active stream.'
+          : 'The active playback owner still owns the next exact-stream move while fallback stays visible but secondary.',
+        activeOwner: 'The stream currently on screen still owns the visible playback shell until recovery outranks it explicitly.',
+        fallbackReason: scenario === 'degradedLive'
+          ? 'Playback continuity softened enough that recovery currently owns the safer exact-stream promise.'
+          : scenario === 'authUnstable'
+            ? 'Auth instability means the dock cannot pretend the visible playback owner still controls the clean next move.'
+            : scenario === 'lineSaturated'
+              ? 'Provider line pressure changed who can honestly own the next playback action.'
+              : 'Fallback stays visible because playback can still need a safer owner if stream proof or provider trust softens.',
+        returnTrigger: scenario === 'healthy'
+          ? 'Keep recovery secondary until stream proof, provider trust, and line headroom still reinforce the same playback owner.'
+          : 'Hand playback ownership back only after stream proof, provider trust, and line headroom all clear on the same provider again.',
+        tone: scenario === 'healthy'
+          ? 'watch'
+          : scenario === 'degradedLive' || scenario === 'authUnstable'
+            ? 'watch'
+            : 'recover',
       },
     ],
   },

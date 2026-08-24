@@ -1756,7 +1756,7 @@ export type MockProviderManifest = {
     competitiveGap: string;
     buildPhase: string;
     architectureNotes: string;
-    surfaces: Array<'login' | 'home' | 'live'>;
+    surfaces: Array<'login' | 'home' | 'live' | 'player'>;
   }>;
   supportedScreens: Array<{
     id: 'login' | 'home' | 'live';
@@ -1919,7 +1919,7 @@ export type MockProviderManifest = {
     }>;
   }>;
   surfaceRecoveryAuthorityContracts: Array<{
-    screenId: 'login' | 'home' | 'live';
+    screenId: 'login' | 'home' | 'live' | 'player';
     eyebrow: string;
     title: string;
     summary: string;
