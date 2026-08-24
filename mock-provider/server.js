@@ -887,6 +887,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live', 'player'],
   },
   {
+    slug: 'recovery-proof-quorum',
+    feature: 'Recovery proof quorum',
+    pitch: 'Keep the provider vote, line vote, continuity vote, and missing vote visible before Connect, the hero CTA, or Play overclaims that one lucky signal means full recovery.',
+    competitiveGap: 'Competitors usually let one recovered auth poll, one reopened line, or one smooth preview moment masquerade as total recovery, so users get pushed back onto the wrong owner before the whole proof set agrees.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one recovery-proof quorum contract so provider proof, line posture, continuity proof, and the single missing vote stay visible beside premium CTAs before recovery copy outruns the actual evidence stack.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'saved-provider-podium',
     feature: 'Saved-provider podium',
     pitch: 'Keep a compact podium beside premium CTAs so provider ownership, standby recovery, and blocked shortcuts are readable before the next move changes hands.',
@@ -5249,6 +5258,66 @@ const buildSurfaceRecoveryAuthorityContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceRecoveryProofQuorumContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login should show the full recovery proof vote before Connect reclaims Home',
+    summary: scenario === 'healthy'
+      ? 'Connect should still show which proof votes agree, which vote is still conditional, and what missing vote would block full recovery before setup overclaims certainty.'
+      : 'Connect should keep the provider vote, line vote, continuity vote, and missing vote visible before a shaky provider or lucky line release reclaims the next Home move.',
+    quorums: [
+      {
+        label: 'Connect recovery quorum',
+        providerVote: 'Provider auth and saved-provider trust still point at the same Connect owner.',
+        lineVote: 'Line headroom or reclaim priority still supports that owner taking the next Home move.',
+        continuityVote: 'The same setup subject and Home destination still survive the recovery path.',
+        missingVote: scenario === 'healthy'
+          ? 'No missing vote if auth, headroom, and setup continuity still agree on the same owner.'
+          : 'Do not reclaim Connect on one lucky signal when auth, line pressure, or carried-forward setup meaning is still split.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home should show the full recovery proof vote before the hero reclaims launch authority',
+    summary: scenario === 'healthy'
+      ? 'The hero should still show which proof votes agree, which vote is conditional, and what missing vote would block full featured recovery before browse overclaims certainty.'
+      : 'The hero should keep the provider vote, line vote, continuity vote, and missing vote visible before a shaky provider or one good browse moment reclaims featured launch.',
+    quorums: [
+      {
+        label: 'Hero recovery quorum',
+        providerVote: 'Provider health and saved-owner trust still point at the same featured launch owner.',
+        lineVote: 'Line headroom or reclaim priority still supports that owner launching the current hero honestly.',
+        continuityVote: 'The same featured title and browse promise still survive the recovery path.',
+        missingVote: scenario === 'healthy'
+          ? 'No missing vote if provider proof, launch headroom, and featured continuity still agree on the same owner.'
+          : 'Do not reclaim the hero on one calm browse beat when provider truth, line posture, or carried-forward featured meaning is still split.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live should show the full recovery proof vote before Play reclaims exact-channel authority',
+    summary: scenario === 'healthy'
+      ? 'Play should still show which proof votes agree, which vote is conditional, and what missing vote would block exact-channel recovery before preview overclaims certainty.'
+      : 'Play should keep the provider vote, line vote, continuity vote, and missing vote visible before one smooth preview or one reopened line reclaims the selected watch path.',
+    quorums: [
+      {
+        label: 'Play recovery quorum',
+        providerVote: 'Provider health and saved-owner trust still point at the same selected-card owner.',
+        lineVote: 'Line headroom or reclaim priority still supports that owner taking the next Play move.',
+        continuityVote: 'The same selected channel, same preview lane, and same watch target still survive the recovery path.',
+        missingVote: scenario === 'healthy'
+          ? 'No missing vote if provider proof, launch headroom, and selected-card continuity still agree on the same owner.'
+          : 'Do not reclaim Play on one smooth preview beat when provider truth, line posture, or exact-channel continuity is still split.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -6334,6 +6403,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceLineReleaseWitnessContracts: buildSurfaceLineReleaseWitnessContracts(scenario),
   surfaceLineClearancePriorityContracts: buildSurfaceLineClearancePriorityContracts(scenario),
   surfaceRecoveryAuthorityContracts: buildSurfaceRecoveryAuthorityContracts(scenario),
+  surfaceRecoveryProofQuorumContracts: buildSurfaceRecoveryProofQuorumContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),

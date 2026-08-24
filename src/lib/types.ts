@@ -1163,6 +1163,28 @@ export type SurfaceFallbackExpiryRuntimeContract = {
   expiries: SurfaceFallbackExpiryRuntimeEntry[];
 };
 
+export type SurfaceRecoveryProofQuorumRuntimeEntry = {
+  label: string;
+  providerVote: string;
+  lineVote: string;
+  continuityVote: string;
+  missingVote: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+  quorumStatus: string;
+};
+
+export type SurfaceRecoveryProofQuorumRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  quorums: SurfaceRecoveryProofQuorumRuntimeEntry[];
+};
+
 export type SurfaceIdentityAnchorRuntimeEntry = {
   label: string;
   mustStayVisible: string;
@@ -1929,6 +1951,19 @@ export type MockProviderManifest = {
       activeOwner: string;
       fallbackReason: string;
       returnTrigger: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
+  surfaceRecoveryProofQuorumContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    quorums: Array<{
+      label: string;
+      providerVote: string;
+      lineVote: string;
+      continuityVote: string;
+      missingVote: string;
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
