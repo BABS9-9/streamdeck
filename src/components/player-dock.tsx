@@ -13,6 +13,7 @@ import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
 import { buildMultiConnectionSwitchRuntime } from '@/lib/multi-connection-switch-runtime';
 import { buildProviderDropRuntime } from '@/lib/provider-drop-runtime';
 import { buildSavedProviderRecoveryAuthorityResolver } from '@/lib/saved-provider-recovery-authority-resolver';
+import { buildSavedProviderRecoveryProofDissentRuntime } from '@/lib/saved-provider-recovery-proof-dissent-runtime';
 import { buildSavedProviderRecoveryProofQuorumRuntime } from '@/lib/saved-provider-recovery-proof-quorum-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
 import { MockProviderManifest } from '@/lib/types';
@@ -32,6 +33,7 @@ import { ProviderDropPanel } from './provider-drop-panel';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { SavedProviderRecoveryAuthorityPanel } from './saved-provider-recovery-authority-panel';
 import { SurfaceRecoveryAuthorityInline } from './surface-recovery-authority-inline';
+import { SurfaceRecoveryProofDissentInline } from './surface-recovery-proof-dissent-inline';
 import { SurfaceRecoveryProofQuorumInline } from './surface-recovery-proof-quorum-inline';
 
 const MOCK_SERVER = 'http://localhost:3579';
@@ -445,6 +447,23 @@ export function PlayerDock() {
     playerRecoveryProofQuorum,
     savedProviderBoard,
   ]);
+  const playerRecoveryProofDissent = useMemo(
+    () => manifest?.surfaceRecoveryProofDissentContracts?.find((item) => item.screenId === 'player') ?? null,
+    [manifest]
+  );
+  const playerRecoveryProofDissentRuntime = useMemo(() => buildSavedProviderRecoveryProofDissentRuntime({
+    contract: playerRecoveryProofDissent,
+    board: savedProviderBoard,
+    recoveryAuthorityRuntime: playerRecoveryAuthorityRuntime,
+    lineReleaseRuntime: livePlayerLineReleaseRuntime,
+    lineClearanceRuntime: livePlayerLineClearanceRuntime,
+  }), [
+    livePlayerLineClearanceRuntime,
+    livePlayerLineReleaseRuntime,
+    playerRecoveryAuthorityRuntime,
+    playerRecoveryProofDissent,
+    savedProviderBoard,
+  ]);
 
   const handleQuickSwitch = (providerId: string) => {
     const switched = setActiveConnection(providerId, {
@@ -658,6 +677,11 @@ export function PlayerDock() {
                 runtime={playerRecoveryProofQuorumRuntime}
                 title="Playback recovery proof quorum"
                 badge="Player recovery proof"
+              />
+              <SurfaceRecoveryProofDissentInline
+                runtime={playerRecoveryProofDissentRuntime}
+                title="Playback recovery proof dissent"
+                badge="Player recovery veto"
               />
               <LivePlayerFocusReturnPanel contract={livePlayerFocusReturnRuntime} />
               <SurfaceRecoveryAuthorityInline

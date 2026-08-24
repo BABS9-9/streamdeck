@@ -1197,7 +1197,7 @@ export type SurfaceRecoveryProofDissentRuntimeEntry = {
 };
 
 export type SurfaceRecoveryProofDissentRuntimeContract = {
-  screenId: 'login' | 'home' | 'live';
+  screenId: 'login' | 'home' | 'live' | 'player';
   title: string;
   summary: string;
   providerCount: number;
@@ -1989,7 +1989,7 @@ export type MockProviderManifest = {
     }>;
   }>;
   surfaceRecoveryProofDissentContracts: Array<{
-    screenId: 'login' | 'home' | 'live';
+    screenId: 'login' | 'home' | 'live' | 'player';
     title: string;
     summary: string;
     dissents: Array<{

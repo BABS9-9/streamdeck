@@ -5410,6 +5410,27 @@ const buildSurfaceRecoveryProofDissentContracts = (scenario = 'healthy') => ([
       },
     ],
   },
+  {
+    screenId: 'player',
+    title: 'Player should name the dissenting recovery proof before playback claims it safely recovered',
+    summary: scenario === 'healthy'
+      ? 'Playback should still name which signal would veto a premature recovered-state claim even when the stream looks smooth again.'
+      : 'Playback should keep the dissenting signal, the contradicted owner, and the exact repair trigger visible before one stable frame or recovered line moment reclaims trust.',
+    dissents: [
+      {
+        label: 'Playback dissent register',
+        dissentingSignal: scenario === 'healthy'
+          ? 'The line or carried-forward playback continuity vote can still veto recovery even while the active stream looks calm.'
+          : 'A shaky provider poll, capped playback line posture, or broken carried-forward stream continuity is still dissenting against full playback recovery.',
+        contradictedOwner: 'The visible playback owner should stay named, but should not claim recovery while the dissenting signal is still blocking consensus.',
+        conflictSummary: scenario === 'healthy'
+          ? 'Playback can feel close to recovered while still requiring one final line or continuity agreement before the dock should narrate recovery like settled truth.'
+          : 'One stable playback beat is not enough if provider trust, playback line posture, and carried-forward stream continuity still disagree about who safely owns the next recovery move.',
+        repairTrigger: 'Only reclaim playback recovery after the dissenting signal lines up with provider trust, line headroom, and the same carried-forward stream meaning.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
 ]);
 
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([

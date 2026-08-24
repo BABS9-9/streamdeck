@@ -2,6 +2,7 @@ import {
   LivePlayerLineClearanceRuntimeContract,
   LivePlayerLineReleaseRuntimeContract,
   MockProviderManifest,
+  SavedProviderRecoveryAuthorityRuntimeContract,
   SavedProviderHealthBoard,
   SavedProviderHealthEntry,
   SurfaceLineClearancePriorityRuntimeContract,
@@ -13,11 +14,22 @@ import {
 type SurfaceRecoveryProofDissentDefinition = MockProviderManifest['surfaceRecoveryProofDissentContracts'][number];
 type RecoveryLineReleaseRuntime = SurfaceLineReleaseWitnessRuntimeContract | LivePlayerLineReleaseRuntimeContract | null;
 type RecoveryLineClearanceRuntime = SurfaceLineClearancePriorityRuntimeContract | LivePlayerLineClearanceRuntimeContract | null;
-type RecoveryAuthorityRuntime = SurfaceRecoveryAuthorityRuntimeContract | null;
+type RecoveryAuthorityRuntime = SurfaceRecoveryAuthorityRuntimeContract | SavedProviderRecoveryAuthorityRuntimeContract | null;
 
-const getAuthorityOwnerLabel = (runtime: RecoveryAuthorityRuntime) => runtime?.authorityOwner ?? null;
-const getReturnTrigger = (runtime: RecoveryAuthorityRuntime) => runtime?.returnTrigger ?? null;
-const getFallbackReason = (runtime: RecoveryAuthorityRuntime) => runtime?.fallbackReason ?? null;
+const getAuthorityOwnerLabel = (runtime: RecoveryAuthorityRuntime) => {
+  if (!runtime) return null;
+  return 'authorityOwner' in runtime ? runtime.authorityOwner : runtime.finalOwnerLabel;
+};
+
+const getReturnTrigger = (runtime: RecoveryAuthorityRuntime) => {
+  if (!runtime) return null;
+  return runtime.returnTrigger;
+};
+
+const getFallbackReason = (runtime: RecoveryAuthorityRuntime) => {
+  if (!runtime) return null;
+  return 'fallbackReason' in runtime ? runtime.fallbackReason : runtime.failClosedReason;
+};
 
 const getReleaseWitnessLabel = (runtime: RecoveryLineReleaseRuntime) => {
   if (!runtime) return null;
