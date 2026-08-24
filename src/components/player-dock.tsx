@@ -5,6 +5,7 @@ import { fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeTo
 import { getContentId } from '@/lib/xtream-api';
 import { getLiveCategoryRecovery, getLiveProviderVariants } from '@/lib/provider-recovery';
 import { buildLivePlayerControlRuntime } from '@/lib/live-player-control-runtime';
+import { buildLivePlayerRecoveryActionRuntime } from '@/lib/live-player-recovery-action-runtime';
 import { buildLivePlayerLineClearanceRuntime } from '@/lib/live-player-line-clearance-runtime';
 import { buildLivePlayerContinuityRuntime } from '@/lib/live-player-continuity-runtime';
 import { buildLivePlayerFocusReturnRuntime } from '@/lib/live-player-focus-return-runtime';
@@ -24,6 +25,7 @@ import { usePlayerStore } from '@/stores/player-store';
 import { LivePlayerContinuityPanel } from './live-player-continuity-panel';
 import { LivePlayerControlPanel } from './live-player-control-panel';
 import { LivePlayerFocusReturnPanel } from './live-player-focus-return-panel';
+import { LivePlayerRecoveryActionPanel } from './live-player-recovery-action-panel';
 import { LivePlayerLineClearancePanel } from './live-player-line-clearance-panel';
 import { LivePlayerLineReleasePanel } from './live-player-line-release-panel';
 import { LivePlayerRemotePanel } from './live-player-remote-panel';
@@ -464,6 +466,77 @@ export function PlayerDock() {
     playerRecoveryProofDissent,
     savedProviderBoard,
   ]);
+  const playerRecoveryActionRuntime = useMemo(() => buildLivePlayerRecoveryActionRuntime({
+    currentStream,
+    streamHealthStatus: streamHealth.status,
+    authorityRuntime: playerRecoveryAuthorityRuntime,
+    quorumRuntime: playerRecoveryProofQuorumRuntime,
+    dissentRuntime: playerRecoveryProofDissentRuntime,
+    lineReleaseRuntime: livePlayerLineReleaseRuntime,
+    lineClearanceRuntime: livePlayerLineClearanceRuntime,
+    switchRuntime: multiConnectionSwitchRuntime,
+    exactRecoveryTarget: liveRecovery.topVariant
+      ? {
+          providerId: liveRecovery.topVariant.providerId,
+          providerName: liveRecovery.topVariant.providerName,
+        }
+      : null,
+    categoryRecoveryTarget: liveRecovery.categoryFallback
+      ? {
+          providerId: liveRecovery.categoryFallback.providerId,
+          providerName: liveRecovery.categoryFallback.providerName,
+          categoryName: liveRecovery.categoryFallback.categoryName,
+        }
+      : null,
+  }), [
+    currentStream,
+    livePlayerLineClearanceRuntime,
+    livePlayerLineReleaseRuntime,
+    liveRecovery.categoryFallback,
+    liveRecovery.topVariant,
+    multiConnectionSwitchRuntime,
+    playerRecoveryAuthorityRuntime,
+    playerRecoveryProofDissentRuntime,
+    playerRecoveryProofQuorumRuntime,
+    streamHealth.status,
+  ]);
+
+  const switchPlaybackOwner = (providerId: string, reason: 'quick-switch' | 'recovery' = 'recovery') => {
+    if (!currentStream) return false;
+
+    return setActiveConnection(providerId, {
+      sourceSurface: 'player',
+      reason,
+      preservedTitle: currentStream.name,
+    });
+  };
+
+  const playExactRecoveryTarget = (providerId: string) => {
+    if (!currentStream || !liveRecovery.topVariant || liveRecovery.topVariant.providerId !== providerId) return false;
+
+    switchPlaybackOwner(providerId, 'recovery');
+    playStream(liveRecovery.topVariant.stream!, liveRecovery.topVariant.playbackUrl!, providerId, {
+      sourceSurface: 'player',
+    });
+    return true;
+  };
+
+  const playCategoryRecoveryTarget = (providerId: string) => {
+    if (!currentStream || !liveRecovery.categoryFallback || liveRecovery.categoryFallback.providerId !== providerId) return false;
+
+    switchPlaybackOwner(providerId, 'recovery');
+    playStream(liveRecovery.categoryFallback.stream, liveRecovery.categoryFallback.playbackUrl, providerId, {
+      sourceSurface: 'player',
+    });
+    return true;
+  };
+
+  const retryCurrentPlayback = () => {
+    if (!currentStream || !playbackUrl || !currentProviderId) return;
+    playStream(currentStream, playbackUrl, currentProviderId, {
+      sourceSurface: 'player',
+    });
+  };
 
   const handleQuickSwitch = (providerId: string) => {
     const switched = setActiveConnection(providerId, {
@@ -491,46 +564,17 @@ export function PlayerDock() {
   const handleLineReleasePrimaryAction = () => {
     if (!currentStream) return;
 
-    if (liveRecovery.topVariant) {
-      setActiveConnection(liveRecovery.topVariant.providerId, {
-        sourceSurface: 'player',
-        reason: 'recovery',
-        preservedTitle: currentStream.name,
-      });
-      playStream(liveRecovery.topVariant.stream!, liveRecovery.topVariant.playbackUrl!, liveRecovery.topVariant.providerId, {
-        sourceSurface: 'player',
-      });
-      return;
-    }
-
-    if (liveRecovery.categoryFallback) {
-      setActiveConnection(liveRecovery.categoryFallback.providerId, {
-        sourceSurface: 'player',
-        reason: 'recovery',
-        preservedTitle: currentStream.name,
-      });
-      playStream(liveRecovery.categoryFallback.stream, liveRecovery.categoryFallback.playbackUrl, liveRecovery.categoryFallback.providerId, {
-        sourceSurface: 'player',
-      });
-      return;
-    }
+    if (liveRecovery.topVariant && playExactRecoveryTarget(liveRecovery.topVariant.providerId)) return;
+    if (liveRecovery.categoryFallback && playCategoryRecoveryTarget(liveRecovery.categoryFallback.providerId)) return;
 
     if (livePlayerLineReleaseRuntime?.nextMove.targetProviderId) {
-      setActiveConnection(livePlayerLineReleaseRuntime.nextMove.targetProviderId, {
-        sourceSurface: 'player',
-        reason: 'recovery',
-        preservedTitle: currentStream.name,
-      });
+      switchPlaybackOwner(livePlayerLineReleaseRuntime.nextMove.targetProviderId, 'recovery');
     }
   };
 
   const handleLineReleaseSwitchOnly = () => {
     if (!currentStream || !livePlayerLineReleaseRuntime?.nextMove.targetProviderId) return;
-    setActiveConnection(livePlayerLineReleaseRuntime.nextMove.targetProviderId, {
-      sourceSurface: 'player',
-      reason: 'recovery',
-      preservedTitle: currentStream.name,
-    });
+    switchPlaybackOwner(livePlayerLineReleaseRuntime.nextMove.targetProviderId, 'recovery');
   };
 
   const handleLineClearancePrimaryAction = () => {
@@ -538,45 +582,41 @@ export function PlayerDock() {
 
     const targetProviderId = livePlayerLineClearanceRuntime.nextMove.targetProviderId;
 
-    if (liveRecovery.topVariant?.providerId === targetProviderId) {
-      setActiveConnection(targetProviderId, {
-        sourceSurface: 'player',
-        reason: 'recovery',
-        preservedTitle: currentStream.name,
-      });
-      playStream(liveRecovery.topVariant.stream!, liveRecovery.topVariant.playbackUrl!, targetProviderId, {
-        sourceSurface: 'player',
-      });
-      return;
-    }
-
-    if (liveRecovery.categoryFallback?.providerId === targetProviderId) {
-      setActiveConnection(targetProviderId, {
-        sourceSurface: 'player',
-        reason: 'recovery',
-        preservedTitle: currentStream.name,
-      });
-      playStream(liveRecovery.categoryFallback.stream, liveRecovery.categoryFallback.playbackUrl, targetProviderId, {
-        sourceSurface: 'player',
-      });
-      return;
-    }
-
-    setActiveConnection(targetProviderId, {
-      sourceSurface: 'player',
-      reason: 'recovery',
-      preservedTitle: currentStream.name,
-    });
+    if (playExactRecoveryTarget(targetProviderId)) return;
+    if (playCategoryRecoveryTarget(targetProviderId)) return;
+    switchPlaybackOwner(targetProviderId, 'recovery');
   };
 
   const handleLineClearanceSwitchOnly = () => {
     if (!currentStream || !livePlayerLineClearanceRuntime?.nextMove.targetProviderId) return;
 
-    setActiveConnection(livePlayerLineClearanceRuntime.nextMove.targetProviderId, {
-      sourceSurface: 'player',
-      reason: 'recovery',
-      preservedTitle: currentStream.name,
-    });
+    switchPlaybackOwner(livePlayerLineClearanceRuntime.nextMove.targetProviderId, 'recovery');
+  };
+
+  const handleRecoveryActionPrimary = () => {
+    if (!playerRecoveryActionRuntime) return;
+
+    switch (playerRecoveryActionRuntime.actionKind) {
+      case 'retry':
+        retryCurrentPlayback();
+        return;
+      case 'quick-switch':
+      case 'reclaim-owner': {
+        const targetProviderId = playerRecoveryActionRuntime.targetProviderId;
+        if (!targetProviderId) return;
+        if (playExactRecoveryTarget(targetProviderId)) return;
+        if (playCategoryRecoveryTarget(targetProviderId)) return;
+        switchPlaybackOwner(targetProviderId, 'recovery');
+        return;
+      }
+      default:
+        return;
+    }
+  };
+
+  const handleRecoveryActionSecondary = () => {
+    if (!playerRecoveryActionRuntime?.targetProviderId) return;
+    switchPlaybackOwner(playerRecoveryActionRuntime.targetProviderId, 'recovery');
   };
 
   useEffect(() => {
@@ -682,6 +722,11 @@ export function PlayerDock() {
                 runtime={playerRecoveryProofDissentRuntime}
                 title="Playback recovery proof dissent"
                 badge="Player recovery veto"
+              />
+              <LivePlayerRecoveryActionPanel
+                contract={playerRecoveryActionRuntime}
+                onPrimaryAction={playerRecoveryActionRuntime?.nextMove.primaryActionLabel ? handleRecoveryActionPrimary : undefined}
+                onSecondaryAction={playerRecoveryActionRuntime?.nextMove.secondaryActionLabel ? handleRecoveryActionSecondary : undefined}
               />
               <LivePlayerFocusReturnPanel contract={livePlayerFocusReturnRuntime} />
               <SurfaceRecoveryAuthorityInline

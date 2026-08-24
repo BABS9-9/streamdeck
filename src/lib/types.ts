@@ -1608,6 +1608,57 @@ export type LivePlayerLineClearanceRuntimeContract = {
   };
 };
 
+export type LivePlayerRecoveryActionKind =
+  | 'retry'
+  | 'quick-switch'
+  | 'wait-for-line'
+  | 'reclaim-owner'
+  | 'fail-closed';
+
+export type LivePlayerRecoveryTargetMode =
+  | 'current-playback'
+  | 'exact-variant'
+  | 'category-fallback'
+  | 'authority-switch'
+  | null;
+
+export type LivePlayerRecoveryActionSupportEntry = {
+  id: 'authority' | 'proof-quorum' | 'proof-dissent' | 'line-release' | 'line-clearance' | 'switch-readiness';
+  label: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerRecoveryActionRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  actionKind: LivePlayerRecoveryActionKind;
+  targetMode: LivePlayerRecoveryTargetMode;
+  activeProviderId: string | null;
+  authorityProviderId: string | null;
+  targetProviderId: string | null;
+  exactTargetProviderId: string | null;
+  categoryTargetProviderId: string | null;
+  reasonPath: string;
+  overlayCopy: string;
+  vetoStatus: string;
+  quorumStatus: string;
+  lineStatus: string;
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    primaryActionLabel: string | null;
+    secondaryActionLabel: string | null;
+  };
+  supportEntries: LivePlayerRecoveryActionSupportEntry[];
+};
+
 export type LiveMarketAuthorityState =
   | 'account-home-zip'
   | 'home-network'
