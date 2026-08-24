@@ -896,6 +896,15 @@ const buildCompetitiveDifferentiators = () => ([
     surfaces: ['login', 'home', 'live'],
   },
   {
+    slug: 'recovery-proof-dissent',
+    feature: 'Recovery proof dissent',
+    pitch: 'Keep the dissenting signal, the contradicted owner, and the repair trigger visible before partial recovery gets narrated like consensus.',
+    competitiveGap: 'Competitors usually admit that recovery is shaky without naming which signal is dissenting or which saved-provider claim it is blocking, so users still get pushed onto a story the proof stack has not actually cleared.',
+    buildPhase: 'Phase 1',
+    architectureNotes: 'Drive Login, Home, and Live from one recovery-proof dissent contract so the dissenting signal, contradicted owner, conflict summary, and repair trigger stay visible beside premium CTAs before a partial recovery vote turns into fake unanimity.',
+    surfaces: ['login', 'home', 'live'],
+  },
+  {
     slug: 'saved-provider-podium',
     feature: 'Saved-provider podium',
     pitch: 'Keep a compact podium beside premium CTAs so provider ownership, standby recovery, and blocked shortcuts are readable before the next move changes hands.',
@@ -5337,6 +5346,72 @@ const buildSurfaceRecoveryProofQuorumContracts = (scenario = 'healthy') => ([
   },
 ]);
 
+const buildSurfaceRecoveryProofDissentContracts = (scenario = 'healthy') => ([
+  {
+    screenId: 'login',
+    title: 'Login should name the dissenting recovery proof before Connect reclaims Home',
+    summary: scenario === 'healthy'
+      ? 'Connect should still name which signal would veto a premature recovery claim even when most of the setup proof stack looks calm.'
+      : 'Connect should keep the dissenting signal, the contradicted owner, and the exact repair trigger visible before one lucky auth or line moment reclaims the next Home move.',
+    dissents: [
+      {
+        label: 'Connect dissent register',
+        dissentingSignal: scenario === 'healthy'
+          ? 'The line or continuity vote can still veto recovery even while auth looks calm.'
+          : 'A shaky auth check, capped line posture, or broken carried-forward setup meaning is still dissenting against full recovery.',
+        contradictedOwner: 'The last trusted setup owner should stay visible, but not reclaim Connect while the dissenting signal is still blocking consensus.',
+        conflictSummary: scenario === 'healthy'
+          ? 'Setup can feel close to ready while still requiring one final line or continuity agreement before Connect owns the next Home move again.'
+          : 'One recovered signal is not enough if auth freshness, line posture, and setup continuity still disagree about who safely owns the next Home move.',
+        repairTrigger: 'Only reclaim Connect after the dissenting signal lines up with provider trust, line headroom, and the same carried-forward Home destination.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'home',
+    title: 'Home should name the dissenting recovery proof before the hero reclaims launch authority',
+    summary: scenario === 'healthy'
+      ? 'The hero should still name which signal would veto a premature featured recovery claim even when browse posture looks calm.'
+      : 'The hero should keep the dissenting signal, the contradicted owner, and the exact repair trigger visible before one calm browse beat reclaims featured launch.',
+    dissents: [
+      {
+        label: 'Hero dissent register',
+        dissentingSignal: scenario === 'healthy'
+          ? 'The line or continuity vote can still veto recovery even while featured browse proof looks polished.'
+          : 'A shaky provider poll, capped line posture, or broken featured continuity is still dissenting against full hero recovery.',
+        contradictedOwner: 'The visible featured owner should stay named, but not reclaim the hero CTA while the dissenting signal is still blocking consensus.',
+        conflictSummary: scenario === 'healthy'
+          ? 'Featured browse can feel close to ready while still requiring one final line or continuity agreement before the hero owns premium launch copy again.'
+          : 'One good browse moment is not enough if provider trust, line posture, and featured continuity still disagree about who safely owns launch.',
+        repairTrigger: 'Only reclaim the hero after the dissenting signal lines up with provider trust, launch headroom, and the same featured destination.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+  {
+    screenId: 'live',
+    title: 'Live should name the dissenting recovery proof before Play reclaims exact-channel authority',
+    summary: scenario === 'healthy'
+      ? 'Play should still name which signal would veto a premature exact-channel recovery claim even when preview looks smooth.'
+      : 'Play should keep the dissenting signal, the contradicted owner, and the exact repair trigger visible before one smooth preview beat reclaims the selected watch path.',
+    dissents: [
+      {
+        label: 'Play dissent register',
+        dissentingSignal: scenario === 'healthy'
+          ? 'The line or continuity vote can still veto recovery even while selected-card preview looks calm.'
+          : 'A shaky provider poll, capped line posture, or broken exact-channel continuity is still dissenting against full Play recovery.',
+        contradictedOwner: 'The visible selected-card owner should stay named, but not reclaim Play while the dissenting signal is still blocking consensus.',
+        conflictSummary: scenario === 'healthy'
+          ? 'Selected-card preview can feel close to ready while still requiring one final line or continuity agreement before Play owns premium launch copy again.'
+          : 'One smooth preview moment is not enough if provider trust, line posture, and exact-channel continuity still disagree about who safely owns the next Play move.',
+        repairTrigger: 'Only reclaim Play after the dissenting signal lines up with provider trust, line headroom, and the same selected-channel destination.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
+]);
+
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([
   {
     screenId: 'login',
@@ -6423,6 +6498,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceLineClearancePriorityContracts: buildSurfaceLineClearancePriorityContracts(scenario),
   surfaceRecoveryAuthorityContracts: buildSurfaceRecoveryAuthorityContracts(scenario),
   surfaceRecoveryProofQuorumContracts: buildSurfaceRecoveryProofQuorumContracts(scenario),
+  surfaceRecoveryProofDissentContracts: buildSurfaceRecoveryProofDissentContracts(scenario),
   surfaceLaunchReadinessContracts: buildSurfaceLaunchReadinessContracts(scenario),
   surfaceLaunchOwnerships: buildSurfaceLaunchOwnerships(scenario),
   surfaceHoldReceipts: buildSurfaceHoldReceipts(scenario),

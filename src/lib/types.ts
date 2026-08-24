@@ -1185,6 +1185,27 @@ export type SurfaceRecoveryProofQuorumRuntimeContract = {
   quorums: SurfaceRecoveryProofQuorumRuntimeEntry[];
 };
 
+export type SurfaceRecoveryProofDissentRuntimeEntry = {
+  label: string;
+  dissentingSignal: string;
+  contradictedOwner: string;
+  conflictSummary: string;
+  repairTrigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+  owner: SavedProviderHealthEntry | null;
+  ownerStatusLabel: string;
+};
+
+export type SurfaceRecoveryProofDissentRuntimeContract = {
+  screenId: 'login' | 'home' | 'live';
+  title: string;
+  summary: string;
+  providerCount: number;
+  activeProviderId: string | null;
+  recommendedProviderId: string | null;
+  dissents: SurfaceRecoveryProofDissentRuntimeEntry[];
+};
+
 export type SurfaceIdentityAnchorRuntimeEntry = {
   label: string;
   mustStayVisible: string;
@@ -1964,6 +1985,19 @@ export type MockProviderManifest = {
       lineVote: string;
       continuityVote: string;
       missingVote: string;
+      tone: 'ready' | 'watch' | 'recover';
+    }>;
+  }>;
+  surfaceRecoveryProofDissentContracts: Array<{
+    screenId: 'login' | 'home' | 'live';
+    title: string;
+    summary: string;
+    dissents: Array<{
+      label: string;
+      dissentingSignal: string;
+      contradictedOwner: string;
+      conflictSummary: string;
+      repairTrigger: string;
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
