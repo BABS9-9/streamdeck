@@ -19,6 +19,7 @@ import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-can
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceLineReleaseWitnessInline } from '@/components/surface-line-release-witness-inline';
 import { SurfaceLineClearancePriorityInline } from '@/components/surface-line-clearance-priority-inline';
+import { SurfaceRecoveryProofQuorumInline } from '@/components/surface-recovery-proof-quorum-inline';
 import { SavedProviderRecoveryAuthorityPanel } from '@/components/saved-provider-recovery-authority-panel';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
@@ -94,6 +95,7 @@ import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provide
 import { buildSavedProviderLineReleaseRuntime } from '@/lib/saved-provider-line-release-runtime';
 import { buildSavedProviderLineClearancePriorityRuntime } from '@/lib/saved-provider-line-clearance-priority-runtime';
 import { buildSavedProviderRecoveryAuthorityRuntime } from '@/lib/saved-provider-recovery-authority-runtime';
+import { buildSavedProviderRecoveryProofQuorumRuntime } from '@/lib/saved-provider-recovery-proof-quorum-runtime';
 import { buildSavedProviderRecoveryAuthorityResolver } from '@/lib/saved-provider-recovery-authority-resolver';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
@@ -280,6 +282,7 @@ export function LiveBrowser() {
   const lineReleaseWitness = manifest?.surfaceLineReleaseWitnessContracts?.find((item) => item.screenId === 'live') ?? null;
   const lineClearancePriority = manifest?.surfaceLineClearancePriorityContracts?.find((item) => item.screenId === 'live') ?? null;
   const recoveryAuthority = manifest?.surfaceRecoveryAuthorityContracts?.find((item) => item.screenId === 'live') ?? null;
+  const recoveryProofQuorum = manifest?.surfaceRecoveryProofQuorumContracts?.find((item) => item.screenId === 'live') ?? null;
   const downgradeLadder = manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'live') ?? null;
   const providerChoice = manifest?.surfaceProviderChoiceContracts.find((item) => item.screenId === 'live') ?? null;
   const providerSwitchContract = manifest?.surfaceProviderSwitchContracts.find((item) => item.screenId === 'live') ?? null;
@@ -375,6 +378,22 @@ export function LiveBrowser() {
       board: savedProviderBoard,
     }),
     [recoveryAuthority, savedProviderBoard]
+  );
+  const recoveryProofQuorumRuntime = useMemo(
+    () => buildSavedProviderRecoveryProofQuorumRuntime({
+      contract: recoveryProofQuorum,
+      board: savedProviderBoard,
+      recoveryAuthorityRuntime,
+      lineReleaseRuntime: lineReleaseWitnessRuntime,
+      lineClearanceRuntime: lineClearancePriorityRuntime,
+    }),
+    [
+      lineClearancePriorityRuntime,
+      lineReleaseWitnessRuntime,
+      recoveryAuthorityRuntime,
+      recoveryProofQuorum,
+      savedProviderBoard,
+    ]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -777,6 +796,11 @@ export function LiveBrowser() {
           reason: 'quick-switch',
           preservedTitle: selectedStream?.name || null,
         })}
+      />
+      <SurfaceRecoveryProofQuorumInline
+        runtime={recoveryProofQuorumRuntime}
+        title="Play recovery proof quorum"
+        badge="Proof vote truth"
       />
       <SurfaceRecoveryAuthorityResolverInline
         runtime={liveRecoveryAuthority}

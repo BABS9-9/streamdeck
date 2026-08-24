@@ -19,6 +19,7 @@ import { SurfaceCanonicalProviderIdentityInline } from '@/components/surface-can
 import { SurfaceConnectionHeadroomInline } from '@/components/surface-connection-headroom-inline';
 import { SurfaceLineReleaseWitnessInline } from '@/components/surface-line-release-witness-inline';
 import { SurfaceLineClearancePriorityInline } from '@/components/surface-line-clearance-priority-inline';
+import { SurfaceRecoveryProofQuorumInline } from '@/components/surface-recovery-proof-quorum-inline';
 import { SavedProviderRecoveryAuthorityPanel } from '@/components/saved-provider-recovery-authority-panel';
 import { SurfaceConnectionHeadroom } from '@/components/surface-connection-headroom';
 import { SurfaceContinuityWindowInline } from '@/components/surface-continuity-window-inline';
@@ -92,6 +93,7 @@ import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provide
 import { buildSavedProviderLineReleaseRuntime } from '@/lib/saved-provider-line-release-runtime';
 import { buildSavedProviderLineClearancePriorityRuntime } from '@/lib/saved-provider-line-clearance-priority-runtime';
 import { buildSavedProviderRecoveryAuthorityRuntime } from '@/lib/saved-provider-recovery-authority-runtime';
+import { buildSavedProviderRecoveryProofQuorumRuntime } from '@/lib/saved-provider-recovery-proof-quorum-runtime';
 import { buildSavedProviderRecoveryAuthorityResolver } from '@/lib/saved-provider-recovery-authority-resolver';
 import { buildSavedProviderChoiceRuntime } from '@/lib/saved-provider-choice-runtime';
 import { buildSavedProviderExplanationBoundaryRuntime } from '@/lib/saved-provider-explanation-boundary-runtime';
@@ -347,6 +349,10 @@ export function HomeDashboard() {
     () => manifest?.surfaceRecoveryAuthorityContracts?.find((item) => item.screenId === 'home') ?? null,
     [manifest]
   );
+  const recoveryProofQuorum = useMemo(
+    () => manifest?.surfaceRecoveryProofQuorumContracts?.find((item) => item.screenId === 'home') ?? null,
+    [manifest]
+  );
   const downgradeLadder = useMemo(
     () => manifest?.surfaceDowngradeLadders.find((item) => item.screenId === 'home') ?? null,
     [manifest]
@@ -517,6 +523,22 @@ export function HomeDashboard() {
       board: savedProviderBoard,
     }),
     [recoveryAuthority, savedProviderBoard]
+  );
+  const recoveryProofQuorumRuntime = useMemo(
+    () => buildSavedProviderRecoveryProofQuorumRuntime({
+      contract: recoveryProofQuorum,
+      board: savedProviderBoard,
+      recoveryAuthorityRuntime,
+      lineReleaseRuntime: lineReleaseWitnessRuntime,
+      lineClearanceRuntime: lineClearancePriorityRuntime,
+    }),
+    [
+      lineClearancePriorityRuntime,
+      lineReleaseWitnessRuntime,
+      recoveryAuthorityRuntime,
+      recoveryProofQuorum,
+      savedProviderBoard,
+    ]
   );
   const fallbackRankingRuntime = useMemo(
     () => buildSavedProviderFallbackRankingRuntime({
@@ -1217,6 +1239,11 @@ export function HomeDashboard() {
           reason: 'quick-switch',
           preservedTitle: home.featured?.name || null,
         })}
+      />
+      <SurfaceRecoveryProofQuorumInline
+        runtime={recoveryProofQuorumRuntime}
+        title="Hero recovery proof quorum"
+        badge="Proof vote truth"
       />
       <SurfaceRecoveryAuthorityResolverInline
         runtime={homeRecoveryAuthority}
