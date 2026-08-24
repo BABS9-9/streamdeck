@@ -5316,6 +5316,25 @@ const buildSurfaceRecoveryProofQuorumContracts = (scenario = 'healthy') => ([
       },
     ],
   },
+  {
+    screenId: 'player',
+    title: 'Player Dock should show the full recovery proof vote before playback reclaims exact-owner authority',
+    summary: scenario === 'healthy'
+      ? 'Playback should still show which proof votes agree, which vote is conditional, and what missing vote would block exact-owner recovery before the dock overclaims continuity.'
+      : 'Playback should keep the provider vote, line vote, continuity vote, and missing vote visible before one smooth frame or one reopened line claims the player is safely back in bounds.',
+    quorums: [
+      {
+        label: 'Player recovery quorum',
+        providerVote: 'Provider health and saved-owner trust still point at the same playback owner.',
+        lineVote: 'Line headroom or reclaim priority still supports that owner keeping the next playback move honest.',
+        continuityVote: 'The same live title, same playback lane, and same recovery destination still survive the current handoff.',
+        missingVote: scenario === 'healthy'
+          ? 'No missing vote if provider proof, playback headroom, and carried-forward playback continuity still agree on the same owner.'
+          : 'Do not reclaim playback on one stable frame when provider truth, line posture, or carried-forward playback meaning is still split.',
+        tone: scenario === 'healthy' ? 'watch' : 'recover',
+      },
+    ],
+  },
 ]);
 
 const buildSurfaceContinuityWindows = (scenario = 'healthy') => ([

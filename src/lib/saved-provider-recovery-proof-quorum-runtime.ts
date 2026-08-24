@@ -1,5 +1,8 @@
 import {
+  LivePlayerLineClearanceRuntimeContract,
+  LivePlayerLineReleaseRuntimeContract,
   MockProviderManifest,
+  SavedProviderRecoveryAuthorityRuntimeContract,
   SavedProviderHealthBoard,
   SavedProviderHealthEntry,
   SurfaceLineClearancePriorityRuntimeContract,
@@ -9,13 +12,46 @@ import {
 } from './types';
 
 type SurfaceRecoveryProofQuorumDefinition = MockProviderManifest['surfaceRecoveryProofQuorumContracts'][number];
+type RecoveryLineReleaseRuntime = SurfaceLineReleaseWitnessRuntimeContract | LivePlayerLineReleaseRuntimeContract | null;
+type RecoveryLineClearanceRuntime = SurfaceLineClearancePriorityRuntimeContract | LivePlayerLineClearanceRuntimeContract | null;
+type RecoveryAuthorityRuntime = SurfaceRecoveryAuthorityRuntimeContract | SavedProviderRecoveryAuthorityRuntimeContract | null;
+
+const getAuthorityOwnerLabel = (runtime: RecoveryAuthorityRuntime) => {
+  if (!runtime) return null;
+  return 'authorityOwner' in runtime ? runtime.authorityOwner : runtime.finalOwnerLabel;
+};
+
+const getAuthorityDetail = (runtime: RecoveryAuthorityRuntime) => {
+  if (!runtime) return null;
+  return runtime.detail;
+};
+
+const getAuthorityFallbackReason = (runtime: RecoveryAuthorityRuntime) => {
+  if (!runtime) return null;
+  return 'fallbackReason' in runtime ? runtime.fallbackReason : runtime.failClosedReason;
+};
+
+const getReleaseWitnessLabel = (runtime: RecoveryLineReleaseRuntime) => {
+  if (!runtime) return null;
+  return 'releaseWitness' in runtime ? runtime.releaseWitness : runtime.releaseWitnessLabel;
+};
+
+const getBlockedClaimantLabel = (runtime: RecoveryLineClearanceRuntime) => {
+  if (!runtime) return null;
+  return 'blockedClaimant' in runtime ? runtime.blockedClaimant : runtime.blockedClaimantLabel;
+};
+
+const getReclaimRuleLabel = (runtime: RecoveryLineClearanceRuntime) => {
+  if (!runtime) return null;
+  return 'reclaimRule' in runtime ? runtime.reclaimRule : runtime.reclaimRuleLabel;
+};
 
 const getOwner = ({
   board,
   recoveryAuthorityRuntime,
 }: {
   board: SavedProviderHealthBoard;
-  recoveryAuthorityRuntime: SurfaceRecoveryAuthorityRuntimeContract | null;
+  recoveryAuthorityRuntime: RecoveryAuthorityRuntime;
 }) => {
   if (recoveryAuthorityRuntime?.authorityProviderId) {
     return board.byProviderId[recoveryAuthorityRuntime.authorityProviderId] ?? board.recommendedProvider ?? board.activeProvider ?? null;
@@ -36,7 +72,7 @@ const getProviderVote = ({
   recoveryAuthorityRuntime,
 }: {
   owner: SavedProviderHealthEntry | null;
-  recoveryAuthorityRuntime: SurfaceRecoveryAuthorityRuntimeContract | null;
+  recoveryAuthorityRuntime: RecoveryAuthorityRuntime;
 }) => {
   if (!owner) {
     return 'Provider proof is still missing because no saved owner has earned honest recovery authority yet.';
@@ -46,7 +82,7 @@ const getProviderVote = ({
     return `${owner.providerName} only has a conditional provider vote right now: ${owner.warning}`;
   }
 
-  return recoveryAuthorityRuntime?.authorityOwner
+  return getAuthorityOwnerLabel(recoveryAuthorityRuntime)
     ?? `${owner.providerName} owns the provider vote because auth freshness and saved-provider trust still point at the same next move.`;
 };
 
@@ -56,27 +92,31 @@ const getLineVote = ({
   lineClearanceRuntime,
 }: {
   owner: SavedProviderHealthEntry | null;
-  lineReleaseRuntime: SurfaceLineReleaseWitnessRuntimeContract | null;
-  lineClearanceRuntime: SurfaceLineClearancePriorityRuntimeContract | null;
+  lineReleaseRuntime: RecoveryLineReleaseRuntime;
+  lineClearanceRuntime: RecoveryLineClearanceRuntime;
 }) => {
-  if (lineReleaseRuntime?.tone === 'recover') {
-    return lineReleaseRuntime.releaseWitness;
+  const releaseWitness = getReleaseWitnessLabel(lineReleaseRuntime);
+  const blockedClaimant = getBlockedClaimantLabel(lineClearanceRuntime);
+  const reclaimRule = getReclaimRuleLabel(lineClearanceRuntime);
+
+  if (lineReleaseRuntime?.tone === 'recover' && releaseWitness) {
+    return releaseWitness;
   }
 
-  if (lineClearanceRuntime?.tone === 'recover') {
-    return lineClearanceRuntime.blockedClaimant;
+  if (lineClearanceRuntime?.tone === 'recover' && blockedClaimant) {
+    return blockedClaimant;
   }
 
   if (lineClearanceRuntime?.claimantProviderId && owner && lineClearanceRuntime.claimantProviderId !== owner.providerId) {
-    return lineClearanceRuntime.reclaimRule;
+    return reclaimRule ?? `${owner.providerName} does not currently own reclaimed-line priority.`;
   }
 
-  if (lineReleaseRuntime?.releaseWitness) {
-    return lineReleaseRuntime.releaseWitness;
+  if (releaseWitness) {
+    return releaseWitness;
   }
 
-  if (lineClearanceRuntime?.reclaimRule) {
-    return lineClearanceRuntime.reclaimRule;
+  if (reclaimRule) {
+    return reclaimRule;
   }
 
   return owner
@@ -91,7 +131,7 @@ const getContinuityVote = ({
 }: {
   owner: SavedProviderHealthEntry | null;
   board: SavedProviderHealthBoard;
-  recoveryAuthorityRuntime: SurfaceRecoveryAuthorityRuntimeContract | null;
+  recoveryAuthorityRuntime: RecoveryAuthorityRuntime;
 }) => {
   if (!owner) {
     return 'Continuity proof is not aligned yet because no saved owner can safely carry the same move forward.';
@@ -101,7 +141,7 @@ const getContinuityVote = ({
     return `${board.activeProvider.providerName} still owns the visible shell, but ${owner.providerName} owns the safer carried-forward move until the return trigger clears.`;
   }
 
-  return recoveryAuthorityRuntime?.detail
+  return getAuthorityDetail(recoveryAuthorityRuntime)
     ?? `${owner.providerName} still preserves the same provider-backed next move without hiding a subject or destination change.`;
 };
 
@@ -112,20 +152,23 @@ const getMissingVote = ({
   recoveryAuthorityRuntime,
 }: {
   owner: SavedProviderHealthEntry | null;
-  lineReleaseRuntime: SurfaceLineReleaseWitnessRuntimeContract | null;
-  lineClearanceRuntime: SurfaceLineClearancePriorityRuntimeContract | null;
-  recoveryAuthorityRuntime: SurfaceRecoveryAuthorityRuntimeContract | null;
+  lineReleaseRuntime: RecoveryLineReleaseRuntime;
+  lineClearanceRuntime: RecoveryLineClearanceRuntime;
+  recoveryAuthorityRuntime: RecoveryAuthorityRuntime;
 }) => {
+  const releaseWitness = getReleaseWitnessLabel(lineReleaseRuntime);
+  const blockedClaimant = getBlockedClaimantLabel(lineClearanceRuntime);
+
   if (!owner) {
     return 'Missing vote: provider ownership is still unproven, so the shell should stay fail-closed.';
   }
 
-  if (lineReleaseRuntime?.tone === 'recover') {
-    return `Missing vote: ${lineReleaseRuntime.releaseWitness}`;
+  if (lineReleaseRuntime?.tone === 'recover' && releaseWitness) {
+    return `Missing vote: ${releaseWitness}`;
   }
 
-  if (lineClearanceRuntime?.tone === 'recover') {
-    return `Missing vote: ${lineClearanceRuntime.blockedClaimant}`;
+  if (lineClearanceRuntime?.tone === 'recover' && blockedClaimant) {
+    return `Missing vote: ${blockedClaimant}`;
   }
 
   if (owner.warning) {
@@ -133,7 +176,7 @@ const getMissingVote = ({
   }
 
   if (recoveryAuthorityRuntime?.tone === 'recover') {
-    return `Missing vote: ${recoveryAuthorityRuntime.fallbackReason}`;
+    return `Missing vote: ${getAuthorityFallbackReason(recoveryAuthorityRuntime)}`;
   }
 
   return 'Missing vote: none. Provider proof, line posture, and continuity all agree on the same next move.';
@@ -146,9 +189,9 @@ const getTone = ({
   recoveryAuthorityRuntime,
 }: {
   owner: SavedProviderHealthEntry | null;
-  lineReleaseRuntime: SurfaceLineReleaseWitnessRuntimeContract | null;
-  lineClearanceRuntime: SurfaceLineClearancePriorityRuntimeContract | null;
-  recoveryAuthorityRuntime: SurfaceRecoveryAuthorityRuntimeContract | null;
+  lineReleaseRuntime: RecoveryLineReleaseRuntime;
+  lineClearanceRuntime: RecoveryLineClearanceRuntime;
+  recoveryAuthorityRuntime: RecoveryAuthorityRuntime;
 }): SurfaceRecoveryProofQuorumRuntimeContract['quorums'][number]['tone'] => {
   if (!owner) return 'recover';
   if (lineReleaseRuntime?.tone === 'recover' || lineClearanceRuntime?.tone === 'recover' || recoveryAuthorityRuntime?.tone === 'recover') {
@@ -168,8 +211,8 @@ const getQuorumStatus = ({
 }: {
   tone: SurfaceRecoveryProofQuorumRuntimeContract['quorums'][number]['tone'];
   owner: SavedProviderHealthEntry | null;
-  lineReleaseRuntime: SurfaceLineReleaseWitnessRuntimeContract | null;
-  lineClearanceRuntime: SurfaceLineClearancePriorityRuntimeContract | null;
+  lineReleaseRuntime: RecoveryLineReleaseRuntime;
+  lineClearanceRuntime: RecoveryLineClearanceRuntime;
 }) => {
   if (tone === 'ready') return '3 of 3 proofs aligned';
   if (!owner) return '0 of 3 proofs aligned';
@@ -186,9 +229,9 @@ export const buildSavedProviderRecoveryProofQuorumRuntime = ({
 }: {
   contract: SurfaceRecoveryProofQuorumDefinition | null;
   board: SavedProviderHealthBoard;
-  recoveryAuthorityRuntime: SurfaceRecoveryAuthorityRuntimeContract | null;
-  lineReleaseRuntime: SurfaceLineReleaseWitnessRuntimeContract | null;
-  lineClearanceRuntime: SurfaceLineClearancePriorityRuntimeContract | null;
+  recoveryAuthorityRuntime: RecoveryAuthorityRuntime;
+  lineReleaseRuntime: RecoveryLineReleaseRuntime;
+  lineClearanceRuntime: RecoveryLineClearanceRuntime;
 }): SurfaceRecoveryProofQuorumRuntimeContract | null => {
   if (!contract || board.providers.length === 0) return null;
 

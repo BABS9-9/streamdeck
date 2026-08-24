@@ -1176,7 +1176,7 @@ export type SurfaceRecoveryProofQuorumRuntimeEntry = {
 };
 
 export type SurfaceRecoveryProofQuorumRuntimeContract = {
-  screenId: 'login' | 'home' | 'live';
+  screenId: 'login' | 'home' | 'live' | 'player';
   title: string;
   summary: string;
   providerCount: number;
@@ -1955,7 +1955,7 @@ export type MockProviderManifest = {
     }>;
   }>;
   surfaceRecoveryProofQuorumContracts: Array<{
-    screenId: 'login' | 'home' | 'live';
+    screenId: 'login' | 'home' | 'live' | 'player';
     title: string;
     summary: string;
     quorums: Array<{
