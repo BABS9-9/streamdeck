@@ -1,6 +1,7 @@
 import {
   LivePlayerControlRuntimeContract,
   LivePlayerContinuityRuntimeContract,
+  LivePlayerOverlayFocusRuntimeContract,
   LivePlayerOverlayInfoBarState,
   LivePlayerOverlayLane,
   LivePlayerOverlayProgressState,
@@ -208,6 +209,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
   seekWindowLabel,
   audioLabel,
   subtitleLabel,
+  focusRuntime,
   controlRuntime,
   continuityRuntime,
   remoteRuntime,
@@ -222,6 +224,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
   seekWindowLabel: string;
   audioLabel: string;
   subtitleLabel: string;
+  focusRuntime: LivePlayerOverlayFocusRuntimeContract;
   controlRuntime: LivePlayerControlRuntimeContract;
   continuityRuntime: LivePlayerContinuityRuntimeContract;
   remoteRuntime: LivePlayerRemoteRuntimeContract;
@@ -287,6 +290,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
     actionKind: recoveryRuntime?.actionKind ?? 'fail-closed',
     primaryActionLabel: recoveryRuntime?.nextMove.primaryActionLabel ?? null,
     secondaryActionLabel: recoveryRuntime?.nextMove.secondaryActionLabel ?? null,
+    focusRuntime,
     quickActions,
     lanes,
     statusChips,

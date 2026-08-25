@@ -1696,6 +1696,54 @@ export type LivePlayerOverlayStatusChip = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayFocusRailState =
+  | 'hero-primary'
+  | 'timeshift-transport'
+  | 'track-picker'
+  | 'recovery-primary'
+  | 'return-ladder';
+
+export type LivePlayerOverlayFocusStep = {
+  id: string;
+  label: string;
+  buttons: string[];
+  state: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayFocusGroup = {
+  id: 'hero' | 'transport' | 'tracks' | 'recovery' | 'return';
+  label: string;
+  railState: LivePlayerOverlayFocusRailState;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  steps: LivePlayerOverlayFocusStep[];
+};
+
+export type LivePlayerOverlayFocusRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  railState: LivePlayerOverlayFocusRailState;
+  primaryFocusLabel: string;
+  secondaryFocusLabel: string;
+  supportFocusLabel: string;
+  heroButtons: string[];
+  nextMove: {
+    label: string;
+    detail: string;
+    buttons: string[];
+    tone: LivePlayerControlTone;
+  };
+  focusGroups: LivePlayerOverlayFocusGroup[];
+};
+
 export type LivePlayerOverlayRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -1721,6 +1769,7 @@ export type LivePlayerOverlayRuntimeContract = {
   actionKind: LivePlayerRecoveryActionKind;
   primaryActionLabel: string | null;
   secondaryActionLabel: string | null;
+  focusRuntime: LivePlayerOverlayFocusRuntimeContract;
   quickActions: LivePlayerOverlayQuickAction[];
   lanes: LivePlayerOverlayLane[];
   statusChips: LivePlayerOverlayStatusChip[];
