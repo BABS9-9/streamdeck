@@ -33,6 +33,7 @@ const KEYS = {
   providerSwitchContext: 'streamdeck.provider-switch-context',
   collections: 'streamdeck.collections',
   playerDockMode: 'streamdeck.player-dock-mode',
+  playerOverlayState: 'streamdeck.player-overlay-state',
   mockScenario: 'streamdeck.mock-scenario',
   providerSessions: 'streamdeck.provider-sessions',
   providerDrops: 'streamdeck.provider-drops',
@@ -516,6 +517,15 @@ export const storage = {
   savePlayerDockMode(mode: 'expanded' | 'compact') {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.playerDockMode, mode);
+  },
+  getPlayerOverlayState(): 'closed' | 'hero' | 'transport' | 'tracks' | 'recovery' {
+    if (!isBrowser()) return 'closed';
+    const state = localStorage.getItem(KEYS.playerOverlayState);
+    return state === 'hero' || state === 'transport' || state === 'tracks' || state === 'recovery' ? state : 'closed';
+  },
+  savePlayerOverlayState(state: 'closed' | 'hero' | 'transport' | 'tracks' | 'recovery') {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.playerOverlayState, state);
   },
   getMockScenario(): 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' | 'expiredAccount' | 'authUnstable' {
     if (!isBrowser()) return 'healthy';

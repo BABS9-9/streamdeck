@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { createPlaybackHistoryEntry, hydratePlaybackHistory, updatePlaybackHistoryProgress } from '@/lib/playback-history-runtime';
 import { getArtwork, getCachedSearchCatalog, getContentId } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
-import { PlayerControlTelemetry, ProviderDropNotice, ProviderDropReason, StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
+import { LivePlayerOverlayVisibilityState, PlayerControlTelemetry, ProviderDropNotice, ProviderDropReason, StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 
 type PlaybackMeta = {
@@ -25,6 +25,7 @@ type PlayerState = {
   streamHealth: StreamHealth;
   controlTelemetry: PlayerControlTelemetry;
   dockMode: 'expanded' | 'compact';
+  overlayState: LivePlayerOverlayVisibilityState;
   hydrate: () => void;
   playStream: (stream: XtreamStream, playbackUrl: string, providerId: string, meta?: PlaybackMeta) => void;
   updatePlaybackProgress: (positionSeconds: number, durationSeconds?: number | null) => void;
@@ -37,6 +38,9 @@ type PlayerState = {
   resetStreamHealth: () => void;
   resetControlTelemetry: () => void;
   setDockMode: (mode: 'expanded' | 'compact') => void;
+  setOverlayState: (state: LivePlayerOverlayVisibilityState) => void;
+  openOverlay: (state?: Exclude<LivePlayerOverlayVisibilityState, 'closed'>) => void;
+  closeOverlay: () => void;
   closePlayback: () => void;
 };
 
@@ -84,6 +88,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   streamHealth: defaultStreamHealth,
   controlTelemetry: defaultControlTelemetry,
   dockMode: 'compact',
+  overlayState: 'closed',
   hydrate: () => {
     const authState = useAuthStore.getState();
     const hydratedHistory = hydratePlaybackHistory({
@@ -116,6 +121,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     set({
       watchHistory: history,
       dockMode: storage.getPlayerDockMode(),
+      overlayState: storage.getPlayerOverlayState(),
       providerDrops: storage.getProviderDrops(),
     });
   },
@@ -162,7 +168,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         playbackState: 'loading',
         updatedAt: Date.now(),
       },
+      overlayState: 'closed',
     });
+    storage.savePlayerOverlayState('closed');
   },
   getProviderDrop: (providerId) => get().providerDrops[providerId] ?? null,
   clearProviderDrop: (providerId) => {
@@ -316,12 +324,28 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     storage.savePlayerDockMode(mode);
     set({ dockMode: mode });
   },
-  closePlayback: () => set({
-    currentStream: null,
-    playbackUrl: null,
-    currentProviderId: null,
-    resumeFromSeconds: 0,
-    streamHealth: defaultStreamHealth,
-    controlTelemetry: defaultControlTelemetry,
-  }),
+  setOverlayState: (overlayState) => {
+    storage.savePlayerOverlayState(overlayState);
+    set({ overlayState });
+  },
+  openOverlay: (overlayState = 'hero') => {
+    storage.savePlayerOverlayState(overlayState);
+    set({ overlayState });
+  },
+  closeOverlay: () => {
+    storage.savePlayerOverlayState('closed');
+    set({ overlayState: 'closed' });
+  },
+  closePlayback: () => {
+    storage.savePlayerOverlayState('closed');
+    set({
+      currentStream: null,
+      playbackUrl: null,
+      currentProviderId: null,
+      resumeFromSeconds: 0,
+      streamHealth: defaultStreamHealth,
+      controlTelemetry: defaultControlTelemetry,
+      overlayState: 'closed',
+    });
+  },
 }));

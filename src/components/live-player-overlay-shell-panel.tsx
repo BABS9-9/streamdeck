@@ -12,10 +12,12 @@ export function LivePlayerOverlayShellPanel({
   contract,
   onPrimaryAction,
   onSecondaryAction,
+  onCommandDispatch,
 }: {
   contract: LivePlayerOverlayRuntimeContract;
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
+  onCommandDispatch?: (commandId: 'ok' | 'back' | 'left-right' | 'up-down' | 'audio-subtitle') => void;
 }) {
   return (
     <section className={`rounded-[1.4rem] border p-4 ${toneStyles[contract.tone]}`}>
@@ -140,6 +142,45 @@ export function LivePlayerOverlayShellPanel({
               ))}
             </div>
             <p className="mt-3 text-sm leading-6 text-white/90">{contract.focusRuntime.nextMove.detail}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.interactionRuntime.eyebrow}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.interactionRuntime.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.interactionRuntime.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.interactionRuntime.visibilityState}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.interactionRuntime.nextMove.label}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Open posture</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.interactionRuntime.openLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Close posture</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.interactionRuntime.closeLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Focus handoff</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.interactionRuntime.focusHandoffLabel}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.interactionRuntime.focusHandoffDetail}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Reason path glue</p>
+            <p className="mt-3 text-sm leading-6 text-white/90">{contract.interactionRuntime.reasonPath}</p>
           </div>
         </div>
 
@@ -340,6 +381,25 @@ export function LivePlayerOverlayShellPanel({
             <p className="mt-3 text-sm font-semibold text-white">{command.summary}</p>
             <p className="mt-2 text-xs leading-5 text-white/80">{command.detail}</p>
             <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/60">{command.escalationLabel}</p>
+            {(() => {
+              const dispatch = contract.interactionRuntime.commandDispatches.find((entry) => entry.commandId === command.id);
+              if (!dispatch) return null;
+
+              return (
+                <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-white/70">{dispatch.label}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{dispatch.summary}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/65">{dispatch.detail}</p>
+                  <button
+                    onClick={() => onCommandDispatch?.(command.id)}
+                    disabled={!dispatch.available || !onCommandDispatch}
+                    className="mt-3 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {dispatch.label}
+                  </button>
+                </div>
+              );
+            })()}
           </article>
         ))}
       </div>

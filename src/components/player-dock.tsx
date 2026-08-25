@@ -11,6 +11,7 @@ import { buildLivePlayerContinuityRuntime } from '@/lib/live-player-continuity-r
 import { buildLivePlayerFocusReturnRuntime } from '@/lib/live-player-focus-return-runtime';
 import { buildLivePlayerOverlayFocusRuntime } from '@/lib/live-player-overlay-focus-runtime';
 import { buildLivePlayerOverlayCommandRuntime } from '@/lib/live-player-overlay-command-runtime';
+import { buildLivePlayerOverlayInteractionRuntime } from '@/lib/live-player-overlay-interaction-runtime';
 import { buildLivePlayerOverlayShellRuntime } from '@/lib/live-player-overlay-shell-runtime';
 import { buildLivePlayerLineReleaseRuntime } from '@/lib/live-player-line-release-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
@@ -92,7 +93,11 @@ export function PlayerDock() {
   const streamHealth = usePlayerStore((state) => state.streamHealth);
   const controlTelemetry = usePlayerStore((state) => state.controlTelemetry);
   const dockMode = usePlayerStore((state) => state.dockMode);
+  const overlayState = usePlayerStore((state) => state.overlayState);
   const setDockMode = usePlayerStore((state) => state.setDockMode);
+  const setOverlayState = usePlayerStore((state) => state.setOverlayState);
+  const openOverlay = usePlayerStore((state) => state.openOverlay);
+  const closeOverlay = usePlayerStore((state) => state.closeOverlay);
   const closePlayback = usePlayerStore((state) => state.closePlayback);
   const playStream = usePlayerStore((state) => state.playStream);
   const connections = useAuthStore((state) => state.connections);
@@ -532,6 +537,21 @@ export function PlayerDock() {
     livePlayerRemoteRuntime,
     playerRecoveryActionRuntime,
   ]);
+  const livePlayerOverlayInteractionRuntime = useMemo(() => buildLivePlayerOverlayInteractionRuntime({
+    overlayState,
+    controlRuntime: livePlayerControlRuntime,
+    focusRuntime: livePlayerOverlayFocusRuntime,
+    focusReturnRuntime: livePlayerFocusReturnRuntime,
+    commandRuntime: livePlayerOverlayCommandRuntime,
+    recoveryRuntime: playerRecoveryActionRuntime,
+  }), [
+    overlayState,
+    livePlayerControlRuntime,
+    livePlayerOverlayFocusRuntime,
+    livePlayerFocusReturnRuntime,
+    livePlayerOverlayCommandRuntime,
+    playerRecoveryActionRuntime,
+  ]);
   const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({
     channelName: currentStream?.name ?? historyItem?.title ?? 'Active playback',
     providerLabel: currentProvider?.name
@@ -552,6 +572,7 @@ export function PlayerDock() {
     subtitleLabel: `${controlTelemetry.subtitleTrackCount} subtitle track${controlTelemetry.subtitleTrackCount === 1 ? '' : 's'}`,
     focusRuntime: livePlayerOverlayFocusRuntime,
     commandRuntime: livePlayerOverlayCommandRuntime,
+    interactionRuntime: livePlayerOverlayInteractionRuntime,
     controlRuntime: livePlayerControlRuntime,
     continuityRuntime: livePlayerContinuityRuntime,
     remoteRuntime: livePlayerRemoteRuntime,
@@ -569,6 +590,7 @@ export function PlayerDock() {
     historyItem?.progress,
     historyItem?.title,
     livePlayerOverlayCommandRuntime,
+    livePlayerOverlayInteractionRuntime,
     livePlayerOverlayFocusRuntime,
     livePlayerContinuityRuntime,
     livePlayerControlRuntime,
@@ -670,6 +692,7 @@ export function PlayerDock() {
 
   const handleRecoveryActionPrimary = () => {
     if (!playerRecoveryActionRuntime) return;
+    openOverlay('recovery');
 
     switch (playerRecoveryActionRuntime.actionKind) {
       case 'retry':
@@ -691,8 +714,84 @@ export function PlayerDock() {
 
   const handleRecoveryActionSecondary = () => {
     if (!playerRecoveryActionRuntime?.targetProviderId) return;
+    openOverlay('recovery');
     switchPlaybackOwner(playerRecoveryActionRuntime.targetProviderId, 'recovery');
   };
+
+  const handleOverlayDispatch = (commandId: 'ok' | 'back' | 'left-right' | 'up-down' | 'audio-subtitle') => {
+    const dispatch = livePlayerOverlayInteractionRuntime.commandDispatches.find((entry) => entry.commandId === commandId);
+    if (!dispatch?.available) return;
+
+    switch (dispatch.dispatchKind) {
+      case 'open-overlay':
+      case 'reveal-info':
+        openOverlay('hero');
+        return;
+      case 'close-overlay':
+        closeOverlay();
+        return;
+      case 'settle-timeshift':
+        setOverlayState('transport');
+        return;
+      case 'open-track-picker':
+        setOverlayState('tracks');
+        return;
+      case 'route-back':
+        if (overlayState !== 'closed') {
+          closeOverlay();
+          return;
+        }
+        closePlayback();
+        return;
+      case 'retry-playback':
+        openOverlay('recovery');
+        retryCurrentPlayback();
+        return;
+      case 'quick-switch':
+        if (dispatch.targetProviderId) {
+          openOverlay('recovery');
+          handleQuickSwitch(dispatch.targetProviderId);
+        }
+        return;
+      case 'reclaim-owner':
+        if (dispatch.targetProviderId) {
+          openOverlay('recovery');
+          if (playExactRecoveryTarget(dispatch.targetProviderId)) return;
+          if (playCategoryRecoveryTarget(dispatch.targetProviderId)) return;
+          switchPlaybackOwner(dispatch.targetProviderId, 'recovery');
+        }
+        return;
+      case 'wait-for-line':
+        openOverlay('recovery');
+        return;
+      default:
+        return;
+    }
+  };
+
+  useEffect(() => {
+    if (streamHealth.status === 'error' || playerRecoveryActionRuntime?.actionKind === 'wait-for-line' || playerRecoveryActionRuntime?.actionKind === 'fail-closed') {
+      openOverlay('recovery');
+      return;
+    }
+
+    if (livePlayerControlRuntime.seekWindowState === 'timeshift-active' && overlayState === 'closed') {
+      setOverlayState('transport');
+      return;
+    }
+
+    if (livePlayerControlRuntime.subtitleAudioOptionState === 'selection-active' && overlayState === 'closed') {
+      setOverlayState('tracks');
+    }
+  }, [
+    livePlayerControlRuntime.seekWindowState,
+    livePlayerControlRuntime.subtitleAudioOptionState,
+    openOverlay,
+    overlayState,
+    playerRecoveryActionRuntime?.actionKind,
+    setOverlayState,
+    streamHealth.status,
+  ]);
 
   useEffect(() => {
     if (!currentProvider || !currentStream || currentStream.stream_type !== 'live' || !contentId) return;
@@ -790,6 +889,7 @@ export function PlayerDock() {
                 contract={livePlayerOverlayRuntime}
                 onPrimaryAction={livePlayerOverlayRuntime.primaryActionLabel ? handleRecoveryActionPrimary : undefined}
                 onSecondaryAction={livePlayerOverlayRuntime.secondaryActionLabel ? handleRecoveryActionSecondary : undefined}
+                onCommandDispatch={handleOverlayDispatch}
               />
               <LivePlayerControlPanel contract={livePlayerControlRuntime} />
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />

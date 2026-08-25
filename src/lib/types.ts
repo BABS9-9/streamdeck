@@ -1786,6 +1786,73 @@ export type LivePlayerOverlayCommandRuntimeContract = {
   commands: LivePlayerOverlayCommandEntry[];
 };
 
+export type LivePlayerOverlayVisibilityState =
+  | 'closed'
+  | 'hero'
+  | 'transport'
+  | 'tracks'
+  | 'recovery';
+
+export type LivePlayerOverlayDispatchKind =
+  | 'open-overlay'
+  | 'close-overlay'
+  | 'reveal-info'
+  | 'settle-timeshift'
+  | 'open-track-picker'
+  | 'route-back'
+  | 'retry-playback'
+  | 'quick-switch'
+  | 'reclaim-owner'
+  | 'wait-for-line'
+  | 'noop';
+
+export type LivePlayerOverlayInteractionCommandDispatch = {
+  commandId: LivePlayerOverlayCommandEntry['id'];
+  label: string;
+  dispatchKind: LivePlayerOverlayDispatchKind;
+  targetProviderId: string | null;
+  available: boolean;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayInteractionRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  visibilityState: LivePlayerOverlayVisibilityState;
+  openLabel: string;
+  closeLabel: string;
+  focusHandoffLabel: string;
+  focusHandoffDetail: string;
+  reasonPath: string;
+  primaryDispatch: {
+    label: string;
+    dispatchKind: LivePlayerOverlayDispatchKind;
+    targetProviderId: string | null;
+    available: boolean;
+    detail: string;
+  } | null;
+  secondaryDispatch: {
+    label: string;
+    dispatchKind: LivePlayerOverlayDispatchKind;
+    targetProviderId: string | null;
+    available: boolean;
+    detail: string;
+  } | null;
+  commandDispatches: LivePlayerOverlayInteractionCommandDispatch[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    targetProviderId: string | null;
+  };
+};
+
 export type LivePlayerOverlayRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -1813,6 +1880,7 @@ export type LivePlayerOverlayRuntimeContract = {
   secondaryActionLabel: string | null;
   focusRuntime: LivePlayerOverlayFocusRuntimeContract;
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
+  interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
   quickActions: LivePlayerOverlayQuickAction[];
   lanes: LivePlayerOverlayLane[];
   statusChips: LivePlayerOverlayStatusChip[];
