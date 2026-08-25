@@ -1744,6 +1744,48 @@ export type LivePlayerOverlayFocusRuntimeContract = {
   focusGroups: LivePlayerOverlayFocusGroup[];
 };
 
+export type LivePlayerOverlayCommandZone =
+  | 'hero'
+  | 'transport'
+  | 'tracks'
+  | 'recovery'
+  | 'return';
+
+export type LivePlayerOverlayCommandEntry = {
+  id: 'ok' | 'back' | 'left-right' | 'up-down' | 'audio-subtitle';
+  label: string;
+  buttons: string[];
+  state: string;
+  activeZone: LivePlayerOverlayCommandZone;
+  fallbackZone: LivePlayerOverlayCommandZone;
+  escalationLabel: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayCommandRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  activeZone: LivePlayerOverlayCommandZone;
+  fallbackZone: LivePlayerOverlayCommandZone;
+  escalationState: 'calm' | 'watch' | 'recover';
+  primaryCommandLabel: string;
+  recoveryCommandLabel: string;
+  exitCommandLabel: string;
+  nextMove: {
+    label: string;
+    detail: string;
+    buttons: string[];
+    tone: LivePlayerControlTone;
+  };
+  commands: LivePlayerOverlayCommandEntry[];
+};
+
 export type LivePlayerOverlayRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -1770,6 +1812,7 @@ export type LivePlayerOverlayRuntimeContract = {
   primaryActionLabel: string | null;
   secondaryActionLabel: string | null;
   focusRuntime: LivePlayerOverlayFocusRuntimeContract;
+  commandRuntime: LivePlayerOverlayCommandRuntimeContract;
   quickActions: LivePlayerOverlayQuickAction[];
   lanes: LivePlayerOverlayLane[];
   statusChips: LivePlayerOverlayStatusChip[];

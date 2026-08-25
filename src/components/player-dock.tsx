@@ -10,6 +10,7 @@ import { buildLivePlayerLineClearanceRuntime } from '@/lib/live-player-line-clea
 import { buildLivePlayerContinuityRuntime } from '@/lib/live-player-continuity-runtime';
 import { buildLivePlayerFocusReturnRuntime } from '@/lib/live-player-focus-return-runtime';
 import { buildLivePlayerOverlayFocusRuntime } from '@/lib/live-player-overlay-focus-runtime';
+import { buildLivePlayerOverlayCommandRuntime } from '@/lib/live-player-overlay-command-runtime';
 import { buildLivePlayerOverlayShellRuntime } from '@/lib/live-player-overlay-shell-runtime';
 import { buildLivePlayerLineReleaseRuntime } from '@/lib/live-player-line-release-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
@@ -503,6 +504,34 @@ export function PlayerDock() {
     playerRecoveryProofQuorumRuntime,
     streamHealth.status,
   ]);
+  const livePlayerOverlayFocusRuntime = useMemo(() => buildLivePlayerOverlayFocusRuntime({
+    controlRuntime: livePlayerControlRuntime,
+    continuityRuntime: livePlayerContinuityRuntime,
+    remoteRuntime: livePlayerRemoteRuntime,
+    focusReturnRuntime: livePlayerFocusReturnRuntime,
+    recoveryRuntime: playerRecoveryActionRuntime,
+  }), [
+    livePlayerContinuityRuntime,
+    livePlayerControlRuntime,
+    livePlayerFocusReturnRuntime,
+    livePlayerRemoteRuntime,
+    playerRecoveryActionRuntime,
+  ]);
+  const livePlayerOverlayCommandRuntime = useMemo(() => buildLivePlayerOverlayCommandRuntime({
+    controlRuntime: livePlayerControlRuntime,
+    continuityRuntime: livePlayerContinuityRuntime,
+    remoteRuntime: livePlayerRemoteRuntime,
+    focusReturnRuntime: livePlayerFocusReturnRuntime,
+    focusRuntime: livePlayerOverlayFocusRuntime,
+    recoveryRuntime: playerRecoveryActionRuntime,
+  }), [
+    livePlayerContinuityRuntime,
+    livePlayerControlRuntime,
+    livePlayerFocusReturnRuntime,
+    livePlayerOverlayFocusRuntime,
+    livePlayerRemoteRuntime,
+    playerRecoveryActionRuntime,
+  ]);
   const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({
     channelName: currentStream?.name ?? historyItem?.title ?? 'Active playback',
     providerLabel: currentProvider?.name
@@ -521,13 +550,8 @@ export function PlayerDock() {
     seekWindowLabel: livePlayerControlRuntime.seekWindowState.replace(/-/g, ' '),
     audioLabel: `${controlTelemetry.audioTrackCount} audio track${controlTelemetry.audioTrackCount === 1 ? '' : 's'}`,
     subtitleLabel: `${controlTelemetry.subtitleTrackCount} subtitle track${controlTelemetry.subtitleTrackCount === 1 ? '' : 's'}`,
-    focusRuntime: buildLivePlayerOverlayFocusRuntime({
-      controlRuntime: livePlayerControlRuntime,
-      continuityRuntime: livePlayerContinuityRuntime,
-      remoteRuntime: livePlayerRemoteRuntime,
-      focusReturnRuntime: livePlayerFocusReturnRuntime,
-      recoveryRuntime: playerRecoveryActionRuntime,
-    }),
+    focusRuntime: livePlayerOverlayFocusRuntime,
+    commandRuntime: livePlayerOverlayCommandRuntime,
     controlRuntime: livePlayerControlRuntime,
     continuityRuntime: livePlayerContinuityRuntime,
     remoteRuntime: livePlayerRemoteRuntime,
@@ -544,9 +568,10 @@ export function PlayerDock() {
     currentStream?.stream_type,
     historyItem?.progress,
     historyItem?.title,
+    livePlayerOverlayCommandRuntime,
+    livePlayerOverlayFocusRuntime,
     livePlayerContinuityRuntime,
     livePlayerControlRuntime,
-    livePlayerFocusReturnRuntime,
     livePlayerRemoteRuntime,
     playerRecoveryActionRuntime,
   ]);

@@ -143,6 +143,54 @@ export function LivePlayerOverlayShellPanel({
           </div>
         </div>
 
+        <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.commandRuntime.eyebrow}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.commandRuntime.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.commandRuntime.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.commandRuntime.activeZone}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.commandRuntime.escalationState}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Primary command</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.commandRuntime.primaryCommandLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Recovery command</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.commandRuntime.recoveryCommandLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Exit command</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.commandRuntime.exitCommandLabel}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.commandRuntime.nextMove.label}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {contract.commandRuntime.nextMove.buttons.map((button) => (
+                <span
+                  key={`${contract.commandRuntime.nextMove.label}-${button}`}
+                  className="rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[10px] uppercase tracking-[0.22em] text-white/80"
+                >
+                  {button}
+                </span>
+              ))}
+            </div>
+            <p className="mt-3 text-sm leading-6 text-white/90">{contract.commandRuntime.nextMove.detail}</p>
+          </div>
+        </div>
+
         {contract.primaryActionLabel ? (
           <div className="mt-4 flex flex-wrap gap-3">
             <button
@@ -257,6 +305,41 @@ export function LivePlayerOverlayShellPanel({
                 </div>
               ))}
             </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+        {contract.commandRuntime.commands.map((command) => (
+          <article
+            key={command.id}
+            className={`rounded-2xl border p-4 ${
+              command.tone === 'ready'
+                ? 'border-sky-300/20 bg-sky-500/10'
+                : command.tone === 'watch'
+                  ? 'border-amber-300/20 bg-amber-500/10'
+                  : 'border-rose-300/20 bg-rose-500/10'
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{command.label}</p>
+              <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {command.activeZone}
+              </span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {command.buttons.map((button) => (
+                <span
+                  key={`${command.id}-${button}`}
+                  className="rounded-full border border-white/15 bg-white/[0.06] px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75"
+                >
+                  {button}
+                </span>
+              ))}
+            </div>
+            <p className="mt-3 text-sm font-semibold text-white">{command.summary}</p>
+            <p className="mt-2 text-xs leading-5 text-white/80">{command.detail}</p>
+            <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/60">{command.escalationLabel}</p>
           </article>
         ))}
       </div>
