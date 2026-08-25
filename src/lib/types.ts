@@ -1659,6 +1659,79 @@ export type LivePlayerRecoveryActionRuntimeContract = {
   supportEntries: LivePlayerRecoveryActionSupportEntry[];
 };
 
+export type LivePlayerOverlayInfoBarState =
+  | 'calm'
+  | 'guide-led'
+  | 'recovery-led'
+  | 'buffer-watch'
+  | 'fail-closed';
+
+export type LivePlayerOverlayProgressState =
+  | 'live-edge'
+  | 'timeshift'
+  | 'resume'
+  | 'unavailable';
+
+export type LivePlayerOverlayQuickAction = {
+  id: 'playback' | 'audio' | 'subtitles' | 'seek' | 'recovery' | 'owner';
+  label: string;
+  state: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayLane = {
+  id: 'hero' | 'recovery' | 'remote' | 'continuity';
+  label: string;
+  state: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayStatusChip = {
+  label: string;
+  value: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  activeProviderId: string | null;
+  playbackOwnerProviderId: string | null;
+  recommendedProviderId: string | null;
+  infoBarState: LivePlayerOverlayInfoBarState;
+  progressState: LivePlayerOverlayProgressState;
+  nowPlayingLabel: string;
+  providerLabel: string;
+  nowLabel: string;
+  nextLabel: string;
+  continuityLabel: string;
+  progressLabel: string;
+  seekWindowLabel: string;
+  audioLabel: string;
+  subtitleLabel: string;
+  overlayCopy: string;
+  actionKind: LivePlayerRecoveryActionKind;
+  primaryActionLabel: string | null;
+  secondaryActionLabel: string | null;
+  quickActions: LivePlayerOverlayQuickAction[];
+  lanes: LivePlayerOverlayLane[];
+  statusChips: LivePlayerOverlayStatusChip[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    targetProviderId: string | null;
+  };
+};
+
 export type LiveMarketAuthorityState =
   | 'account-home-zip'
   | 'home-network'

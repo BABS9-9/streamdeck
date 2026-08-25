@@ -9,6 +9,7 @@ import { buildLivePlayerRecoveryActionRuntime } from '@/lib/live-player-recovery
 import { buildLivePlayerLineClearanceRuntime } from '@/lib/live-player-line-clearance-runtime';
 import { buildLivePlayerContinuityRuntime } from '@/lib/live-player-continuity-runtime';
 import { buildLivePlayerFocusReturnRuntime } from '@/lib/live-player-focus-return-runtime';
+import { buildLivePlayerOverlayShellRuntime } from '@/lib/live-player-overlay-shell-runtime';
 import { buildLivePlayerLineReleaseRuntime } from '@/lib/live-player-line-release-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
 import { buildMultiConnectionSwitchRuntime } from '@/lib/multi-connection-switch-runtime';
@@ -25,6 +26,7 @@ import { usePlayerStore } from '@/stores/player-store';
 import { LivePlayerContinuityPanel } from './live-player-continuity-panel';
 import { LivePlayerControlPanel } from './live-player-control-panel';
 import { LivePlayerFocusReturnPanel } from './live-player-focus-return-panel';
+import { LivePlayerOverlayShellPanel } from './live-player-overlay-shell-panel';
 import { LivePlayerRecoveryActionPanel } from './live-player-recovery-action-panel';
 import { LivePlayerLineClearancePanel } from './live-player-line-clearance-panel';
 import { LivePlayerLineReleasePanel } from './live-player-line-release-panel';
@@ -500,6 +502,45 @@ export function PlayerDock() {
     playerRecoveryProofQuorumRuntime,
     streamHealth.status,
   ]);
+  const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({
+    channelName: currentStream?.name ?? historyItem?.title ?? 'Active playback',
+    providerLabel: currentProvider?.name
+      ? `${currentProvider.name} owns the visible player shell.`
+      : 'Current provider ownership is still settling.',
+    nowTitle: currentGuide?.now?.title ?? null,
+    nextTitle: currentGuide?.next?.title ?? null,
+    guideStateLabel: currentGuideCoverage?.summary ?? currentGuideState?.status ?? null,
+    progressLabel: currentStream?.stream_type === 'live'
+      ? livePlayerControlRuntime.seekWindowState === 'timeshift-active'
+        ? 'Timeshift playback is offset from live edge.'
+        : livePlayerControlRuntime.seekWindowState === 'timeshift-ready'
+          ? 'Live edge is active, but rewind proof is available.'
+          : 'Playback is pinned to the live edge.'
+      : `${Math.max(0, Math.round((historyItem?.progress ?? 0) * 100))}% watched`,
+    seekWindowLabel: livePlayerControlRuntime.seekWindowState.replace(/-/g, ' '),
+    audioLabel: `${controlTelemetry.audioTrackCount} audio track${controlTelemetry.audioTrackCount === 1 ? '' : 's'}`,
+    subtitleLabel: `${controlTelemetry.subtitleTrackCount} subtitle track${controlTelemetry.subtitleTrackCount === 1 ? '' : 's'}`,
+    controlRuntime: livePlayerControlRuntime,
+    continuityRuntime: livePlayerContinuityRuntime,
+    remoteRuntime: livePlayerRemoteRuntime,
+    recoveryRuntime: playerRecoveryActionRuntime,
+  }), [
+    controlTelemetry.audioTrackCount,
+    controlTelemetry.subtitleTrackCount,
+    currentGuide?.next?.title,
+    currentGuide?.now?.title,
+    currentGuideCoverage?.summary,
+    currentGuideState?.status,
+    currentProvider?.name,
+    currentStream?.name,
+    currentStream?.stream_type,
+    historyItem?.progress,
+    historyItem?.title,
+    livePlayerContinuityRuntime,
+    livePlayerControlRuntime,
+    livePlayerRemoteRuntime,
+    playerRecoveryActionRuntime,
+  ]);
 
   const switchPlaybackOwner = (providerId: string, reason: 'quick-switch' | 'recovery' = 'recovery') => {
     if (!currentStream) return false;
@@ -711,6 +752,11 @@ export function PlayerDock() {
                 </div>
               </div>
 
+              <LivePlayerOverlayShellPanel
+                contract={livePlayerOverlayRuntime}
+                onPrimaryAction={livePlayerOverlayRuntime.primaryActionLabel ? handleRecoveryActionPrimary : undefined}
+                onSecondaryAction={livePlayerOverlayRuntime.secondaryActionLabel ? handleRecoveryActionSecondary : undefined}
+              />
               <LivePlayerControlPanel contract={livePlayerControlRuntime} />
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />
               <SurfaceRecoveryProofQuorumInline
