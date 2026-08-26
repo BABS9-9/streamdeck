@@ -1817,6 +1817,22 @@ export type LivePlayerOverlayInteractionCommandDispatch = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayExecutionOutcome =
+  | 'completed'
+  | 'blocked'
+  | 'unavailable';
+
+export type LivePlayerOverlayExecutionWitness = {
+  commandId: LivePlayerOverlayCommandEntry['id'];
+  dispatchKind: LivePlayerOverlayDispatchKind;
+  visibilityState: LivePlayerOverlayVisibilityState;
+  outcome: LivePlayerOverlayExecutionOutcome;
+  label: string;
+  detail: string;
+  targetProviderId: string | null;
+  happenedAt: number;
+};
+
 export type LivePlayerOverlayInteractionRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -1844,6 +1860,10 @@ export type LivePlayerOverlayInteractionRuntimeContract = {
     available: boolean;
     detail: string;
   } | null;
+  executionSummary: string;
+  executionDetail: string;
+  lastExecution: LivePlayerOverlayExecutionWitness | null;
+  recentExecutions: LivePlayerOverlayExecutionWitness[];
   commandDispatches: LivePlayerOverlayInteractionCommandDispatch[];
   nextMove: {
     label: string;

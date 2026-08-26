@@ -94,11 +94,13 @@ export function PlayerDock() {
   const controlTelemetry = usePlayerStore((state) => state.controlTelemetry);
   const dockMode = usePlayerStore((state) => state.dockMode);
   const overlayState = usePlayerStore((state) => state.overlayState);
+  const overlayExecutionLog = usePlayerStore((state) => state.overlayExecutionLog);
   const setDockMode = usePlayerStore((state) => state.setDockMode);
   const setOverlayState = usePlayerStore((state) => state.setOverlayState);
   const openOverlay = usePlayerStore((state) => state.openOverlay);
   const closeOverlay = usePlayerStore((state) => state.closeOverlay);
   const closePlayback = usePlayerStore((state) => state.closePlayback);
+  const recordOverlayExecution = usePlayerStore((state) => state.recordOverlayExecution);
   const playStream = usePlayerStore((state) => state.playStream);
   const connections = useAuthStore((state) => state.connections);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
@@ -543,9 +545,11 @@ export function PlayerDock() {
     focusRuntime: livePlayerOverlayFocusRuntime,
     focusReturnRuntime: livePlayerFocusReturnRuntime,
     commandRuntime: livePlayerOverlayCommandRuntime,
+    executionLog: overlayExecutionLog,
     recoveryRuntime: playerRecoveryActionRuntime,
   }), [
     overlayState,
+    overlayExecutionLog,
     livePlayerControlRuntime,
     livePlayerOverlayFocusRuntime,
     livePlayerFocusReturnRuntime,
@@ -718,53 +722,173 @@ export function PlayerDock() {
     switchPlaybackOwner(playerRecoveryActionRuntime.targetProviderId, 'recovery');
   };
 
+  const recordDispatchOutcome = ({
+    commandId,
+    outcome,
+    detail,
+    targetProviderId,
+  }: {
+    commandId: 'ok' | 'back' | 'left-right' | 'up-down' | 'audio-subtitle';
+    outcome: 'completed' | 'blocked' | 'unavailable';
+    detail?: string;
+    targetProviderId?: string | null;
+  }) => {
+    const dispatch = livePlayerOverlayInteractionRuntime.commandDispatches.find((entry) => entry.commandId === commandId);
+    if (!dispatch) return;
+
+    recordOverlayExecution({
+      commandId,
+      dispatchKind: dispatch.dispatchKind,
+      visibilityState: livePlayerOverlayInteractionRuntime.visibilityState,
+      outcome,
+      label: dispatch.label,
+      detail: detail ?? dispatch.detail,
+      targetProviderId: targetProviderId ?? dispatch.targetProviderId,
+    });
+  };
+
   const handleOverlayDispatch = (commandId: 'ok' | 'back' | 'left-right' | 'up-down' | 'audio-subtitle') => {
     const dispatch = livePlayerOverlayInteractionRuntime.commandDispatches.find((entry) => entry.commandId === commandId);
-    if (!dispatch?.available) return;
+    if (!dispatch) return;
+    if (!dispatch.available) {
+      recordDispatchOutcome({
+        commandId,
+        outcome: 'unavailable',
+        detail: dispatch.detail,
+      });
+      return;
+    }
 
     switch (dispatch.dispatchKind) {
       case 'open-overlay':
       case 'reveal-info':
         openOverlay('hero');
+        recordDispatchOutcome({
+          commandId,
+          outcome: 'completed',
+          detail: dispatch.summary,
+        });
         return;
       case 'close-overlay':
         closeOverlay();
+        recordDispatchOutcome({
+          commandId,
+          outcome: 'completed',
+          detail: dispatch.summary,
+        });
         return;
       case 'settle-timeshift':
         setOverlayState('transport');
+        recordDispatchOutcome({
+          commandId,
+          outcome: 'completed',
+          detail: dispatch.summary,
+        });
         return;
       case 'open-track-picker':
         setOverlayState('tracks');
+        recordDispatchOutcome({
+          commandId,
+          outcome: 'completed',
+          detail: dispatch.summary,
+        });
         return;
       case 'route-back':
         if (overlayState !== 'closed') {
           closeOverlay();
+          recordDispatchOutcome({
+            commandId,
+            outcome: 'completed',
+            detail: dispatch.summary,
+          });
           return;
         }
         closePlayback();
+        recordDispatchOutcome({
+          commandId,
+          outcome: 'completed',
+          detail: dispatch.summary,
+        });
         return;
       case 'retry-playback':
         openOverlay('recovery');
         retryCurrentPlayback();
+        recordDispatchOutcome({
+          commandId,
+          outcome: currentStream && playbackUrl && currentProviderId ? 'completed' : 'blocked',
+          detail: currentStream && playbackUrl && currentProviderId
+            ? dispatch.summary
+            : 'Retry was requested, but the active playback owner was no longer available.',
+        });
         return;
       case 'quick-switch':
         if (dispatch.targetProviderId) {
           openOverlay('recovery');
           handleQuickSwitch(dispatch.targetProviderId);
+          recordDispatchOutcome({
+            commandId,
+            outcome: 'completed',
+            detail: dispatch.summary,
+            targetProviderId: dispatch.targetProviderId,
+          });
+          return;
         }
+        recordDispatchOutcome({
+          commandId,
+          outcome: 'blocked',
+          detail: 'Quick-switch was requested without a runtime-owned provider target.',
+        });
         return;
       case 'reclaim-owner':
         if (dispatch.targetProviderId) {
           openOverlay('recovery');
-          if (playExactRecoveryTarget(dispatch.targetProviderId)) return;
-          if (playCategoryRecoveryTarget(dispatch.targetProviderId)) return;
+          if (playExactRecoveryTarget(dispatch.targetProviderId)) {
+            recordDispatchOutcome({
+              commandId,
+              outcome: 'completed',
+              detail: dispatch.summary,
+              targetProviderId: dispatch.targetProviderId,
+            });
+            return;
+          }
+          if (playCategoryRecoveryTarget(dispatch.targetProviderId)) {
+            recordDispatchOutcome({
+              commandId,
+              outcome: 'completed',
+              detail: dispatch.summary,
+              targetProviderId: dispatch.targetProviderId,
+            });
+            return;
+          }
           switchPlaybackOwner(dispatch.targetProviderId, 'recovery');
+          recordDispatchOutcome({
+            commandId,
+            outcome: 'completed',
+            detail: dispatch.summary,
+            targetProviderId: dispatch.targetProviderId,
+          });
+          return;
         }
+        recordDispatchOutcome({
+          commandId,
+          outcome: 'blocked',
+          detail: 'Reclaim-owner was requested without a runtime-owned provider target.',
+        });
         return;
       case 'wait-for-line':
         openOverlay('recovery');
+        recordDispatchOutcome({
+          commandId,
+          outcome: 'blocked',
+          detail: dispatch.summary,
+        });
         return;
       default:
+        recordDispatchOutcome({
+          commandId,
+          outcome: 'unavailable',
+          detail: dispatch.detail,
+        });
         return;
     }
   };

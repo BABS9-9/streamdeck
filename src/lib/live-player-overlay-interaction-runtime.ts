@@ -1,5 +1,6 @@
 import {
   LivePlayerControlRuntimeContract,
+  LivePlayerOverlayExecutionWitness,
   LivePlayerFocusReturnRuntimeContract,
   LivePlayerOverlayCommandEntry,
   LivePlayerOverlayCommandRuntimeContract,
@@ -20,6 +21,18 @@ const toneRank = {
 const getDominantTone = (tones: LivePlayerOverlayInteractionRuntimeContract['tone'][]) => tones.reduce<LivePlayerOverlayInteractionRuntimeContract['tone']>((current, tone) => (
   toneRank[tone] > toneRank[current] ? tone : current
 ), 'ready');
+
+const formatExecutionAgo = (happenedAt: number, now = Date.now()) => {
+  const deltaMs = Math.max(0, now - happenedAt);
+  const deltaSeconds = Math.floor(deltaMs / 1000);
+  if (deltaSeconds < 5) return 'just now';
+  if (deltaSeconds < 60) return `${deltaSeconds}s ago`;
+  const deltaMinutes = Math.floor(deltaSeconds / 60);
+  if (deltaMinutes < 60) return `${deltaMinutes}m ago`;
+  const deltaHours = Math.floor(deltaMinutes / 60);
+  if (deltaHours < 24) return `${deltaHours}h ago`;
+  return `${Math.floor(deltaHours / 24)}d ago`;
+};
 
 const getVisibilityState = ({
   overlayState,
@@ -79,6 +92,28 @@ const getReasonPath = ({
   if (visibilityState === 'transport') return 'Timeshift posture is active, so the overlay should stay open until the current offset is settled honestly.';
   if (visibilityState === 'hero') return commandRuntime.nextMove.detail;
   return focusReturnRuntime.backTarget;
+};
+
+const getExecutionSummary = (executionLog: LivePlayerOverlayExecutionWitness[]) => {
+  const latest = executionLog[0] ?? null;
+  if (!latest) {
+    return {
+      summary: 'No overlay command witness is recorded yet.',
+      detail: 'The full-screen overlay path still needs one runtime-owned execution event before it can explain what actually happened last.',
+    };
+  }
+
+  const outcomeLabel = latest.outcome === 'completed'
+    ? 'completed'
+    : latest.outcome === 'blocked'
+      ? 'stopped'
+      : 'stayed unavailable';
+  const providerDetail = latest.targetProviderId ? ` Provider target: ${latest.targetProviderId}.` : '';
+
+  return {
+    summary: `${latest.label} ${outcomeLabel} ${formatExecutionAgo(latest.happenedAt)}.`,
+    detail: `${latest.detail}${providerDetail}`,
+  };
 };
 
 const getCommandDispatch = ({
@@ -258,6 +293,7 @@ export const buildLivePlayerOverlayInteractionRuntime = ({
   focusRuntime,
   focusReturnRuntime,
   commandRuntime,
+  executionLog = [],
   recoveryRuntime = null,
 }: {
   overlayState: LivePlayerOverlayVisibilityState;
@@ -265,6 +301,7 @@ export const buildLivePlayerOverlayInteractionRuntime = ({
   focusRuntime: LivePlayerOverlayFocusRuntimeContract;
   focusReturnRuntime: LivePlayerFocusReturnRuntimeContract;
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
+  executionLog?: LivePlayerOverlayExecutionWitness[];
   recoveryRuntime?: LivePlayerRecoveryActionRuntimeContract | null;
 }): LivePlayerOverlayInteractionRuntimeContract => {
   const visibilityState = getVisibilityState({
@@ -292,6 +329,9 @@ export const buildLivePlayerOverlayInteractionRuntime = ({
     focusReturnRuntime,
     commandRuntime,
   });
+  const recentExecutions = executionLog.slice(0, 6);
+  const lastExecution = recentExecutions[0] ?? null;
+  const executionSummary = getExecutionSummary(recentExecutions);
   const tone = getDominantTone([
     controlRuntime.tone,
     focusReturnRuntime.tone,
@@ -317,6 +357,10 @@ export const buildLivePlayerOverlayInteractionRuntime = ({
     focusHandoffLabel: focusReturnRuntime.nextMove.label,
     focusHandoffDetail: focusReturnRuntime.nextMove.detail,
     reasonPath,
+    executionSummary: executionSummary.summary,
+    executionDetail: executionSummary.detail,
+    lastExecution,
+    recentExecutions,
     primaryDispatch: primaryDispatch
       ? {
           label: primaryDispatch.label,

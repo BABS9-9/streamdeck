@@ -4,7 +4,16 @@ import { create } from 'zustand';
 import { createPlaybackHistoryEntry, hydratePlaybackHistory, updatePlaybackHistoryProgress } from '@/lib/playback-history-runtime';
 import { getArtwork, getCachedSearchCatalog, getContentId } from '@/lib/xtream-api';
 import { storage } from '@/lib/storage';
-import { LivePlayerOverlayVisibilityState, PlayerControlTelemetry, ProviderDropNotice, ProviderDropReason, StreamHealth, WatchHistoryItem, XtreamStream } from '@/lib/types';
+import {
+  LivePlayerOverlayExecutionWitness,
+  LivePlayerOverlayVisibilityState,
+  PlayerControlTelemetry,
+  ProviderDropNotice,
+  ProviderDropReason,
+  StreamHealth,
+  WatchHistoryItem,
+  XtreamStream,
+} from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 
 type PlaybackMeta = {
@@ -26,6 +35,7 @@ type PlayerState = {
   controlTelemetry: PlayerControlTelemetry;
   dockMode: 'expanded' | 'compact';
   overlayState: LivePlayerOverlayVisibilityState;
+  overlayExecutionLog: LivePlayerOverlayExecutionWitness[];
   hydrate: () => void;
   playStream: (stream: XtreamStream, playbackUrl: string, providerId: string, meta?: PlaybackMeta) => void;
   updatePlaybackProgress: (positionSeconds: number, durationSeconds?: number | null) => void;
@@ -41,6 +51,8 @@ type PlayerState = {
   setOverlayState: (state: LivePlayerOverlayVisibilityState) => void;
   openOverlay: (state?: Exclude<LivePlayerOverlayVisibilityState, 'closed'>) => void;
   closeOverlay: () => void;
+  recordOverlayExecution: (entry: Omit<LivePlayerOverlayExecutionWitness, 'happenedAt'> & { happenedAt?: number }) => void;
+  clearOverlayExecutionLog: () => void;
   closePlayback: () => void;
 };
 
@@ -89,6 +101,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   controlTelemetry: defaultControlTelemetry,
   dockMode: 'compact',
   overlayState: 'closed',
+  overlayExecutionLog: [],
   hydrate: () => {
     const authState = useAuthStore.getState();
     const hydratedHistory = hydratePlaybackHistory({
@@ -122,6 +135,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       watchHistory: history,
       dockMode: storage.getPlayerDockMode(),
       overlayState: storage.getPlayerOverlayState(),
+      overlayExecutionLog: storage.getPlayerOverlayExecutionLog(),
       providerDrops: storage.getProviderDrops(),
     });
   },
@@ -169,8 +183,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         updatedAt: Date.now(),
       },
       overlayState: 'closed',
+      overlayExecutionLog: [],
     });
     storage.savePlayerOverlayState('closed');
+    storage.savePlayerOverlayExecutionLog([]);
   },
   getProviderDrop: (providerId) => get().providerDrops[providerId] ?? null,
   clearProviderDrop: (providerId) => {
@@ -271,6 +287,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         },
       };
       if (state.currentProviderId === providerId) {
+        storage.savePlayerOverlayState('recovery');
         nextState.streamHealth = {
           ...state.streamHealth,
           status: 'error',
@@ -282,6 +299,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           playbackState: 'error',
           updatedAt: Date.now(),
         };
+        nextState.overlayState = 'recovery';
       }
       return nextState as PlayerState;
     });
@@ -315,8 +333,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           playbackState: 'error',
           updatedAt: Date.now(),
         },
+        overlayState: 'closed',
+        overlayExecutionLog: [],
       };
     });
+    storage.savePlayerOverlayState('closed');
+    storage.savePlayerOverlayExecutionLog([]);
   },
   resetStreamHealth: () => set({ streamHealth: defaultStreamHealth }),
   resetControlTelemetry: () => set({ controlTelemetry: defaultControlTelemetry }),
@@ -336,8 +358,24 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     storage.savePlayerOverlayState('closed');
     set({ overlayState: 'closed' });
   },
+  recordOverlayExecution: (entry) => {
+    const nextEntry: LivePlayerOverlayExecutionWitness = {
+      ...entry,
+      happenedAt: entry.happenedAt ?? Date.now(),
+    };
+    set((state) => {
+      const overlayExecutionLog = [nextEntry, ...state.overlayExecutionLog].slice(0, 12);
+      storage.savePlayerOverlayExecutionLog(overlayExecutionLog);
+      return { overlayExecutionLog };
+    });
+  },
+  clearOverlayExecutionLog: () => {
+    storage.savePlayerOverlayExecutionLog([]);
+    set({ overlayExecutionLog: [] });
+  },
   closePlayback: () => {
     storage.savePlayerOverlayState('closed');
+    storage.savePlayerOverlayExecutionLog([]);
     set({
       currentStream: null,
       playbackUrl: null,
@@ -346,6 +384,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       streamHealth: defaultStreamHealth,
       controlTelemetry: defaultControlTelemetry,
       overlayState: 'closed',
+      overlayExecutionLog: [],
     });
   },
 }));

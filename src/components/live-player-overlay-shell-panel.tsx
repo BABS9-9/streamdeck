@@ -8,6 +8,12 @@ const toneStyles = {
   recover: 'border-rose-400/20 bg-rose-500/10 text-rose-100',
 } as const;
 
+const executionToneStyles = {
+  completed: 'border-emerald-300/20 bg-emerald-500/10 text-emerald-100',
+  blocked: 'border-amber-300/20 bg-amber-500/10 text-amber-100',
+  unavailable: 'border-slate-300/20 bg-slate-500/10 text-slate-100',
+} as const;
+
 export function LivePlayerOverlayShellPanel({
   contract,
   onPrimaryAction,
@@ -181,6 +187,50 @@ export function LivePlayerOverlayShellPanel({
           <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
             <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Reason path glue</p>
             <p className="mt-3 text-sm leading-6 text-white/90">{contract.interactionRuntime.reasonPath}</p>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="max-w-3xl">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Execution witness</p>
+                <p className="mt-2 text-sm font-semibold text-white">{contract.interactionRuntime.executionSummary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{contract.interactionRuntime.executionDetail}</p>
+              </div>
+              {contract.interactionRuntime.lastExecution ? (
+                <span
+                  className={`rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.18em] ${
+                    executionToneStyles[contract.interactionRuntime.lastExecution.outcome]
+                  }`}
+                >
+                  {contract.interactionRuntime.lastExecution.outcome}
+                </span>
+              ) : null}
+            </div>
+
+            {contract.interactionRuntime.recentExecutions.length ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {contract.interactionRuntime.recentExecutions.map((execution) => (
+                  <article
+                    key={`${execution.commandId}-${execution.happenedAt}`}
+                    className={`rounded-2xl border p-4 ${executionToneStyles[execution.outcome]}`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[11px] uppercase tracking-[0.22em]">{execution.label}</p>
+                      <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/80">
+                        {execution.visibilityState}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm font-semibold text-white">{execution.dispatchKind}</p>
+                    <p className="mt-2 text-xs leading-5 text-white/80">{execution.detail}</p>
+                    {execution.targetProviderId ? (
+                      <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/70">
+                        Target {execution.targetProviderId}
+                      </p>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
 

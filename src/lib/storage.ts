@@ -3,6 +3,7 @@ import {
   CachedProviderSession,
   FavoriteEntry,
   LibraryCollection,
+  LivePlayerOverlayExecutionWitness,
   ProviderCatalog,
   ProviderEpgSnapshot,
   ProviderHomeSnapshot,
@@ -34,6 +35,7 @@ const KEYS = {
   collections: 'streamdeck.collections',
   playerDockMode: 'streamdeck.player-dock-mode',
   playerOverlayState: 'streamdeck.player-overlay-state',
+  playerOverlayExecutionLog: 'streamdeck.player-overlay-execution-log',
   mockScenario: 'streamdeck.mock-scenario',
   providerSessions: 'streamdeck.provider-sessions',
   providerDrops: 'streamdeck.provider-drops',
@@ -58,6 +60,56 @@ const isFavoriteEntry = (value: unknown): value is FavoriteEntry => (
   && Number.isFinite((value as FavoriteEntry).streamId)
   && typeof (value as FavoriteEntry).providerId === 'string'
 );
+
+const isOverlayCommandId = (value: unknown): value is LivePlayerOverlayExecutionWitness['commandId'] => (
+  value === 'ok' || value === 'back' || value === 'left-right' || value === 'up-down' || value === 'audio-subtitle'
+);
+
+const isOverlayDispatchKind = (value: unknown): value is LivePlayerOverlayExecutionWitness['dispatchKind'] => (
+  value === 'open-overlay'
+  || value === 'close-overlay'
+  || value === 'reveal-info'
+  || value === 'settle-timeshift'
+  || value === 'open-track-picker'
+  || value === 'route-back'
+  || value === 'retry-playback'
+  || value === 'quick-switch'
+  || value === 'reclaim-owner'
+  || value === 'wait-for-line'
+  || value === 'noop'
+);
+
+const isOverlayVisibilityState = (value: unknown): value is LivePlayerOverlayExecutionWitness['visibilityState'] => (
+  value === 'closed' || value === 'hero' || value === 'transport' || value === 'tracks' || value === 'recovery'
+);
+
+const isOverlayExecutionOutcome = (value: unknown): value is LivePlayerOverlayExecutionWitness['outcome'] => (
+  value === 'completed' || value === 'blocked' || value === 'unavailable'
+);
+
+const normalizePlayerOverlayExecutionLog = (value: unknown) => {
+  if (!Array.isArray(value)) return [] as LivePlayerOverlayExecutionWitness[];
+
+  return value.reduce<LivePlayerOverlayExecutionWitness[]>((items, entry) => {
+    if (!entry || typeof entry !== 'object') return items;
+    const raw = entry as Partial<LivePlayerOverlayExecutionWitness>;
+    if (!isOverlayCommandId(raw.commandId) || !isOverlayDispatchKind(raw.dispatchKind) || !isOverlayVisibilityState(raw.visibilityState) || !isOverlayExecutionOutcome(raw.outcome)) {
+      return items;
+    }
+
+    items.push({
+      commandId: raw.commandId,
+      dispatchKind: raw.dispatchKind,
+      visibilityState: raw.visibilityState,
+      outcome: raw.outcome,
+      label: typeof raw.label === 'string' ? raw.label : 'Overlay dispatch',
+      detail: typeof raw.detail === 'string' ? raw.detail : 'No execution detail was recorded.',
+      targetProviderId: typeof raw.targetProviderId === 'string' ? raw.targetProviderId : null,
+      happenedAt: Number.isFinite(raw.happenedAt) ? Number(raw.happenedAt) : 0,
+    });
+    return items;
+  }, []).sort((left, right) => right.happenedAt - left.happenedAt).slice(0, 12);
+};
 
 const mergeFavoriteEntries = (current: FavoriteEntry[], incoming: FavoriteEntry[]) => {
   const merged = [...current, ...incoming].reduce<Record<number, FavoriteEntry>>((acc, entry) => {
@@ -526,6 +578,14 @@ export const storage = {
   savePlayerOverlayState(state: 'closed' | 'hero' | 'transport' | 'tracks' | 'recovery') {
     if (!isBrowser()) return;
     localStorage.setItem(KEYS.playerOverlayState, state);
+  },
+  getPlayerOverlayExecutionLog(): LivePlayerOverlayExecutionWitness[] {
+    if (!isBrowser()) return [];
+    return normalizePlayerOverlayExecutionLog(safeJsonParse<unknown>(localStorage.getItem(KEYS.playerOverlayExecutionLog), []));
+  },
+  savePlayerOverlayExecutionLog(log: LivePlayerOverlayExecutionWitness[]) {
+    if (!isBrowser()) return;
+    localStorage.setItem(KEYS.playerOverlayExecutionLog, JSON.stringify(log.slice(0, 12)));
   },
   getMockScenario(): 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' | 'expiredAccount' | 'authUnstable' {
     if (!isBrowser()) return 'healthy';
