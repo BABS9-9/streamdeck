@@ -106,6 +106,110 @@ export function LivePlayerOverlayShellPanel({
         <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.timelineRuntime.eyebrow}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.timelineRuntime.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.timelineRuntime.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.timelineRuntime.timelineState}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.timelineRuntime.positionLabel}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Timeline coverage</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-white/65">
+                {contract.timelineRuntime.coveragePercent === null
+                  ? 'explicit posture only'
+                  : `${Math.round(contract.timelineRuntime.coveragePercent)}%`}
+              </p>
+            </div>
+            <div className="mt-4 h-3 rounded-full bg-white/10">
+              <div
+                className={`h-full rounded-full ${
+                  contract.timelineRuntime.tone === 'ready'
+                    ? 'bg-sky-300'
+                    : contract.timelineRuntime.tone === 'watch'
+                      ? 'bg-amber-300'
+                      : 'bg-rose-300'
+                }`}
+                style={{ width: `${Math.max(0, contract.timelineRuntime.coveragePercent ?? 0)}%` }}
+              />
+            </div>
+            <div className="relative mt-3 h-8">
+              {contract.timelineRuntime.markers.map((marker) => (
+                <div
+                  key={marker.id}
+                  className="absolute top-0 -translate-x-1/2"
+                  style={{ left: `${Math.max(0, Math.min(100, marker.positionPercent ?? 50))}%` }}
+                >
+                  <div className="mx-auto h-3 w-3 rounded-full border border-white/20 bg-white/80" />
+                  <p className="mt-2 whitespace-nowrap text-[10px] uppercase tracking-[0.16em] text-white/65">
+                    {marker.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Elapsed</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.timelineRuntime.elapsedLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Remaining / window</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.timelineRuntime.remainingLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Window label</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.timelineRuntime.windowLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Live edge</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.timelineRuntime.liveEdgeLabel}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {contract.timelineRuntime.markers.map((marker) => (
+              <article
+                key={`detail-${marker.id}`}
+                className={`rounded-2xl border p-4 ${
+                  marker.tone === 'ready'
+                    ? 'border-sky-300/20 bg-sky-500/10'
+                    : marker.tone === 'watch'
+                      ? 'border-amber-300/20 bg-amber-500/10'
+                      : 'border-rose-300/20 bg-rose-500/10'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{marker.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {marker.state}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{marker.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/80">{marker.detail}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Timeline focus</p>
+            <p className="mt-3 text-sm font-semibold text-white">{contract.timelineRuntime.focusLabel}</p>
+            <p className="mt-2 text-xs leading-5 text-white/75">{contract.timelineRuntime.nextMove.detail}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
               <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.focusRuntime.eyebrow}</p>
               <p className="mt-2 text-sm font-semibold text-white">{contract.focusRuntime.summary}</p>
               <p className="mt-2 text-xs leading-5 text-white/75">{contract.focusRuntime.detail}</p>

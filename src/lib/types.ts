@@ -1672,6 +1672,47 @@ export type LivePlayerOverlayProgressState =
   | 'resume'
   | 'unavailable';
 
+export type LivePlayerOverlayTimelineState =
+  | 'live-edge'
+  | 'timeshift-active'
+  | 'timeshift-ready'
+  | 'resume-window'
+  | 'recovery-pinned'
+  | 'unavailable';
+
+export type LivePlayerOverlayTimelineMarker = {
+  id: 'window-start' | 'resume-checkpoint' | 'current-position' | 'live-edge' | 'window-end';
+  label: string;
+  state: string;
+  summary: string;
+  detail: string;
+  positionPercent: number | null;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayTimelineRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  timelineState: LivePlayerOverlayTimelineState;
+  coveragePercent: number | null;
+  elapsedLabel: string;
+  remainingLabel: string;
+  windowLabel: string;
+  liveEdgeLabel: string;
+  positionLabel: string;
+  focusLabel: string;
+  markers: LivePlayerOverlayTimelineMarker[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+  };
+};
+
 export type LivePlayerOverlayQuickAction = {
   id: 'playback' | 'audio' | 'subtitles' | 'seek' | 'recovery' | 'owner';
   label: string;
@@ -1948,6 +1989,7 @@ export type LivePlayerOverlayRuntimeContract = {
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
   interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
   sessionRuntime: LivePlayerOverlaySessionRuntimeContract;
+  timelineRuntime: LivePlayerOverlayTimelineRuntimeContract;
   quickActions: LivePlayerOverlayQuickAction[];
   lanes: LivePlayerOverlayLane[];
   statusChips: LivePlayerOverlayStatusChip[];

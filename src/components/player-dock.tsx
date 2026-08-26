@@ -13,6 +13,7 @@ import { buildLivePlayerOverlayFocusRuntime } from '@/lib/live-player-overlay-fo
 import { buildLivePlayerOverlayCommandRuntime } from '@/lib/live-player-overlay-command-runtime';
 import { buildLivePlayerOverlayInteractionRuntime } from '@/lib/live-player-overlay-interaction-runtime';
 import { buildLivePlayerOverlaySessionRuntime } from '@/lib/live-player-overlay-session-runtime';
+import { buildLivePlayerOverlayTimelineRuntime } from '@/lib/live-player-overlay-timeline-runtime';
 import { buildLivePlayerOverlayShellRuntime } from '@/lib/live-player-overlay-shell-runtime';
 import { buildLivePlayerLineReleaseRuntime } from '@/lib/live-player-line-release-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
@@ -116,7 +117,9 @@ export function PlayerDock() {
   const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
 
   const contentId = currentStream ? (currentStream.stream_id ?? currentStream.series_id ?? 0) : 0;
-  const historyItem = currentProviderId ? watchHistory.find((item) => item.id === `${currentProviderId}-${contentId}`) : undefined;
+  const historyItem = currentProviderId
+    ? watchHistory.find((item) => item.id === `${currentProviderId}-${contentId}`) ?? null
+    : null;
   const currentProvider = connections.find((connection) => connection.id === currentProviderId) ?? null;
   const isExpanded = dockMode === 'expanded';
   const currentGuideEntry = currentProviderId ? lookupStreamGuide(currentProviderId, currentStream, Number.MAX_SAFE_INTEGER) : null;
@@ -568,6 +571,19 @@ export function PlayerDock() {
     livePlayerOverlayInteractionRuntime,
     playerRecoveryActionRuntime,
   ]);
+  const livePlayerOverlayTimelineRuntime = useMemo(() => buildLivePlayerOverlayTimelineRuntime({
+    historyItem,
+    controlTelemetry,
+    controlRuntime: livePlayerControlRuntime,
+    interactionRuntime: livePlayerOverlayInteractionRuntime,
+    recoveryRuntime: playerRecoveryActionRuntime,
+  }), [
+    historyItem,
+    controlTelemetry,
+    livePlayerControlRuntime,
+    livePlayerOverlayInteractionRuntime,
+    playerRecoveryActionRuntime,
+  ]);
   const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({
     channelName: currentStream?.name ?? historyItem?.title ?? 'Active playback',
     providerLabel: currentProvider?.name
@@ -590,6 +606,7 @@ export function PlayerDock() {
     commandRuntime: livePlayerOverlayCommandRuntime,
     interactionRuntime: livePlayerOverlayInteractionRuntime,
     sessionRuntime: livePlayerOverlaySessionRuntime,
+    timelineRuntime: livePlayerOverlayTimelineRuntime,
     controlRuntime: livePlayerControlRuntime,
     continuityRuntime: livePlayerContinuityRuntime,
     remoteRuntime: livePlayerRemoteRuntime,
@@ -609,6 +626,7 @@ export function PlayerDock() {
     livePlayerOverlayCommandRuntime,
     livePlayerOverlayInteractionRuntime,
     livePlayerOverlaySessionRuntime,
+    livePlayerOverlayTimelineRuntime,
     livePlayerOverlayFocusRuntime,
     livePlayerContinuityRuntime,
     livePlayerControlRuntime,
