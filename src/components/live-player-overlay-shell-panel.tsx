@@ -237,6 +237,67 @@ export function LivePlayerOverlayShellPanel({
         <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.sessionRuntime.eyebrow}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.sessionRuntime.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.sessionRuntime.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.sessionRuntime.freshnessState}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.sessionRuntime.commandCoverageLabel}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {contract.sessionRuntime.cards.map((card) => (
+              <article
+                key={card.id}
+                className={`rounded-2xl border p-4 ${
+                  card.tone === 'ready'
+                    ? 'border-sky-300/20 bg-sky-500/10 text-sky-100'
+                    : card.tone === 'watch'
+                      ? 'border-amber-300/20 bg-amber-500/10 text-amber-100'
+                      : 'border-rose-300/20 bg-rose-500/10 text-rose-100'
+                }`}
+              >
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/75">{card.label}</p>
+                <p className="mt-3 text-sm font-semibold text-white">{card.value}</p>
+                <p className="mt-2 text-xs leading-5 text-white/80">{card.detail}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Session window</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.sessionRuntime.sessionAgeLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Last execution</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.sessionRuntime.lastExecutionAgeLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Dispatch readiness</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.sessionRuntime.dispatchReadinessLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Drift guard</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.sessionRuntime.driftLabel}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.sessionRuntime.nextMove.label}</p>
+            <p className="mt-3 text-sm leading-6 text-white/90">{contract.sessionRuntime.nextMove.detail}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
               <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.commandRuntime.eyebrow}</p>
               <p className="mt-2 text-sm font-semibold text-white">{contract.commandRuntime.summary}</p>
               <p className="mt-2 text-xs leading-5 text-white/75">{contract.commandRuntime.detail}</p>

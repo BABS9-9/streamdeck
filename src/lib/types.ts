@@ -1873,6 +1873,52 @@ export type LivePlayerOverlayInteractionRuntimeContract = {
   };
 };
 
+export type LivePlayerOverlaySessionFreshnessState =
+  | 'fresh'
+  | 'warming'
+  | 'stale'
+  | 'recovery-locked';
+
+export type LivePlayerOverlaySessionCommandState =
+  | 'fully-routable'
+  | 'recovery-routed'
+  | 'partially-routable'
+  | 'unavailable';
+
+export type LivePlayerOverlaySessionCard = {
+  id: 'freshness' | 'dispatch' | 'cadence' | 'recovery';
+  label: string;
+  value: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlaySessionRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  freshnessState: LivePlayerOverlaySessionFreshnessState;
+  commandState: LivePlayerOverlaySessionCommandState;
+  recoveryLockState: 'locked' | 'open' | 'released';
+  sessionAgeLabel: string;
+  lastExecutionAgeLabel: string;
+  dispatchReadinessLabel: string;
+  driftLabel: string;
+  commandCoverageLabel: string;
+  completedCount: number;
+  blockedCount: number;
+  unavailableCount: number;
+  cards: LivePlayerOverlaySessionCard[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+  };
+};
+
 export type LivePlayerOverlayRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -1901,6 +1947,7 @@ export type LivePlayerOverlayRuntimeContract = {
   focusRuntime: LivePlayerOverlayFocusRuntimeContract;
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
   interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
+  sessionRuntime: LivePlayerOverlaySessionRuntimeContract;
   quickActions: LivePlayerOverlayQuickAction[];
   lanes: LivePlayerOverlayLane[];
   statusChips: LivePlayerOverlayStatusChip[];

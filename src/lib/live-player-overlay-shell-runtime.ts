@@ -9,6 +9,7 @@ import {
   LivePlayerOverlayProgressState,
   LivePlayerOverlayQuickAction,
   LivePlayerOverlayRuntimeContract,
+  LivePlayerOverlaySessionRuntimeContract,
   LivePlayerOverlayStatusChip,
   LivePlayerRecoveryActionRuntimeContract,
   LivePlayerRemoteRuntimeContract,
@@ -214,6 +215,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
   focusRuntime,
   commandRuntime,
   interactionRuntime,
+  sessionRuntime,
   controlRuntime,
   continuityRuntime,
   remoteRuntime,
@@ -231,6 +233,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
   focusRuntime: LivePlayerOverlayFocusRuntimeContract;
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
   interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
+  sessionRuntime: LivePlayerOverlaySessionRuntimeContract;
   controlRuntime: LivePlayerControlRuntimeContract;
   continuityRuntime: LivePlayerContinuityRuntimeContract;
   remoteRuntime: LivePlayerRemoteRuntimeContract;
@@ -299,6 +302,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
     focusRuntime,
     commandRuntime,
     interactionRuntime,
+    sessionRuntime,
     quickActions,
     lanes,
     statusChips,

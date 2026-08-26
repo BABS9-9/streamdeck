@@ -12,6 +12,7 @@ import { buildLivePlayerFocusReturnRuntime } from '@/lib/live-player-focus-retur
 import { buildLivePlayerOverlayFocusRuntime } from '@/lib/live-player-overlay-focus-runtime';
 import { buildLivePlayerOverlayCommandRuntime } from '@/lib/live-player-overlay-command-runtime';
 import { buildLivePlayerOverlayInteractionRuntime } from '@/lib/live-player-overlay-interaction-runtime';
+import { buildLivePlayerOverlaySessionRuntime } from '@/lib/live-player-overlay-session-runtime';
 import { buildLivePlayerOverlayShellRuntime } from '@/lib/live-player-overlay-shell-runtime';
 import { buildLivePlayerLineReleaseRuntime } from '@/lib/live-player-line-release-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
@@ -556,6 +557,17 @@ export function PlayerDock() {
     livePlayerOverlayCommandRuntime,
     playerRecoveryActionRuntime,
   ]);
+  const livePlayerOverlaySessionRuntime = useMemo(() => buildLivePlayerOverlaySessionRuntime({
+    controlRuntime: livePlayerControlRuntime,
+    commandRuntime: livePlayerOverlayCommandRuntime,
+    interactionRuntime: livePlayerOverlayInteractionRuntime,
+    recoveryRuntime: playerRecoveryActionRuntime,
+  }), [
+    livePlayerControlRuntime,
+    livePlayerOverlayCommandRuntime,
+    livePlayerOverlayInteractionRuntime,
+    playerRecoveryActionRuntime,
+  ]);
   const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({
     channelName: currentStream?.name ?? historyItem?.title ?? 'Active playback',
     providerLabel: currentProvider?.name
@@ -577,6 +589,7 @@ export function PlayerDock() {
     focusRuntime: livePlayerOverlayFocusRuntime,
     commandRuntime: livePlayerOverlayCommandRuntime,
     interactionRuntime: livePlayerOverlayInteractionRuntime,
+    sessionRuntime: livePlayerOverlaySessionRuntime,
     controlRuntime: livePlayerControlRuntime,
     continuityRuntime: livePlayerContinuityRuntime,
     remoteRuntime: livePlayerRemoteRuntime,
@@ -595,6 +608,7 @@ export function PlayerDock() {
     historyItem?.title,
     livePlayerOverlayCommandRuntime,
     livePlayerOverlayInteractionRuntime,
+    livePlayerOverlaySessionRuntime,
     livePlayerOverlayFocusRuntime,
     livePlayerContinuityRuntime,
     livePlayerControlRuntime,
