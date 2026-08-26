@@ -1960,6 +1960,53 @@ export type LivePlayerOverlaySessionRuntimeContract = {
   };
 };
 
+export type LivePlayerOverlayPlaybackProgramState =
+  | 'current-next'
+  | 'guide-stale'
+  | 'timeshift'
+  | 'resume'
+  | 'recovery-led'
+  | 'unavailable';
+
+export type LivePlayerOverlayPlaybackActionId =
+  | 'retry'
+  | 'quick-switch'
+  | 'audio-subtitle'
+  | 'return';
+
+export type LivePlayerOverlayPlaybackActionRoute = {
+  id: LivePlayerOverlayPlaybackActionId;
+  label: string;
+  summary: string;
+  detail: string;
+  dispatchKind: LivePlayerOverlayDispatchKind;
+  commandId: LivePlayerOverlayCommandEntry['id'] | null;
+  targetProviderId: string | null;
+  available: boolean;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  programState: LivePlayerOverlayPlaybackProgramState;
+  guideFreshnessLabel: string;
+  currentProgramLabel: string;
+  nextProgramLabel: string;
+  liveEdgeLabel: string;
+  seekEligibilityLabel: string;
+  programWindowLabel: string;
+  metadataSummary: string;
+  actionSummary: string;
+  primaryAction: LivePlayerOverlayPlaybackActionRoute | null;
+  secondaryAction: LivePlayerOverlayPlaybackActionRoute | null;
+  actions: LivePlayerOverlayPlaybackActionRoute[];
+};
+
 export type LivePlayerOverlayRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -1989,6 +2036,7 @@ export type LivePlayerOverlayRuntimeContract = {
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
   interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
   sessionRuntime: LivePlayerOverlaySessionRuntimeContract;
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
   timelineRuntime: LivePlayerOverlayTimelineRuntimeContract;
   quickActions: LivePlayerOverlayQuickAction[];
   lanes: LivePlayerOverlayLane[];

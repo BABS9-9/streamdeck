@@ -14,6 +14,7 @@ import { buildLivePlayerOverlayCommandRuntime } from '@/lib/live-player-overlay-
 import { buildLivePlayerOverlayInteractionRuntime } from '@/lib/live-player-overlay-interaction-runtime';
 import { buildLivePlayerOverlaySessionRuntime } from '@/lib/live-player-overlay-session-runtime';
 import { buildLivePlayerOverlayTimelineRuntime } from '@/lib/live-player-overlay-timeline-runtime';
+import { buildLivePlayerOverlayPlaybackRuntime } from '@/lib/live-player-overlay-playback-runtime';
 import { buildLivePlayerOverlayShellRuntime } from '@/lib/live-player-overlay-shell-runtime';
 import { buildLivePlayerLineReleaseRuntime } from '@/lib/live-player-line-release-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
@@ -584,6 +585,29 @@ export function PlayerDock() {
     livePlayerOverlayInteractionRuntime,
     playerRecoveryActionRuntime,
   ]);
+  const livePlayerOverlayPlaybackRuntime = useMemo(() => buildLivePlayerOverlayPlaybackRuntime({
+    currentStream,
+    currentProviderName: currentProvider?.name ?? null,
+    guide: currentGuide,
+    guideCoverage: currentGuideCoverage,
+    guideSyncState: currentGuideState,
+    historyItem,
+    controlTelemetry,
+    controlRuntime: livePlayerControlRuntime,
+    interactionRuntime: livePlayerOverlayInteractionRuntime,
+    recoveryRuntime: playerRecoveryActionRuntime,
+  }), [
+    controlTelemetry,
+    currentGuide,
+    currentGuideCoverage,
+    currentGuideState,
+    currentProvider?.name,
+    currentStream,
+    historyItem,
+    livePlayerControlRuntime,
+    livePlayerOverlayInteractionRuntime,
+    playerRecoveryActionRuntime,
+  ]);
   const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({
     channelName: currentStream?.name ?? historyItem?.title ?? 'Active playback',
     providerLabel: currentProvider?.name
@@ -606,6 +630,7 @@ export function PlayerDock() {
     commandRuntime: livePlayerOverlayCommandRuntime,
     interactionRuntime: livePlayerOverlayInteractionRuntime,
     sessionRuntime: livePlayerOverlaySessionRuntime,
+    playbackRuntime: livePlayerOverlayPlaybackRuntime,
     timelineRuntime: livePlayerOverlayTimelineRuntime,
     controlRuntime: livePlayerControlRuntime,
     continuityRuntime: livePlayerContinuityRuntime,
@@ -625,6 +650,7 @@ export function PlayerDock() {
     historyItem?.title,
     livePlayerOverlayCommandRuntime,
     livePlayerOverlayInteractionRuntime,
+    livePlayerOverlayPlaybackRuntime,
     livePlayerOverlaySessionRuntime,
     livePlayerOverlayTimelineRuntime,
     livePlayerOverlayFocusRuntime,

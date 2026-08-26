@@ -106,6 +106,77 @@ export function LivePlayerOverlayShellPanel({
         <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.playbackRuntime.eyebrow}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.playbackRuntime.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.playbackRuntime.programState}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.playbackRuntime.guideFreshnessLabel}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Current program</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.currentProgramLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Next / fallback</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.nextProgramLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Metadata owner</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.metadataSummary}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Live edge</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.liveEdgeLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Seek eligibility</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.seekEligibilityLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Program window</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.programWindowLabel}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Action routing</p>
+            <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.actionSummary}</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {contract.playbackRuntime.actions.map((action) => (
+                <button
+                  key={action.id}
+                  onClick={action.commandId ? () => onCommandDispatch?.(action.commandId!) : undefined}
+                  disabled={!onCommandDispatch || !action.commandId || !action.available}
+                  className={`rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.22em] transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    action.tone === 'ready'
+                      ? 'border-sky-300/20 bg-sky-500/10 text-sky-100 hover:bg-sky-500/15'
+                      : action.tone === 'watch'
+                        ? 'border-amber-300/20 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15'
+                        : 'border-rose-300/20 bg-rose-500/10 text-rose-100 hover:bg-rose-500/15'
+                  }`}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
               <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.timelineRuntime.eyebrow}</p>
               <p className="mt-2 text-sm font-semibold text-white">{contract.timelineRuntime.summary}</p>
               <p className="mt-2 text-xs leading-5 text-white/75">{contract.timelineRuntime.detail}</p>
