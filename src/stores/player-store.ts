@@ -8,6 +8,7 @@ import {
   LivePlayerOverlayExecutionWitness,
   LivePlayerOverlayVisibilityState,
   PlayerControlTelemetry,
+  PlayerTrackOption,
   ProviderDropNotice,
   ProviderDropReason,
   StreamHealth,
@@ -24,6 +25,11 @@ type PlaybackMeta = {
   sourceSurface?: WatchHistoryItem['sourceSurface'];
 };
 
+type PendingTrackCommand = {
+  kind: 'cycle-audio' | 'cycle-subtitle' | 'open-picker';
+  requestedAt: number;
+};
+
 type PlayerState = {
   currentStream: XtreamStream | null;
   playbackUrl: string | null;
@@ -36,6 +42,7 @@ type PlayerState = {
   dockMode: 'expanded' | 'compact';
   overlayState: LivePlayerOverlayVisibilityState;
   overlayExecutionLog: LivePlayerOverlayExecutionWitness[];
+  pendingTrackCommand: PendingTrackCommand | null;
   hydrate: () => void;
   playStream: (stream: XtreamStream, playbackUrl: string, providerId: string, meta?: PlaybackMeta) => void;
   updatePlaybackProgress: (positionSeconds: number, durationSeconds?: number | null) => void;
@@ -51,6 +58,8 @@ type PlayerState = {
   setOverlayState: (state: LivePlayerOverlayVisibilityState) => void;
   openOverlay: (state?: Exclude<LivePlayerOverlayVisibilityState, 'closed'>) => void;
   closeOverlay: () => void;
+  requestTrackCommand: (kind: PendingTrackCommand['kind']) => void;
+  clearTrackCommand: () => void;
   recordOverlayExecution: (entry: Omit<LivePlayerOverlayExecutionWitness, 'happenedAt'> & { happenedAt?: number }) => void;
   clearOverlayExecutionLog: () => void;
   closePlayback: () => void;
@@ -73,8 +82,12 @@ const defaultControlTelemetry: PlayerControlTelemetry = {
   volumeLevel: null,
   audioTrackCount: 0,
   subtitleTrackCount: 0,
+  audioTracks: [],
+  subtitleTracks: [],
   hasSelectedAudioTrack: false,
   hasSelectedSubtitleTrack: false,
+  selectedAudioTrackLabel: null,
+  selectedSubtitleTrackLabel: null,
   seekableWindowSeconds: null,
   durationSeconds: null,
   atLiveEdge: null,
@@ -102,6 +115,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   dockMode: 'compact',
   overlayState: 'closed',
   overlayExecutionLog: [],
+  pendingTrackCommand: null,
   hydrate: () => {
     const authState = useAuthStore.getState();
     const hydratedHistory = hydratePlaybackHistory({
@@ -184,6 +198,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       },
       overlayState: 'closed',
       overlayExecutionLog: [],
+      pendingTrackCommand: null,
     });
     storage.savePlayerOverlayState('closed');
     storage.savePlayerOverlayExecutionLog([]);
@@ -335,6 +350,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         },
         overlayState: 'closed',
         overlayExecutionLog: [],
+        pendingTrackCommand: null,
       };
     });
     storage.savePlayerOverlayState('closed');
@@ -358,6 +374,15 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     storage.savePlayerOverlayState('closed');
     set({ overlayState: 'closed' });
   },
+  requestTrackCommand: (kind) => {
+    set({
+      pendingTrackCommand: {
+        kind,
+        requestedAt: Date.now(),
+      },
+    });
+  },
+  clearTrackCommand: () => set({ pendingTrackCommand: null }),
   recordOverlayExecution: (entry) => {
     const nextEntry: LivePlayerOverlayExecutionWitness = {
       ...entry,
@@ -385,6 +410,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       controlTelemetry: defaultControlTelemetry,
       overlayState: 'closed',
       overlayExecutionLog: [],
+      pendingTrackCommand: null,
     });
   },
 }));

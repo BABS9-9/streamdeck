@@ -3,6 +3,7 @@
 import Hls from 'hls.js';
 import { useEffect, useRef } from 'react';
 import { usePlayerStore } from '@/stores/player-store';
+import { PlayerTrackOption } from '@/lib/types';
 
 export function VideoPlayer({
   src,
@@ -28,6 +29,8 @@ export function VideoPlayer({
   const updateControlTelemetry = usePlayerStore((state) => state.updateControlTelemetry);
   const resetStreamHealth = usePlayerStore((state) => state.resetStreamHealth);
   const resetControlTelemetry = usePlayerStore((state) => state.resetControlTelemetry);
+  const pendingTrackCommand = usePlayerStore((state) => state.pendingTrackCommand);
+  const clearTrackCommand = usePlayerStore((state) => state.clearTrackCommand);
 
   useEffect(() => {
     const video = ref.current;
@@ -52,8 +55,12 @@ export function VideoPlayer({
       volumeLevel: null,
       audioTrackCount: 0,
       subtitleTrackCount: 0,
+      audioTracks: [],
+      subtitleTracks: [],
       hasSelectedAudioTrack: false,
       hasSelectedSubtitleTrack: false,
+      selectedAudioTrackLabel: null,
+      selectedSubtitleTrackLabel: null,
       seekableWindowSeconds: null,
       durationSeconds: null,
       atLiveEdge: null,
@@ -73,19 +80,53 @@ export function VideoPlayer({
 
     const getAudioTracks = () => {
       const mediaWithAudioTracks = video as HTMLVideoElement & {
-        audioTracks?: ArrayLike<{ enabled?: boolean }>;
+        audioTracks?: ArrayLike<{ enabled?: boolean; id?: string; label?: string; language?: string; lang?: string; kind?: string }>;
       };
       return mediaWithAudioTracks.audioTracks ?? null;
     };
 
-    const getSelectedAudioTrack = () => {
+    const getAudioTrackOptions = (): PlayerTrackOption[] => {
       const audioTracks = getAudioTracks();
-      if (!audioTracks) return false;
-      return Array.from({ length: audioTracks.length }).some((_, index) => Boolean(audioTracks[index]?.enabled));
+      if (!audioTracks) return [];
+
+      return Array.from({ length: audioTracks.length }, (_, index) => {
+        const track = audioTracks[index];
+        const label = track?.label?.trim()
+          || track?.language?.trim()
+          || track?.lang?.trim()
+          || `Audio ${index + 1}`;
+        const language = track?.language?.trim() || track?.lang?.trim() || null;
+
+        return {
+          id: track?.id?.trim() || `audio-${index}`,
+          label,
+          language,
+          kind: 'audio',
+          isSelected: Boolean(track?.enabled),
+          isForced: false,
+        };
+      });
+    };
+
+    const getSubtitleTrackOptions = (): PlayerTrackOption[] =>
+      Array.from(video.textTracks || []).map((track, index) => ({
+        id: `${track.id || track.language || 'subtitle'}-${index}`,
+        label: track.label?.trim() || track.language?.trim() || `Subtitle ${index + 1}`,
+        language: track.language?.trim() || null,
+        kind: 'subtitle',
+        isSelected: track.mode === 'showing',
+        isForced: track.label?.toLowerCase().includes('forced') ?? false,
+      }));
+
+    const getSelectedAudioTrack = () => {
+      return getAudioTrackOptions().some((track) => track.isSelected);
     };
 
     const getSelectedSubtitleTrack = () =>
-      Array.from(video.textTracks || []).some((track) => track.mode === 'showing');
+      getSubtitleTrackOptions().some((track) => track.isSelected);
+
+    const getSelectedTrackLabel = (tracks: PlayerTrackOption[]) =>
+      tracks.find((track) => track.isSelected)?.label ?? null;
 
     const getSeekableWindowSeconds = () => {
       if (!video.seekable || video.seekable.length === 0) return null;
@@ -101,15 +142,20 @@ export function VideoPlayer({
     };
 
     const pushControlTelemetry = (playbackState?: 'idle' | 'loading' | 'playing' | 'paused' | 'buffering' | 'error') => {
-      const audioTracks = getAudioTracks();
+      const audioTrackOptions = getAudioTrackOptions();
+      const subtitleTrackOptions = getSubtitleTrackOptions();
       updateControlTelemetry({
         playbackState: playbackState ?? (video.paused ? 'paused' : 'playing'),
         isMuted: video.muted,
         volumeLevel: Number.isFinite(video.volume) ? Number(video.volume.toFixed(2)) : null,
-        audioTrackCount: audioTracks?.length ?? 0,
-        subtitleTrackCount: video.textTracks?.length ?? 0,
-        hasSelectedAudioTrack: getSelectedAudioTrack(),
-        hasSelectedSubtitleTrack: getSelectedSubtitleTrack(),
+        audioTrackCount: audioTrackOptions.length,
+        subtitleTrackCount: subtitleTrackOptions.length,
+        audioTracks: audioTrackOptions,
+        subtitleTracks: subtitleTrackOptions,
+        hasSelectedAudioTrack: audioTrackOptions.some((track) => track.isSelected),
+        hasSelectedSubtitleTrack: subtitleTrackOptions.some((track) => track.isSelected),
+        selectedAudioTrackLabel: getSelectedTrackLabel(audioTrackOptions),
+        selectedSubtitleTrackLabel: getSelectedTrackLabel(subtitleTrackOptions),
         seekableWindowSeconds: getSeekableWindowSeconds(),
         durationSeconds: Number.isFinite(video.duration) ? Number(video.duration.toFixed(1)) : null,
         atLiveEdge: getAtLiveEdge(),
@@ -176,6 +222,7 @@ export function VideoPlayer({
       if (!video.ended) pushControlTelemetry('paused');
     };
     const handleVolumeChange = () => pushControlTelemetry(video.paused ? 'paused' : 'playing');
+    const handleTrackListChange = () => pushControlTelemetry(video.paused ? 'paused' : 'playing');
 
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('playing', handlePlaying);
@@ -185,6 +232,9 @@ export function VideoPlayer({
     video.addEventListener('error', handleError);
     video.addEventListener('pause', handlePause);
     video.addEventListener('volumechange', handleVolumeChange);
+    Array.from(video.textTracks || []).forEach((track) => {
+      track.addEventListener('change', handleTrackListChange);
+    });
 
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       setNativeSource();
@@ -251,9 +301,108 @@ export function VideoPlayer({
       video.removeEventListener('error', handleError);
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('volumechange', handleVolumeChange);
+      Array.from(video.textTracks || []).forEach((track) => {
+        track.removeEventListener('change', handleTrackListChange);
+      });
       if (hls) hls.destroy();
     };
   }, [allowResume, currentProviderId, markProviderDrop, muted, onStateChange, poster, resetControlTelemetry, resetStreamHealth, resumeFromSeconds, src, updateControlTelemetry, updatePlaybackProgress, updateStreamHealth]);
+
+  useEffect(() => {
+    const video = ref.current;
+    if (!video || !pendingTrackCommand) return;
+
+    const getAudioTracks = () => {
+      const mediaWithAudioTracks = video as HTMLVideoElement & {
+        audioTracks?: ArrayLike<{ enabled?: boolean; id?: string; label?: string; language?: string; lang?: string; kind?: string }>;
+      };
+      return mediaWithAudioTracks.audioTracks ?? null;
+    };
+
+    const getAudioTrackOptions = (): PlayerTrackOption[] => {
+      const audioTracks = getAudioTracks();
+      if (!audioTracks) return [];
+
+      return Array.from({ length: audioTracks.length }, (_, index) => {
+        const track = audioTracks[index];
+        const label = track?.label?.trim()
+          || track?.language?.trim()
+          || track?.lang?.trim()
+          || `Audio ${index + 1}`;
+        const language = track?.language?.trim() || track?.lang?.trim() || null;
+
+        return {
+          id: track?.id?.trim() || `audio-${index}`,
+          label,
+          language,
+          kind: 'audio',
+          isSelected: Boolean(track?.enabled),
+          isForced: false,
+        };
+      });
+    };
+
+    const getSubtitleTrackOptions = (): PlayerTrackOption[] =>
+      Array.from(video.textTracks || []).map((track, index) => ({
+        id: `${track.id || track.language || 'subtitle'}-${index}`,
+        label: track.label?.trim() || track.language?.trim() || `Subtitle ${index + 1}`,
+        language: track.language?.trim() || null,
+        kind: 'subtitle',
+        isSelected: track.mode === 'showing',
+        isForced: track.label?.toLowerCase().includes('forced') ?? false,
+      }));
+
+    const getSelectedTrackLabel = (tracks: PlayerTrackOption[]) =>
+      tracks.find((track) => track.isSelected)?.label ?? null;
+
+    let handled = false;
+    if (pendingTrackCommand.kind === 'cycle-audio') {
+      const audioTracks = getAudioTracks();
+      if (audioTracks?.length) {
+        const currentIndex = Array.from({ length: audioTracks.length }).findIndex((_, index) => Boolean(audioTracks[index]?.enabled));
+        const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % audioTracks.length : 0;
+        Array.from({ length: audioTracks.length }).forEach((_, index) => {
+          if (audioTracks[index]) {
+            audioTracks[index].enabled = index === nextIndex;
+          }
+        });
+        handled = true;
+      }
+    }
+
+    if (pendingTrackCommand.kind === 'cycle-subtitle' && video.textTracks.length > 0) {
+      const subtitleTracks = Array.from(video.textTracks || []);
+      const currentIndex = subtitleTracks.findIndex((track) => track.mode === 'showing');
+      const nextIndex = currentIndex >= subtitleTracks.length - 1 ? -1 : currentIndex + 1;
+      subtitleTracks.forEach((track, index) => {
+        track.mode = index === nextIndex ? 'showing' : 'disabled';
+      });
+      handled = true;
+    }
+
+    if (pendingTrackCommand.kind === 'open-picker') {
+      handled = true;
+    }
+
+    if (handled) {
+      const audioTracks = getAudioTrackOptions();
+      const subtitleTracks = getSubtitleTrackOptions();
+      updateControlTelemetry({
+        playbackState: video.paused ? 'paused' : 'playing',
+        isMuted: video.muted,
+        volumeLevel: Number.isFinite(video.volume) ? Number(video.volume.toFixed(2)) : null,
+        audioTrackCount: audioTracks.length,
+        subtitleTrackCount: subtitleTracks.length,
+        audioTracks,
+        subtitleTracks,
+        hasSelectedAudioTrack: audioTracks.some((track) => track.isSelected),
+        hasSelectedSubtitleTrack: subtitleTracks.some((track) => track.isSelected),
+        selectedAudioTrackLabel: getSelectedTrackLabel(audioTracks),
+        selectedSubtitleTrackLabel: getSelectedTrackLabel(subtitleTracks),
+      });
+    }
+    clearTrackCommand();
+  }, [clearTrackCommand, pendingTrackCommand, updateControlTelemetry]);
 
   return (
     <video

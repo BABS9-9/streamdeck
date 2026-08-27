@@ -24,7 +24,7 @@ import { buildSavedProviderRecoveryAuthorityResolver } from '@/lib/saved-provide
 import { buildSavedProviderRecoveryProofDissentRuntime } from '@/lib/saved-provider-recovery-proof-dissent-runtime';
 import { buildSavedProviderRecoveryProofQuorumRuntime } from '@/lib/saved-provider-recovery-proof-quorum-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
-import { MockProviderManifest } from '@/lib/types';
+import { LivePlayerOverlayPlaybackActionId, MockProviderManifest } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatGuideUpdatedAge, getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
 import { VideoPlayer } from './video-player';
@@ -102,6 +102,7 @@ export function PlayerDock() {
   const setOverlayState = usePlayerStore((state) => state.setOverlayState);
   const openOverlay = usePlayerStore((state) => state.openOverlay);
   const closeOverlay = usePlayerStore((state) => state.closeOverlay);
+  const requestTrackCommand = usePlayerStore((state) => state.requestTrackCommand);
   const closePlayback = usePlayerStore((state) => state.closePlayback);
   const recordOverlayExecution = usePlayerStore((state) => state.recordOverlayExecution);
   const playStream = usePlayerStore((state) => state.playStream);
@@ -624,8 +625,8 @@ export function PlayerDock() {
           : 'Playback is pinned to the live edge.'
       : `${Math.max(0, Math.round((historyItem?.progress ?? 0) * 100))}% watched`,
     seekWindowLabel: livePlayerControlRuntime.seekWindowState.replace(/-/g, ' '),
-    audioLabel: `${controlTelemetry.audioTrackCount} audio track${controlTelemetry.audioTrackCount === 1 ? '' : 's'}`,
-    subtitleLabel: `${controlTelemetry.subtitleTrackCount} subtitle track${controlTelemetry.subtitleTrackCount === 1 ? '' : 's'}`,
+    audioLabel: livePlayerOverlayPlaybackRuntime.audioTrackLabel,
+    subtitleLabel: livePlayerOverlayPlaybackRuntime.subtitleTrackLabel,
     focusRuntime: livePlayerOverlayFocusRuntime,
     commandRuntime: livePlayerOverlayCommandRuntime,
     interactionRuntime: livePlayerOverlayInteractionRuntime,
@@ -637,8 +638,6 @@ export function PlayerDock() {
     remoteRuntime: livePlayerRemoteRuntime,
     recoveryRuntime: playerRecoveryActionRuntime,
   }), [
-    controlTelemetry.audioTrackCount,
-    controlTelemetry.subtitleTrackCount,
     currentGuide?.next?.title,
     currentGuide?.now?.title,
     currentGuideCoverage?.summary,
@@ -803,6 +802,80 @@ export function PlayerDock() {
       detail: detail ?? dispatch.detail,
       targetProviderId: targetProviderId ?? dispatch.targetProviderId,
     });
+  };
+
+  const handlePlaybackActionDispatch = (actionId: LivePlayerOverlayPlaybackActionId) => {
+    const action = livePlayerOverlayPlaybackRuntime.actions.find((entry) => entry.id === actionId);
+    if (!action) return;
+
+    if (!action.available) {
+      recordOverlayExecution({
+        commandId: action.commandId ?? 'audio-subtitle',
+        dispatchKind: action.dispatchKind,
+        visibilityState: livePlayerOverlayInteractionRuntime.visibilityState,
+        outcome: 'unavailable',
+        label: action.label,
+        detail: action.detail,
+        targetProviderId: action.targetProviderId,
+      });
+      return;
+    }
+
+    switch (action.dispatchKind) {
+      case 'cycle-audio-track':
+        openOverlay('tracks');
+        requestTrackCommand('cycle-audio');
+        recordOverlayExecution({
+          commandId: action.commandId ?? 'audio-subtitle',
+          dispatchKind: action.dispatchKind,
+          visibilityState: 'tracks',
+          outcome: 'completed',
+          label: action.label,
+          detail: action.summary,
+          targetProviderId: action.targetProviderId,
+        });
+        return;
+      case 'cycle-subtitle-track':
+        openOverlay('tracks');
+        requestTrackCommand('cycle-subtitle');
+        recordOverlayExecution({
+          commandId: action.commandId ?? 'audio-subtitle',
+          dispatchKind: action.dispatchKind,
+          visibilityState: 'tracks',
+          outcome: 'completed',
+          label: action.label,
+          detail: action.summary,
+          targetProviderId: action.targetProviderId,
+        });
+        return;
+      case 'open-track-picker':
+        openOverlay('tracks');
+        requestTrackCommand('open-picker');
+        recordOverlayExecution({
+          commandId: action.commandId ?? 'audio-subtitle',
+          dispatchKind: action.dispatchKind,
+          visibilityState: 'tracks',
+          outcome: 'completed',
+          label: action.label,
+          detail: action.summary,
+          targetProviderId: action.targetProviderId,
+        });
+        return;
+      default:
+        if (action.commandId) {
+          handleOverlayDispatch(action.commandId);
+          return;
+        }
+        recordOverlayExecution({
+          commandId: 'audio-subtitle',
+          dispatchKind: action.dispatchKind,
+          visibilityState: livePlayerOverlayInteractionRuntime.visibilityState,
+          outcome: 'blocked',
+          label: action.label,
+          detail: 'Playback action was modeled without a routable command or direct track handler.',
+          targetProviderId: action.targetProviderId,
+        });
+    }
   };
 
   const handleOverlayDispatch = (commandId: 'ok' | 'back' | 'left-right' | 'up-down' | 'audio-subtitle') => {
@@ -1072,6 +1145,7 @@ export function PlayerDock() {
                 onPrimaryAction={livePlayerOverlayRuntime.primaryActionLabel ? handleRecoveryActionPrimary : undefined}
                 onSecondaryAction={livePlayerOverlayRuntime.secondaryActionLabel ? handleRecoveryActionSecondary : undefined}
                 onCommandDispatch={handleOverlayDispatch}
+                onPlaybackAction={handlePlaybackActionDispatch}
               />
               <LivePlayerControlPanel contract={livePlayerControlRuntime} />
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />

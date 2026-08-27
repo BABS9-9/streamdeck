@@ -1,6 +1,5 @@
 import {
   LivePlayerControlRuntimeContract,
-  LivePlayerOverlayInteractionRuntimeContract,
   LivePlayerOverlayPlaybackActionRoute,
   LivePlayerOverlayPlaybackRuntimeContract,
   LivePlayerRecoveryActionRuntimeContract,
@@ -66,7 +65,12 @@ const getProgramState = ({
   recoveryRuntime: LivePlayerRecoveryActionRuntimeContract | null;
 }): LivePlayerOverlayPlaybackRuntimeContract['programState'] => {
   if (!currentStream) return 'unavailable';
-  if (recoveryRuntime?.actionKind === 'wait-for-line' || recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner' || recoveryRuntime?.actionKind === 'fail-closed') {
+  if (
+    recoveryRuntime?.actionKind === 'wait-for-line'
+    || recoveryRuntime?.actionKind === 'quick-switch'
+    || recoveryRuntime?.actionKind === 'reclaim-owner'
+    || recoveryRuntime?.actionKind === 'fail-closed'
+  ) {
     return 'recovery-led';
   }
   if (currentStream.stream_type !== 'live') return 'resume';
@@ -78,42 +82,35 @@ const getProgramState = ({
 
 const buildActionRoute = ({
   id,
-  interactionRuntime,
   dispatchKind,
   commandId,
+  targetProviderId,
+  available,
   fallbackLabel,
   fallbackSummary,
   fallbackDetail,
   fallbackTone,
 }: {
   id: LivePlayerOverlayPlaybackActionRoute['id'];
-  interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
   dispatchKind?: LivePlayerOverlayPlaybackActionRoute['dispatchKind'];
   commandId?: LivePlayerOverlayPlaybackActionRoute['commandId'];
+  targetProviderId?: string | null;
+  available?: boolean;
   fallbackLabel: string;
   fallbackSummary: string;
   fallbackDetail: string;
   fallbackTone: LivePlayerOverlayPlaybackActionRoute['tone'];
-}): LivePlayerOverlayPlaybackActionRoute | null => {
-  const dispatch = interactionRuntime.commandDispatches.find((entry) => (
-    (dispatchKind ? entry.dispatchKind === dispatchKind : true)
-      && (commandId ? entry.commandId === commandId : true)
-  ));
-
-  if (!dispatch && !dispatchKind && !commandId) return null;
-
-  return {
-    id,
-    label: dispatch?.label ?? fallbackLabel,
-    summary: dispatch?.summary ?? fallbackSummary,
-    detail: dispatch?.detail ?? fallbackDetail,
-    dispatchKind: dispatch?.dispatchKind ?? dispatchKind ?? 'noop',
-    commandId: dispatch?.commandId ?? commandId ?? null,
-    targetProviderId: dispatch?.targetProviderId ?? null,
-    available: dispatch?.available ?? false,
-    tone: dispatch?.tone ?? fallbackTone,
-  };
-};
+}): LivePlayerOverlayPlaybackActionRoute => ({
+  id,
+  label: fallbackLabel,
+  summary: fallbackSummary,
+  detail: fallbackDetail,
+  dispatchKind: dispatchKind ?? 'noop',
+  commandId: commandId ?? null,
+  targetProviderId: targetProviderId ?? null,
+  available: available ?? false,
+  tone: fallbackTone,
+});
 
 export const buildLivePlayerOverlayPlaybackRuntime = ({
   currentStream,
@@ -135,7 +132,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   historyItem: WatchHistoryItem | null;
   controlTelemetry: PlayerControlTelemetry;
   controlRuntime: LivePlayerControlRuntimeContract;
-  interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
+  interactionRuntime: { commandDispatches: Array<{ commandId: string; available: boolean }> };
   recoveryRuntime?: LivePlayerRecoveryActionRuntimeContract | null;
 }): LivePlayerOverlayPlaybackRuntimeContract => {
   const programState = getProgramState({
@@ -193,10 +190,20 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     ? `${currentProviderName} owns the active playback metadata contract for ${currentStream?.name ?? historyItem?.title ?? 'this session'}.`
     : 'Playback metadata ownership is still settling.';
 
+  const selectedAudioTrackLabel = controlTelemetry.selectedAudioTrackLabel ?? (
+    controlTelemetry.audioTrackCount > 0 ? 'Default audio' : 'No audio tracks detected'
+  );
+  const selectedSubtitleTrackLabel = controlTelemetry.selectedSubtitleTrackLabel ?? (
+    controlTelemetry.subtitleTrackCount > 0 ? 'Subtitles available but not selected' : 'Subtitles unavailable'
+  );
+  const canOpenTrackPicker = interactionRuntime.commandDispatches.some((dispatch) => dispatch.commandId === 'audio-subtitle' && dispatch.available);
+
   const retryAction = buildActionRoute({
     id: 'retry',
-    interactionRuntime,
     dispatchKind: 'retry-playback',
+    commandId: 'ok',
+    targetProviderId: recoveryRuntime?.targetProviderId ?? null,
+    available: recoveryRuntime?.actionKind === 'retry',
     fallbackLabel: 'Retry playback',
     fallbackSummary: 'Retry the current playback owner when the dock still trusts the same route.',
     fallbackDetail: 'This path should only stay primary while the current provider still owns the cleanest retry.',
@@ -204,61 +211,114 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   });
   const quickSwitchAction = buildActionRoute({
     id: 'quick-switch',
-    interactionRuntime,
     dispatchKind: recoveryRuntime?.actionKind === 'reclaim-owner' ? 'reclaim-owner' : 'quick-switch',
+    commandId: 'ok',
+    targetProviderId: recoveryRuntime?.targetProviderId ?? null,
+    available: recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner',
     fallbackLabel: recoveryRuntime?.actionKind === 'reclaim-owner' ? 'Reclaim playback owner' : 'Quick-switch playback',
     fallbackSummary: recoveryRuntime?.nextMove.label ?? 'Move playback onto the healthier saved provider.',
     fallbackDetail: recoveryRuntime?.nextMove.detail ?? 'The overlay should publish the saved-provider handoff instead of hiding it behind generic retry copy.',
     fallbackTone: recoveryRuntime?.tone ?? 'recover',
   });
+  const audioAction = buildActionRoute({
+    id: 'audio',
+    dispatchKind: 'cycle-audio-track',
+    available: controlTelemetry.audioTrackCount > 0,
+    fallbackLabel: controlTelemetry.audioTrackCount > 1 ? 'Next audio track' : 'Audio track',
+    fallbackSummary: controlTelemetry.audioTrackCount > 0
+      ? `Cycle audio ownership from ${selectedAudioTrackLabel}.`
+      : 'Audio switching stays unavailable until the player exposes at least one audio track.',
+    fallbackDetail: controlTelemetry.audioTrackCount > 0
+      ? `The overlay can rotate across ${controlTelemetry.audioTrackCount} runtime-detected audio track${controlTelemetry.audioTrackCount === 1 ? '' : 's'} without leaving playback.`
+      : 'No runtime-detected audio track metadata is available yet.',
+    fallbackTone: controlTelemetry.audioTrackCount > 0 ? 'ready' : 'watch',
+  });
+  const subtitleAction = buildActionRoute({
+    id: 'subtitles',
+    dispatchKind: 'cycle-subtitle-track',
+    available: controlTelemetry.subtitleTrackCount > 0,
+    fallbackLabel: controlTelemetry.subtitleTrackCount > 1 ? 'Next subtitle track' : 'Subtitle track',
+    fallbackSummary: controlTelemetry.subtitleTrackCount > 0
+      ? `Cycle subtitle ownership from ${selectedSubtitleTrackLabel}.`
+      : 'Subtitle switching stays unavailable until the player exposes subtitle tracks.',
+    fallbackDetail: controlTelemetry.subtitleTrackCount > 0
+      ? `The overlay can rotate subtitles across ${controlTelemetry.subtitleTrackCount} runtime-detected subtitle track${controlTelemetry.subtitleTrackCount === 1 ? '' : 's'}, including turning them off.`
+      : 'No runtime-detected subtitle track metadata is available yet.',
+    fallbackTone: controlTelemetry.subtitleTrackCount > 0 ? 'ready' : 'watch',
+  });
   const audioSubtitleAction = buildActionRoute({
     id: 'audio-subtitle',
-    interactionRuntime,
+    dispatchKind: 'open-track-picker',
     commandId: 'audio-subtitle',
+    available: canOpenTrackPicker,
     fallbackLabel: 'Audio / subtitles',
-    fallbackSummary: 'Open the track picker from the same overlay contract.',
-    fallbackDetail: 'Track choices should be reachable without leaving the player story.',
+    fallbackSummary: 'Open the shared track picker from the same overlay contract.',
+    fallbackDetail: 'Track choices should stay reachable through one backend-owned overlay lane.',
     fallbackTone: controlRuntime.subtitleAudioOptionState === 'none' ? 'watch' : 'ready',
   });
   const returnAction = buildActionRoute({
     id: 'return',
-    interactionRuntime,
+    dispatchKind: 'route-back',
     commandId: 'back',
+    available: true,
     fallbackLabel: 'Return',
     fallbackSummary: 'Back should either collapse the overlay or leave playback cleanly.',
     fallbackDetail: 'The final return path should stay explicit while recovery and focus state are changing.',
     fallbackTone: 'watch',
   });
 
-  const actions = [retryAction, quickSwitchAction, audioSubtitleAction, returnAction].filter((action): action is LivePlayerOverlayPlaybackActionRoute => Boolean(action));
+  const actions = [
+    retryAction,
+    quickSwitchAction,
+    audioAction,
+    subtitleAction,
+    audioSubtitleAction,
+    returnAction,
+  ];
 
   const primaryAction = recoveryRuntime?.actionKind === 'retry'
     ? retryAction
     : recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
       ? quickSwitchAction
-      : audioSubtitleAction?.available
-        ? audioSubtitleAction
-        : returnAction;
-  const secondaryAction = primaryAction?.id === 'quick-switch'
-    ? audioSubtitleAction?.available
-      ? audioSubtitleAction
-      : returnAction
-    : primaryAction?.id === 'retry'
-      ? quickSwitchAction?.available
+      : audioAction.available
+        ? audioAction
+        : subtitleAction.available
+          ? subtitleAction
+          : audioSubtitleAction.available
+            ? audioSubtitleAction
+            : returnAction;
+  const secondaryAction = primaryAction.id === 'quick-switch'
+    ? audioAction.available
+      ? audioAction
+      : subtitleAction.available
+        ? subtitleAction
+        : audioSubtitleAction.available
+          ? audioSubtitleAction
+          : returnAction
+    : primaryAction.id === 'retry'
+      ? quickSwitchAction.available
         ? quickSwitchAction
         : returnAction
-      : primaryAction?.id === 'audio-subtitle'
+      : primaryAction.id === 'audio' || primaryAction.id === 'subtitles' || primaryAction.id === 'audio-subtitle'
         ? returnAction
-        : audioSubtitleAction?.available
-          ? audioSubtitleAction
-          : null;
+        : audioAction.available
+          ? audioAction
+          : subtitleAction.available
+            ? subtitleAction
+            : audioSubtitleAction.available
+              ? audioSubtitleAction
+              : null;
 
-  const actionSummary = primaryAction?.summary
+  const trackSummary = controlRuntime.subtitleAudioOptionState === 'none'
+    ? 'No audio or subtitle track controls are currently exposed.'
+    : `Audio: ${selectedAudioTrackLabel}. Subtitles: ${selectedSubtitleTrackLabel}.`;
+  const actionSummary = primaryAction.summary
     ?? recoveryRuntime?.nextMove.label
     ?? 'No routed overlay playback action is available yet.';
   const tone = getDominantTone([
     recoveryRuntime?.tone ?? 'ready',
-    primaryAction?.tone ?? 'ready',
+    primaryAction.tone,
+    secondaryAction?.tone ?? 'ready',
     programState === 'guide-stale' || programState === 'timeshift' ? 'watch' : 'ready',
     programState === 'recovery-led' || programState === 'unavailable' ? 'recover' : 'ready',
   ]);
@@ -279,9 +339,12 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     seekEligibilityLabel,
     programWindowLabel,
     metadataSummary,
+    audioTrackLabel: selectedAudioTrackLabel,
+    subtitleTrackLabel: selectedSubtitleTrackLabel,
+    trackSummary,
     actionSummary,
-    primaryAction: primaryAction ?? null,
-    secondaryAction: secondaryAction ?? null,
+    primaryAction,
+    secondaryAction,
     actions,
   };
 };

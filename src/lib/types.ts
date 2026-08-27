@@ -1240,14 +1240,27 @@ export type StreamHealth = {
 
 export type PlayerPlaybackState = 'idle' | 'loading' | 'playing' | 'paused' | 'buffering' | 'error';
 
+export type PlayerTrackOption = {
+  id: string;
+  label: string;
+  language: string | null;
+  kind: 'audio' | 'subtitle';
+  isSelected: boolean;
+  isForced: boolean;
+};
+
 export type PlayerControlTelemetry = {
   playbackState: PlayerPlaybackState;
   isMuted: boolean;
   volumeLevel: number | null;
   audioTrackCount: number;
   subtitleTrackCount: number;
+  audioTracks: PlayerTrackOption[];
+  subtitleTracks: PlayerTrackOption[];
   hasSelectedAudioTrack: boolean;
   hasSelectedSubtitleTrack: boolean;
+  selectedAudioTrackLabel: string | null;
+  selectedSubtitleTrackLabel: string | null;
   seekableWindowSeconds: number | null;
   durationSeconds: number | null;
   atLiveEdge: boolean | null;
@@ -1840,6 +1853,8 @@ export type LivePlayerOverlayDispatchKind =
   | 'reveal-info'
   | 'settle-timeshift'
   | 'open-track-picker'
+  | 'cycle-audio-track'
+  | 'cycle-subtitle-track'
   | 'route-back'
   | 'retry-playback'
   | 'quick-switch'
@@ -1971,6 +1986,8 @@ export type LivePlayerOverlayPlaybackProgramState =
 export type LivePlayerOverlayPlaybackActionId =
   | 'retry'
   | 'quick-switch'
+  | 'audio'
+  | 'subtitles'
   | 'audio-subtitle'
   | 'return';
 
@@ -2001,6 +2018,9 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   seekEligibilityLabel: string;
   programWindowLabel: string;
   metadataSummary: string;
+  audioTrackLabel: string;
+  subtitleTrackLabel: string;
+  trackSummary: string;
   actionSummary: string;
   primaryAction: LivePlayerOverlayPlaybackActionRoute | null;
   secondaryAction: LivePlayerOverlayPlaybackActionRoute | null;

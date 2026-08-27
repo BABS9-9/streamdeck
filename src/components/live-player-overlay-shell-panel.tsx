@@ -19,11 +19,13 @@ export function LivePlayerOverlayShellPanel({
   onPrimaryAction,
   onSecondaryAction,
   onCommandDispatch,
+  onPlaybackAction,
 }: {
   contract: LivePlayerOverlayRuntimeContract;
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
   onCommandDispatch?: (commandId: 'ok' | 'back' | 'left-right' | 'up-down' | 'audio-subtitle') => void;
+  onPlaybackAction?: (actionId: LivePlayerOverlayRuntimeContract['playbackRuntime']['actions'][number]['id']) => void;
 }) {
   return (
     <section className={`rounded-[1.4rem] border p-4 ${toneStyles[contract.tone]}`}>
@@ -150,6 +152,21 @@ export function LivePlayerOverlayShellPanel({
             </article>
           </div>
 
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Selected audio</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.audioTrackLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Selected subtitles</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.subtitleTrackLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Track posture</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.trackSummary}</p>
+            </article>
+          </div>
+
           <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
             <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Action routing</p>
             <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.actionSummary}</p>
@@ -157,8 +174,8 @@ export function LivePlayerOverlayShellPanel({
               {contract.playbackRuntime.actions.map((action) => (
                 <button
                   key={action.id}
-                  onClick={action.commandId ? () => onCommandDispatch?.(action.commandId!) : undefined}
-                  disabled={!onCommandDispatch || !action.commandId || !action.available}
+                  onClick={() => onPlaybackAction?.(action.id)}
+                  disabled={!onPlaybackAction || !action.available}
                   className={`rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.22em] transition disabled:cursor-not-allowed disabled:opacity-50 ${
                     action.tone === 'ready'
                       ? 'border-sky-300/20 bg-sky-500/10 text-sky-100 hover:bg-sky-500/15'
