@@ -14,6 +14,12 @@ const executionToneStyles = {
   unavailable: 'border-slate-300/20 bg-slate-500/10 text-slate-100',
 } as const;
 
+const availabilityToneStyles = {
+  ready: 'border-sky-300/20 bg-sky-500/10 text-sky-100',
+  watch: 'border-amber-300/20 bg-amber-500/10 text-amber-100',
+  blocked: 'border-rose-300/20 bg-rose-500/10 text-rose-100',
+} as const;
+
 export function LivePlayerOverlayShellPanel({
   contract,
   onPrimaryAction,
@@ -215,6 +221,25 @@ export function LivePlayerOverlayShellPanel({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {contract.playbackRuntime.actions.map((action) => (
+              <article
+                key={`${action.id}-witness`}
+                className={`rounded-2xl border p-4 ${availabilityToneStyles[action.availabilityState]}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{action.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {action.available ? 'routable' : 'not routed'}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{action.availabilityLabel}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{action.ownerLabel}</p>
+                <p className="mt-2 text-xs leading-5 text-white/70">{action.availabilityDetail}</p>
+              </article>
+            ))}
           </div>
         </div>
 

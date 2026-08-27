@@ -87,6 +87,10 @@ const buildActionRoute = ({
   dispatchKind,
   commandId,
   targetProviderId,
+  availabilityState,
+  availabilityLabel,
+  availabilityDetail,
+  ownerLabel,
   available,
   fallbackLabel,
   fallbackSummary,
@@ -97,6 +101,10 @@ const buildActionRoute = ({
   dispatchKind?: LivePlayerOverlayPlaybackActionRoute['dispatchKind'];
   commandId?: LivePlayerOverlayPlaybackActionRoute['commandId'];
   targetProviderId?: string | null;
+  availabilityState: LivePlayerOverlayPlaybackActionRoute['availabilityState'];
+  availabilityLabel: string;
+  availabilityDetail: string;
+  ownerLabel: string;
   available?: boolean;
   fallbackLabel: string;
   fallbackSummary: string;
@@ -107,6 +115,10 @@ const buildActionRoute = ({
   label: fallbackLabel,
   summary: fallbackSummary,
   detail: fallbackDetail,
+  availabilityState,
+  availabilityLabel,
+  availabilityDetail,
+  ownerLabel,
   dispatchKind: dispatchKind ?? 'noop',
   commandId: commandId ?? null,
   targetProviderId: targetProviderId ?? null,
@@ -163,6 +175,154 @@ const buildMetadataWitness = ({
     source,
     tone: getGuideWitnessTone(guideCoverage?.status ?? null, hasGuide),
     isPreferred: preferred,
+  };
+};
+
+const getRetryAvailability = ({
+  recoveryRuntime,
+  currentProviderName,
+}: {
+  recoveryRuntime: LivePlayerRecoveryActionRuntimeContract | null;
+  currentProviderName: string | null;
+}) => {
+  if (recoveryRuntime?.actionKind === 'retry') {
+    return {
+      state: 'ready' as const,
+      label: `${currentProviderName ?? 'Current provider'} still owns the cleanest retry path.`,
+      detail: recoveryRuntime.nextMove.detail,
+      ownerLabel: `Retry owner: ${currentProviderName ?? 'Current provider'}`,
+    };
+  }
+
+  if (recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner') {
+    return {
+      state: 'blocked' as const,
+      label: 'Retry is intentionally downgraded because recovery prefers a provider handoff.',
+      detail: recoveryRuntime.nextMove.detail,
+      ownerLabel: `Recovery owner: ${currentProviderName ?? 'Current provider'}`,
+    };
+  }
+
+  if (recoveryRuntime?.actionKind === 'wait-for-line') {
+    return {
+      state: 'watch' as const,
+      label: 'Retry is paused while the overlay waits for the healthier playback line to clear.',
+      detail: recoveryRuntime.nextMove.detail,
+      ownerLabel: `Recovery owner: ${currentProviderName ?? 'Current provider'}`,
+    };
+  }
+
+  if (recoveryRuntime?.actionKind === 'fail-closed') {
+    return {
+      state: 'blocked' as const,
+      label: 'Retry stays blocked because the recovery contract no longer trusts the active route.',
+      detail: recoveryRuntime.nextMove.detail,
+      ownerLabel: `Playback owner: ${currentProviderName ?? 'Current provider'}`,
+    };
+  }
+
+  return {
+    state: 'watch' as const,
+    label: 'Retry is standing by until playback risk or recovery posture becomes explicit.',
+    detail: 'The playback runtime has not promoted retry as the safest next move yet.',
+    ownerLabel: `Playback owner: ${currentProviderName ?? 'Current provider'}`,
+  };
+};
+
+const getQuickSwitchAvailability = ({
+  recoveryRuntime,
+  recoveryProviderName,
+  currentProviderName,
+}: {
+  recoveryRuntime: LivePlayerRecoveryActionRuntimeContract | null;
+  recoveryProviderName: string | null;
+  currentProviderName: string | null;
+}) => {
+  if (recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner') {
+    return {
+      state: 'ready' as const,
+      label: `${recoveryProviderName ?? 'Recovery target'} is approved as the healthier playback owner.`,
+      detail: recoveryRuntime.nextMove.detail,
+      ownerLabel: `Switch target: ${recoveryProviderName ?? 'Saved provider'}`,
+    };
+  }
+
+  if (recoveryRuntime?.actionKind === 'retry') {
+    return {
+      state: 'watch' as const,
+      label: 'Quick-switch is secondary because the active owner still has a trusted retry path.',
+      detail: recoveryRuntime.nextMove.detail,
+      ownerLabel: `Playback owner: ${currentProviderName ?? 'Current provider'}`,
+    };
+  }
+
+  if (recoveryRuntime?.actionKind === 'wait-for-line') {
+    return {
+      state: 'watch' as const,
+      label: 'Quick-switch is waiting on line availability before the overlay can hand off playback.',
+      detail: recoveryRuntime.nextMove.detail,
+      ownerLabel: `Recovery target: ${recoveryProviderName ?? 'Saved provider'}`,
+    };
+  }
+
+  if (recoveryRuntime?.actionKind === 'fail-closed') {
+    return {
+      state: 'blocked' as const,
+      label: 'Quick-switch is blocked because the recovery contract does not trust a backup owner yet.',
+      detail: recoveryRuntime.nextMove.detail,
+      ownerLabel: `Recovery target: ${recoveryProviderName ?? 'Unavailable'}`,
+    };
+  }
+
+  return {
+    state: 'watch' as const,
+    label: 'Quick-switch is standing by until the runtime promotes a backup playback owner.',
+    detail: 'No saved-provider handoff has been elevated into the routed playback contract yet.',
+    ownerLabel: `Playback owner: ${currentProviderName ?? 'Current provider'}`,
+  };
+};
+
+const getTrackAvailability = ({
+  kind,
+  count,
+  selectedLabel,
+  pickerAvailable,
+}: {
+  kind: 'audio' | 'subtitle' | 'picker';
+  count: number;
+  selectedLabel: string;
+  pickerAvailable: boolean;
+}) => {
+  if (kind === 'picker') {
+    return pickerAvailable
+      ? {
+          state: 'ready' as const,
+          label: 'The shared track picker is routed through the same overlay command lane.',
+          detail: 'Audio and subtitle choices can open without leaving the backend-owned playback contract.',
+          ownerLabel: 'Track lane: shared audio/subtitle picker',
+        }
+      : {
+          state: 'watch' as const,
+          label: 'The shared track picker is hidden until the overlay command lane exposes it.',
+          detail: 'Track choices remain direct-only until the audio/subtitle command route becomes available.',
+          ownerLabel: 'Track lane: command route still settling',
+        };
+  }
+
+  if (count > 0) {
+    return {
+      state: 'ready' as const,
+      label: `${kind === 'audio' ? 'Audio' : 'Subtitle'} control is attached to runtime-detected playback tracks.`,
+      detail: `Current selection: ${selectedLabel}.`,
+      ownerLabel: `${kind === 'audio' ? 'Audio owner' : 'Subtitle owner'}: live media element`,
+    };
+  }
+
+  return {
+    state: 'blocked' as const,
+    label: `${kind === 'audio' ? 'Audio' : 'Subtitle'} switching is blocked until the player exposes track metadata.`,
+    detail: `The live media element has not reported any ${kind === 'audio' ? 'audio' : 'subtitle'} tracks yet.`,
+    ownerLabel: `${kind === 'audio' ? 'Audio owner' : 'Subtitle owner'}: unavailable`,
   };
 };
 
@@ -294,12 +454,43 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     controlTelemetry.subtitleTrackCount > 0 ? 'Subtitles available but not selected' : 'Subtitles unavailable'
   );
   const canOpenTrackPicker = interactionRuntime.commandDispatches.some((dispatch) => dispatch.commandId === 'audio-subtitle' && dispatch.available);
+  const retryAvailability = getRetryAvailability({
+    recoveryRuntime,
+    currentProviderName,
+  });
+  const quickSwitchAvailability = getQuickSwitchAvailability({
+    recoveryRuntime,
+    recoveryProviderName,
+    currentProviderName,
+  });
+  const audioAvailability = getTrackAvailability({
+    kind: 'audio',
+    count: controlTelemetry.audioTrackCount,
+    selectedLabel: selectedAudioTrackLabel,
+    pickerAvailable: canOpenTrackPicker,
+  });
+  const subtitleAvailability = getTrackAvailability({
+    kind: 'subtitle',
+    count: controlTelemetry.subtitleTrackCount,
+    selectedLabel: selectedSubtitleTrackLabel,
+    pickerAvailable: canOpenTrackPicker,
+  });
+  const pickerAvailability = getTrackAvailability({
+    kind: 'picker',
+    count: controlTelemetry.audioTrackCount + controlTelemetry.subtitleTrackCount,
+    selectedLabel: '',
+    pickerAvailable: canOpenTrackPicker,
+  });
 
   const retryAction = buildActionRoute({
     id: 'retry',
     dispatchKind: 'retry-playback',
     commandId: 'ok',
     targetProviderId: recoveryRuntime?.targetProviderId ?? null,
+    availabilityState: retryAvailability.state,
+    availabilityLabel: retryAvailability.label,
+    availabilityDetail: retryAvailability.detail,
+    ownerLabel: retryAvailability.ownerLabel,
     available: recoveryRuntime?.actionKind === 'retry',
     fallbackLabel: 'Retry playback',
     fallbackSummary: 'Retry the current playback owner when the dock still trusts the same route.',
@@ -311,6 +502,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     dispatchKind: recoveryRuntime?.actionKind === 'reclaim-owner' ? 'reclaim-owner' : 'quick-switch',
     commandId: 'ok',
     targetProviderId: recoveryRuntime?.targetProviderId ?? null,
+    availabilityState: quickSwitchAvailability.state,
+    availabilityLabel: quickSwitchAvailability.label,
+    availabilityDetail: quickSwitchAvailability.detail,
+    ownerLabel: quickSwitchAvailability.ownerLabel,
     available: recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner',
     fallbackLabel: recoveryRuntime?.actionKind === 'reclaim-owner' ? 'Reclaim playback owner' : 'Quick-switch playback',
     fallbackSummary: recoveryRuntime?.nextMove.label ?? 'Move playback onto the healthier saved provider.',
@@ -320,6 +515,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   const audioAction = buildActionRoute({
     id: 'audio',
     dispatchKind: 'cycle-audio-track',
+    availabilityState: audioAvailability.state,
+    availabilityLabel: audioAvailability.label,
+    availabilityDetail: audioAvailability.detail,
+    ownerLabel: audioAvailability.ownerLabel,
     available: controlTelemetry.audioTrackCount > 0,
     fallbackLabel: controlTelemetry.audioTrackCount > 1 ? 'Next audio track' : 'Audio track',
     fallbackSummary: controlTelemetry.audioTrackCount > 0
@@ -333,6 +532,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   const subtitleAction = buildActionRoute({
     id: 'subtitles',
     dispatchKind: 'cycle-subtitle-track',
+    availabilityState: subtitleAvailability.state,
+    availabilityLabel: subtitleAvailability.label,
+    availabilityDetail: subtitleAvailability.detail,
+    ownerLabel: subtitleAvailability.ownerLabel,
     available: controlTelemetry.subtitleTrackCount > 0,
     fallbackLabel: controlTelemetry.subtitleTrackCount > 1 ? 'Next subtitle track' : 'Subtitle track',
     fallbackSummary: controlTelemetry.subtitleTrackCount > 0
@@ -347,6 +550,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     id: 'audio-subtitle',
     dispatchKind: 'open-track-picker',
     commandId: 'audio-subtitle',
+    availabilityState: pickerAvailability.state,
+    availabilityLabel: pickerAvailability.label,
+    availabilityDetail: pickerAvailability.detail,
+    ownerLabel: pickerAvailability.ownerLabel,
     available: canOpenTrackPicker,
     fallbackLabel: 'Audio / subtitles',
     fallbackSummary: 'Open the shared track picker from the same overlay contract.',
@@ -357,6 +564,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     id: 'return',
     dispatchKind: 'route-back',
     commandId: 'back',
+    availabilityState: 'ready',
+    availabilityLabel: 'Return is always routed so the overlay can collapse or hand back control cleanly.',
+    availabilityDetail: 'Back stays explicit even when recovery, metadata, or track posture is still changing.',
+    ownerLabel: 'Return owner: overlay back route',
     available: true,
     fallbackLabel: 'Return',
     fallbackSummary: 'Back should either collapse the overlay or leave playback cleanly.',

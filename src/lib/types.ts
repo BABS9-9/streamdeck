@@ -1996,6 +1996,10 @@ export type LivePlayerOverlayPlaybackActionRoute = {
   label: string;
   summary: string;
   detail: string;
+  availabilityState: 'ready' | 'watch' | 'blocked';
+  availabilityLabel: string;
+  availabilityDetail: string;
+  ownerLabel: string;
   dispatchKind: LivePlayerOverlayDispatchKind;
   commandId: LivePlayerOverlayCommandEntry['id'] | null;
   targetProviderId: string | null;
