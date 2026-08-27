@@ -2003,6 +2003,18 @@ export type LivePlayerOverlayPlaybackActionRoute = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackMetadataWitness = {
+  id: 'active' | 'recovery';
+  label: string;
+  providerLabel: string;
+  summary: string;
+  detail: string;
+  state: ProviderGuideCoverageReport['status'] | ProviderEpgSyncState['status'] | 'unknown';
+  source: ProviderEpgSyncState['source'] | 'unknown';
+  tone: LivePlayerControlTone;
+  isPreferred: boolean;
+};
+
 export type LivePlayerOverlayPlaybackRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -2018,10 +2030,13 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   seekEligibilityLabel: string;
   programWindowLabel: string;
   metadataSummary: string;
+  metadataOwnerLabel: string;
+  fallbackMetadataLabel: string;
   audioTrackLabel: string;
   subtitleTrackLabel: string;
   trackSummary: string;
   actionSummary: string;
+  metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   primaryAction: LivePlayerOverlayPlaybackActionRoute | null;
   secondaryAction: LivePlayerOverlayPlaybackActionRoute | null;
   actions: LivePlayerOverlayPlaybackActionRoute[];

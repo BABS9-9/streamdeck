@@ -134,7 +134,34 @@ export function LivePlayerOverlayShellPanel({
             <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
               <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Metadata owner</p>
               <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.metadataSummary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.metadataOwnerLabel}</p>
+              <p className="mt-2 text-xs leading-5 text-white/65">{contract.playbackRuntime.fallbackMetadataLabel}</p>
             </article>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {contract.playbackRuntime.metadataWitnesses.map((witness) => (
+              <article
+                key={witness.id}
+                className={`rounded-2xl border p-4 ${
+                  witness.tone === 'ready'
+                    ? 'border-sky-300/20 bg-sky-500/10 text-sky-100'
+                    : witness.tone === 'watch'
+                      ? 'border-amber-300/20 bg-amber-500/10 text-amber-100'
+                      : 'border-rose-300/20 bg-rose-500/10 text-rose-100'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{witness.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {witness.state} / {witness.source}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{witness.providerLabel}</p>
+                <p className="mt-2 text-sm text-white/85">{witness.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/70">{witness.detail}</p>
+              </article>
+            ))}
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">

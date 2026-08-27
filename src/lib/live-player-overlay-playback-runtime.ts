@@ -1,6 +1,8 @@
 import {
+  LivePlayerControlTone,
   LivePlayerControlRuntimeContract,
   LivePlayerOverlayPlaybackActionRoute,
+  LivePlayerOverlayPlaybackMetadataWitness,
   LivePlayerOverlayPlaybackRuntimeContract,
   LivePlayerRecoveryActionRuntimeContract,
   NormalizedEpg,
@@ -112,12 +114,68 @@ const buildActionRoute = ({
   tone: fallbackTone,
 });
 
+const getGuideWitnessTone = (
+  status?: ProviderGuideCoverageReport['status'] | ProviderEpgSyncState['status'] | null,
+  hasGuide = false
+): LivePlayerControlTone => {
+  if (status === 'error' || status === 'empty') return 'recover';
+  if (status === 'stale' || status === 'partial' || status === 'refreshing' || status === 'idle') return 'watch';
+  if (status === 'fresh' || status === 'ready' || hasGuide) return 'ready';
+  return 'watch';
+};
+
+const buildMetadataWitness = ({
+  id,
+  label,
+  providerName,
+  guide,
+  guideCoverage,
+  guideSyncState,
+  preferred,
+}: {
+  id: LivePlayerOverlayPlaybackMetadataWitness['id'];
+  label: string;
+  providerName: string | null;
+  guide: NormalizedEpg | null;
+  guideCoverage: ProviderGuideCoverageReport | null;
+  guideSyncState: ProviderEpgSyncState | null;
+  preferred: boolean;
+}): LivePlayerOverlayPlaybackMetadataWitness => {
+  const hasGuide = Boolean(guide?.now || guide?.next);
+  const state = guideCoverage?.status ?? guideSyncState?.status ?? (hasGuide ? 'fresh' : 'unknown');
+  const source = guideSyncState?.source ?? (guideCoverage ? 'cache' : 'unknown');
+  const summary = hasGuide
+    ? `${providerName ?? 'This provider'} has ${guide?.now ? 'current' : 'partial'} now/next proof for the active playback title.`
+    : guideCoverage?.summary ?? `No durable now/next proof is available from ${providerName ?? 'this provider'} yet.`;
+  const detail = guide?.next?.title
+    ? `Next up: ${guide.next.title}.`
+    : guideSyncState?.error
+      ? guideSyncState.error
+      : guideCoverage?.summary ?? 'Guide evidence is still settling.';
+
+  return {
+    id,
+    label,
+    providerLabel: providerName ?? 'Unknown provider',
+    summary,
+    detail,
+    state,
+    source,
+    tone: getGuideWitnessTone(guideCoverage?.status ?? null, hasGuide),
+    isPreferred: preferred,
+  };
+};
+
 export const buildLivePlayerOverlayPlaybackRuntime = ({
   currentStream,
   currentProviderName,
   guide,
   guideCoverage,
   guideSyncState,
+  recoveryProviderName,
+  recoveryGuide,
+  recoveryGuideCoverage,
+  recoveryGuideSyncState,
   historyItem,
   controlTelemetry,
   controlRuntime,
@@ -129,6 +187,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   guide: NormalizedEpg | null;
   guideCoverage: ProviderGuideCoverageReport | null;
   guideSyncState: ProviderEpgSyncState | null;
+  recoveryProviderName: string | null;
+  recoveryGuide: NormalizedEpg | null;
+  recoveryGuideCoverage: ProviderGuideCoverageReport | null;
+  recoveryGuideSyncState: ProviderEpgSyncState | null;
   historyItem: WatchHistoryItem | null;
   controlTelemetry: PlayerControlTelemetry;
   controlRuntime: LivePlayerControlRuntimeContract;
@@ -186,9 +248,44 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
       : 'Duration still settling';
   const guideFreshnessLabel = guideCoverage?.summary
     ?? (guideSyncState ? `${guideSyncState.status} via ${guideSyncState.source}` : 'Guide has not synced yet.');
+  const recoveryTargetGuideReady = Boolean(recoveryGuide?.now || recoveryGuide?.next);
+  const activeGuideReady = Boolean(guide?.now || guide?.next);
+  const metadataWitnesses = [
+    buildMetadataWitness({
+      id: 'active',
+      label: 'Active playback guide',
+      providerName: currentProviderName,
+      guide,
+      guideCoverage,
+      guideSyncState,
+      preferred: activeGuideReady || !recoveryTargetGuideReady,
+    }),
+    ...(recoveryProviderName || recoveryGuideCoverage || recoveryGuideSyncState || recoveryGuide
+      ? [buildMetadataWitness({
+          id: 'recovery',
+          label: 'Recovery target guide',
+          providerName: recoveryProviderName,
+          guide: recoveryGuide,
+          guideCoverage: recoveryGuideCoverage,
+          guideSyncState: recoveryGuideSyncState,
+          preferred: !activeGuideReady && recoveryTargetGuideReady,
+        })]
+      : []),
+  ];
+  const preferredWitness = metadataWitnesses.find((witness) => witness.isPreferred) ?? metadataWitnesses[0];
   const metadataSummary = currentProviderName
-    ? `${currentProviderName} owns the active playback metadata contract for ${currentStream?.name ?? historyItem?.title ?? 'this session'}.`
+    ? preferredWitness.id === 'recovery'
+      ? `${currentProviderName} still owns playback, but ${preferredWitness.providerLabel} has the clearest backup now/next proof for ${currentStream?.name ?? historyItem?.title ?? 'this session'}.`
+      : `${currentProviderName} owns the active playback metadata contract for ${currentStream?.name ?? historyItem?.title ?? 'this session'}.`
     : 'Playback metadata ownership is still settling.';
+  const metadataOwnerLabel = preferredWitness
+    ? `${preferredWitness.label}: ${preferredWitness.providerLabel}`
+    : 'Playback metadata owner is still settling.';
+  const fallbackMetadataLabel = recoveryProviderName
+    ? recoveryTargetGuideReady
+      ? `${recoveryProviderName} also has recovery-path now/next proof ready.`
+      : `${recoveryProviderName} is the recovery target, but its guide proof is still settling.`
+    : 'No recovery guide witness is attached yet.';
 
   const selectedAudioTrackLabel = controlTelemetry.selectedAudioTrackLabel ?? (
     controlTelemetry.audioTrackCount > 0 ? 'Default audio' : 'No audio tracks detected'
@@ -339,10 +436,13 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     seekEligibilityLabel,
     programWindowLabel,
     metadataSummary,
+    metadataOwnerLabel,
+    fallbackMetadataLabel,
     audioTrackLabel: selectedAudioTrackLabel,
     subtitleTrackLabel: selectedSubtitleTrackLabel,
     trackSummary,
     actionSummary,
+    metadataWitnesses,
     primaryAction,
     secondaryAction,
     actions,

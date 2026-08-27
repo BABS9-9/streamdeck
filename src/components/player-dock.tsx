@@ -191,6 +191,25 @@ export function PlayerDock() {
       }),
     };
   }, [connectionStatus, connections, currentProviderId, currentStream, historyItem?.categoryName]);
+  const recoveryGuideProviderId = liveRecovery.topVariant?.providerId ?? liveRecovery.categoryFallback?.providerId ?? null;
+  const recoveryGuideProvider = recoveryGuideProviderId
+    ? connections.find((connection) => connection.id === recoveryGuideProviderId) ?? null
+    : null;
+  const recoveryGuideStream = liveRecovery.topVariant?.stream ?? liveRecovery.categoryFallback?.stream ?? null;
+  const recoveryGuideContentId = recoveryGuideStream ? getContentId(recoveryGuideStream) : 0;
+  const recoveryGuideEntry = recoveryGuideProviderId
+    ? lookupStreamGuide(recoveryGuideProviderId, recoveryGuideStream, Number.MAX_SAFE_INTEGER)
+    : null;
+  const recoveryGuide = getGuidePayload(recoveryGuideEntry);
+  const recoveryGuideState = recoveryGuideProviderId && recoveryGuideContentId
+    ? syncByGuideKey[`${recoveryGuideProviderId}:${recoveryGuideContentId}`] ?? null
+    : null;
+  const recoveryGuideCoverage = useMemo(
+    () => (recoveryGuideProviderId && recoveryGuideContentId
+      ? getCoverageReport(recoveryGuideProviderId, [recoveryGuideContentId], Number.MAX_SAFE_INTEGER)
+      : null),
+    [getCoverageReport, recoveryGuideContentId, recoveryGuideProviderId]
+  );
 
   const livePlayerControlRuntime = useMemo(() => buildLivePlayerControlRuntime({
     currentStream,
@@ -592,6 +611,10 @@ export function PlayerDock() {
     guide: currentGuide,
     guideCoverage: currentGuideCoverage,
     guideSyncState: currentGuideState,
+    recoveryProviderName: recoveryGuideProvider?.name ?? null,
+    recoveryGuide,
+    recoveryGuideCoverage,
+    recoveryGuideSyncState: recoveryGuideState,
     historyItem,
     controlTelemetry,
     controlRuntime: livePlayerControlRuntime,
@@ -608,6 +631,10 @@ export function PlayerDock() {
     livePlayerControlRuntime,
     livePlayerOverlayInteractionRuntime,
     playerRecoveryActionRuntime,
+    recoveryGuide,
+    recoveryGuideCoverage,
+    recoveryGuideProvider?.name,
+    recoveryGuideState,
   ]);
   const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({
     channelName: currentStream?.name ?? historyItem?.title ?? 'Active playback',
@@ -1053,6 +1080,22 @@ export function PlayerDock() {
     markGuideFromCache(currentProvider.id, [contentId]);
     refreshGuideEntry(currentProvider, contentId).catch(() => {});
   }, [contentId, currentProvider, currentStream?.stream_type, markGuideFromCache, refreshGuideEntry]);
+
+  useEffect(() => {
+    if (!recoveryGuideProvider || !recoveryGuideStream || recoveryGuideContentId <= 0) return;
+    if (recoveryGuideProvider.id === currentProviderId && recoveryGuideContentId === contentId) return;
+
+    markGuideFromCache(recoveryGuideProvider.id, [recoveryGuideContentId]);
+    refreshGuideEntry(recoveryGuideProvider, recoveryGuideContentId).catch(() => {});
+  }, [
+    contentId,
+    currentProviderId,
+    markGuideFromCache,
+    recoveryGuideContentId,
+    recoveryGuideProvider,
+    recoveryGuideStream,
+    refreshGuideEntry,
+  ]);
 
   if (!currentStream || !playbackUrl || !currentProviderId) return null;
 
