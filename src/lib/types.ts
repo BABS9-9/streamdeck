@@ -2000,6 +2000,7 @@ export type LivePlayerOverlayPlaybackActionRoute = {
   availabilityLabel: string;
   availabilityDetail: string;
   ownerLabel: string;
+  ownerDetail: string;
   dispatchKind: LivePlayerOverlayDispatchKind;
   commandId: LivePlayerOverlayCommandEntry['id'] | null;
   targetProviderId: string | null;
@@ -2019,6 +2020,26 @@ export type LivePlayerOverlayPlaybackMetadataWitness = {
   isPreferred: boolean;
 };
 
+export type LivePlayerOverlayPlaybackFreshnessWitness = {
+  id: 'active-guide' | 'recovery-guide' | 'metadata-owner';
+  label: string;
+  state: 'fresh' | 'partial' | 'stale' | 'error' | 'empty' | 'ready' | 'idle' | 'refreshing' | 'unknown';
+  source: 'cache' | 'network' | 'none' | 'unknown';
+  ageLabel: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackWindowWitness = {
+  id: 'live-edge' | 'seek' | 'program-window';
+  label: string;
+  state: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerOverlayPlaybackRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -2028,19 +2049,27 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   tone: LivePlayerControlTone;
   programState: LivePlayerOverlayPlaybackProgramState;
   guideFreshnessLabel: string;
+  guideFreshnessDetail: string;
   currentProgramLabel: string;
   nextProgramLabel: string;
   liveEdgeLabel: string;
+  liveEdgeDetail: string;
   seekEligibilityLabel: string;
+  seekEligibilityDetail: string;
   programWindowLabel: string;
+  programWindowDetail: string;
   metadataSummary: string;
   metadataOwnerLabel: string;
   fallbackMetadataLabel: string;
+  metadataFallbackDetail: string;
   audioTrackLabel: string;
   subtitleTrackLabel: string;
   trackSummary: string;
   actionSummary: string;
+  actionOwnerSummary: string;
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
+  freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
+  windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];
   primaryAction: LivePlayerOverlayPlaybackActionRoute | null;
   secondaryAction: LivePlayerOverlayPlaybackActionRoute | null;
   actions: LivePlayerOverlayPlaybackActionRoute[];

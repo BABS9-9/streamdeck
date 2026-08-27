@@ -2,8 +2,10 @@ import {
   LivePlayerControlTone,
   LivePlayerControlRuntimeContract,
   LivePlayerOverlayPlaybackActionRoute,
+  LivePlayerOverlayPlaybackFreshnessWitness,
   LivePlayerOverlayPlaybackMetadataWitness,
   LivePlayerOverlayPlaybackRuntimeContract,
+  LivePlayerOverlayPlaybackWindowWitness,
   LivePlayerRecoveryActionRuntimeContract,
   NormalizedEpg,
   PlayerControlTelemetry,
@@ -31,6 +33,15 @@ const formatClockTime = (timestamp?: number | null) => {
   }).format(new Date(timestamp * 1000));
 };
 
+const formatRelativeAge = (updatedAt?: number | null) => {
+  if (typeof updatedAt !== 'number' || !Number.isFinite(updatedAt) || updatedAt <= 0) {
+    return 'No guide sync yet';
+  }
+
+  const ageMinutes = Math.max(1, Math.round((Date.now() - updatedAt) / 60000));
+  return `${ageMinutes} minute${ageMinutes === 1 ? '' : 's'} ago`;
+};
+
 const formatDuration = (seconds?: number | null) => {
   if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) return null;
   const total = Math.floor(seconds);
@@ -43,6 +54,16 @@ const formatDuration = (seconds?: number | null) => {
   }
 
   return `${minutes}:${String(remainder).padStart(2, '0')}`;
+};
+
+const getGuideEvidenceTone = (
+  status?: ProviderGuideCoverageReport['status'] | ProviderEpgSyncState['status'] | 'unknown' | null,
+  hasGuide = false
+): LivePlayerControlTone => {
+  if (status === 'error' || status === 'empty') return 'recover';
+  if (status === 'stale' || status === 'partial' || status === 'refreshing' || status === 'idle') return 'watch';
+  if (status === 'fresh' || status === 'ready' || hasGuide) return 'ready';
+  return 'watch';
 };
 
 const buildProgramLabel = (entry: NormalizedEpg['now'] | NormalizedEpg['next'] | null, fallback: string) => {
@@ -91,6 +112,7 @@ const buildActionRoute = ({
   availabilityLabel,
   availabilityDetail,
   ownerLabel,
+  ownerDetail,
   available,
   fallbackLabel,
   fallbackSummary,
@@ -110,6 +132,7 @@ const buildActionRoute = ({
   fallbackSummary: string;
   fallbackDetail: string;
   fallbackTone: LivePlayerOverlayPlaybackActionRoute['tone'];
+  ownerDetail: string;
 }): LivePlayerOverlayPlaybackActionRoute => ({
   id,
   label: fallbackLabel,
@@ -119,22 +142,13 @@ const buildActionRoute = ({
   availabilityLabel,
   availabilityDetail,
   ownerLabel,
+  ownerDetail,
   dispatchKind: dispatchKind ?? 'noop',
   commandId: commandId ?? null,
   targetProviderId: targetProviderId ?? null,
   available: available ?? false,
   tone: fallbackTone,
 });
-
-const getGuideWitnessTone = (
-  status?: ProviderGuideCoverageReport['status'] | ProviderEpgSyncState['status'] | null,
-  hasGuide = false
-): LivePlayerControlTone => {
-  if (status === 'error' || status === 'empty') return 'recover';
-  if (status === 'stale' || status === 'partial' || status === 'refreshing' || status === 'idle') return 'watch';
-  if (status === 'fresh' || status === 'ready' || hasGuide) return 'ready';
-  return 'watch';
-};
 
 const buildMetadataWitness = ({
   id,
@@ -173,10 +187,71 @@ const buildMetadataWitness = ({
     detail,
     state,
     source,
-    tone: getGuideWitnessTone(guideCoverage?.status ?? null, hasGuide),
+    tone: getGuideEvidenceTone(guideCoverage?.status ?? guideSyncState?.status ?? null, hasGuide),
     isPreferred: preferred,
   };
 };
+
+const buildFreshnessWitness = ({
+  id,
+  label,
+  providerName,
+  guide,
+  guideCoverage,
+  guideSyncState,
+  preferred = false,
+}: {
+  id: LivePlayerOverlayPlaybackFreshnessWitness['id'];
+  label: string;
+  providerName: string | null;
+  guide: NormalizedEpg | null;
+  guideCoverage: ProviderGuideCoverageReport | null;
+  guideSyncState: ProviderEpgSyncState | null;
+  preferred?: boolean;
+}): LivePlayerOverlayPlaybackFreshnessWitness => {
+  const hasGuide = Boolean(guide?.now || guide?.next);
+  const state = guideCoverage?.status ?? guideSyncState?.status ?? (hasGuide ? 'fresh' : 'unknown');
+  const source = guideSyncState?.source ?? (guideCoverage ? 'cache' : 'unknown');
+  const updatedAt = guideCoverage?.freshestUpdatedAt ?? guideSyncState?.updatedAt ?? null;
+  const ageLabel = formatRelativeAge(updatedAt);
+  const providerLabel = providerName ?? 'This provider';
+  const coverageSummary = guideCoverage?.summary ?? 'Guide freshness is still settling.';
+  const summary = preferred
+    ? `${providerLabel} currently carries the preferred now/next freshness witness.`
+    : `${providerLabel} is still part of the overlay freshness ledger.`;
+  const detail = hasGuide
+    ? `${coverageSummary} Last durable sync ${ageLabel}.`
+    : guideSyncState?.error
+      ? `${guideSyncState.error} Last attempted sync ${ageLabel}.`
+      : `${coverageSummary} Last durable sync ${ageLabel}.`;
+
+  return {
+    id,
+    label,
+    state,
+    source,
+    ageLabel,
+    summary,
+    detail,
+    tone: getGuideEvidenceTone(state, hasGuide),
+  };
+};
+
+const buildWindowWitness = ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+}: LivePlayerOverlayPlaybackWindowWitness): LivePlayerOverlayPlaybackWindowWitness => ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+});
 
 const getRetryAvailability = ({
   recoveryRuntime,
@@ -191,6 +266,7 @@ const getRetryAvailability = ({
       label: `${currentProviderName ?? 'Current provider'} still owns the cleanest retry path.`,
       detail: recoveryRuntime.nextMove.detail,
       ownerLabel: `Retry owner: ${currentProviderName ?? 'Current provider'}`,
+      ownerDetail: 'The overlay should keep retry attached to the active playback owner until recovery explicitly promotes a handoff.',
     };
   }
 
@@ -200,6 +276,7 @@ const getRetryAvailability = ({
       label: 'Retry is intentionally downgraded because recovery prefers a provider handoff.',
       detail: recoveryRuntime.nextMove.detail,
       ownerLabel: `Recovery owner: ${currentProviderName ?? 'Current provider'}`,
+      ownerDetail: 'Retry stays visible for honesty, but the backend contract is suppressing it as the primary recovery lane.',
     };
   }
 
@@ -209,6 +286,7 @@ const getRetryAvailability = ({
       label: 'Retry is paused while the overlay waits for the healthier playback line to clear.',
       detail: recoveryRuntime.nextMove.detail,
       ownerLabel: `Recovery owner: ${currentProviderName ?? 'Current provider'}`,
+      ownerDetail: 'The current route is still known, but line custody is not clean enough to re-fire playback yet.',
     };
   }
 
@@ -218,6 +296,7 @@ const getRetryAvailability = ({
       label: 'Retry stays blocked because the recovery contract no longer trusts the active route.',
       detail: recoveryRuntime.nextMove.detail,
       ownerLabel: `Playback owner: ${currentProviderName ?? 'Current provider'}`,
+      ownerDetail: 'The backend runtime is intentionally fail-closing retry instead of pretending the active path is still healthy.',
     };
   }
 
@@ -226,6 +305,7 @@ const getRetryAvailability = ({
     label: 'Retry is standing by until playback risk or recovery posture becomes explicit.',
     detail: 'The playback runtime has not promoted retry as the safest next move yet.',
     ownerLabel: `Playback owner: ${currentProviderName ?? 'Current provider'}`,
+    ownerDetail: 'Retry ownership remains parked on the active provider, but it has not cleared the promotion bar.',
   };
 };
 
@@ -244,6 +324,7 @@ const getQuickSwitchAvailability = ({
       label: `${recoveryProviderName ?? 'Recovery target'} is approved as the healthier playback owner.`,
       detail: recoveryRuntime.nextMove.detail,
       ownerLabel: `Switch target: ${recoveryProviderName ?? 'Saved provider'}`,
+      ownerDetail: 'The saved-provider lane is the current recovery owner, so the overlay should advertise handoff instead of generic retry.',
     };
   }
 
@@ -253,6 +334,7 @@ const getQuickSwitchAvailability = ({
       label: 'Quick-switch is secondary because the active owner still has a trusted retry path.',
       detail: recoveryRuntime.nextMove.detail,
       ownerLabel: `Playback owner: ${currentProviderName ?? 'Current provider'}`,
+      ownerDetail: 'The backup owner remains visible, but the backend contract has not promoted it above the active provider.',
     };
   }
 
@@ -262,6 +344,7 @@ const getQuickSwitchAvailability = ({
       label: 'Quick-switch is waiting on line availability before the overlay can hand off playback.',
       detail: recoveryRuntime.nextMove.detail,
       ownerLabel: `Recovery target: ${recoveryProviderName ?? 'Saved provider'}`,
+      ownerDetail: 'The backup owner is known, but the line-clearance gate is still suppressing immediate handoff.',
     };
   }
 
@@ -271,6 +354,7 @@ const getQuickSwitchAvailability = ({
       label: 'Quick-switch is blocked because the recovery contract does not trust a backup owner yet.',
       detail: recoveryRuntime.nextMove.detail,
       ownerLabel: `Recovery target: ${recoveryProviderName ?? 'Unavailable'}`,
+      ownerDetail: 'The backend contract has not found a trustworthy alternate owner, so switch language must stay downgraded.',
     };
   }
 
@@ -279,6 +363,7 @@ const getQuickSwitchAvailability = ({
     label: 'Quick-switch is standing by until the runtime promotes a backup playback owner.',
     detail: 'No saved-provider handoff has been elevated into the routed playback contract yet.',
     ownerLabel: `Playback owner: ${currentProviderName ?? 'Current provider'}`,
+    ownerDetail: 'A backup route may exist elsewhere in the system, but this overlay contract has not promoted it yet.',
   };
 };
 
@@ -300,12 +385,14 @@ const getTrackAvailability = ({
           label: 'The shared track picker is routed through the same overlay command lane.',
           detail: 'Audio and subtitle choices can open without leaving the backend-owned playback contract.',
           ownerLabel: 'Track lane: shared audio/subtitle picker',
+          ownerDetail: 'Track ownership stays on the player, while picker navigation stays on the overlay command lane.',
         }
       : {
           state: 'watch' as const,
           label: 'The shared track picker is hidden until the overlay command lane exposes it.',
           detail: 'Track choices remain direct-only until the audio/subtitle command route becomes available.',
           ownerLabel: 'Track lane: command route still settling',
+          ownerDetail: 'The player sees track state, but the overlay still lacks a dedicated picker entrypoint.',
         };
   }
 
@@ -315,6 +402,7 @@ const getTrackAvailability = ({
       label: `${kind === 'audio' ? 'Audio' : 'Subtitle'} control is attached to runtime-detected playback tracks.`,
       detail: `Current selection: ${selectedLabel}.`,
       ownerLabel: `${kind === 'audio' ? 'Audio owner' : 'Subtitle owner'}: live media element`,
+      ownerDetail: `The ${kind} lane is sourced from the active media element instead of inferred UI state.`,
     };
   }
 
@@ -323,6 +411,7 @@ const getTrackAvailability = ({
     label: `${kind === 'audio' ? 'Audio' : 'Subtitle'} switching is blocked until the player exposes track metadata.`,
     detail: `The live media element has not reported any ${kind === 'audio' ? 'audio' : 'subtitle'} tracks yet.`,
     ownerLabel: `${kind === 'audio' ? 'Audio owner' : 'Subtitle owner'}: unavailable`,
+    ownerDetail: `The overlay cannot promise ${kind} control before the media element publishes a real track list.`,
   };
 };
 
@@ -379,26 +468,49 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
         ? `Checkpoint: ${historyItem.resumeCheckpoint.progressPercent}% watched`
         : 'No saved checkpoint has been captured yet.'
   );
+  const liveWindowLabel = controlTelemetry.seekableWindowSeconds
+    ? formatDuration(controlTelemetry.seekableWindowSeconds)
+    : null;
   const liveEdgeLabel = !currentStream
     ? 'No playback owner'
     : currentStream.stream_type !== 'live'
       ? 'On-demand playback'
       : controlRuntime.seekWindowState === 'timeshift-active'
-        ? 'Viewer is off live edge'
+        ? `Viewer is off live edge${liveWindowLabel ? ` with ${liveWindowLabel} of rewind window` : ''}`
         : controlRuntime.seekWindowState === 'timeshift-ready'
-          ? 'Live edge is active with rewind available'
+          ? `Live edge is active${liveWindowLabel ? ` with ${liveWindowLabel} of rewind ready` : ' with rewind available'}`
           : controlTelemetry.atLiveEdge === false
             ? 'Live edge drift is still settling'
             : 'Playback is pinned to live edge';
+  const liveEdgeDetail = !currentStream
+    ? 'The overlay should not claim live-edge posture until playback attaches to a real owner.'
+    : currentStream.stream_type !== 'live'
+      ? 'Non-live playback is outside the live-edge contract, so the overlay should describe resume posture instead.'
+      : controlRuntime.seekWindowState === 'timeshift-active'
+        ? `Playback has already moved behind the live edge${liveWindowLabel ? ` inside a ${liveWindowLabel} window` : ''}.`
+        : controlRuntime.seekWindowState === 'timeshift-ready'
+          ? `Playback is still anchored to live edge${liveWindowLabel ? `, and the provider is exposing ${liveWindowLabel} of rewind headroom` : ', and rewind headroom is available'}.`
+          : controlTelemetry.atLiveEdge === false
+            ? 'Telemetry says playback may have drifted, but the backend contract is waiting for a stable seek window before publishing a stronger offset claim.'
+            : 'The active playback route is still attached to the live edge with no durable offset witness published.';
   const seekEligibilityLabel = !currentStream
     ? 'Seek is unavailable until playback attaches.'
     : currentStream.stream_type !== 'live'
       ? 'Resume seek is available for this title.'
       : controlRuntime.seekWindowState === 'timeshift-active'
-        ? 'Timeshift seek is active.'
+        ? `Timeshift seek is active${liveWindowLabel ? ` across ${liveWindowLabel}` : ''}.`
         : controlRuntime.seekWindowState === 'timeshift-ready'
-          ? 'Live rewind is available.'
+          ? `Live rewind is available${liveWindowLabel ? ` across ${liveWindowLabel}` : ''}.`
           : 'No rewind window is currently exposed.';
+  const seekEligibilityDetail = !currentStream
+    ? 'The overlay should keep seek controls suppressed until the player exposes a real playback session.'
+    : currentStream.stream_type !== 'live'
+      ? 'VOD-style seeking is safe because the title is not bound to a live window.'
+      : controlRuntime.seekWindowState === 'timeshift-active'
+        ? 'The player already owns a real live offset, so the overlay can expose rewind/seek behavior without pretending this is generic VOD.'
+        : controlRuntime.seekWindowState === 'timeshift-ready'
+          ? 'The player has exposed a safe live rewind window, but playback is still anchored at the live edge right now.'
+          : 'The provider has not exposed enough window to promise honest rewind controls yet.';
   const programWindowLabel = isLive
     ? guide?.now
       ? `${formatClockTime(guide.now.start_timestamp) ?? 'Now'}-${formatClockTime(guide.now.stop_timestamp) ?? 'Later'} window`
@@ -406,8 +518,13 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     : formatDuration(controlTelemetry.durationSeconds ?? historyItem?.durationSeconds ?? historyItem?.resumeCheckpoint?.durationSeconds)
       ? `Duration ${formatDuration(controlTelemetry.durationSeconds ?? historyItem?.durationSeconds ?? historyItem?.resumeCheckpoint?.durationSeconds)}`
       : 'Duration still settling';
-  const guideFreshnessLabel = guideCoverage?.summary
-    ?? (guideSyncState ? `${guideSyncState.status} via ${guideSyncState.source}` : 'Guide has not synced yet.');
+  const programWindowDetail = isLive
+    ? guide?.now
+      ? `Current guide window is backed by ${guide.now.title}${guide?.next?.title ? `, with ${guide.next.title} queued next` : ''}.`
+      : 'The overlay should keep the program window textual until the active provider proves a real now/next span.'
+    : formatDuration(controlTelemetry.durationSeconds ?? historyItem?.durationSeconds ?? historyItem?.resumeCheckpoint?.durationSeconds)
+      ? `Runtime duration is ${formatDuration(controlTelemetry.durationSeconds ?? historyItem?.durationSeconds ?? historyItem?.resumeCheckpoint?.durationSeconds)}.`
+      : 'The player has not exposed a durable duration yet.';
   const recoveryTargetGuideReady = Boolean(recoveryGuide?.now || recoveryGuide?.next);
   const activeGuideReady = Boolean(guide?.now || guide?.next);
   const metadataWitnesses = [
@@ -433,19 +550,67 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
       : []),
   ];
   const preferredWitness = metadataWitnesses.find((witness) => witness.isPreferred) ?? metadataWitnesses[0];
+  const freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[] = [
+    buildFreshnessWitness({
+      id: 'active-guide',
+      label: 'Active guide freshness',
+      providerName: currentProviderName,
+      guide,
+      guideCoverage,
+      guideSyncState,
+      preferred: preferredWitness?.id === 'active',
+    }),
+    ...(recoveryProviderName || recoveryGuideCoverage || recoveryGuideSyncState || recoveryGuide
+      ? [buildFreshnessWitness({
+          id: 'recovery-guide',
+          label: 'Recovery guide freshness',
+          providerName: recoveryProviderName,
+          guide: recoveryGuide,
+          guideCoverage: recoveryGuideCoverage,
+          guideSyncState: recoveryGuideSyncState,
+          preferred: preferredWitness?.id === 'recovery',
+        })]
+      : []),
+    {
+      id: 'metadata-owner',
+      label: 'Metadata owner decision',
+      state: preferredWitness?.state ?? 'unknown',
+      source: preferredWitness?.source ?? 'unknown',
+      ageLabel: formatRelativeAge(
+        preferredWitness?.id === 'recovery'
+          ? recoveryGuideCoverage?.freshestUpdatedAt ?? recoveryGuideSyncState?.updatedAt ?? null
+          : guideCoverage?.freshestUpdatedAt ?? guideSyncState?.updatedAt ?? null
+      ),
+      summary: preferredWitness?.id === 'recovery'
+        ? `${preferredWitness.providerLabel} currently outranks the active provider for overlay metadata freshness.`
+        : `${preferredWitness?.providerLabel ?? 'The active provider'} currently owns the strongest overlay metadata witness.`,
+      detail: preferredWitness?.id === 'recovery'
+        ? 'Playback can stay on the active route while the overlay explicitly cites the recovery target as the fresher metadata witness.'
+        : 'The active playback owner still carries the strongest now/next witness, so the overlay can keep metadata ownership local.',
+      tone: preferredWitness?.tone ?? 'watch',
+    },
+  ];
+  const preferredFreshnessWitness = freshnessWitnesses.find((witness) => witness.id === 'metadata-owner') ?? freshnessWitnesses[0];
+  const guideFreshnessLabel = `${preferredFreshnessWitness.summary} (${preferredFreshnessWitness.ageLabel})`;
+  const guideFreshnessDetail = preferredFreshnessWitness.detail;
   const metadataSummary = currentProviderName
     ? preferredWitness.id === 'recovery'
       ? `${currentProviderName} still owns playback, but ${preferredWitness.providerLabel} has the clearest backup now/next proof for ${currentStream?.name ?? historyItem?.title ?? 'this session'}.`
       : `${currentProviderName} owns the active playback metadata contract for ${currentStream?.name ?? historyItem?.title ?? 'this session'}.`
     : 'Playback metadata ownership is still settling.';
   const metadataOwnerLabel = preferredWitness
-    ? `${preferredWitness.label}: ${preferredWitness.providerLabel}`
+    ? `${preferredWitness.label}: ${preferredWitness.providerLabel} (${preferredFreshnessWitness.ageLabel})`
     : 'Playback metadata owner is still settling.';
   const fallbackMetadataLabel = recoveryProviderName
     ? recoveryTargetGuideReady
       ? `${recoveryProviderName} also has recovery-path now/next proof ready.`
       : `${recoveryProviderName} is the recovery target, but its guide proof is still settling.`
     : 'No recovery guide witness is attached yet.';
+  const metadataFallbackDetail = recoveryProviderName
+    ? recoveryTargetGuideReady
+      ? `${recoveryProviderName} can carry backup now/next copy immediately if playback ownership shifts.`
+      : `${recoveryProviderName} remains the recovery target, but the overlay should not overclaim its guide freshness until that proof hardens.`
+    : 'The overlay currently has no secondary metadata owner to cite.';
 
   const selectedAudioTrackLabel = controlTelemetry.selectedAudioTrackLabel ?? (
     controlTelemetry.audioTrackCount > 0 ? 'Default audio' : 'No audio tracks detected'
@@ -496,6 +661,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     fallbackSummary: 'Retry the current playback owner when the dock still trusts the same route.',
     fallbackDetail: 'This path should only stay primary while the current provider still owns the cleanest retry.',
     fallbackTone: recoveryRuntime?.actionKind === 'retry' ? recoveryRuntime.tone : 'watch',
+    ownerDetail: retryAvailability.ownerDetail,
   });
   const quickSwitchAction = buildActionRoute({
     id: 'quick-switch',
@@ -511,6 +677,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     fallbackSummary: recoveryRuntime?.nextMove.label ?? 'Move playback onto the healthier saved provider.',
     fallbackDetail: recoveryRuntime?.nextMove.detail ?? 'The overlay should publish the saved-provider handoff instead of hiding it behind generic retry copy.',
     fallbackTone: recoveryRuntime?.tone ?? 'recover',
+    ownerDetail: quickSwitchAvailability.ownerDetail,
   });
   const audioAction = buildActionRoute({
     id: 'audio',
@@ -528,6 +695,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
       ? `The overlay can rotate across ${controlTelemetry.audioTrackCount} runtime-detected audio track${controlTelemetry.audioTrackCount === 1 ? '' : 's'} without leaving playback.`
       : 'No runtime-detected audio track metadata is available yet.',
     fallbackTone: controlTelemetry.audioTrackCount > 0 ? 'ready' : 'watch',
+    ownerDetail: audioAvailability.ownerDetail,
   });
   const subtitleAction = buildActionRoute({
     id: 'subtitles',
@@ -545,6 +713,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
       ? `The overlay can rotate subtitles across ${controlTelemetry.subtitleTrackCount} runtime-detected subtitle track${controlTelemetry.subtitleTrackCount === 1 ? '' : 's'}, including turning them off.`
       : 'No runtime-detected subtitle track metadata is available yet.',
     fallbackTone: controlTelemetry.subtitleTrackCount > 0 ? 'ready' : 'watch',
+    ownerDetail: subtitleAvailability.ownerDetail,
   });
   const audioSubtitleAction = buildActionRoute({
     id: 'audio-subtitle',
@@ -559,6 +728,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     fallbackSummary: 'Open the shared track picker from the same overlay contract.',
     fallbackDetail: 'Track choices should stay reachable through one backend-owned overlay lane.',
     fallbackTone: controlRuntime.subtitleAudioOptionState === 'none' ? 'watch' : 'ready',
+    ownerDetail: pickerAvailability.ownerDetail,
   });
   const returnAction = buildActionRoute({
     id: 'return',
@@ -568,6 +738,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     availabilityLabel: 'Return is always routed so the overlay can collapse or hand back control cleanly.',
     availabilityDetail: 'Back stays explicit even when recovery, metadata, or track posture is still changing.',
     ownerLabel: 'Return owner: overlay back route',
+    ownerDetail: 'The return lane stays owned by the overlay shell even while playback ownership or recovery posture changes underneath it.',
     available: true,
     fallbackLabel: 'Return',
     fallbackSummary: 'Back should either collapse the overlay or leave playback cleanly.',
@@ -623,6 +794,53 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   const actionSummary = primaryAction.summary
     ?? recoveryRuntime?.nextMove.label
     ?? 'No routed overlay playback action is available yet.';
+  const actionOwnerSummary = primaryAction
+    ? `${primaryAction.label} is currently owned by ${primaryAction.ownerLabel.toLowerCase()}.`
+    : 'No playback action owner has been promoted yet.';
+  const windowWitnesses = [
+    buildWindowWitness({
+      id: 'live-edge',
+      label: 'Live-edge posture',
+      state: controlRuntime.seekWindowState,
+      summary: liveEdgeLabel,
+      detail: liveEdgeDetail,
+      tone: !currentStream
+        ? 'recover'
+        : currentStream.stream_type !== 'live'
+          ? 'ready'
+          : controlRuntime.seekWindowState === 'timeshift-active'
+            ? 'watch'
+            : controlRuntime.seekWindowState === 'timeshift-ready'
+              ? 'ready'
+              : controlRuntime.seekWindowState === 'live-edge'
+                ? 'watch'
+                : 'recover',
+    }),
+    buildWindowWitness({
+      id: 'seek',
+      label: 'Seek eligibility',
+      state: controlRuntime.seekWindowState,
+      summary: seekEligibilityLabel,
+      detail: seekEligibilityDetail,
+      tone: !currentStream
+        ? 'recover'
+        : currentStream.stream_type !== 'live'
+          ? 'ready'
+          : controlRuntime.seekWindowState === 'live-edge'
+            ? 'watch'
+            : controlRuntime.seekWindowState.startsWith('timeshift')
+              ? 'ready'
+              : 'recover',
+    }),
+    buildWindowWitness({
+      id: 'program-window',
+      label: 'Program window proof',
+      state: guide?.now ? 'guide-window' : 'fallback-window',
+      summary: programWindowLabel,
+      detail: programWindowDetail,
+      tone: guide?.now ? 'ready' : isLive ? 'watch' : 'ready',
+    }),
+  ];
   const tone = getDominantTone([
     recoveryRuntime?.tone ?? 'ready',
     primaryAction.tone,
@@ -641,19 +859,27 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     tone,
     programState,
     guideFreshnessLabel,
+    guideFreshnessDetail,
     currentProgramLabel,
     nextProgramLabel,
     liveEdgeLabel,
+    liveEdgeDetail,
     seekEligibilityLabel,
+    seekEligibilityDetail,
     programWindowLabel,
+    programWindowDetail,
     metadataSummary,
     metadataOwnerLabel,
     fallbackMetadataLabel,
+    metadataFallbackDetail,
     audioTrackLabel: selectedAudioTrackLabel,
     subtitleTrackLabel: selectedSubtitleTrackLabel,
     trackSummary,
     actionSummary,
+    actionOwnerSummary,
     metadataWitnesses,
+    freshnessWitnesses,
+    windowWitnesses,
     primaryAction,
     secondaryAction,
     actions,
