@@ -2049,6 +2049,15 @@ export type LivePlayerOverlayPlaybackAlignmentWitness = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackDiagnosticsWitness = {
+  id: 'stream-health' | 'telemetry-freshness' | 'execution-stability';
+  label: string;
+  state: 'healthy' | 'watch' | 'degraded' | 'stale' | 'unavailable';
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerOverlayPlaybackRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -2076,11 +2085,14 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   trackSummary: string;
   actionSummary: string;
   actionOwnerSummary: string;
+  diagnosticsSummary: string;
+  diagnosticsDetail: string;
   alignmentSummary: string;
   alignmentDetail: string;
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
   windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];
+  diagnosticsWitnesses: LivePlayerOverlayPlaybackDiagnosticsWitness[];
   alignmentWitnesses: LivePlayerOverlayPlaybackAlignmentWitness[];
   primaryAction: LivePlayerOverlayPlaybackActionRoute | null;
   secondaryAction: LivePlayerOverlayPlaybackActionRoute | null;

@@ -3,10 +3,13 @@ import {
   LivePlayerControlRuntimeContract,
   LivePlayerOverlayPlaybackActionRoute,
   LivePlayerOverlayPlaybackAlignmentWitness,
+  LivePlayerOverlayPlaybackDiagnosticsWitness,
   LivePlayerOverlayPlaybackFreshnessWitness,
   LivePlayerOverlayPlaybackMetadataWitness,
   LivePlayerOverlayPlaybackRuntimeContract,
   LivePlayerOverlayPlaybackWindowWitness,
+  LivePlayerOverlayExecutionWitness,
+  StreamHealth,
   LivePlayerRecoveryActionRuntimeContract,
   NormalizedEpg,
   PlayerControlTelemetry,
@@ -40,6 +43,20 @@ const formatRelativeAge = (updatedAt?: number | null) => {
   }
 
   const ageMinutes = Math.max(1, Math.round((Date.now() - updatedAt) / 60000));
+  return `${ageMinutes} minute${ageMinutes === 1 ? '' : 's'} ago`;
+};
+
+const formatTelemetryAge = (updatedAt?: number | null) => {
+  if (typeof updatedAt !== 'number' || !Number.isFinite(updatedAt) || updatedAt <= 0) {
+    return 'No telemetry yet';
+  }
+
+  const ageSeconds = Math.max(0, Math.round((Date.now() - updatedAt) / 1000));
+  if (ageSeconds < 60) {
+    return `${ageSeconds}s ago`;
+  }
+
+  const ageMinutes = Math.round(ageSeconds / 60);
   return `${ageMinutes} minute${ageMinutes === 1 ? '' : 's'} ago`;
 };
 
@@ -270,6 +287,31 @@ const buildAlignmentWitness = ({
   tone,
 });
 
+const buildDiagnosticsWitness = ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+}: LivePlayerOverlayPlaybackDiagnosticsWitness): LivePlayerOverlayPlaybackDiagnosticsWitness => ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+});
+
+const getDiagnosticsTone = (
+  state: LivePlayerOverlayPlaybackDiagnosticsWitness['state']
+): LivePlayerControlTone => {
+  if (state === 'healthy') return 'ready';
+  if (state === 'unavailable') return 'recover';
+  if (state === 'degraded' || state === 'stale') return 'recover';
+  return 'watch';
+};
+
 const getRetryAvailability = ({
   recoveryRuntime,
   currentProviderName,
@@ -444,8 +486,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   recoveryGuideSyncState,
   historyItem,
   controlTelemetry,
+  streamHealth,
   controlRuntime,
   interactionRuntime,
+  executionLog,
   recoveryRuntime = null,
 }: {
   currentStream: XtreamStream | null;
@@ -459,8 +503,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   recoveryGuideSyncState: ProviderEpgSyncState | null;
   historyItem: WatchHistoryItem | null;
   controlTelemetry: PlayerControlTelemetry;
+  streamHealth: StreamHealth;
   controlRuntime: LivePlayerControlRuntimeContract;
   interactionRuntime: { commandDispatches: Array<{ commandId: string; available: boolean }> };
+  executionLog: LivePlayerOverlayExecutionWitness[];
   recoveryRuntime?: LivePlayerRecoveryActionRuntimeContract | null;
 }): LivePlayerOverlayPlaybackRuntimeContract => {
   const programState = getProgramState({
@@ -814,6 +860,129 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   const actionOwnerSummary = primaryAction
     ? `${primaryAction.label} is currently owned by ${primaryAction.ownerLabel.toLowerCase()}.`
     : 'No playback action owner has been promoted yet.';
+  const streamHealthAge = formatTelemetryAge(streamHealth.updatedAt);
+  const controlTelemetryAge = formatTelemetryAge(controlTelemetry.updatedAt);
+  const latestExecution = executionLog[0] ?? null;
+  const latestExecutionAge = latestExecution ? formatTelemetryAge(latestExecution.happenedAt) : 'No overlay execution witness yet';
+  const recentBlockedExecutionCount = executionLog.slice(0, 4).filter((entry) => entry.outcome === 'blocked').length;
+  const recentUnavailableExecutionCount = executionLog.slice(0, 4).filter((entry) => entry.outcome === 'unavailable').length;
+  const streamDiagnosticsState: LivePlayerOverlayPlaybackDiagnosticsWitness['state'] = !currentStream
+    ? 'unavailable'
+    : streamHealth.status === 'healthy'
+      ? 'healthy'
+      : streamHealth.status === 'loading' || streamHealth.status === 'buffering'
+        ? 'watch'
+        : streamHealth.status === 'degraded' || streamHealth.status === 'error'
+          ? 'degraded'
+          : 'watch';
+  const streamDiagnosticsSummary = !currentStream
+    ? 'No active playback owner is publishing transport health yet.'
+    : streamHealth.status === 'healthy'
+      ? `${currentProviderName ?? 'The active provider'} is publishing stable playback transport health.`
+      : streamHealth.status === 'loading'
+        ? `${currentProviderName ?? 'The active provider'} is still attaching the playback transport.`
+        : streamHealth.status === 'buffering'
+          ? `${currentProviderName ?? 'The active provider'} is buffering, so transport trust should stay cautious.`
+          : streamHealth.status === 'degraded'
+            ? `${currentProviderName ?? 'The active provider'} is still playing, but transport quality is degraded.`
+            : `${currentProviderName ?? 'The active provider'} has dropped transport trust for the current playback path.`;
+  const streamDiagnosticsDetail = !currentStream
+    ? 'The overlay should fail closed on playback-health language until a real stream is attached.'
+    : streamHealth.status === 'healthy'
+      ? `Latest player metrics arrived ${streamHealthAge}${streamHealth.bufferSeconds !== null ? ` with ${streamHealth.bufferSeconds}s buffered` : ''}${streamHealth.bitrateKbps ? ` at ${streamHealth.bitrateKbps} kbps` : ''}.`
+      : streamHealth.status === 'loading'
+        ? `The player is still initializing playback transport. Latest health probe ${streamHealthAge}.`
+        : streamHealth.status === 'buffering'
+          ? `Playback is waiting for more media${streamHealth.bufferSeconds !== null ? ` with only ${streamHealth.bufferSeconds}s buffered` : ''}. Latest health probe ${streamHealthAge}.`
+          : streamHealth.status === 'degraded'
+            ? `${streamHealth.message ?? 'The player reported degraded playback quality.'} Latest health probe ${streamHealthAge}.`
+            : `${streamHealth.message ?? 'The player reported a playback error.'} Latest health probe ${streamHealthAge}.`;
+  const telemetryDiagnosticsState: LivePlayerOverlayPlaybackDiagnosticsWitness['state'] = !currentStream
+    ? 'unavailable'
+    : !controlTelemetry.updatedAt
+      ? 'unavailable'
+      : Date.now() - controlTelemetry.updatedAt > 15000
+        ? 'stale'
+        : controlTelemetry.playbackState === 'buffering' || controlTelemetry.playbackState === 'loading'
+          ? 'watch'
+          : controlTelemetry.playbackState === 'error'
+            ? 'degraded'
+            : 'healthy';
+  const telemetryDiagnosticsSummary = !currentStream
+    ? 'No playback telemetry is attached yet.'
+    : !controlTelemetry.updatedAt
+      ? 'The player has not published control telemetry yet.'
+      : telemetryDiagnosticsState === 'stale'
+        ? 'Playback telemetry has gone stale, so overlay confidence should widen.'
+        : controlTelemetry.playbackState === 'buffering'
+          ? 'Playback telemetry is alive, but it is currently reporting buffering.'
+          : controlTelemetry.playbackState === 'loading'
+            ? 'Playback telemetry is still settling during initial attach.'
+            : controlTelemetry.playbackState === 'error'
+              ? 'Playback telemetry is reporting an error state.'
+              : 'Playback telemetry is fresh enough to trust overlay posture.';
+  const telemetryDiagnosticsDetail = !currentStream
+    ? 'The overlay should wait for a live telemetry feed before it claims seek, track, or live-edge truth.'
+    : !controlTelemetry.updatedAt
+      ? 'No runtime telemetry heartbeat has landed from the player yet.'
+      : telemetryDiagnosticsState === 'stale'
+        ? `The latest telemetry heartbeat landed ${controlTelemetryAge}, so the overlay should keep ownership and seek copy cautious until a fresher sample arrives.`
+        : `Latest telemetry heartbeat landed ${controlTelemetryAge} with playback ${controlTelemetry.playbackState}${controlTelemetry.atLiveEdge === null ? '' : controlTelemetry.atLiveEdge ? ' at the live edge' : ' off the live edge'}.`;
+  const executionDiagnosticsState: LivePlayerOverlayPlaybackDiagnosticsWitness['state'] = !latestExecution
+    ? 'watch'
+    : latestExecution.outcome === 'blocked' || recentBlockedExecutionCount >= 2
+      ? 'degraded'
+      : latestExecution.outcome === 'unavailable' || recentUnavailableExecutionCount >= 2
+        ? 'stale'
+        : 'healthy';
+  const executionDiagnosticsSummary = !latestExecution
+    ? 'No recent overlay execution witness has been recorded yet.'
+    : executionDiagnosticsState === 'healthy'
+      ? `${latestExecution.label} is the latest overlay execution witness and it landed cleanly.`
+      : executionDiagnosticsState === 'degraded'
+        ? 'Recent overlay actions are hitting blocked paths, so CTA confidence should stay explicit.'
+        : 'Recent overlay actions are aging into unavailable territory, so command posture may be drifting.';
+  const executionDiagnosticsDetail = !latestExecution
+    ? 'The overlay can still render routed actions, but it should not overclaim recent execution truth before the first command fires.'
+    : executionDiagnosticsState === 'healthy'
+      ? `${latestExecution.detail} Latest witness recorded ${latestExecutionAge}.`
+      : executionDiagnosticsState === 'degraded'
+        ? `${recentBlockedExecutionCount} of the last ${Math.min(executionLog.length, 4)} overlay witnesses were blocked. Latest witness recorded ${latestExecutionAge}.`
+        : `${recentUnavailableExecutionCount} of the last ${Math.min(executionLog.length, 4)} overlay witnesses were unavailable. Latest witness recorded ${latestExecutionAge}.`;
+  const diagnosticsWitnesses = [
+    buildDiagnosticsWitness({
+      id: 'stream-health',
+      label: 'Playback transport health',
+      state: streamDiagnosticsState,
+      summary: streamDiagnosticsSummary,
+      detail: streamDiagnosticsDetail,
+      tone: getDiagnosticsTone(streamDiagnosticsState),
+    }),
+    buildDiagnosticsWitness({
+      id: 'telemetry-freshness',
+      label: 'Telemetry freshness',
+      state: telemetryDiagnosticsState,
+      summary: telemetryDiagnosticsSummary,
+      detail: telemetryDiagnosticsDetail,
+      tone: getDiagnosticsTone(telemetryDiagnosticsState),
+    }),
+    buildDiagnosticsWitness({
+      id: 'execution-stability',
+      label: 'Execution stability',
+      state: executionDiagnosticsState,
+      summary: executionDiagnosticsSummary,
+      detail: executionDiagnosticsDetail,
+      tone: getDiagnosticsTone(executionDiagnosticsState),
+    }),
+  ];
+  const diagnosticsSummary = diagnosticsWitnesses.find((witness) => witness.state === 'degraded' || witness.state === 'stale')?.summary
+    ?? diagnosticsWitnesses.find((witness) => witness.state === 'watch')?.summary
+    ?? diagnosticsWitnesses[0]?.summary
+    ?? 'Playback diagnostics are still settling.';
+  const diagnosticsDetail = diagnosticsWitnesses.find((witness) => witness.state === 'degraded' || witness.state === 'stale')?.detail
+    ?? diagnosticsWitnesses.find((witness) => witness.state === 'watch')?.detail
+    ?? diagnosticsWitnesses[0]?.detail
+    ?? 'The overlay should keep underlying player health explicit.';
   const playbackOwnerAlignmentState = !currentStream
     ? 'unavailable'
     : preferredWitness?.id === 'active'
@@ -965,6 +1134,11 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     recoveryRuntime?.tone ?? 'ready',
     primaryAction.tone,
     secondaryAction?.tone ?? 'ready',
+    diagnosticsWitnesses.some((witness) => witness.state === 'degraded' || witness.state === 'stale')
+      ? 'recover'
+      : diagnosticsWitnesses.some((witness) => witness.state === 'watch')
+        ? 'watch'
+        : 'ready',
     programState === 'guide-stale' || programState === 'timeshift' ? 'watch' : 'ready',
     programState === 'recovery-led' || programState === 'unavailable' ? 'recover' : 'ready',
   ]);
@@ -997,11 +1171,14 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     trackSummary,
     actionSummary,
     actionOwnerSummary,
+    diagnosticsSummary,
+    diagnosticsDetail,
     alignmentSummary,
     alignmentDetail,
     metadataWitnesses,
     freshnessWitnesses,
     windowWitnesses,
+    diagnosticsWitnesses,
     alignmentWitnesses,
     primaryAction,
     secondaryAction,
