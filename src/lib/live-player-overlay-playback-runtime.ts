@@ -1130,6 +1130,127 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
       tone: guide?.now ? 'ready' : isLive ? 'watch' : 'ready',
     }),
   ];
+  const hasRecoverDiagnostics = diagnosticsWitnesses.some((witness) => witness.tone === 'recover');
+  const hasWatchDiagnostics = diagnosticsWitnesses.some((witness) => witness.tone === 'watch');
+  const hasRecoverAlignment = alignmentWitnesses.some((witness) => witness.tone === 'recover');
+  const hasWatchAlignment = alignmentWitnesses.some((witness) => witness.tone === 'watch');
+  const confidenceFloorTone = getDominantTone([
+    hasRecoverDiagnostics ? 'recover' : hasWatchDiagnostics ? 'watch' : 'ready',
+    hasRecoverAlignment ? 'recover' : hasWatchAlignment ? 'watch' : 'ready',
+    primaryAction?.available
+      ? primaryAction.availabilityState === 'ready'
+        ? 'ready'
+        : 'watch'
+      : 'recover',
+    preferredWitness?.id === 'recovery' ? 'watch' : 'ready',
+    programState === 'unavailable' || programState === 'recovery-led'
+      ? 'recover'
+      : programState === 'guide-stale' || programState === 'timeshift'
+        ? 'watch'
+        : 'ready',
+  ]);
+  const confidenceFloor = {
+    title: 'Playback confidence floor',
+    summary: !currentStream
+      ? 'Playback has no attached owner, so the overlay is already below its minimum premium-proof floor.'
+      : confidenceFloorTone === 'ready'
+        ? `${currentProviderName ?? 'The active provider'} still has enough transport, ownership, and action proof for the overlay to stay above its minimum premium-confidence floor.`
+        : confidenceFloorTone === 'watch'
+          ? 'Playback can still feel premium, but the proof stack is thin enough that watched language should stay visible beside the CTA.'
+          : 'Playback has dropped below the minimum proof bar for carefree overlay language, so downgrade copy should lead the next move.',
+    minimumProof: !currentStream
+      ? 'Do not advertise premium playback posture until one real stream owner, one executable action lane, and one current telemetry feed are attached to the dock.'
+      : confidenceFloorTone === 'ready'
+        ? `Keep premium overlay language only while ${currentProviderName ?? 'the active provider'} still owns playback transport, the promoted action stays executable, and metadata freshness does not drift onto a different owner.`
+        : confidenceFloorTone === 'watch'
+          ? 'The overlay still needs one visible owner, one fresh-enough telemetry heartbeat, and one explicit explanation for any metadata drift or line-pressure caution before it sounds premium.'
+          : `Do not restore premium posture until ${preferredWitness?.providerLabel ?? currentProviderName ?? 'the playback owner'} regains aligned transport, guide freshness, and a repeatably executable next move.`,
+    downgradeMode: !currentStream
+      ? 'Downgrade into explicit recovery-first copy until playback attaches to a real owner.'
+      : recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+        ? `Downgrade into an explicit provider handoff so the shell stops pretending ${currentProviderName ?? 'the active provider'} still invisibly owns the next move.`
+        : recoveryRuntime?.actionKind === 'wait-for-line'
+          ? 'Downgrade into watched line-pressure copy that keeps the pending recovery owner and the blockage reason visible.'
+          : preferredWitness?.id === 'recovery'
+            ? `Downgrade into watched metadata-drift copy that names ${preferredWitness.providerLabel} as the fresher guide witness while playback stays on the current route.`
+            : hasRecoverDiagnostics
+              ? 'Downgrade into explicit transport-health or stale-telemetry language before the overlay promises a clean next press.'
+              : 'Downgrade into watched proof language as soon as diagnostics, ownership, or action truth stop lining up cleanly.',
+    hardStopTrigger: !currentStream
+      ? 'Hard-stop premium posture immediately while no playback owner is attached.'
+      : recoveryRuntime?.actionKind === 'fail-closed'
+        ? 'Hard-stop premium posture once recovery no longer trusts either retry or saved-provider handoff.'
+        : primaryAction?.availabilityState === 'blocked'
+          ? `Hard-stop premium posture once ${primaryAction.label} remains blocked and no alternate executable action is promoted.`
+          : hasRecoverDiagnostics
+            ? 'Hard-stop premium posture once transport health degrades or telemetry goes stale enough that the overlay must widen its claims.'
+            : preferredWitness?.id === 'recovery'
+              ? `Hard-stop premium posture once ${preferredWitness.providerLabel} keeps owning fresher metadata and the visible playback owner still cannot retake that proof.`
+              : 'Hard-stop premium posture once playback needs a different ownership story to keep the same CTA honest.',
+    tone: confidenceFloorTone,
+  };
+  const retryHonestyTone = getDominantTone([
+    recoveryRuntime?.actionKind === 'retry'
+      ? retryAction.availabilityState === 'ready'
+        ? 'ready'
+        : 'watch'
+      : recoveryRuntime?.actionKind === 'wait-for-line'
+        ? 'watch'
+        : 'recover',
+    preferredWitness?.id === 'recovery' ? 'watch' : 'ready',
+    telemetryDiagnosticsState === 'healthy'
+      ? 'ready'
+      : telemetryDiagnosticsState === 'watch'
+        ? 'watch'
+        : 'recover',
+    streamDiagnosticsState === 'healthy'
+      ? 'ready'
+      : streamDiagnosticsState === 'watch'
+        ? 'watch'
+        : 'recover',
+  ]);
+  const retryHonesty = {
+    title: 'Retry honesty',
+    summary: !currentStream
+      ? 'Retry is not honest yet because playback does not have a real owner.'
+      : retryHonestyTone === 'ready'
+        ? `${currentProviderName ?? 'The active provider'} can still absorb an ordinary retry without changing who owns playback or what the overlay promise means.`
+        : retryHonestyTone === 'watch'
+          ? 'Only a short watched retry remains honest, and the overlay should say exactly what proof is still carrying that retry.'
+          : 'Blind retry is no longer the honest story for this player state, so recovery-first language should replace it.',
+    honestRetryWindow: !currentStream
+      ? 'No retry window exists until playback transport and telemetry attach to a real stream.'
+      : retryHonestyTone === 'ready'
+        ? `A quick retry is still honest while ${currentProviderName ?? 'the active provider'} keeps transport ownership, fresh-enough telemetry, and the same promoted next move.`
+        : retryHonestyTone === 'watch'
+          ? preferredWitness?.id === 'recovery'
+            ? `Only one short retry remains honest, and only while the overlay keeps saying that ${preferredWitness.providerLabel} already owns the fresher metadata lane.`
+            : 'Only one short retry remains honest, and only while the overlay keeps the current blockage, drift, or line-pressure reason visible.'
+          : recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+            ? `Retry stops being honest once ${recoveryProviderName ?? 'the recovery target'} owns the safer next move.`
+            : 'Retry stops being honest once diagnostics, ownership, or action truth can no longer preserve one believable next move.',
+    preservesContext: !currentStream
+      ? 'No playback context can be preserved before a stream owner is attached.'
+      : retryHonestyTone === 'ready'
+        ? 'A clean retry may preserve the visible channel, the same playback owner, current track posture, and the same now/next story.'
+        : preferredWitness?.id === 'recovery'
+          ? `A watched retry may preserve the visible channel while explicitly borrowing metadata confidence from ${preferredWitness.providerLabel}.`
+          : recoveryRuntime?.actionKind === 'wait-for-line'
+            ? 'A watched retry may preserve the visible channel and recovery owner, but only as line-pressure copy rather than carefree playback continuity.'
+            : 'A watched retry may preserve the visible shell and current owner label, but only while the overlay keeps the uncertainty explicit.',
+    giveUpTrigger: !currentStream
+      ? 'Give up on retry immediately while playback still has no owner.'
+      : recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+        ? `Give up on retry once ${recoveryProviderName ?? 'the recovery target'} keeps owning the healthier next move.`
+        : recoveryRuntime?.actionKind === 'fail-closed'
+          ? 'Give up on retry once recovery cannot promote any trustworthy next owner.'
+          : hasRecoverDiagnostics
+            ? 'Give up on retry once transport health or telemetry freshness stop preserving one stable playback story.'
+            : preferredWitness?.id === 'recovery'
+              ? `Give up on retry once ${preferredWitness.providerLabel} keeps outranking the active path for metadata truth.`
+              : 'Give up on retry once another attempt would need a different ownership story to stay believable.',
+    tone: retryHonestyTone,
+  };
   const tone = getDominantTone([
     recoveryRuntime?.tone ?? 'ready',
     primaryAction.tone,
@@ -1175,6 +1296,8 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     diagnosticsDetail,
     alignmentSummary,
     alignmentDetail,
+    confidenceFloor,
+    retryHonesty,
     metadataWitnesses,
     freshnessWitnesses,
     windowWitnesses,

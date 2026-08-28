@@ -2058,6 +2058,24 @@ export type LivePlayerOverlayPlaybackDiagnosticsWitness = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackConfidenceFloor = {
+  title: string;
+  summary: string;
+  minimumProof: string;
+  downgradeMode: string;
+  hardStopTrigger: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackRetryHonesty = {
+  title: string;
+  summary: string;
+  honestRetryWindow: string;
+  preservesContext: string;
+  giveUpTrigger: string;
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerOverlayPlaybackRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -2089,6 +2107,8 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   diagnosticsDetail: string;
   alignmentSummary: string;
   alignmentDetail: string;
+  confidenceFloor: LivePlayerOverlayPlaybackConfidenceFloor;
+  retryHonesty: LivePlayerOverlayPlaybackRetryHonesty;
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
   windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];

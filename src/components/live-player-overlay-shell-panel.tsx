@@ -275,6 +275,29 @@ export function LivePlayerOverlayShellPanel({
             ))}
           </div>
 
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.confidenceFloor.tone]}`}>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.confidenceFloor.title}</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.confidenceFloor.summary}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Minimum proof</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.confidenceFloor.minimumProof}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Downgrade mode</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.confidenceFloor.downgradeMode}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Hard stop</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.confidenceFloor.hardStopTrigger}</p>
+            </article>
+            <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.retryHonesty.tone]}`}>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.retryHonesty.title}</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.retryHonesty.summary}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Honest retry window</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.retryHonesty.honestRetryWindow}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Preserves context</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.retryHonesty.preservesContext}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Give up trigger</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.retryHonesty.giveUpTrigger}</p>
+            </article>
+          </div>
+
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {contract.playbackRuntime.windowWitnesses.map((witness) => (
               <article
