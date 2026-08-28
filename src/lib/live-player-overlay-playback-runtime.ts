@@ -2,6 +2,7 @@ import {
   LivePlayerControlTone,
   LivePlayerControlRuntimeContract,
   LivePlayerOverlayPlaybackActionRoute,
+  LivePlayerOverlayPlaybackAlignmentWitness,
   LivePlayerOverlayPlaybackFreshnessWitness,
   LivePlayerOverlayPlaybackMetadataWitness,
   LivePlayerOverlayPlaybackRuntimeContract,
@@ -245,6 +246,22 @@ const buildWindowWitness = ({
   detail,
   tone,
 }: LivePlayerOverlayPlaybackWindowWitness): LivePlayerOverlayPlaybackWindowWitness => ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+});
+
+const buildAlignmentWitness = ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+}: LivePlayerOverlayPlaybackAlignmentWitness): LivePlayerOverlayPlaybackAlignmentWitness => ({
   id,
   label,
   state,
@@ -797,6 +814,109 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   const actionOwnerSummary = primaryAction
     ? `${primaryAction.label} is currently owned by ${primaryAction.ownerLabel.toLowerCase()}.`
     : 'No playback action owner has been promoted yet.';
+  const playbackOwnerAlignmentState = !currentStream
+    ? 'unavailable'
+    : preferredWitness?.id === 'active'
+      ? 'aligned'
+      : 'watch';
+  const playbackOwnerAlignmentSummary = !currentStream
+    ? 'Playback owner is not attached yet, so overlay ownership cannot be reconciled.'
+    : preferredWitness?.id === 'active'
+      ? `${currentProviderName ?? 'The active provider'} still owns both playback and the strongest metadata witness.`
+      : `${currentProviderName ?? 'The active provider'} still owns playback, but ${preferredWitness?.providerLabel ?? recoveryProviderName ?? 'the recovery target'} currently carries the fresher metadata witness.`;
+  const playbackOwnerAlignmentDetail = !currentStream
+    ? 'The overlay should stay fail-closed on ownership claims until playback attaches to a real runtime owner.'
+    : preferredWitness?.id === 'active'
+      ? 'Playback transport and now/next proof still agree, so the full-screen shell can keep ownership copy concise.'
+      : 'Playback can stay on the active route, but the overlay should cite the recovery-side guide witness explicitly so metadata confidence does not drift ahead of playback ownership.';
+  const recoveryRouteAlignmentState = recoveryRuntime?.actionKind === 'fail-closed'
+    ? 'conflict'
+    : recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+      ? preferredWitness?.id === 'recovery'
+        ? 'aligned'
+        : 'watch'
+      : recoveryRuntime?.actionKind === 'wait-for-line'
+        ? 'watch'
+        : recoveryRuntime?.actionKind === 'retry'
+          ? preferredWitness?.id === 'active'
+            ? 'aligned'
+            : 'watch'
+          : 'aligned';
+  const recoveryRouteAlignmentSummary = recoveryRuntime?.actionKind === 'fail-closed'
+    ? 'Recovery has no trustworthy owner to promote yet.'
+    : recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+      ? preferredWitness?.id === 'recovery'
+        ? `${recoveryProviderName ?? 'The recovery target'} is promoted in both recovery routing and metadata proof.`
+        : `${recoveryProviderName ?? 'The recovery target'} is promoted for handoff, but the active metadata lane still needs to catch up.`
+      : recoveryRuntime?.actionKind === 'wait-for-line'
+        ? 'Recovery knows the likely backup owner, but line clearance is still delaying the handoff.'
+        : recoveryRuntime?.actionKind === 'retry'
+          ? `${currentProviderName ?? 'The active provider'} still owns the safest retry route.`
+          : 'Recovery is not currently overriding the normal playback owner.';
+  const recoveryRouteAlignmentDetail = recoveryRuntime?.actionKind === 'fail-closed'
+    ? 'The overlay should keep blunt recovery copy visible because neither retry nor backup-owner language has earned promotion.'
+    : recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+      ? preferredWitness?.id === 'recovery'
+        ? 'The backup owner has matching proof across recovery routing and guide freshness, so the overlay can advertise handoff without hedging.'
+        : 'Recovery has promoted a switch, but metadata proof still partially belongs to the active path, so the handoff should stay explicit instead of sounding settled.'
+      : recoveryRuntime?.actionKind === 'wait-for-line'
+        ? 'The next owner is named, but the runtime is still waiting on line hygiene before playback can move honestly.'
+        : recoveryRuntime?.actionKind === 'retry'
+          ? preferredWitness?.id === 'active'
+            ? 'Retry, playback ownership, and metadata ownership still point at the same provider.'
+            : 'Retry remains available, but metadata confidence is already leaning toward the recovery target.'
+          : 'No recovery override is currently pressuring the playback contract away from its default owner.';
+  const actionRouteAlignmentState = primaryAction?.available
+    ? primaryAction.availabilityState === 'ready'
+      ? 'aligned'
+      : 'watch'
+    : primaryAction?.availabilityState === 'blocked'
+      ? 'conflict'
+      : 'watch';
+  const actionRouteAlignmentSummary = !primaryAction
+    ? 'No primary playback action has been promoted yet.'
+    : primaryAction.available
+      ? `${primaryAction.label} is the current routed playback action and remains executable from the overlay.`
+      : `${primaryAction.label} is still visible for honesty, but it is not executable yet.`;
+  const actionRouteAlignmentDetail = !primaryAction
+    ? 'The overlay should avoid inventing a hero CTA until the backend runtime promotes one.'
+    : primaryAction.available
+      ? `${primaryAction.ownerLabel} currently owns the next move, and the route can fire without UI-local guesswork.`
+      : `${primaryAction.ownerLabel} still frames the next move, but the overlay should keep the blocked or waiting reason visible until execution truth changes.`;
+  const alignmentWitnesses = [
+    buildAlignmentWitness({
+      id: 'playback-owner',
+      label: 'Playback vs metadata owner',
+      state: playbackOwnerAlignmentState,
+      summary: playbackOwnerAlignmentSummary,
+      detail: playbackOwnerAlignmentDetail,
+      tone: playbackOwnerAlignmentState === 'aligned' ? 'ready' : playbackOwnerAlignmentState === 'watch' ? 'watch' : 'recover',
+    }),
+    buildAlignmentWitness({
+      id: 'recovery-route',
+      label: 'Recovery route agreement',
+      state: recoveryRouteAlignmentState,
+      summary: recoveryRouteAlignmentSummary,
+      detail: recoveryRouteAlignmentDetail,
+      tone: recoveryRouteAlignmentState === 'aligned' ? 'ready' : recoveryRouteAlignmentState === 'watch' ? 'watch' : 'recover',
+    }),
+    buildAlignmentWitness({
+      id: 'action-route',
+      label: 'Primary action truth',
+      state: actionRouteAlignmentState,
+      summary: actionRouteAlignmentSummary,
+      detail: actionRouteAlignmentDetail,
+      tone: actionRouteAlignmentState === 'aligned' ? 'ready' : actionRouteAlignmentState === 'watch' ? 'watch' : 'recover',
+    }),
+  ];
+  const alignmentSummary = alignmentWitnesses.find((witness) => witness.state === 'conflict')?.summary
+    ?? alignmentWitnesses.find((witness) => witness.state === 'watch')?.summary
+    ?? alignmentWitnesses[0]?.summary
+    ?? 'Playback alignment truth is still settling.';
+  const alignmentDetail = alignmentWitnesses.find((witness) => witness.state === 'conflict')?.detail
+    ?? alignmentWitnesses.find((witness) => witness.state === 'watch')?.detail
+    ?? alignmentWitnesses[0]?.detail
+    ?? 'The overlay should keep ownership and recovery alignment explicit.';
   const windowWitnesses = [
     buildWindowWitness({
       id: 'live-edge',
@@ -877,9 +997,12 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     trackSummary,
     actionSummary,
     actionOwnerSummary,
+    alignmentSummary,
+    alignmentDetail,
     metadataWitnesses,
     freshnessWitnesses,
     windowWitnesses,
+    alignmentWitnesses,
     primaryAction,
     secondaryAction,
     actions,

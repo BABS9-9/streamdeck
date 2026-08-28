@@ -2040,6 +2040,15 @@ export type LivePlayerOverlayPlaybackWindowWitness = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackAlignmentWitness = {
+  id: 'playback-owner' | 'recovery-route' | 'action-route';
+  label: string;
+  state: 'aligned' | 'watch' | 'conflict' | 'unavailable';
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerOverlayPlaybackRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -2067,9 +2076,12 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   trackSummary: string;
   actionSummary: string;
   actionOwnerSummary: string;
+  alignmentSummary: string;
+  alignmentDetail: string;
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
   windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];
+  alignmentWitnesses: LivePlayerOverlayPlaybackAlignmentWitness[];
   primaryAction: LivePlayerOverlayPlaybackActionRoute | null;
   secondaryAction: LivePlayerOverlayPlaybackActionRoute | null;
   actions: LivePlayerOverlayPlaybackActionRoute[];
