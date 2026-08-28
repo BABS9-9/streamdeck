@@ -2076,6 +2076,51 @@ export type LivePlayerOverlayPlaybackRetryHonesty = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackCtaEligibility = {
+  title: string;
+  state: 'eligible' | 'watched' | 'blocked';
+  summary: string;
+  detail: string;
+  primaryOwner: string;
+  primaryLabel: string;
+  secondaryLabel: string;
+  blocker: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackCtaWitness = {
+  id: 'action-executable' | 'owner-aligned' | 'proof-freshness';
+  label: string;
+  state: 'ready' | 'watch' | 'blocked';
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackTelemetryDecay = {
+  title: string;
+  stage: 'live' | 'settling' | 'aging' | 'stale' | 'missing';
+  summary: string;
+  detail: string;
+  ageLabel: string;
+  softExpiry: string;
+  hardExpiry: string;
+  overlayImpact: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackRecoveryOwnership = {
+  title: string;
+  state: 'active-owner' | 'shared-proof' | 'handoff-ready' | 'line-wait' | 'fail-closed';
+  summary: string;
+  detail: string;
+  playbackOwner: string;
+  metadataOwner: string;
+  recoveryOwner: string;
+  handoffReadiness: string;
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerOverlayPlaybackRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -2109,6 +2154,10 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   alignmentDetail: string;
   confidenceFloor: LivePlayerOverlayPlaybackConfidenceFloor;
   retryHonesty: LivePlayerOverlayPlaybackRetryHonesty;
+  ctaEligibility: LivePlayerOverlayPlaybackCtaEligibility;
+  ctaWitnesses: LivePlayerOverlayPlaybackCtaWitness[];
+  telemetryDecay: LivePlayerOverlayPlaybackTelemetryDecay;
+  recoveryOwnership: LivePlayerOverlayPlaybackRecoveryOwnership;
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
   windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];

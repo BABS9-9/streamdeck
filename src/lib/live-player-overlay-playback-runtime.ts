@@ -60,6 +60,14 @@ const formatTelemetryAge = (updatedAt?: number | null) => {
   return `${ageMinutes} minute${ageMinutes === 1 ? '' : 's'} ago`;
 };
 
+const getTelemetryAgeMs = (updatedAt?: number | null) => {
+  if (typeof updatedAt !== 'number' || !Number.isFinite(updatedAt) || updatedAt <= 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return Math.max(0, Date.now() - updatedAt);
+};
+
 const formatDuration = (seconds?: number | null) => {
   if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) return null;
   const total = Math.floor(seconds);
@@ -295,6 +303,22 @@ const buildDiagnosticsWitness = ({
   detail,
   tone,
 }: LivePlayerOverlayPlaybackDiagnosticsWitness): LivePlayerOverlayPlaybackDiagnosticsWitness => ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+});
+
+const buildCtaWitness = ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+}: LivePlayerOverlayPlaybackRuntimeContract['ctaWitnesses'][number]): LivePlayerOverlayPlaybackRuntimeContract['ctaWitnesses'][number] => ({
   id,
   label,
   state,
@@ -862,6 +886,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     : 'No playback action owner has been promoted yet.';
   const streamHealthAge = formatTelemetryAge(streamHealth.updatedAt);
   const controlTelemetryAge = formatTelemetryAge(controlTelemetry.updatedAt);
+  const controlTelemetryAgeMs = getTelemetryAgeMs(controlTelemetry.updatedAt);
   const latestExecution = executionLog[0] ?? null;
   const latestExecutionAge = latestExecution ? formatTelemetryAge(latestExecution.happenedAt) : 'No overlay execution witness yet';
   const recentBlockedExecutionCount = executionLog.slice(0, 4).filter((entry) => entry.outcome === 'blocked').length;
@@ -901,7 +926,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     ? 'unavailable'
     : !controlTelemetry.updatedAt
       ? 'unavailable'
-      : Date.now() - controlTelemetry.updatedAt > 15000
+      : controlTelemetryAgeMs > 15000
         ? 'stale'
         : controlTelemetry.playbackState === 'buffering' || controlTelemetry.playbackState === 'loading'
           ? 'watch'
@@ -1251,6 +1276,253 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
               : 'Give up on retry once another attempt would need a different ownership story to stay believable.',
     tone: retryHonestyTone,
   };
+  const ctaEligibilityState: 'eligible' | 'watched' | 'blocked' = !currentStream
+    ? 'blocked'
+    : primaryAction.available && primaryAction.availabilityState === 'ready' && !hasRecoverDiagnostics && !hasRecoverAlignment
+      ? 'eligible'
+      : primaryAction.availabilityState === 'blocked' || recoveryRuntime?.actionKind === 'fail-closed'
+        ? 'blocked'
+        : 'watched';
+  const ctaEligibilityTone: LivePlayerOverlayPlaybackRuntimeContract['tone'] = ctaEligibilityState === 'eligible'
+    ? 'ready'
+    : ctaEligibilityState === 'watched'
+      ? 'watch'
+      : 'recover';
+  const ctaEligibility = {
+    title: 'Hero CTA eligibility',
+    state: ctaEligibilityState,
+    summary: !currentStream
+      ? 'No hero CTA is eligible yet because playback still has no attached owner.'
+      : ctaEligibilityState === 'eligible'
+        ? `${primaryAction.label} can lead the premium overlay because the owner, telemetry, and execution path still agree.`
+        : ctaEligibilityState === 'watched'
+          ? `${primaryAction.label} can stay visible, but the overlay should pair it with watched language instead of carefree promise copy.`
+          : `${primaryAction.label} should not be sold as a premium hero CTA until the runtime regains a trustworthy owner and executable next move.`,
+    detail: !currentStream
+      ? 'Wait for one real playback owner, one telemetry heartbeat, and one routed action lane before promoting a hero CTA.'
+      : ctaEligibilityState === 'eligible'
+        ? `${primaryAction.ownerLabel} owns the next move, recent execution is still believable, and no stronger recovery owner is overruling the CTA.`
+        : ctaEligibilityState === 'watched'
+          ? `${primaryAction.ownerLabel} still frames the next move, but diagnostics, metadata drift, or line pressure require explicit caution alongside the CTA.`
+          : `${primaryAction.ownerLabel} is not enough by itself because the routed action is blocked, recovery is fail-closing, or the proof stack has dropped below premium honesty.`,
+    primaryOwner: primaryAction.ownerLabel,
+    primaryLabel: primaryAction.label,
+    secondaryLabel: secondaryAction?.label ?? 'No secondary CTA promoted',
+    blocker: !currentStream
+      ? 'Playback owner missing'
+      : ctaEligibilityState === 'eligible'
+        ? 'No blocker'
+        : primaryAction.availabilityState === 'blocked'
+          ? `${primaryAction.label} is still blocked`
+          : recoveryRuntime?.actionKind === 'fail-closed'
+            ? 'Recovery fail-closed is overriding premium CTA language'
+            : preferredWitness?.id === 'recovery'
+              ? `${preferredWitness.providerLabel} owns fresher metadata proof`
+              : hasRecoverDiagnostics
+                ? 'Transport or telemetry proof is below the premium bar'
+                : 'The next move is still honest, but only with watched copy',
+    tone: ctaEligibilityTone,
+  };
+  const telemetryDecayStage: 'live' | 'settling' | 'aging' | 'stale' | 'missing' = !currentStream || !controlTelemetry.updatedAt
+    ? 'missing'
+    : controlTelemetryAgeMs <= 5000
+      ? 'live'
+      : controlTelemetryAgeMs <= 10000
+        ? 'settling'
+        : controlTelemetryAgeMs <= 15000
+          ? 'aging'
+          : 'stale';
+  const telemetryDecayTone: LivePlayerOverlayPlaybackRuntimeContract['tone'] = telemetryDecayStage === 'live'
+    ? 'ready'
+    : telemetryDecayStage === 'settling' || telemetryDecayStage === 'aging'
+      ? 'watch'
+      : 'recover';
+  const telemetryDecay = {
+    title: 'Telemetry decay posture',
+    stage: telemetryDecayStage,
+    summary: telemetryDecayStage === 'missing'
+      ? 'No telemetry heartbeat is attached, so playback copy must stay fail-closed.'
+      : telemetryDecayStage === 'live'
+        ? 'Telemetry is live enough to support premium overlay posture.'
+        : telemetryDecayStage === 'settling'
+          ? 'Telemetry is still recent, but the overlay should keep one watched clause visible.'
+          : telemetryDecayStage === 'aging'
+            ? 'Telemetry is aging out, so the next overlay claim should stay explicit and reversible.'
+            : 'Telemetry has gone stale, so the overlay should stop sounding certain about live-edge or CTA truth.',
+    detail: telemetryDecayStage === 'missing'
+      ? 'The player has not emitted a durable telemetry heartbeat yet, so seek, track, and live-edge claims should stay conservative.'
+      : telemetryDecayStage === 'live'
+        ? `Latest heartbeat landed ${controlTelemetryAge} with playback ${controlTelemetry.playbackState}.`
+        : telemetryDecayStage === 'settling'
+          ? `Latest heartbeat landed ${controlTelemetryAge}; the player is still believable, but the shell should keep a watched bridge in case posture changes quickly.`
+          : telemetryDecayStage === 'aging'
+            ? `Latest heartbeat landed ${controlTelemetryAge}; fresh-enough playback truth is decaying, so the overlay should widen its claims before it sounds stale.`
+            : `Latest heartbeat landed ${controlTelemetryAge}; the runtime should treat playback posture as stale until a fresher sample arrives.`,
+    ageLabel: controlTelemetryAge,
+    softExpiry: 'Watched overlay language after 10 seconds without a fresh heartbeat.',
+    hardExpiry: 'Fail closed on premium playback certainty after 15 seconds without a fresh heartbeat.',
+    overlayImpact: telemetryDecayStage === 'missing'
+      ? 'Suppress premium CTA confidence and avoid strong seek/live-edge claims.'
+      : telemetryDecayStage === 'live'
+        ? 'Allow normal premium CTA posture if ownership and execution proof also stay aligned.'
+        : telemetryDecayStage === 'settling'
+          ? 'Keep the CTA visible, but pair it with watched telemetry language.'
+          : telemetryDecayStage === 'aging'
+            ? 'Name telemetry decay explicitly before promising a clean next press.'
+            : 'Downgrade into stale-telemetry recovery language until a new heartbeat lands.',
+    tone: telemetryDecayTone,
+  };
+  const recoveryOwnershipState: 'active-owner' | 'shared-proof' | 'handoff-ready' | 'line-wait' | 'fail-closed' = !currentStream
+    ? 'fail-closed'
+    : recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+      ? preferredWitness?.id === 'recovery'
+        ? 'handoff-ready'
+        : 'shared-proof'
+      : recoveryRuntime?.actionKind === 'wait-for-line'
+        ? 'line-wait'
+        : recoveryRuntime?.actionKind === 'fail-closed'
+          ? 'fail-closed'
+          : preferredWitness?.id === 'recovery'
+            ? 'shared-proof'
+            : 'active-owner';
+  const recoveryOwnershipTone: LivePlayerOverlayPlaybackRuntimeContract['tone'] = recoveryOwnershipState === 'active-owner'
+    ? 'ready'
+    : recoveryOwnershipState === 'shared-proof' || recoveryOwnershipState === 'line-wait'
+      ? 'watch'
+      : 'recover';
+  const recoveryOwnership = {
+    title: 'Recovery owner truth',
+    state: recoveryOwnershipState,
+    summary: !currentStream
+      ? 'No recovery owner truth can be published while playback still has no attached owner.'
+      : recoveryOwnershipState === 'active-owner'
+        ? `${currentProviderName ?? 'The active provider'} still owns playback, metadata, and the next honest move.`
+        : recoveryOwnershipState === 'handoff-ready'
+          ? `${recoveryProviderName ?? preferredWitness?.providerLabel ?? 'The recovery target'} has enough proof to own the next playback handoff.`
+          : recoveryOwnershipState === 'line-wait'
+            ? `${recoveryProviderName ?? 'The recovery target'} is the pending recovery owner, but line hygiene is still blocking the handoff.`
+            : recoveryOwnershipState === 'shared-proof'
+              ? `Playback still sits on ${currentProviderName ?? 'the active provider'}, but recovery ownership is already visible in the proof stack.`
+              : 'Recovery cannot publish a trustworthy next owner yet, so the overlay should stay fail-closed.',
+    detail: !currentStream
+      ? 'Attach playback first, then name which provider owns transport, which provider owns metadata proof, and which provider owns recovery.'
+      : recoveryOwnershipState === 'active-owner'
+        ? 'The overlay can keep ownership copy concise because playback transport, metadata proof, and CTA routing still point at the same provider.'
+        : recoveryOwnershipState === 'handoff-ready'
+          ? 'Recovery routing and metadata freshness both support the same backup owner, so the shell can advertise a real provider handoff.'
+          : recoveryOwnershipState === 'line-wait'
+            ? 'The backup owner is named, but the shell should keep line-pressure copy visible until playback can move without hiding the wait reason.'
+            : recoveryOwnershipState === 'shared-proof'
+              ? 'The proof stack is split: playback transport still belongs to the current route, while metadata or recovery routing already lean toward a different owner.'
+              : 'Neither retry nor saved-provider handoff has enough proof to claim a trustworthy next owner.',
+    playbackOwner: currentProviderName ?? 'No active playback owner',
+    metadataOwner: preferredWitness?.providerLabel ?? 'Metadata owner unsettled',
+    recoveryOwner: recoveryRuntime?.targetProviderId
+      ? recoveryProviderName ?? 'Saved-provider recovery target'
+      : recoveryRuntime?.actionKind === 'retry'
+        ? currentProviderName ?? 'Active retry owner'
+        : 'No promoted recovery owner',
+    handoffReadiness: recoveryOwnershipState === 'handoff-ready'
+      ? 'Handoff is honest now.'
+      : recoveryOwnershipState === 'line-wait'
+        ? 'Handoff owner is named, but the line is not clear.'
+        : recoveryOwnershipState === 'shared-proof'
+          ? 'Handoff proof is partial and should stay explicit.'
+          : recoveryOwnershipState === 'active-owner'
+            ? 'No handoff needed while the active owner still carries the proof.'
+            : 'No honest handoff can be promoted yet.',
+    tone: recoveryOwnershipTone,
+  };
+  const ctaWitnesses = [
+    buildCtaWitness({
+      id: 'action-executable',
+      label: 'Action executable',
+      state: !currentStream
+        ? 'blocked'
+        : primaryAction.available && primaryAction.availabilityState === 'ready'
+          ? 'ready'
+          : primaryAction.availabilityState === 'blocked'
+            ? 'blocked'
+            : 'watch',
+      summary: !currentStream
+        ? 'No CTA route can execute before playback attaches.'
+        : primaryAction.available && primaryAction.availabilityState === 'ready'
+          ? `${primaryAction.label} is executable from the overlay right now.`
+          : primaryAction.availabilityState === 'blocked'
+            ? `${primaryAction.label} is still visible, but it is blocked as a real hero action.`
+            : `${primaryAction.label} is routed, but it should stay watched until execution proof firms up.`,
+      detail: !currentStream
+        ? 'The shell should wait for a real playback route before presenting a hero button.'
+        : primaryAction.available
+          ? `${primaryAction.ownerLabel} owns a dispatchable route with no UI-local guesswork required.`
+          : `${primaryAction.ownerLabel} still frames the next move, but the overlay must keep the wait or block reason visible.`,
+      tone: !currentStream
+        ? 'recover'
+        : primaryAction.available && primaryAction.availabilityState === 'ready'
+          ? 'ready'
+          : primaryAction.availabilityState === 'blocked'
+            ? 'recover'
+            : 'watch',
+    }),
+    buildCtaWitness({
+      id: 'owner-aligned',
+      label: 'Owner aligned',
+      state: !currentStream
+        ? 'blocked'
+        : preferredWitness?.id === 'active' && !(recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner')
+          ? 'ready'
+          : recoveryOwnershipState === 'handoff-ready' || recoveryOwnershipState === 'line-wait' || recoveryOwnershipState === 'shared-proof'
+            ? 'watch'
+            : 'blocked',
+      summary: !currentStream
+        ? 'No owner alignment exists before playback attaches.'
+        : preferredWitness?.id === 'active' && !(recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner')
+          ? `${currentProviderName ?? 'The active provider'} still owns playback and CTA posture together.`
+          : recoveryOwnershipState === 'handoff-ready'
+            ? `${recoveryProviderName ?? preferredWitness?.providerLabel ?? 'The recovery target'} is ready to take CTA ownership through handoff.`
+            : 'CTA ownership is split across playback, metadata, or recovery signals, so the shell should keep the ownership story explicit.',
+      detail: !currentStream
+        ? 'A hero CTA needs one named playback owner before it can sound premium.'
+        : preferredWitness?.id === 'active' && !(recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner')
+          ? 'Playback transport, metadata proof, and recovery posture still point at the active provider.'
+          : `Playback owner: ${currentProviderName ?? 'unsettled'}. Metadata owner: ${preferredWitness?.providerLabel ?? 'unsettled'}. Recovery owner: ${recoveryOwnership.recoveryOwner}.`,
+      tone: !currentStream
+        ? 'recover'
+        : preferredWitness?.id === 'active' && !(recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner')
+          ? 'ready'
+          : recoveryOwnershipState === 'handoff-ready' || recoveryOwnershipState === 'line-wait' || recoveryOwnershipState === 'shared-proof'
+            ? 'watch'
+            : 'recover',
+    }),
+    buildCtaWitness({
+      id: 'proof-freshness',
+      label: 'Proof freshness',
+      state: telemetryDecayStage === 'live'
+        ? 'ready'
+        : telemetryDecayStage === 'settling' || telemetryDecayStage === 'aging'
+          ? 'watch'
+          : 'blocked',
+      summary: telemetryDecayStage === 'live'
+        ? 'Telemetry freshness still supports premium CTA confidence.'
+        : telemetryDecayStage === 'settling'
+          ? 'Telemetry is fresh enough to keep the CTA visible, but watched copy should stay attached.'
+          : telemetryDecayStage === 'aging'
+            ? 'CTA freshness is decaying, so the shell should widen its language before certainty goes stale.'
+            : 'Telemetry freshness no longer supports a premium hero CTA.',
+      detail: telemetryDecayStage === 'live'
+        ? `Latest heartbeat ${controlTelemetryAge}; transport and overlay proof are still inside the live freshness budget.`
+        : telemetryDecayStage === 'settling'
+          ? `Latest heartbeat ${controlTelemetryAge}; the CTA is still believable, but the proof window is narrowing.`
+          : telemetryDecayStage === 'aging'
+            ? `Latest heartbeat ${controlTelemetryAge}; the overlay should explicitly name telemetry decay before promising a clean next press.`
+            : `Latest heartbeat ${controlTelemetryAge}; the runtime should fail closed on premium CTA certainty until a fresher sample arrives.`,
+      tone: telemetryDecayStage === 'live'
+        ? 'ready'
+        : telemetryDecayStage === 'settling' || telemetryDecayStage === 'aging'
+          ? 'watch'
+          : 'recover',
+    }),
+  ];
   const tone = getDominantTone([
     recoveryRuntime?.tone ?? 'ready',
     primaryAction.tone,
@@ -1298,6 +1570,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     alignmentDetail,
     confidenceFloor,
     retryHonesty,
+    ctaEligibility,
+    ctaWitnesses,
+    telemetryDecay,
+    recoveryOwnership,
     metadataWitnesses,
     freshnessWitnesses,
     windowWitnesses,

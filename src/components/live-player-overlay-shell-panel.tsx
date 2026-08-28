@@ -299,6 +299,85 @@ export function LivePlayerOverlayShellPanel({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.ctaEligibility.tone]}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.ctaEligibility.title}</p>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.ctaEligibility.state}
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.ctaEligibility.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.ctaEligibility.detail}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Primary owner</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.ctaEligibility.primaryOwner}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">CTA stack</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.ctaEligibility.primaryLabel} / {contract.playbackRuntime.ctaEligibility.secondaryLabel}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Blocker</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.ctaEligibility.blocker}</p>
+            </article>
+            <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.telemetryDecay.tone]}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.telemetryDecay.title}</p>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.telemetryDecay.stage}
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.telemetryDecay.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.telemetryDecay.detail}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Current age</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.telemetryDecay.ageLabel}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Soft expiry</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.telemetryDecay.softExpiry}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Hard expiry</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.telemetryDecay.hardExpiry}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Overlay impact</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.telemetryDecay.overlayImpact}</p>
+            </article>
+            <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.recoveryOwnership.tone]}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.recoveryOwnership.title}</p>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.recoveryOwnership.state}
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.recoveryOwnership.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.recoveryOwnership.detail}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Playback owner</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.recoveryOwnership.playbackOwner}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Metadata owner</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.recoveryOwnership.metadataOwner}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Recovery owner</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.recoveryOwnership.recoveryOwner}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Handoff readiness</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.recoveryOwnership.handoffReadiness}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {contract.playbackRuntime.ctaWitnesses.map((witness) => (
+              <article
+                key={witness.id}
+                className={`rounded-2xl border p-4 ${
+                  witness.tone === 'ready'
+                    ? 'border-sky-300/20 bg-sky-500/10 text-sky-100'
+                    : witness.tone === 'watch'
+                      ? 'border-amber-300/20 bg-amber-500/10 text-amber-100'
+                      : 'border-rose-300/20 bg-rose-500/10 text-rose-100'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{witness.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {witness.state}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{witness.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/70">{witness.detail}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {contract.playbackRuntime.windowWitnesses.map((witness) => (
               <article
                 key={witness.id}
