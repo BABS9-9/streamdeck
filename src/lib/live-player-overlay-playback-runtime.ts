@@ -331,6 +331,42 @@ const buildCtaWitness = ({
   tone,
 });
 
+const buildCtaStackSlot = ({
+  id,
+  label,
+  state,
+  ctaLabel,
+  surfaceCopy,
+  summary,
+  detail,
+  ownerLabel,
+  reason,
+  activationRule,
+  fallbackRule,
+  actionId,
+  dispatchKind,
+  commandId,
+  targetProviderId,
+  tone,
+}: LivePlayerOverlayPlaybackRuntimeContract['ctaStack']['slots'][number]): LivePlayerOverlayPlaybackRuntimeContract['ctaStack']['slots'][number] => ({
+  id,
+  label,
+  state,
+  ctaLabel,
+  surfaceCopy,
+  summary,
+  detail,
+  ownerLabel,
+  reason,
+  activationRule,
+  fallbackRule,
+  actionId,
+  dispatchKind,
+  commandId,
+  targetProviderId,
+  tone,
+});
+
 const buildEscalationWitness = ({
   id,
   label,
@@ -1943,6 +1979,171 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     lanes: messageLadderLanes,
     surfaces: messageLadderSurfaces,
   };
+  const heroSurface = messageLadder.surfaces.find((surface) => surface.id === 'hero');
+  const infoBarSurface = messageLadder.surfaces.find((surface) => surface.id === 'info-bar');
+  const continuitySurface = messageLadder.surfaces.find((surface) => surface.id === 'continuity');
+  const recoveryHelperSurface = messageLadder.surfaces.find((surface) => surface.id === 'recovery-cta');
+  const heroCtaState: LivePlayerOverlayPlaybackRuntimeContract['ctaStack']['slots'][number]['state'] = !currentStream
+    ? 'blocked'
+    : ctaEligibilityState === 'eligible'
+      ? 'promoted'
+      : ctaEligibilityState === 'watched'
+        ? 'watched'
+        : 'blocked';
+  const secondaryCtaState: LivePlayerOverlayPlaybackRuntimeContract['ctaStack']['slots'][number]['state'] = !secondaryAction
+    ? 'hidden'
+    : secondaryAction.availabilityState === 'blocked'
+      ? 'blocked'
+      : heroDoctrineState === 'recovery' || recoveryOwnershipState !== 'active-owner'
+        ? 'watched'
+        : secondaryAction.available && secondaryAction.availabilityState === 'ready'
+          ? 'promoted'
+          : 'watched';
+  const recoveryHelperAction = recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+    ? actions.find((action) => action.id === 'quick-switch')
+    : recoveryRuntime?.actionKind === 'wait-for-line'
+      ? actions.find((action) => action.id === 'quick-switch') ?? secondaryAction
+      : recoveryRuntime?.actionKind === 'retry'
+        ? actions.find((action) => action.id === 'retry')
+        : recoveryRuntime?.actionKind === 'fail-closed'
+          ? null
+          : secondaryAction ?? primaryAction;
+  const recoveryHelperState: LivePlayerOverlayPlaybackRuntimeContract['ctaStack']['slots'][number]['state'] = recoveryRuntime?.actionKind === 'fail-closed'
+    ? 'blocked'
+    : recoveryOwnershipState === 'handoff-ready'
+      ? 'promoted'
+      : recoveryOwnershipState === 'line-wait' || recoveryOwnershipState === 'shared-proof'
+        ? 'watched'
+        : recoveryHelperAction?.availabilityState === 'blocked'
+          ? 'blocked'
+        : recoveryHelperAction
+          ? 'watched'
+          : 'hidden';
+  const ctaStack = {
+    title: 'Overlay CTA stack',
+    summary: !currentStream
+      ? 'No CTA should be promoted until playback, telemetry, and ownership all attach to one real route.'
+      : heroCtaState === 'promoted'
+        ? `${primaryAction.label} can lead the overlay while the recovery helper stays secondary.`
+        : heroCtaState === 'watched'
+          ? `${primaryAction.label} can stay visible, but the overlay should keep both a watched clause and a recovery helper nearby.`
+          : recoveryHelperState === 'promoted'
+            ? `${recoveryHelperSurface?.copy ?? recoveryOwnership.recoveryOwner} should take over the CTA stack now.`
+            : 'CTA copy should stay explicit because no premium-safe hero button is available.',
+    detail: 'This stack gives the production overlay one backend-owned packet for the hero button, the secondary button, and the recovery helper without recomputing honesty rules in UI state.',
+    heroOwner: ctaEligibility.primaryOwner,
+    recoveryOwner: recoveryOwnership.recoveryOwner,
+    heroSurfaceCopy: heroSurface?.copy ?? primaryPromise,
+    companionSurfaceCopy: infoBarSurface?.copy ?? watchedCaveat,
+    continuitySurfaceCopy: continuitySurface?.copy ?? recoveryOwnership.detail,
+    recoverySurfaceCopy: recoveryHelperSurface?.copy ?? recoveryPivot,
+    escalationRule: nextEscalation,
+    tone: heroDoctrineTone,
+    slots: [
+      buildCtaStackSlot({
+        id: 'hero',
+        label: 'Hero CTA',
+        state: heroCtaState,
+        ctaLabel: heroDoctrine.primaryCtaLabel,
+        surfaceCopy: heroSurface?.copy ?? primaryPromise,
+        summary: ctaEligibility.summary,
+        detail: heroDoctrineState === 'premium'
+          ? `${heroDoctrine.body} ${heroDoctrine.disclaimer}`
+          : heroDoctrineState === 'watched'
+            ? `${heroDoctrine.body} ${watchedCaveat}`
+            : `${heroDoctrine.body} ${recoveryPivot}`,
+        ownerLabel: ctaEligibility.primaryOwner,
+        reason: ctaEligibility.blocker,
+        activationRule: heroDoctrineState === 'premium'
+          ? 'Promote this button as the default next press while the proof stack stays premium-safe.'
+          : heroDoctrineState === 'watched'
+            ? 'Keep this button visible, but only while the watched caveat stays on screen beside it.'
+            : 'Do not present this button as a carefree continuation until recovery proof collapses back into one trusted owner.',
+        fallbackRule: nextEscalation,
+        actionId: primaryAction.id,
+        dispatchKind: primaryAction.dispatchKind,
+        commandId: primaryAction.commandId,
+        targetProviderId: primaryAction.targetProviderId,
+        tone: heroCtaState === 'promoted'
+          ? 'ready'
+          : heroCtaState === 'watched'
+            ? 'watch'
+            : 'recover',
+      }),
+      buildCtaStackSlot({
+        id: 'secondary',
+        label: 'Secondary CTA',
+        state: secondaryCtaState,
+        ctaLabel: secondaryAction?.label ?? 'No secondary CTA promoted',
+        surfaceCopy: infoBarSurface?.copy ?? (secondaryAction?.summary ?? watchedCaveat),
+        summary: !secondaryAction
+          ? 'No secondary CTA is needed while the runtime keeps one primary next move.'
+          : secondaryAction.available && secondaryAction.availabilityState === 'ready'
+            ? `${secondaryAction.label} remains available as the supporting next move.`
+            : `${secondaryAction.label} should stay visible only as contextual support for the hero lane.`,
+        detail: !secondaryAction
+          ? 'The overlay can stay single-CTA until recovery or auxiliary playback actions need their own visible slot.'
+          : secondaryAction.ownerDetail,
+        ownerLabel: secondaryAction?.ownerLabel ?? 'No secondary owner',
+        reason: !secondaryAction
+          ? 'Secondary CTA suppressed'
+          : secondaryAction.availabilityLabel,
+        activationRule: !secondaryAction
+          ? 'Leave the secondary slot hidden until the runtime promotes a real supporting action.'
+          : secondaryCtaState === 'promoted'
+            ? 'Show this as the supporting button while the hero remains premium-safe.'
+            : 'Keep this button subordinate to the hero and use it as supporting context instead of the leading promise.',
+        fallbackRule: !secondaryAction
+          ? 'No fallback needed.'
+          : secondaryAction.ownerDetail,
+        actionId: secondaryAction?.id ?? null,
+        dispatchKind: secondaryAction?.dispatchKind ?? 'noop',
+        commandId: secondaryAction?.commandId ?? null,
+        targetProviderId: secondaryAction?.targetProviderId ?? null,
+        tone: secondaryCtaState === 'promoted'
+          ? 'ready'
+          : secondaryCtaState === 'watched'
+            ? 'watch'
+            : secondaryCtaState === 'blocked'
+              ? 'recover'
+              : 'watch',
+      }),
+      buildCtaStackSlot({
+        id: 'recovery-helper',
+        label: 'Recovery helper',
+        state: recoveryHelperState,
+        ctaLabel: recoveryHelperSurface?.copy ?? (recoveryHelperAction?.label ?? 'No recovery helper promoted'),
+        surfaceCopy: recoveryHelperSurface?.copy ?? recoveryPivot,
+        summary: recoveryOwnership.summary,
+        detail: recoveryHelperSurface?.reason ?? recoveryOwnership.detail,
+        ownerLabel: recoveryOwnership.recoveryOwner,
+        reason: recoveryHelperState === 'promoted'
+          ? 'Recovery helper is cleared to take over the visible CTA lane.'
+          : recoveryHelperState === 'watched'
+            ? 'Recovery helper should stay nearby, but the overlay still needs caution copy attached.'
+            : recoveryHelperState === 'blocked'
+              ? 'Recovery helper cannot overpromise a next move yet.'
+              : 'Recovery helper hidden',
+        activationRule: recoveryHelperState === 'promoted'
+          ? 'Promote this helper into a visible handoff button now.'
+          : recoveryHelperState === 'watched'
+            ? 'Keep this helper close to the hero so recovery intent stays explicit without stealing the whole overlay.'
+            : 'Keep the helper suppressed until recovery can name one believable next move.',
+        fallbackRule: recoveryOwnership.handoffReadiness,
+        actionId: recoveryHelperAction?.id ?? null,
+        dispatchKind: recoveryHelperAction?.dispatchKind ?? 'noop',
+        commandId: recoveryHelperAction?.commandId ?? null,
+        targetProviderId: recoveryHelperAction?.targetProviderId ?? null,
+        tone: recoveryHelperState === 'promoted'
+          ? 'ready'
+          : recoveryHelperState === 'watched'
+            ? 'watch'
+            : recoveryHelperState === 'blocked'
+              ? 'recover'
+              : 'watch',
+      }),
+    ],
+  };
   const tone = getDominantTone([
     recoveryRuntime?.tone ?? 'ready',
     primaryAction.tone,
@@ -1992,6 +2193,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     retryHonesty,
     ctaEligibility,
     ctaWitnesses,
+    ctaStack,
     telemetryDecay,
     recoveryOwnership,
     heroDoctrine,

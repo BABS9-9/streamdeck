@@ -260,13 +260,13 @@ export const buildLivePlayerOverlayShellRuntime = ({
       ? `Guide posture: ${guideStateLabel}`
       : 'Next program data is unavailable, so the overlay should say so plainly.';
   const continuityLabel = continuityRuntime.recoveryOwnerLabel;
-  const continuitySurface = playbackRuntime.messageLadder.surfaces.find((surface) => surface.id === 'continuity');
-  const infoBarSurface = playbackRuntime.messageLadder.surfaces.find((surface) => surface.id === 'info-bar');
+  const heroCta = playbackRuntime.ctaStack.slots.find((slot) => slot.id === 'hero');
+  const secondaryCta = playbackRuntime.ctaStack.slots.find((slot) => slot.id === 'secondary');
   const overlayCopy = playbackRuntime.messageLadder.state === 'premium'
-    ? infoBarSurface?.copy ?? playbackRuntime.messageLadder.primaryPromise
+    ? playbackRuntime.ctaStack.companionSurfaceCopy
     : playbackRuntime.messageLadder.state === 'watched'
-      ? infoBarSurface?.copy ?? playbackRuntime.messageLadder.watchedCaveat
-      : continuitySurface?.copy ?? playbackRuntime.messageLadder.recoveryPivot;
+      ? playbackRuntime.ctaStack.companionSurfaceCopy
+      : playbackRuntime.ctaStack.continuitySurfaceCopy;
   const quickActions = buildQuickActions({ controlRuntime, remoteRuntime, recoveryRuntime });
   const lanes = buildLanes({
     nowLabel,
@@ -288,7 +288,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
     title: 'Player overlay shell contract',
     eyebrow: 'Overlay runtime preview',
     summary: recoveryRuntime?.summary
-      ?? continuitySurface?.copy
+      ?? playbackRuntime.ctaStack.continuitySurfaceCopy
       ?? playbackRuntime.messageLadder.summary
       ?? 'The overlay should read from one backend-owned shell instead of rebuilding player truth from separate cards.',
     detail: playbackRuntime.messageLadder.detail,
@@ -309,8 +309,8 @@ export const buildLivePlayerOverlayShellRuntime = ({
     subtitleLabel,
     overlayCopy,
     actionKind: recoveryRuntime?.actionKind ?? 'fail-closed',
-    primaryActionLabel: recoveryRuntime?.nextMove.primaryActionLabel ?? null,
-    secondaryActionLabel: recoveryRuntime?.nextMove.secondaryActionLabel ?? null,
+    primaryActionLabel: heroCta?.state === 'hidden' ? null : heroCta?.ctaLabel ?? null,
+    secondaryActionLabel: secondaryCta?.state === 'hidden' ? null : secondaryCta?.ctaLabel ?? null,
     focusRuntime,
     commandRuntime,
     interactionRuntime,

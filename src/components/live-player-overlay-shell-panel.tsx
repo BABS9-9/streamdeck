@@ -417,6 +417,73 @@ export function LivePlayerOverlayShellPanel({
             </div>
           </div>
 
+          <div className={`mt-4 rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.ctaStack.tone]}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="max-w-3xl">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.ctaStack.title}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{contract.playbackRuntime.ctaStack.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.ctaStack.detail}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.ctaStack.heroOwner}
+                </span>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.ctaStack.recoveryOwner}
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {contract.playbackRuntime.ctaStack.slots.map((slot) => (
+                <article
+                  key={slot.id}
+                  className={`rounded-2xl border p-4 ${toneStyles[slot.tone]}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{slot.label}</p>
+                    <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                      {slot.state}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-white">{slot.ctaLabel}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/70">{slot.surfaceCopy}</p>
+                  <p className="mt-2 text-sm text-white/85">{slot.summary}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{slot.detail}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Owner</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{slot.ownerLabel}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Reason</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{slot.reason}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Activation rule</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{slot.activationRule}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Fallback rule</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{slot.fallbackRule}</p>
+                </article>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Hero surface</p>
+                <p className="mt-3 text-sm leading-6 text-white/85">{contract.playbackRuntime.ctaStack.heroSurfaceCopy}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Companion surface</p>
+                <p className="mt-3 text-sm leading-6 text-white/85">{contract.playbackRuntime.ctaStack.companionSurfaceCopy}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Continuity surface</p>
+                <p className="mt-3 text-sm leading-6 text-white/85">{contract.playbackRuntime.ctaStack.continuitySurfaceCopy}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Recovery surface</p>
+                <p className="mt-3 text-sm leading-6 text-white/85">{contract.playbackRuntime.ctaStack.recoverySurfaceCopy}</p>
+              </article>
+            </div>
+            <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Escalation rule</p>
+              <p className="mt-3 text-sm leading-6 text-white/85">{contract.playbackRuntime.ctaStack.escalationRule}</p>
+            </div>
+          </div>
+
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.ctaEligibility.tone]}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -430,7 +497,9 @@ export function LivePlayerOverlayShellPanel({
               <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Primary owner</p>
               <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.ctaEligibility.primaryOwner}</p>
               <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">CTA stack</p>
-              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.ctaEligibility.primaryLabel} / {contract.playbackRuntime.ctaEligibility.secondaryLabel}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">
+                {contract.playbackRuntime.ctaStack.slots.map((slot) => slot.ctaLabel).join(' / ')}
+              </p>
               <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Blocker</p>
               <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.ctaEligibility.blocker}</p>
             </article>

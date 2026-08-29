@@ -2097,6 +2097,40 @@ export type LivePlayerOverlayPlaybackCtaWitness = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackCtaStackSlot = {
+  id: 'hero' | 'secondary' | 'recovery-helper';
+  label: string;
+  state: 'promoted' | 'watched' | 'blocked' | 'hidden';
+  ctaLabel: string;
+  surfaceCopy: string;
+  summary: string;
+  detail: string;
+  ownerLabel: string;
+  reason: string;
+  activationRule: string;
+  fallbackRule: string;
+  actionId: LivePlayerOverlayPlaybackActionId | null;
+  dispatchKind: LivePlayerOverlayDispatchKind;
+  commandId: LivePlayerOverlayCommandEntry['id'] | null;
+  targetProviderId: string | null;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackCtaStack = {
+  title: string;
+  summary: string;
+  detail: string;
+  heroOwner: string;
+  recoveryOwner: string;
+  heroSurfaceCopy: string;
+  companionSurfaceCopy: string;
+  continuitySurfaceCopy: string;
+  recoverySurfaceCopy: string;
+  escalationRule: string;
+  tone: LivePlayerControlTone;
+  slots: LivePlayerOverlayPlaybackCtaStackSlot[];
+};
+
 export type LivePlayerOverlayPlaybackTelemetryDecay = {
   title: string;
   stage: 'live' | 'settling' | 'aging' | 'stale' | 'missing';
@@ -2213,6 +2247,7 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   retryHonesty: LivePlayerOverlayPlaybackRetryHonesty;
   ctaEligibility: LivePlayerOverlayPlaybackCtaEligibility;
   ctaWitnesses: LivePlayerOverlayPlaybackCtaWitness[];
+  ctaStack: LivePlayerOverlayPlaybackCtaStack;
   telemetryDecay: LivePlayerOverlayPlaybackTelemetryDecay;
   recoveryOwnership: LivePlayerOverlayPlaybackRecoveryOwnership;
   heroDoctrine: LivePlayerOverlayPlaybackHeroDoctrine;
