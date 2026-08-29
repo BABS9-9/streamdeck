@@ -2155,6 +2155,62 @@ export type LivePlayerOverlayPlaybackRecoveryOwnership = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackConnectionHeadroom = {
+  title: string;
+  state: 'open' | 'tight' | 'saturated' | 'proof-pending';
+  summary: string;
+  detail: string;
+  activeOwner: string;
+  fallbackOwner: string;
+  currentUsage: string;
+  nextLimit: string;
+  overlayRule: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackSwitchCustody = {
+  title: string;
+  state: 'stable' | 'watch' | 'handoff' | 'contested';
+  summary: string;
+  detail: string;
+  currentOwner: string;
+  standbyOwner: string;
+  lastHandoff: string;
+  custodyRule: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackResumeHonesty = {
+  title: string;
+  state: 'clean' | 'watched' | 'recovery';
+  summary: string;
+  detail: string;
+  resumeTarget: string;
+  checkpointLabel: string;
+  continuityRisk: string;
+  nextHonestMove: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackTakeoverRule = {
+  id: 'active-owner' | 'backup-owner' | 'line-cap' | 'proof-gap';
+  label: string;
+  summary: string;
+  detail: string;
+  actionLabel: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackMultiConnectionTakeover = {
+  title: string;
+  summary: string;
+  detail: string;
+  recommendedOwner: string;
+  blockedOwnerCount: number;
+  tone: LivePlayerControlTone;
+  rules: LivePlayerOverlayPlaybackTakeoverRule[];
+};
+
 export type LivePlayerOverlayPlaybackHeroDoctrine = {
   title: string;
   state: 'premium' | 'watched' | 'recovery';
@@ -2250,6 +2306,10 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   ctaStack: LivePlayerOverlayPlaybackCtaStack;
   telemetryDecay: LivePlayerOverlayPlaybackTelemetryDecay;
   recoveryOwnership: LivePlayerOverlayPlaybackRecoveryOwnership;
+  connectionHeadroom: LivePlayerOverlayPlaybackConnectionHeadroom;
+  switchCustody: LivePlayerOverlayPlaybackSwitchCustody;
+  resumeHonesty: LivePlayerOverlayPlaybackResumeHonesty;
+  multiConnectionTakeover: LivePlayerOverlayPlaybackMultiConnectionTakeover;
   heroDoctrine: LivePlayerOverlayPlaybackHeroDoctrine;
   escalationWitnesses: LivePlayerOverlayPlaybackEscalationWitness[];
   messageLadder: LivePlayerOverlayPlaybackMessageLadder;

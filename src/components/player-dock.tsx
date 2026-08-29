@@ -607,6 +607,7 @@ export function PlayerDock() {
   ]);
   const livePlayerOverlayPlaybackRuntime = useMemo(() => buildLivePlayerOverlayPlaybackRuntime({
     currentStream,
+    currentProviderId,
     currentProviderName: currentProvider?.name ?? null,
     guide: currentGuide,
     guideCoverage: currentGuideCoverage,
@@ -621,6 +622,8 @@ export function PlayerDock() {
     controlRuntime: livePlayerControlRuntime,
     interactionRuntime: livePlayerOverlayInteractionRuntime,
     executionLog: overlayExecutionLog,
+    lineReleaseRuntime: livePlayerLineReleaseRuntime,
+    switchRuntime: multiConnectionSwitchRuntime,
     recoveryRuntime: playerRecoveryActionRuntime,
   }), [
     controlTelemetry,
@@ -633,12 +636,15 @@ export function PlayerDock() {
     historyItem,
     livePlayerControlRuntime,
     livePlayerOverlayInteractionRuntime,
+    livePlayerLineReleaseRuntime,
+    multiConnectionSwitchRuntime,
     overlayExecutionLog,
     playerRecoveryActionRuntime,
     recoveryGuide,
     recoveryGuideCoverage,
     recoveryGuideProvider?.name,
     recoveryGuideState,
+    currentProviderId,
   ]);
   const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({
     channelName: currentStream?.name ?? historyItem?.title ?? 'Active playback',

@@ -542,6 +542,83 @@ export function LivePlayerOverlayShellPanel({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.connectionHeadroom.tone]}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.connectionHeadroom.title}</p>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.connectionHeadroom.state}
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.connectionHeadroom.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.connectionHeadroom.detail}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Current usage</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.connectionHeadroom.currentUsage}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Overlay rule</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.connectionHeadroom.overlayRule}</p>
+            </article>
+            <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.switchCustody.tone]}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.switchCustody.title}</p>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.switchCustody.state}
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.switchCustody.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.switchCustody.detail}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Last handoff</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.switchCustody.lastHandoff}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Custody rule</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.switchCustody.custodyRule}</p>
+            </article>
+            <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.resumeHonesty.tone]}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.resumeHonesty.title}</p>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.resumeHonesty.state}
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.resumeHonesty.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.resumeHonesty.detail}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Checkpoint</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.resumeHonesty.checkpointLabel}</p>
+              <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Continuity risk</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.resumeHonesty.continuityRisk}</p>
+            </article>
+          </div>
+
+          <div className={`mt-4 rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.multiConnectionTakeover.tone]}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="max-w-3xl">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.multiConnectionTakeover.title}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{contract.playbackRuntime.multiConnectionTakeover.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.multiConnectionTakeover.detail}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.multiConnectionTakeover.recommendedOwner}
+                </span>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.multiConnectionTakeover.blockedOwnerCount} blocked
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {contract.playbackRuntime.multiConnectionTakeover.rules.map((rule) => (
+                <article
+                  key={rule.id}
+                  className={`rounded-2xl border p-4 ${toneStyles[rule.tone]}`}
+                >
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{rule.label}</p>
+                  <p className="mt-3 text-sm font-semibold text-white">{rule.summary}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{rule.detail}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Action label</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{rule.actionLabel}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {contract.playbackRuntime.ctaWitnesses.map((witness) => (
               <article
                 key={witness.id}

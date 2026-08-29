@@ -1,8 +1,10 @@
 import {
   LivePlayerControlTone,
   LivePlayerControlRuntimeContract,
+  LivePlayerLineReleaseRuntimeContract,
   LivePlayerOverlayPlaybackActionRoute,
   LivePlayerOverlayPlaybackAlignmentWitness,
+  LivePlayerOverlayPlaybackConnectionHeadroom,
   LivePlayerOverlayPlaybackDiagnosticsWitness,
   LivePlayerOverlayPlaybackEscalationWitness,
   LivePlayerOverlayPlaybackFreshnessWitness,
@@ -10,9 +12,14 @@ import {
   LivePlayerOverlayPlaybackMessageLane,
   LivePlayerOverlayPlaybackMessageLadder,
   LivePlayerOverlayPlaybackMetadataWitness,
+  LivePlayerOverlayPlaybackMultiConnectionTakeover,
+  LivePlayerOverlayPlaybackResumeHonesty,
   LivePlayerOverlayPlaybackRuntimeContract,
+  LivePlayerOverlayPlaybackSwitchCustody,
+  LivePlayerOverlayPlaybackTakeoverRule,
   LivePlayerOverlayPlaybackWindowWitness,
   LivePlayerOverlayExecutionWitness,
+  MultiConnectionSwitchRuntimeContract,
   StreamHealth,
   LivePlayerRecoveryActionRuntimeContract,
   NormalizedEpg,
@@ -401,6 +408,22 @@ const buildMessageLane = ({
   tone,
 });
 
+const buildTakeoverRule = ({
+  id,
+  label,
+  summary,
+  detail,
+  actionLabel,
+  tone,
+}: LivePlayerOverlayPlaybackTakeoverRule): LivePlayerOverlayPlaybackTakeoverRule => ({
+  id,
+  label,
+  summary,
+  detail,
+  actionLabel,
+  tone,
+});
+
 const getDiagnosticsTone = (
   state: LivePlayerOverlayPlaybackDiagnosticsWitness['state']
 ): LivePlayerControlTone => {
@@ -574,6 +597,7 @@ const getTrackAvailability = ({
 
 export const buildLivePlayerOverlayPlaybackRuntime = ({
   currentStream,
+  currentProviderId,
   currentProviderName,
   guide,
   guideCoverage,
@@ -588,9 +612,12 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   controlRuntime,
   interactionRuntime,
   executionLog,
+  lineReleaseRuntime = null,
+  switchRuntime = null,
   recoveryRuntime = null,
 }: {
   currentStream: XtreamStream | null;
+  currentProviderId: string | null;
   currentProviderName: string | null;
   guide: NormalizedEpg | null;
   guideCoverage: ProviderGuideCoverageReport | null;
@@ -605,6 +632,8 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   controlRuntime: LivePlayerControlRuntimeContract;
   interactionRuntime: { commandDispatches: Array<{ commandId: string; available: boolean }> };
   executionLog: LivePlayerOverlayExecutionWitness[];
+  lineReleaseRuntime?: LivePlayerLineReleaseRuntimeContract | null;
+  switchRuntime?: MultiConnectionSwitchRuntimeContract | null;
   recoveryRuntime?: LivePlayerRecoveryActionRuntimeContract | null;
 }): LivePlayerOverlayPlaybackRuntimeContract => {
   const programState = getProgramState({
@@ -961,6 +990,9 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   const streamHealthAge = formatTelemetryAge(streamHealth.updatedAt);
   const controlTelemetryAge = formatTelemetryAge(controlTelemetry.updatedAt);
   const controlTelemetryAgeMs = getTelemetryAgeMs(controlTelemetry.updatedAt);
+  const checkpointLabel = historyItem?.resumeCheckpoint
+    ? `${formatDuration(historyItem.resumeCheckpoint.positionSeconds) ?? '0:00'} checkpoint at ${historyItem.resumeCheckpoint.progressPercent}% watched`
+    : 'No durable checkpoint stored yet';
   const latestExecution = executionLog[0] ?? null;
   const latestExecutionAge = latestExecution ? formatTelemetryAge(latestExecution.happenedAt) : 'No overlay execution witness yet';
   const recentBlockedExecutionCount = executionLog.slice(0, 4).filter((entry) => entry.outcome === 'blocked').length;
@@ -1506,6 +1538,177 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
             ? 'No handoff needed while the active owner still carries the proof.'
             : 'No honest handoff can be promoted yet.',
     tone: recoveryOwnershipTone,
+  };
+  const connectionHeadroom: LivePlayerOverlayPlaybackConnectionHeadroom = lineReleaseRuntime
+    ? {
+        title: 'Connection headroom posture',
+        state: lineReleaseRuntime.capState === 'room-available'
+          ? 'open'
+          : lineReleaseRuntime.capState === 'last-safe-line'
+            ? 'tight'
+            : lineReleaseRuntime.capState === 'line-saturated'
+              ? 'saturated'
+              : 'proof-pending',
+        summary: lineReleaseRuntime.summary,
+        detail: lineReleaseRuntime.detail,
+        activeOwner: lineReleaseRuntime.currentOwnerLabel,
+        fallbackOwner: lineReleaseRuntime.fallbackOwnerLabel,
+        currentUsage: lineReleaseRuntime.entries.find((entry) => entry.id === 'line-headroom')?.summary
+          ?? 'Current provider line usage is still settling.',
+        nextLimit: lineReleaseRuntime.releaseWitnessLabel,
+        overlayRule: lineReleaseRuntime.nextMove.detail,
+        tone: lineReleaseRuntime.tone,
+      }
+    : {
+        title: 'Connection headroom posture',
+        state: 'proof-pending',
+        summary: 'Provider-line headroom is still settling for the active player path.',
+        detail: 'The overlay should stay conservative until the runtime can prove how many provider lines remain.',
+        activeOwner: currentProviderName ?? 'Current provider',
+        fallbackOwner: recoveryProviderName ?? 'No verified fallback owner',
+        currentUsage: 'Fresh provider-line proof has not landed yet.',
+        nextLimit: 'Do not imply spare playback capacity before auth and line-usage proof refreshes.',
+        overlayRule: 'Keep line pressure visible or fail closed until a verified cap posture arrives.',
+        tone: 'watch',
+      };
+  const recommendedSwitchOwner = switchRuntime?.providers.find((provider) => provider.providerId === switchRuntime.recommendedProviderId) ?? null;
+  const switchCustodyState: LivePlayerOverlayPlaybackSwitchCustody['state'] = recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+    ? 'handoff'
+    : switchRuntime?.tone === 'recover'
+      ? 'contested'
+      : switchRuntime?.tone === 'watch' || (switchRuntime?.recommendedProviderId && switchRuntime.recommendedProviderId !== switchRuntime.activeProviderId)
+        ? 'watch'
+        : 'stable';
+  const switchCustody: LivePlayerOverlayPlaybackSwitchCustody = {
+    title: 'Provider-switch custody',
+    state: switchCustodyState,
+    summary: switchRuntime?.summary
+      ?? `${currentProviderName ?? 'The active provider'} still owns visible playback custody while backup-owner proof settles.`,
+    detail: switchRuntime?.detail
+      ?? 'No saved-provider switch runtime is attached yet, so the overlay should avoid implying background takeover.',
+    currentOwner: currentProviderName ?? 'Current provider still settling',
+    standbyOwner: recommendedSwitchOwner?.providerName
+      ?? recoveryProviderName
+      ?? 'No standby owner verified',
+    lastHandoff: switchRuntime?.recentHandoff
+      ?? 'No saved-provider handoff has touched the active player path yet.',
+    custodyRule: recoveryRuntime?.nextMove.detail
+      ?? switchRuntime?.recommendedAction
+      ?? 'Do not transfer playback custody until a healthier saved owner is explicitly promoted.',
+    tone: switchCustodyState === 'stable'
+      ? 'ready'
+      : switchCustodyState === 'watch'
+        ? 'watch'
+        : 'recover',
+  };
+  const resumeHonestyState: LivePlayerOverlayPlaybackResumeHonesty['state'] = historyItem?.staleSession?.status === 'recover'
+    || recoveryRuntime?.actionKind === 'wait-for-line'
+    || recoveryRuntime?.actionKind === 'fail-closed'
+    || controlTelemetryAgeMs > 15000
+    ? 'recovery'
+    : historyItem?.staleSession?.status === 'watch'
+      || currentStream?.stream_type === 'live'
+      || recoveryRuntime?.actionKind === 'quick-switch'
+      || recoveryRuntime?.actionKind === 'reclaim-owner'
+      || recoveryRuntime?.actionKind === 'retry'
+      ? 'watched'
+      : 'clean';
+  const resumeTarget = !currentStream
+    ? 'No active playback target'
+    : currentStream.stream_type === 'live'
+      ? `${currentStream.name} on ${currentProviderName ?? 'the active provider'}`
+      : historyItem?.title ?? currentStream.name;
+  const resumeHonesty: LivePlayerOverlayPlaybackResumeHonesty = {
+    title: 'Degraded resume honesty',
+    state: resumeHonestyState,
+    summary: resumeHonestyState === 'clean'
+      ? `${resumeTarget} still has enough checkpoint and owner proof to keep resume language direct.`
+      : resumeHonestyState === 'watched'
+        ? `${resumeTarget} can stay resumable, but the overlay should keep the exact owner or drift caveat visible.`
+        : `${resumeTarget} no longer deserves clean resume language until recovery proof hardens.`,
+    detail: resumeHonestyState === 'clean'
+      ? (historyItem?.resumeCheckpoint
+          ? `Resume proof is anchored by ${checkpointLabel}.`
+          : 'The current playback path is stable enough that resume language can stay straightforward.')
+      : resumeHonestyState === 'watched'
+        ? (historyItem?.staleSession?.detail
+            ?? (currentStream?.stream_type === 'live'
+              ? 'Live playback can only promise return-to-channel posture while owner and line proof remain explicit.'
+              : 'Checkpoint continuity exists, but the current owner or telemetry band is thin enough that resume copy should stay qualified.'))
+        : (historyItem?.staleSession?.detail
+            ?? recoveryRuntime?.detail
+            ?? 'The overlay should downgrade from clean resume language until a stronger owner, checkpoint, or telemetry witness lands.'),
+    resumeTarget,
+    checkpointLabel,
+    continuityRisk: historyItem?.staleSession?.detail
+      ?? (controlTelemetryAgeMs > 15000
+        ? `Telemetry last landed ${controlTelemetryAge}, so the resume checkpoint may no longer describe the exact active session.`
+        : recoveryRuntime?.actionKind === 'wait-for-line'
+          ? 'A new line has to clear before the current session can honestly promise exact resume continuity.'
+          : recoveryRuntime?.actionKind === 'quick-switch' || recoveryRuntime?.actionKind === 'reclaim-owner'
+            ? 'Resume continuity depends on a provider handoff, so the shell should keep the custody change explicit.'
+            : currentStream?.stream_type === 'live'
+              ? 'Live resume depends on the same lane, owner, and guide proof staying aligned.'
+              : 'No extra continuity risk is currently outranking the stored checkpoint.'),
+    nextHonestMove: recoveryRuntime?.nextMove.detail
+      ?? (resumeHonestyState === 'clean'
+        ? 'Keep resume attached to the current owner until stronger recovery pressure appears.'
+        : 'Downgrade into watched or recovery wording before the overlay implies the same exact session will resume cleanly.'),
+    tone: resumeHonestyState === 'clean' ? 'ready' : resumeHonestyState === 'watched' ? 'watch' : 'recover',
+  };
+  const activeSwitchProvider = switchRuntime?.providers.find((provider) => provider.providerId === currentProviderId) ?? null;
+  const multiConnectionTakeover: LivePlayerOverlayPlaybackMultiConnectionTakeover = {
+    title: 'Multi-connection takeover rules',
+    summary: switchRuntime?.summary
+      ?? 'The active player path still needs explicit saved-provider takeover proof.',
+    detail: switchRuntime?.detail
+      ?? 'Without the multi-connection switch runtime, the overlay should avoid sounding like background takeover is automatic.',
+    recommendedOwner: recommendedSwitchOwner?.providerName
+      ?? currentProviderName
+      ?? 'No verified owner',
+    blockedOwnerCount: switchRuntime?.blockedProviderCount ?? 0,
+    tone: switchRuntime?.tone ?? connectionHeadroom.tone,
+    rules: [
+      buildTakeoverRule({
+        id: 'active-owner',
+        label: 'Active owner rule',
+        summary: activeSwitchProvider?.quickSwitchTruth
+          ?? `${currentProviderName ?? 'The active provider'} still owns the current player path.`,
+        detail: activeSwitchProvider?.authorityLabel
+          ?? 'Active ownership stays visible until the saved-provider switch runtime promotes a better owner.',
+        actionLabel: activeSwitchProvider?.actionLabel ?? 'Keep current owner visible',
+        tone: activeSwitchProvider?.tone ?? 'watch',
+      }),
+      buildTakeoverRule({
+        id: 'backup-owner',
+        label: 'Backup owner rule',
+        summary: recommendedSwitchOwner
+          ? `${recommendedSwitchOwner.providerName} is the next honest takeover owner.`
+          : 'No backup owner is strong enough to advertise yet.',
+        detail: recommendedSwitchOwner?.failClosedReason
+          ?? 'The overlay should not promise fast takeover until one saved provider earns explicit switch authority.',
+        actionLabel: recommendedSwitchOwner?.actionLabel ?? 'Wait for a verified backup owner',
+        tone: recommendedSwitchOwner?.tone ?? 'recover',
+      }),
+      buildTakeoverRule({
+        id: 'line-cap',
+        label: 'Line cap rule',
+        summary: connectionHeadroom.nextLimit,
+        detail: connectionHeadroom.overlayRule,
+        actionLabel: lineReleaseRuntime?.nextMove.primaryActionLabel ?? 'Keep line pressure explicit',
+        tone: connectionHeadroom.tone,
+      }),
+      buildTakeoverRule({
+        id: 'proof-gap',
+        label: 'Proof gap rule',
+        summary: switchRuntime?.detail
+          ?? 'Multi-connection proof still has gaps, so takeover language should stay explicit.',
+        detail: switchRuntime?.recentHandoff
+          ?? 'No recent takeover witness exists yet for the active player path.',
+        actionLabel: switchRuntime?.recommendedAction ?? 'Refresh switch proof first',
+        tone: switchRuntime?.tone ?? 'watch',
+      }),
+    ],
   };
   const ctaWitnesses = [
     buildCtaWitness({
@@ -2196,6 +2399,10 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     ctaStack,
     telemetryDecay,
     recoveryOwnership,
+    connectionHeadroom,
+    switchCustody,
+    resumeHonesty,
+    multiConnectionTakeover,
     heroDoctrine,
     escalationWitnesses,
     messageLadder,
