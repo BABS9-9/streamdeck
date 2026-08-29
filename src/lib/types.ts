@@ -2144,6 +2144,40 @@ export type LivePlayerOverlayPlaybackEscalationWitness = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackMessageLane = {
+  id: 'promise' | 'caveat' | 'pivot';
+  label: string;
+  state: 'premium' | 'watched' | 'recovery';
+  summary: string;
+  detail: string;
+  trigger: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackMessageSurface = {
+  id: 'hero' | 'info-bar' | 'continuity' | 'recovery-cta';
+  label: string;
+  copy: string;
+  reason: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackMessageLadder = {
+  title: string;
+  state: 'premium' | 'watched' | 'recovery';
+  summary: string;
+  detail: string;
+  primaryPromise: string;
+  watchedCaveat: string;
+  recoveryPivot: string;
+  proofOwner: string;
+  proofTrigger: string;
+  nextEscalation: string;
+  tone: LivePlayerControlTone;
+  lanes: LivePlayerOverlayPlaybackMessageLane[];
+  surfaces: LivePlayerOverlayPlaybackMessageSurface[];
+};
+
 export type LivePlayerOverlayPlaybackRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -2183,6 +2217,7 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   recoveryOwnership: LivePlayerOverlayPlaybackRecoveryOwnership;
   heroDoctrine: LivePlayerOverlayPlaybackHeroDoctrine;
   escalationWitnesses: LivePlayerOverlayPlaybackEscalationWitness[];
+  messageLadder: LivePlayerOverlayPlaybackMessageLadder;
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
   windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];

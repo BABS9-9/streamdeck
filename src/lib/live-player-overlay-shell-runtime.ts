@@ -260,9 +260,13 @@ export const buildLivePlayerOverlayShellRuntime = ({
       ? `Guide posture: ${guideStateLabel}`
       : 'Next program data is unavailable, so the overlay should say so plainly.';
   const continuityLabel = continuityRuntime.recoveryOwnerLabel;
-  const overlayCopy = recoveryRuntime?.overlayCopy
-    ?? remoteRuntime.nextMove.detail
-    ?? continuityRuntime.nextMove.detail;
+  const continuitySurface = playbackRuntime.messageLadder.surfaces.find((surface) => surface.id === 'continuity');
+  const infoBarSurface = playbackRuntime.messageLadder.surfaces.find((surface) => surface.id === 'info-bar');
+  const overlayCopy = playbackRuntime.messageLadder.state === 'premium'
+    ? infoBarSurface?.copy ?? playbackRuntime.messageLadder.primaryPromise
+    : playbackRuntime.messageLadder.state === 'watched'
+      ? infoBarSurface?.copy ?? playbackRuntime.messageLadder.watchedCaveat
+      : continuitySurface?.copy ?? playbackRuntime.messageLadder.recoveryPivot;
   const quickActions = buildQuickActions({ controlRuntime, remoteRuntime, recoveryRuntime });
   const lanes = buildLanes({
     nowLabel,
@@ -284,8 +288,10 @@ export const buildLivePlayerOverlayShellRuntime = ({
     title: 'Player overlay shell contract',
     eyebrow: 'Overlay runtime preview',
     summary: recoveryRuntime?.summary
+      ?? continuitySurface?.copy
+      ?? playbackRuntime.messageLadder.summary
       ?? 'The overlay should read from one backend-owned shell instead of rebuilding player truth from separate cards.',
-    detail: 'This contract packages now/next context, remote-first quick actions, continuity posture, and recovery action truth into one overlay payload for the active player path.',
+    detail: playbackRuntime.messageLadder.detail,
     tone,
     activeProviderId: controlRuntime.activeProviderId,
     playbackOwnerProviderId: continuityRuntime.playbackOwnerProviderId,

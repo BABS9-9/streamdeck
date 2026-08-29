@@ -7,6 +7,8 @@ import {
   LivePlayerOverlayPlaybackEscalationWitness,
   LivePlayerOverlayPlaybackFreshnessWitness,
   LivePlayerOverlayPlaybackHeroDoctrine,
+  LivePlayerOverlayPlaybackMessageLane,
+  LivePlayerOverlayPlaybackMessageLadder,
   LivePlayerOverlayPlaybackMetadataWitness,
   LivePlayerOverlayPlaybackRuntimeContract,
   LivePlayerOverlayPlaybackWindowWitness,
@@ -342,6 +344,24 @@ const buildEscalationWitness = ({
   state,
   summary,
   detail,
+  tone,
+});
+
+const buildMessageLane = ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  trigger,
+  tone,
+}: LivePlayerOverlayPlaybackMessageLane): LivePlayerOverlayPlaybackMessageLane => ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  trigger,
   tone,
 });
 
@@ -1740,6 +1760,189 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
         : 'Stay in recovery hero mode until the runtime can name one trusted owner, one fresh-enough heartbeat, and one executable CTA again.',
     tone: heroDoctrineTone,
   };
+  const messageLadderState: LivePlayerOverlayPlaybackMessageLadder['state'] = heroDoctrineState;
+  const proofOwnerLabel = recoveryOwnershipState === 'handoff-ready'
+    ? recoveryOwnership.recoveryOwner
+    : preferredWitness?.providerLabel ?? currentProviderName ?? 'Playback owner unsettled';
+  const proofTrigger = !currentStream
+    ? 'Playback still has no transport owner, telemetry heartbeat, or executable CTA lane.'
+    : heroDoctrineState === 'premium'
+      ? `${proofOwnerLabel} still owns transport, metadata, and CTA execution together.`
+      : heroDoctrineState === 'watched'
+        ? preferredWitness?.id === 'recovery'
+          ? `${proofOwnerLabel} owns fresher metadata while playback stays on the current route.`
+          : telemetryDecayStage !== 'live'
+            ? `Telemetry has decayed to ${telemetryDecay.stage}, so the hero has to widen its wording.`
+            : `Ownership or action proof is split enough that ${primaryAction.label} needs caution copy attached.`
+        : recoveryRuntime?.actionKind === 'fail-closed'
+          ? 'Neither retry nor provider handoff has enough proof to advertise an easy next press.'
+          : recoveryOwnershipState === 'handoff-ready'
+            ? `${proofOwnerLabel} already owns the safer handoff proof for the next move.`
+            : `${primaryAction.label} no longer has enough proof to stay framed as a premium continuation.`;
+  const primaryPromise = !currentStream
+    ? 'Wait for playback proof before promising any premium continuation.'
+    : heroDoctrineState === 'premium'
+      ? `${primaryAction.label} keeps the same owner, same live shell, and enough proof to stay premium.`
+      : heroDoctrineState === 'watched'
+        ? `${primaryAction.label} can stay visible, but only with one explicit caveat beside it.`
+        : recoveryOwnershipState === 'handoff-ready'
+          ? `${recoveryOwnership.recoveryOwner} should replace the current route as the hero promise now.`
+          : `${primaryAction.label} should only be framed as an explicit recovery move.`;
+  const watchedCaveat = !currentStream
+    ? 'No watched clause can rescue the hero before playback attaches to a real owner.'
+    : heroDoctrineState === 'premium'
+      ? 'No watched caveat is required while telemetry, ownership, and CTA routing stay aligned.'
+      : preferredWitness?.id === 'recovery'
+        ? `${preferredWitness.providerLabel} owns fresher current/next proof, so the hero should say that aloud.`
+        : telemetryDecayStage === 'settling' || telemetryDecayStage === 'aging'
+          ? `Latest telemetry is ${controlTelemetryAge}, so the hero should keep one watched clause attached.`
+          : recoveryOwnershipState === 'shared-proof'
+            ? 'Playback, metadata, and recovery ownership are split, so the hero should keep the split visible.'
+            : primaryAction.availabilityState === 'blocked'
+              ? `${primaryAction.label} is blocked, so watched copy is no longer enough by itself.`
+              : 'Keep one watched clause attached until the proof stack converges again.';
+  const recoveryPivot = !currentStream
+    ? 'Fail closed until one owner, one heartbeat, and one executable action lane attach.'
+    : recoveryOwnershipState === 'handoff-ready'
+      ? `Pivot the hero toward ${recoveryOwnership.recoveryOwner} and make the provider handoff explicit.`
+      : recoveryRuntime?.actionKind === 'wait-for-line'
+        ? `Keep ${recoveryOwnership.recoveryOwner} visible as the pending owner and name the line wait instead of hiding it.`
+        : recoveryRuntime?.actionKind === 'fail-closed'
+          ? 'Stop promising an easy recovery and keep the overlay in explicit fail-closed posture.'
+          : telemetryDecayStage === 'stale' || telemetryDecayStage === 'missing'
+            ? 'Escalate into stale-telemetry recovery copy until fresher playback proof lands.'
+            : 'Escalate into recovery wording as soon as the next move needs a different ownership story.';
+  const nextEscalation = heroDoctrineState === 'premium'
+    ? 'Escalate as soon as telemetry ages out, metadata drifts to recovery, or the promoted CTA stops routing cleanly.'
+    : heroDoctrineState === 'watched'
+      ? 'Escalate once the caveat stops being enough: stale telemetry, blocked route, or recovery-owned handoff.'
+      : 'Stay in recovery wording until one owner, one heartbeat, and one executable next move align again.';
+  const messageLadderSurfaces: LivePlayerOverlayPlaybackMessageLadder['surfaces'] = [
+    {
+      id: 'hero',
+      label: 'Hero headline/body',
+      copy: heroDoctrineState === 'premium'
+        ? primaryPromise
+        : heroDoctrineState === 'watched'
+          ? `${primaryPromise} ${watchedCaveat}`
+          : recoveryPivot,
+      reason: proofTrigger,
+      tone: heroDoctrineTone,
+    },
+    {
+      id: 'info-bar',
+      label: 'Info bar companion',
+      copy: heroDoctrineState === 'premium'
+        ? `${primaryAction.label} stays clean while ${proofOwnerLabel} keeps the proof stack aligned.`
+        : heroDoctrineState === 'watched'
+          ? watchedCaveat
+          : `Keep the info bar explicit: ${recoveryPivot}`,
+      reason: heroDoctrineState === 'premium'
+        ? 'Use concise copy only while telemetry, ownership, and execution stay aligned.'
+        : heroDoctrineState === 'watched'
+          ? 'The info bar is the smallest safe place to keep the caveat continuously visible.'
+          : 'The info bar should carry the recovery reason so the hero does not overpromise.',
+      tone: heroDoctrineState === 'premium' ? 'ready' : heroDoctrineState === 'watched' ? 'watch' : 'recover',
+    },
+    {
+      id: 'continuity',
+      label: 'Continuity rail',
+      copy: recoveryOwnershipState === 'active-owner'
+        ? `${proofOwnerLabel} still owns continuity.`
+        : recoveryOwnershipState === 'handoff-ready'
+          ? `${recoveryOwnership.recoveryOwner} now owns the safer continuity path.`
+          : recoveryOwnershipState === 'line-wait'
+            ? `${recoveryOwnership.recoveryOwner} is the pending continuity owner, but the line is still blocked.`
+            : 'Continuity is split across playback, metadata, and recovery proof.',
+      reason: recoveryOwnership.detail,
+      tone: recoveryOwnership.tone,
+    },
+    {
+      id: 'recovery-cta',
+      label: 'Recovery CTA helper',
+      copy: recoveryOwnershipState === 'handoff-ready'
+        ? `Switch to ${recoveryOwnership.recoveryOwner}`
+        : recoveryRuntime?.actionKind === 'wait-for-line'
+          ? 'Hold position while the line clears'
+          : recoveryRuntime?.actionKind === 'fail-closed'
+            ? 'Playback proof missing'
+            : secondaryAction?.label ?? primaryAction.label,
+      reason: nextEscalation,
+      tone: recoveryOwnershipState === 'active-owner'
+        ? secondaryAction?.tone ?? 'ready'
+        : recoveryOwnershipState === 'shared-proof' || recoveryOwnershipState === 'line-wait'
+          ? 'watch'
+          : 'recover',
+    },
+  ];
+  const messageLadderLanes = [
+    buildMessageLane({
+      id: 'promise',
+      label: 'Primary promise',
+      state: heroDoctrineState === 'recovery' ? 'recovery' : heroDoctrineState,
+      summary: primaryPromise,
+      detail: !currentStream
+        ? 'The UI should not imply continuity before playback attaches to a real owner.'
+        : heroDoctrineState === 'premium'
+          ? `${proofOwnerLabel} still carries the proof stack that keeps the hero concise.`
+          : `${primaryAction.ownerLabel} can still lead the visible message, but only inside the current proof boundary.`,
+      trigger: proofTrigger,
+      tone: heroDoctrineTone,
+    }),
+    buildMessageLane({
+      id: 'caveat',
+      label: 'Watched caveat',
+      state: heroDoctrineState === 'premium' ? 'premium' : 'watched',
+      summary: watchedCaveat,
+      detail: heroDoctrineState === 'premium'
+        ? 'This lane stays dormant until one evidence seam starts slipping.'
+        : preferredWitness?.id === 'recovery'
+          ? `Metadata freshness has already drifted toward ${preferredWitness.providerLabel}.`
+          : telemetryDecayStage === 'settling' || telemetryDecayStage === 'aging'
+            ? `Telemetry decay is the current caution seam at ${controlTelemetryAge}.`
+            : recoveryOwnershipState === 'shared-proof'
+              ? 'Ownership is split across playback, metadata, and recovery proof.'
+              : 'The caution lane should stay attached until the next move becomes fully premium-safe again.',
+      trigger: heroDoctrineState === 'premium'
+        ? 'Activate this caveat if telemetry, ownership, or CTA execution drift out of lockstep.'
+        : proofTrigger,
+      tone: heroDoctrineState === 'premium' ? 'ready' : 'watch',
+    }),
+    buildMessageLane({
+      id: 'pivot',
+      label: 'Recovery pivot',
+      state: 'recovery',
+      summary: recoveryPivot,
+      detail: recoveryRuntime?.actionKind === 'fail-closed'
+        ? 'No optimistic phrasing should outrun the actual recovery proof.'
+        : recoveryOwnershipState === 'handoff-ready'
+          ? `${recoveryOwnership.recoveryOwner} already owns the safer route, so the pivot should sound immediate.`
+          : recoveryRuntime?.actionKind === 'wait-for-line'
+            ? 'The pending owner is named; the runtime just needs the line-release reason to stay visible.'
+            : 'This pivot becomes the leading message when the premium and watched lanes stop being honest.',
+      trigger: nextEscalation,
+      tone: 'recover',
+    }),
+  ];
+  const messageLadder = {
+    title: 'Playback message ladder',
+    state: messageLadderState,
+    summary: heroDoctrineState === 'premium'
+      ? 'The backend can publish a premium hero promise without attaching caution copy.'
+      : heroDoctrineState === 'watched'
+        ? 'The backend can still publish a hero, but it must ship with one explicit caveat.'
+        : 'The backend should pivot the hero into recovery wording now.',
+    detail: `This ladder tells the UI what to promise first, which caveat must ride with it, and what exact proof seam forces the recovery pivot.`,
+    primaryPromise,
+    watchedCaveat,
+    recoveryPivot,
+    proofOwner: proofOwnerLabel,
+    proofTrigger,
+    nextEscalation,
+    tone: heroDoctrineTone,
+    lanes: messageLadderLanes,
+    surfaces: messageLadderSurfaces,
+  };
   const tone = getDominantTone([
     recoveryRuntime?.tone ?? 'ready',
     primaryAction.tone,
@@ -1793,6 +1996,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     recoveryOwnership,
     heroDoctrine,
     escalationWitnesses,
+    messageLadder,
     metadataWitnesses,
     freshnessWitnesses,
     windowWitnesses,

@@ -344,6 +344,79 @@ export function LivePlayerOverlayShellPanel({
             </div>
           </div>
 
+          <div className={`mt-4 rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.messageLadder.tone]}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="max-w-3xl">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.messageLadder.title}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{contract.playbackRuntime.messageLadder.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.messageLadder.detail}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.messageLadder.state}
+                </span>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.messageLadder.proofOwner}
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Primary promise</p>
+                <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.messageLadder.primaryPromise}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Watched caveat</p>
+                <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.messageLadder.watchedCaveat}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Recovery pivot</p>
+                <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.messageLadder.recoveryPivot}</p>
+              </article>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Proof trigger</p>
+                <p className="mt-3 text-sm leading-6 text-white/85">{contract.playbackRuntime.messageLadder.proofTrigger}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Next escalation</p>
+                <p className="mt-3 text-sm leading-6 text-white/85">{contract.playbackRuntime.messageLadder.nextEscalation}</p>
+              </article>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {contract.playbackRuntime.messageLadder.lanes.map((lane) => (
+                <article
+                  key={lane.id}
+                  className={`rounded-2xl border p-4 ${toneStyles[lane.tone]}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{lane.label}</p>
+                    <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                      {lane.state}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-white">{lane.summary}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{lane.detail}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/65">Trigger</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{lane.trigger}</p>
+                </article>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {contract.playbackRuntime.messageLadder.surfaces.map((surface) => (
+                <article
+                  key={surface.id}
+                  className={`rounded-2xl border p-4 ${toneStyles[surface.tone]}`}
+                >
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{surface.label}</p>
+                  <p className="mt-3 text-sm font-semibold text-white">{surface.copy}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/75">{surface.reason}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.ctaEligibility.tone]}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
