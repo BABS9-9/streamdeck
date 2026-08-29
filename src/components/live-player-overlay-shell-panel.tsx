@@ -298,6 +298,52 @@ export function LivePlayerOverlayShellPanel({
             </article>
           </div>
 
+          <div className={`mt-4 rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.heroDoctrine.tone]}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="max-w-3xl">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.heroDoctrine.title}</p>
+                <h5 className="mt-2 text-lg font-semibold text-white">{contract.playbackRuntime.heroDoctrine.headline}</h5>
+                <p className="mt-2 text-sm leading-6 text-white/85">{contract.playbackRuntime.heroDoctrine.body}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.heroDoctrine.state}
+                </span>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                  {contract.playbackRuntime.heroDoctrine.badgeLabel}
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Primary CTA</p>
+                <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.heroDoctrine.primaryCtaLabel}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Secondary CTA</p>
+                <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.heroDoctrine.secondaryCtaLabel}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Support label</p>
+                <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.heroDoctrine.supportLabel}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Escalation trigger</p>
+                <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.heroDoctrine.escalationTrigger}</p>
+              </article>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Disclaimer</p>
+                <p className="mt-3 text-sm leading-6 text-white/85">{contract.playbackRuntime.heroDoctrine.disclaimer}</p>
+              </article>
+              <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Runtime doctrine</p>
+                <p className="mt-3 text-sm leading-6 text-white/85">{contract.playbackRuntime.heroDoctrine.supportLabel}</p>
+              </article>
+            </div>
+          </div>
+
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <article className={`rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.ctaEligibility.tone]}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -355,6 +401,30 @@ export function LivePlayerOverlayShellPanel({
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {contract.playbackRuntime.ctaWitnesses.map((witness) => (
+              <article
+                key={witness.id}
+                className={`rounded-2xl border p-4 ${
+                  witness.tone === 'ready'
+                    ? 'border-sky-300/20 bg-sky-500/10 text-sky-100'
+                    : witness.tone === 'watch'
+                      ? 'border-amber-300/20 bg-amber-500/10 text-amber-100'
+                      : 'border-rose-300/20 bg-rose-500/10 text-rose-100'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{witness.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {witness.state}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{witness.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/70">{witness.detail}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {contract.playbackRuntime.escalationWitnesses.map((witness) => (
               <article
                 key={witness.id}
                 className={`rounded-2xl border p-4 ${

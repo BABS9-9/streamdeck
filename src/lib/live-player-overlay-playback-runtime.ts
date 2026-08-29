@@ -4,7 +4,9 @@ import {
   LivePlayerOverlayPlaybackActionRoute,
   LivePlayerOverlayPlaybackAlignmentWitness,
   LivePlayerOverlayPlaybackDiagnosticsWitness,
+  LivePlayerOverlayPlaybackEscalationWitness,
   LivePlayerOverlayPlaybackFreshnessWitness,
+  LivePlayerOverlayPlaybackHeroDoctrine,
   LivePlayerOverlayPlaybackMetadataWitness,
   LivePlayerOverlayPlaybackRuntimeContract,
   LivePlayerOverlayPlaybackWindowWitness,
@@ -319,6 +321,22 @@ const buildCtaWitness = ({
   detail,
   tone,
 }: LivePlayerOverlayPlaybackRuntimeContract['ctaWitnesses'][number]): LivePlayerOverlayPlaybackRuntimeContract['ctaWitnesses'][number] => ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+});
+
+const buildEscalationWitness = ({
+  id,
+  label,
+  state,
+  summary,
+  detail,
+  tone,
+}: LivePlayerOverlayPlaybackEscalationWitness): LivePlayerOverlayPlaybackEscalationWitness => ({
   id,
   label,
   state,
@@ -1523,6 +1541,205 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
           : 'recover',
     }),
   ];
+  const escalationWitnesses = [
+    buildEscalationWitness({
+      id: 'telemetry',
+      label: 'Telemetry escalation',
+      state: telemetryDecayStage === 'live'
+        ? 'clear'
+        : telemetryDecayStage === 'settling' || telemetryDecayStage === 'aging'
+          ? 'watch'
+          : 'escalate',
+      summary: telemetryDecayStage === 'live'
+        ? 'Telemetry is fresh enough for concise premium hero copy.'
+        : telemetryDecayStage === 'settling'
+          ? 'Telemetry is still recent, but the hero should keep a watched clause visible.'
+          : telemetryDecayStage === 'aging'
+            ? 'Telemetry is aging out, so hero copy should widen before certainty breaks.'
+            : 'Telemetry has decayed past the premium budget, so hero copy should escalate into recovery language.',
+      detail: telemetryDecayStage === 'live'
+        ? `Heartbeat landed ${controlTelemetryAge}, so the hero can describe live playback without caveats about stale transport proof.`
+        : telemetryDecayStage === 'settling'
+          ? `Heartbeat landed ${controlTelemetryAge}; keep the hero premium, but attach one explicit watched note in case the next sample slips.`
+          : telemetryDecayStage === 'aging'
+            ? `Heartbeat landed ${controlTelemetryAge}; the hero should mention telemetry decay before it keeps promising live-edge certainty.`
+            : `Heartbeat landed ${controlTelemetryAge}; suppress premium certainty and escalate the hero toward stale-telemetry recovery copy.`,
+      tone: telemetryDecayStage === 'live'
+        ? 'ready'
+        : telemetryDecayStage === 'settling' || telemetryDecayStage === 'aging'
+          ? 'watch'
+          : 'recover',
+    }),
+    buildEscalationWitness({
+      id: 'ownership',
+      label: 'Ownership escalation',
+      state: recoveryOwnershipState === 'active-owner'
+        ? 'clear'
+        : recoveryOwnershipState === 'shared-proof' || recoveryOwnershipState === 'line-wait'
+          ? 'watch'
+          : 'escalate',
+      summary: recoveryOwnershipState === 'active-owner'
+        ? `${currentProviderName ?? 'The active provider'} still owns playback, metadata, and the next move together.`
+        : recoveryOwnershipState === 'shared-proof'
+          ? 'Playback and recovery proof are split, so the hero should explain the ownership split.'
+          : recoveryOwnershipState === 'line-wait'
+            ? 'The recovery owner is named, but the line is still blocking a clean handoff.'
+            : recoveryOwnershipState === 'handoff-ready'
+              ? `${recoveryProviderName ?? preferredWitness?.providerLabel ?? 'The recovery target'} should take the hero ownership story now.`
+              : 'No trustworthy next owner exists, so the hero should fail closed.',
+      detail: recoveryOwnershipState === 'active-owner'
+        ? 'The hero can keep the current playback owner implicit because transport, guide proof, and CTA routing still point at the same provider.'
+        : recoveryOwnershipState === 'shared-proof'
+          ? `Playback is still on ${currentProviderName ?? 'the current route'}, while metadata or recovery proof already leans toward ${recoveryOwnership.recoveryOwner}.`
+          : recoveryOwnershipState === 'line-wait'
+            ? `Keep ${recoveryOwnership.recoveryOwner} visible as the pending owner, but say the line is still blocking the move.`
+            : recoveryOwnershipState === 'handoff-ready'
+              ? `Promote ${recoveryOwnership.recoveryOwner} as the next honest owner because the recovery path and fresher proof already agree.`
+              : 'The hero should not imply ownership continuity until the runtime can name a trustworthy next owner again.',
+      tone: recoveryOwnershipState === 'active-owner'
+        ? 'ready'
+        : recoveryOwnershipState === 'shared-proof' || recoveryOwnershipState === 'line-wait'
+          ? 'watch'
+          : 'recover',
+    }),
+    buildEscalationWitness({
+      id: 'action-route',
+      label: 'CTA-route escalation',
+      state: !currentStream
+        ? 'escalate'
+        : primaryAction.available && primaryAction.availabilityState === 'ready'
+          ? 'clear'
+          : primaryAction.availabilityState === 'blocked'
+            ? 'escalate'
+            : 'watch',
+      summary: !currentStream
+        ? 'No hero route can execute before playback attaches.'
+        : primaryAction.available && primaryAction.availabilityState === 'ready'
+          ? `${primaryAction.label} is executable, so the hero CTA can stay direct.`
+          : primaryAction.availabilityState === 'blocked'
+            ? `${primaryAction.label} is still blocked, so the hero must escalate into an explicit recovery move.`
+            : `${primaryAction.label} is routed, but its proof is thin enough that the hero should keep watched language attached.`,
+      detail: !currentStream
+        ? 'Do not publish a premium hero button until one real playback owner and one routable action lane attach to the dock.'
+        : primaryAction.available
+          ? `${primaryAction.ownerLabel} still owns a dispatchable next move without needing UI-local fallbacks.`
+          : `${primaryAction.ownerLabel} still frames the next move, but the hero should keep the wait, drift, or blockage reason visible.`,
+      tone: !currentStream
+        ? 'recover'
+        : primaryAction.available && primaryAction.availabilityState === 'ready'
+          ? 'ready'
+          : primaryAction.availabilityState === 'blocked'
+            ? 'recover'
+          : 'watch',
+    }),
+    buildEscalationWitness({
+      id: 'metadata-drift',
+      label: 'Metadata-drift escalation',
+      state: !currentStream
+        ? 'escalate'
+        : preferredWitness?.id === 'active'
+          ? 'clear'
+          : preferredWitness?.id === 'recovery'
+            ? recoveryOwnershipState === 'handoff-ready'
+              ? 'escalate'
+              : 'watch'
+            : 'watch',
+      summary: !currentStream
+        ? 'No metadata owner can be trusted before playback attaches.'
+        : preferredWitness?.id === 'active'
+          ? `${currentProviderName ?? 'The active provider'} still owns the freshest metadata proof for the hero.`
+          : preferredWitness?.id === 'recovery'
+            ? recoveryOwnershipState === 'handoff-ready'
+              ? `${preferredWitness.providerLabel} now owns fresher metadata strongly enough to force a handoff hero.`
+              : `${preferredWitness.providerLabel} owns fresher metadata, so the hero should keep drift language visible.`
+            : 'Metadata proof is mixed, so the hero should keep guide drift explicit.',
+      detail: !currentStream
+        ? 'Wait for one playback owner and one metadata owner before promising current/next certainty in the hero.'
+        : preferredWitness?.id === 'active'
+          ? 'Current/next proof still comes from the same provider that owns visible playback transport.'
+          : preferredWitness?.id === 'recovery'
+            ? recoveryOwnershipState === 'handoff-ready'
+              ? `Metadata freshness and recovery routing both lean toward ${preferredWitness.providerLabel}, so the hero should stop implying the current route still owns now/next truth.`
+              : `Metadata freshness is already leaning toward ${preferredWitness.providerLabel}, but playback transport has not fully handed off yet.`
+            : 'The hero should keep guide ownership explicit until one provider clearly outranks the other for current/next proof.',
+      tone: !currentStream
+        ? 'recover'
+        : preferredWitness?.id === 'active'
+          ? 'ready'
+          : preferredWitness?.id === 'recovery' && recoveryOwnershipState === 'handoff-ready'
+            ? 'recover'
+            : 'watch',
+    }),
+  ];
+  const heroDoctrineState: LivePlayerOverlayPlaybackHeroDoctrine['state'] = !currentStream
+    ? 'recovery'
+    : ctaEligibilityState === 'eligible'
+      && telemetryDecayStage === 'live'
+      && recoveryOwnershipState === 'active-owner'
+      ? 'premium'
+      : ctaEligibilityState === 'blocked' || telemetryDecayStage === 'stale' || telemetryDecayStage === 'missing' || recoveryOwnershipState === 'handoff-ready' || recoveryOwnershipState === 'fail-closed'
+        ? 'recovery'
+        : 'watched';
+  const heroDoctrineTone: LivePlayerOverlayPlaybackHeroDoctrine['tone'] = heroDoctrineState === 'premium'
+    ? 'ready'
+    : heroDoctrineState === 'watched'
+      ? 'watch'
+      : 'recover';
+  const heroDoctrine = {
+    title: 'Premium hero doctrine',
+    state: heroDoctrineState,
+    badgeLabel: heroDoctrineState === 'premium'
+      ? 'Premium-safe hero'
+      : heroDoctrineState === 'watched'
+        ? 'Watched hero'
+        : 'Recovery-led hero',
+    headline: !currentStream
+      ? 'Wait for playback to attach before the hero sounds premium.'
+      : heroDoctrineState === 'premium'
+        ? `${primaryAction.label} can lead the hero without extra apology copy.`
+        : heroDoctrineState === 'watched'
+          ? `${primaryAction.label} can still lead, but the hero should name the current proof limit.`
+          : recoveryOwnershipState === 'handoff-ready'
+            ? `${recoveryOwnership.recoveryOwner} should take over the hero story now.`
+            : recoveryRuntime?.actionKind === 'fail-closed'
+              ? 'The hero should stop promising an easy next press.'
+              : `${primaryAction.label} should only appear inside explicit recovery copy.`,
+    body: !currentStream
+      ? 'No transport owner, no telemetry heartbeat, and no routed CTA exist yet, so the hero should fail closed until the runtime can name all three.'
+      : heroDoctrineState === 'premium'
+        ? `${currentProviderName ?? 'The active provider'} still owns transport, metadata, and CTA routing together, so the hero can stay concise and premium.`
+        : heroDoctrineState === 'watched'
+          ? `${primaryAction.ownerLabel} still frames the next move, but the hero should keep watched context visible for ${preferredWitness?.id === 'recovery' ? 'metadata drift' : telemetryDecayStage !== 'live' ? 'telemetry decay' : 'ownership split'}.`
+          : recoveryOwnershipState === 'handoff-ready'
+            ? `${recoveryOwnership.recoveryOwner} already owns the safer proof stack, so the hero should advertise a provider handoff instead of pretending the current route still carries the promise.`
+            : recoveryRuntime?.actionKind === 'fail-closed'
+              ? 'Neither retry nor provider handoff has enough proof to justify premium hero language, so the runtime should keep the user in explicit recovery posture.'
+              : 'The hero should name the blockage, drift, or stale telemetry condition before presenting any next move as premium.',
+    supportLabel: heroDoctrineState === 'premium'
+      ? confidenceFloor.minimumProof
+      : heroDoctrineState === 'watched'
+        ? retryHonesty.honestRetryWindow
+        : recoveryOwnership.handoffReadiness,
+    primaryCtaLabel: primaryAction.label,
+    secondaryCtaLabel: secondaryAction?.label ?? 'No secondary CTA promoted',
+    disclaimer: heroDoctrineState === 'premium'
+      ? 'No watched disclaimer required while the proof stack stays aligned.'
+      : heroDoctrineState === 'watched'
+        ? preferredWitness?.id === 'recovery'
+          ? `${preferredWitness.providerLabel} already owns fresher metadata proof, so the hero should say that aloud.`
+          : telemetryDecayStage === 'settling' || telemetryDecayStage === 'aging'
+            ? `Latest telemetry is ${controlTelemetryAge}, so the hero should keep one watched clause attached.`
+            : 'Keep one watched disclaimer attached until playback, metadata, and CTA ownership converge again.'
+        : recoveryRuntime?.actionKind === 'fail-closed'
+          ? 'Do not disguise fail-closed posture behind optimistic CTA copy.'
+          : `${primaryAction.label} should be wrapped in explicit recovery language until the proof stack recovers.`,
+    escalationTrigger: heroDoctrineState === 'premium'
+      ? 'Escalate out of premium hero mode as soon as telemetry, ownership, or CTA routing stop agreeing.'
+      : heroDoctrineState === 'watched'
+        ? 'Escalate into recovery hero mode once telemetry goes stale, the route blocks, or recovery takes ownership of the next honest move.'
+        : 'Stay in recovery hero mode until the runtime can name one trusted owner, one fresh-enough heartbeat, and one executable CTA again.',
+    tone: heroDoctrineTone,
+  };
   const tone = getDominantTone([
     recoveryRuntime?.tone ?? 'ready',
     primaryAction.tone,
@@ -1574,6 +1791,8 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     ctaWitnesses,
     telemetryDecay,
     recoveryOwnership,
+    heroDoctrine,
+    escalationWitnesses,
     metadataWitnesses,
     freshnessWitnesses,
     windowWitnesses,

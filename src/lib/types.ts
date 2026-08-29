@@ -2121,6 +2121,29 @@ export type LivePlayerOverlayPlaybackRecoveryOwnership = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackHeroDoctrine = {
+  title: string;
+  state: 'premium' | 'watched' | 'recovery';
+  badgeLabel: string;
+  headline: string;
+  body: string;
+  supportLabel: string;
+  primaryCtaLabel: string;
+  secondaryCtaLabel: string;
+  disclaimer: string;
+  escalationTrigger: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackEscalationWitness = {
+  id: 'telemetry' | 'ownership' | 'action-route' | 'metadata-drift';
+  label: string;
+  state: 'clear' | 'watch' | 'escalate';
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerOverlayPlaybackRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -2158,6 +2181,8 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   ctaWitnesses: LivePlayerOverlayPlaybackCtaWitness[];
   telemetryDecay: LivePlayerOverlayPlaybackTelemetryDecay;
   recoveryOwnership: LivePlayerOverlayPlaybackRecoveryOwnership;
+  heroDoctrine: LivePlayerOverlayPlaybackHeroDoctrine;
+  escalationWitnesses: LivePlayerOverlayPlaybackEscalationWitness[];
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
   windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];
