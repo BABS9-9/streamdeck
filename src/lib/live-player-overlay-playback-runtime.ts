@@ -19,6 +19,8 @@ import {
   LivePlayerOverlayPlaybackShellActionPlan,
   LivePlayerOverlayPlaybackShellInsight,
   LivePlayerOverlayPlaybackShellOrchestration,
+  LivePlayerOverlayPlaybackShellPolicy,
+  LivePlayerOverlayPlaybackShellPolicyRule,
   LivePlayerOverlayPlaybackRuntimeContract,
   LivePlayerOverlayPlaybackSwitchCustody,
   LivePlayerOverlayPlaybackTakeoverRule,
@@ -391,6 +393,26 @@ const buildShellInsight = ({
   actionLabel,
   tone,
 }: LivePlayerOverlayPlaybackShellInsight): LivePlayerOverlayPlaybackShellInsight => ({
+  id,
+  label,
+  state,
+  ownerLabel,
+  summary,
+  detail,
+  actionLabel,
+  tone,
+});
+
+const buildShellPolicyRule = ({
+  id,
+  label,
+  state,
+  ownerLabel,
+  summary,
+  detail,
+  actionLabel,
+  tone,
+}: LivePlayerOverlayPlaybackShellPolicyRule): LivePlayerOverlayPlaybackShellPolicyRule => ({
   id,
   label,
   state,
@@ -2586,6 +2608,198 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
           : `${recoveryOwnership.recoveryOwner} should take over the visible next move before the shell implies continuity.`);
   const shellNextMoveTone = recoveryRuntime?.nextMove.tone
     ?? (shellState === 'premium' ? 'ready' : shellState === 'watched' ? 'watch' : 'recover');
+  const shellPolicyState: LivePlayerOverlayPlaybackShellPolicy['state'] = shellState === 'premium'
+    ? 'direct'
+    : shellState === 'watched'
+      ? 'watched'
+      : 'recovery';
+  const shellPolicyTone: LivePlayerOverlayPlaybackShellPolicy['tone'] = shellPolicyState === 'direct'
+    ? 'ready'
+    : shellPolicyState === 'watched'
+      ? 'watch'
+      : 'recover';
+  const shellHeroEmphasisState: LivePlayerOverlayPlaybackShellPolicyRule['state'] = heroCtaState === 'promoted'
+    && telemetryDecayStage === 'live'
+    && recoveryOwnershipState === 'active-owner'
+    ? 'direct'
+    : heroCtaState === 'promoted' || heroCtaState === 'watched'
+      ? 'watched'
+      : 'recovery';
+  const shellCtaDensityState: LivePlayerOverlayPlaybackShellPolicyRule['state'] = visibleActionCount >= 2
+    && suppressedActionCount === 0
+    && actionReadinessState === 'lead'
+    ? 'direct'
+    : visibleActionCount > 0
+      ? 'watched'
+      : 'recovery';
+  const shellProviderBadgeState: LivePlayerOverlayPlaybackShellPolicyRule['state'] = recoveryOwnershipState === 'active-owner'
+    && switchCustody.state === 'stable'
+    ? 'direct'
+    : recoveryOwnershipState === 'shared-proof' || recoveryOwnershipState === 'line-wait' || switchCustody.state === 'watch'
+      ? 'watched'
+      : 'recovery';
+  const shellRecoveryRailState: LivePlayerOverlayPlaybackShellPolicyRule['state'] = recoveryHelperState === 'promoted'
+    || recoveryOwnershipState === 'handoff-ready'
+    || recoveryOwnershipState === 'fail-closed'
+    ? 'recovery'
+    : recoveryHelperState === 'watched' || recoveryOwnershipState === 'line-wait' || recoveryOwnershipState === 'shared-proof'
+      ? 'watched'
+      : 'direct';
+  const shellFocusBiasState: LivePlayerOverlayPlaybackShellPolicyRule['state'] = recoveryHelperState === 'promoted'
+    ? 'recovery'
+    : heroCtaState === 'promoted'
+      ? 'direct'
+      : 'watched';
+  const shellPolicy: LivePlayerOverlayPlaybackShellPolicy = {
+    title: 'Shell policy ledger',
+    state: shellPolicyState,
+    summary: shellPolicyState === 'direct'
+      ? 'The overlay can stay crisp and direct because the active owner, telemetry lane, and lead action still agree.'
+      : shellPolicyState === 'watched'
+        ? 'The overlay can stay visible, but it should keep proof limits attached and avoid sounding carefree.'
+        : 'The overlay should pivot into recovery-first posture because the safer next move no longer belongs to the current hero lane.',
+    detail: 'This ledger tells the shell how loud the hero, provider badge, CTA density, recovery rail, and initial focus are allowed to be after the playback runtime has already reconciled connection, takeover, telemetry, and action truth.',
+    emphasisLabel: shellHeroEmphasisState === 'direct'
+      ? 'Direct hero emphasis allowed'
+      : shellHeroEmphasisState === 'watched'
+        ? 'Hero can stay visible with caveats'
+        : 'Recovery wording must outrank the hero',
+    caveatLabel: shellState === 'premium'
+      ? 'No mandatory caveat'
+      : shellState === 'watched'
+        ? watchedCaveat
+        : recoveryPivot,
+    providerBadgeLabel: shellProviderBadgeState === 'direct'
+      ? `${currentProviderName ?? 'Current provider'} can stay named as the clear owner`
+      : shellProviderBadgeState === 'watched'
+        ? `Show ${recoveryOwnership.recoveryOwner} nearby without replacing ${currentProviderName ?? 'the current provider'} yet`
+        : `Promote ${recoveryOwnership.recoveryOwner} as the safer visible owner`,
+    actionDensityLabel: shellCtaDensityState === 'direct'
+      ? `${visibleActionCount} visible actions can stay on screen without muddying the proof story`
+      : shellCtaDensityState === 'watched'
+        ? `Keep ${visibleActionCount} visible actions subordinate to one watched proof story`
+        : `Collapse to recovery-safe actions while ${suppressedActionCount} action routes stay suppressed`,
+    recoveryLabel: shellRecoveryRailState === 'direct'
+      ? 'Recovery can stay backgrounded while the main shell remains truthful'
+      : shellRecoveryRailState === 'watched'
+        ? 'Keep the recovery rail visible as supporting context'
+        : 'Move the recovery rail into the lead shell lane now',
+    rules: [
+      buildShellPolicyRule({
+        id: 'hero-emphasis',
+        label: 'Hero emphasis',
+        state: shellHeroEmphasisState,
+        ownerLabel: leadReadinessItem?.ownerLabel ?? primaryAction.ownerLabel,
+        summary: shellHeroEmphasisState === 'direct'
+          ? `${primaryAction.label} can carry the shell headline without watched qualifiers.`
+          : shellHeroEmphasisState === 'watched'
+            ? `${primaryAction.label} can stay visible, but the hero must keep proof limits on screen.`
+            : `${recoveryOwnership.recoveryOwner} should replace carefree hero wording until the proof stack recombines.`,
+        detail: shellHeroEmphasisState === 'direct'
+          ? `${primaryAction.ownerLabel} still has clean execution, live telemetry, and aligned ownership.`
+          : shellHeroEmphasisState === 'watched'
+            ? `${nextEscalation} ${telemetryDecay.detail}`
+            : `${recoveryOwnership.detail} ${heroDoctrine.body}`,
+        actionLabel: shellHeroEmphasisState === 'direct'
+          ? 'Keep the hero promise concise and confident.'
+          : shellHeroEmphasisState === 'watched'
+            ? 'Attach the watched clause beside the hero before it sounds premium.'
+            : 'Swap the hero into recovery-led wording first.',
+        tone: shellHeroEmphasisState === 'direct' ? 'ready' : shellHeroEmphasisState === 'watched' ? 'watch' : 'recover',
+      }),
+      buildShellPolicyRule({
+        id: 'cta-density',
+        label: 'CTA density',
+        state: shellCtaDensityState,
+        ownerLabel: actionReadiness.leadActionLabel,
+        summary: shellCtaDensityState === 'direct'
+          ? 'The shell can show a fuller CTA set because every visible action still backs the same lead story.'
+          : shellCtaDensityState === 'watched'
+            ? 'The shell should keep a compact CTA set so support actions do not compete with the watched lead.'
+            : 'The shell should collapse to the smallest recovery-safe action set.',
+        detail: shellCtaDensityState === 'direct'
+          ? `${visibleActionCount} actions remain visible and none require hard suppression.`
+          : shellCtaDensityState === 'watched'
+            ? `${visibleActionCount} actions are still honest to show, but ${suppressedActionCount} routes are already de-emphasized or hidden.`
+            : `Only recovery-safe routes should stay visible while ${suppressedActionCount} actions remain suppressed.`,
+        actionLabel: shellCtaDensityState === 'direct'
+          ? 'Keep one lead action and supporting context nearby.'
+          : shellCtaDensityState === 'watched'
+            ? 'Trim secondary actions before they outrank the watched lane.'
+            : 'Collapse into one recovery-led next move.',
+        tone: shellCtaDensityState === 'direct' ? 'ready' : shellCtaDensityState === 'watched' ? 'watch' : 'recover',
+      }),
+      buildShellPolicyRule({
+        id: 'provider-badge',
+        label: 'Provider badge ownership',
+        state: shellProviderBadgeState,
+        ownerLabel: `${currentProviderName ?? 'Current route'} -> ${recoveryOwnership.recoveryOwner}`,
+        summary: shellProviderBadgeState === 'direct'
+          ? `${currentProviderName ?? 'The current provider'} can stay presented as the sole visible owner.`
+          : shellProviderBadgeState === 'watched'
+            ? 'The shell should show ownership drift without fully flipping the provider badge yet.'
+            : `${recoveryOwnership.recoveryOwner} should become the named owner the shell is preparing the viewer for.`,
+        detail: shellProviderBadgeState === 'direct'
+          ? `${switchCustody.detail} ${recoveryOwnership.detail}`
+          : shellProviderBadgeState === 'watched'
+            ? `${switchCustody.custodyRule} ${recoveryOwnership.handoffReadiness}`
+            : `${recoveryOwnership.handoffReadiness} ${switchCustody.detail}`,
+        actionLabel: shellProviderBadgeState === 'direct'
+          ? 'Leave the provider badge stable.'
+          : shellProviderBadgeState === 'watched'
+            ? 'Add ownership drift context near the provider badge.'
+            : 'Flip the visible provider story toward the recovery owner.',
+        tone: shellProviderBadgeState === 'direct' ? 'ready' : shellProviderBadgeState === 'watched' ? 'watch' : 'recover',
+      }),
+      buildShellPolicyRule({
+        id: 'recovery-rail',
+        label: 'Recovery rail',
+        state: shellRecoveryRailState,
+        ownerLabel: recoveryOwnership.recoveryOwner,
+        summary: shellRecoveryRailState === 'direct'
+          ? 'Recovery can stay available without taking over the main shell rail.'
+          : shellRecoveryRailState === 'watched'
+            ? 'Recovery should stay visibly nearby while the main shell still carries the current route.'
+            : 'Recovery now owns the lead rail and should take the shell forward.',
+        detail: shellRecoveryRailState === 'direct'
+          ? recoveryOwnership.summary
+          : shellRecoveryRailState === 'watched'
+            ? `${recoveryOwnership.detail} ${multiConnectionTakeover.rules[0]?.summary ?? ''}`.trim()
+            : `${recoveryOwnership.detail} ${multiConnectionTakeover.summary}`,
+        actionLabel: shellRecoveryRailState === 'direct'
+          ? 'Keep recovery available but backgrounded.'
+          : shellRecoveryRailState === 'watched'
+            ? 'Expose recovery as supporting context.'
+            : 'Promote recovery into the primary rail.',
+        tone: shellRecoveryRailState === 'direct' ? 'ready' : shellRecoveryRailState === 'watched' ? 'watch' : 'recover',
+      }),
+      buildShellPolicyRule({
+        id: 'focus-bias',
+        label: 'Initial focus bias',
+        state: shellFocusBiasState,
+        ownerLabel: shellFocusBiasState === 'recovery'
+          ? recoveryOwnership.recoveryOwner
+          : leadReadinessItem?.label ?? primaryAction.label,
+        summary: shellFocusBiasState === 'direct'
+          ? 'Default focus can land on the hero CTA.'
+          : shellFocusBiasState === 'watched'
+            ? 'Initial focus should stay conservative until the viewer sees the watched context.'
+            : 'Initial focus should move directly toward the recovery helper.',
+        detail: shellFocusBiasState === 'direct'
+          ? 'The first press still belongs to the hero lane because no stronger recovery or caution signal outranks it.'
+          : shellFocusBiasState === 'watched'
+            ? `${actionReadiness.readinessEscalation} ${actionReadiness.cautionRule}`
+            : `${recoveryOwnership.handoffReadiness} ${multiConnectionTakeover.rules[0]?.detail ?? ''}`.trim(),
+        actionLabel: shellFocusBiasState === 'direct'
+          ? 'Start on the hero CTA.'
+          : shellFocusBiasState === 'watched'
+            ? 'Delay aggressive focus until watched context is visible.'
+            : 'Bias focus toward the recovery helper.',
+        tone: shellFocusBiasState === 'direct' ? 'ready' : shellFocusBiasState === 'watched' ? 'watch' : 'recover',
+      }),
+    ],
+    tone: shellPolicyTone,
+  };
   const shellOrchestration: LivePlayerOverlayPlaybackShellOrchestration = {
     title: 'Playback shell orchestration',
     state: shellState,
@@ -2772,6 +2986,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     escalationWitnesses,
     messageLadder,
     shellOrchestration,
+    shellPolicy,
     metadataWitnesses,
     freshnessWitnesses,
     windowWitnesses,

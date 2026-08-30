@@ -2319,6 +2319,31 @@ export type LivePlayerOverlayPlaybackShellInsight = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackShellPolicyRule = {
+  id: 'hero-emphasis' | 'cta-density' | 'provider-badge' | 'recovery-rail' | 'focus-bias';
+  label: string;
+  state: 'direct' | 'watched' | 'recovery';
+  ownerLabel: string;
+  summary: string;
+  detail: string;
+  actionLabel: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackShellPolicy = {
+  title: string;
+  state: 'direct' | 'watched' | 'recovery';
+  summary: string;
+  detail: string;
+  emphasisLabel: string;
+  caveatLabel: string;
+  providerBadgeLabel: string;
+  actionDensityLabel: string;
+  recoveryLabel: string;
+  rules: LivePlayerOverlayPlaybackShellPolicyRule[];
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerOverlayPlaybackShellOrchestration = {
   title: string;
   state: 'premium' | 'watched' | 'recovery';
@@ -2385,6 +2410,7 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   escalationWitnesses: LivePlayerOverlayPlaybackEscalationWitness[];
   messageLadder: LivePlayerOverlayPlaybackMessageLadder;
   shellOrchestration: LivePlayerOverlayPlaybackShellOrchestration;
+  shellPolicy: LivePlayerOverlayPlaybackShellPolicy;
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
   windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];
