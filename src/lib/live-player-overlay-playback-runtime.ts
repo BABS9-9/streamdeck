@@ -14,6 +14,9 @@ import {
   LivePlayerOverlayPlaybackMetadataWitness,
   LivePlayerOverlayPlaybackMultiConnectionTakeover,
   LivePlayerOverlayPlaybackResumeHonesty,
+  LivePlayerOverlayPlaybackShellActionPlan,
+  LivePlayerOverlayPlaybackShellInsight,
+  LivePlayerOverlayPlaybackShellOrchestration,
   LivePlayerOverlayPlaybackRuntimeContract,
   LivePlayerOverlayPlaybackSwitchCustody,
   LivePlayerOverlayPlaybackTakeoverRule,
@@ -335,6 +338,44 @@ const buildCtaWitness = ({
   state,
   summary,
   detail,
+  tone,
+});
+
+const buildShellActionPlan = ({
+  id,
+  label,
+  state,
+  ownerLabel,
+  summary,
+  detail,
+  tone,
+}: LivePlayerOverlayPlaybackShellActionPlan): LivePlayerOverlayPlaybackShellActionPlan => ({
+  id,
+  label,
+  state,
+  ownerLabel,
+  summary,
+  detail,
+  tone,
+});
+
+const buildShellInsight = ({
+  id,
+  label,
+  state,
+  ownerLabel,
+  summary,
+  detail,
+  actionLabel,
+  tone,
+}: LivePlayerOverlayPlaybackShellInsight): LivePlayerOverlayPlaybackShellInsight => ({
+  id,
+  label,
+  state,
+  ownerLabel,
+  summary,
+  detail,
+  actionLabel,
   tone,
 });
 
@@ -1710,6 +1751,20 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
       }),
     ],
   };
+  const heroDoctrineState: LivePlayerOverlayPlaybackHeroDoctrine['state'] = !currentStream
+    ? 'recovery'
+    : ctaEligibilityState === 'eligible'
+      && telemetryDecayStage === 'live'
+      && recoveryOwnershipState === 'active-owner'
+      ? 'premium'
+      : ctaEligibilityState === 'blocked' || telemetryDecayStage === 'stale' || telemetryDecayStage === 'missing' || recoveryOwnershipState === 'handoff-ready' || recoveryOwnershipState === 'fail-closed'
+        ? 'recovery'
+        : 'watched';
+  const heroDoctrineTone: LivePlayerOverlayPlaybackHeroDoctrine['tone'] = heroDoctrineState === 'premium'
+    ? 'ready'
+    : heroDoctrineState === 'watched'
+      ? 'watch'
+      : 'recover';
   const ctaWitnesses = [
     buildCtaWitness({
       id: 'action-executable',
@@ -1930,20 +1985,6 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
             : 'watch',
     }),
   ];
-  const heroDoctrineState: LivePlayerOverlayPlaybackHeroDoctrine['state'] = !currentStream
-    ? 'recovery'
-    : ctaEligibilityState === 'eligible'
-      && telemetryDecayStage === 'live'
-      && recoveryOwnershipState === 'active-owner'
-      ? 'premium'
-      : ctaEligibilityState === 'blocked' || telemetryDecayStage === 'stale' || telemetryDecayStage === 'missing' || recoveryOwnershipState === 'handoff-ready' || recoveryOwnershipState === 'fail-closed'
-        ? 'recovery'
-        : 'watched';
-  const heroDoctrineTone: LivePlayerOverlayPlaybackHeroDoctrine['tone'] = heroDoctrineState === 'premium'
-    ? 'ready'
-    : heroDoctrineState === 'watched'
-      ? 'watch'
-      : 'recover';
   const heroDoctrine = {
     title: 'Premium hero doctrine',
     state: heroDoctrineState,
@@ -2347,6 +2388,140 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
       }),
     ],
   };
+  const shellState: LivePlayerOverlayPlaybackShellOrchestration['state'] = heroDoctrineState;
+  const shellContinuityLabel = continuitySurface?.copy ?? recoveryOwnership.detail;
+  const shellOverlayCopy = shellState === 'recovery'
+    ? ctaStack.continuitySurfaceCopy
+    : ctaStack.companionSurfaceCopy;
+  const shellNextMoveLabel = recoveryRuntime?.nextMove.label
+    ?? (recoveryHelperState === 'promoted'
+      ? recoveryHelperSurface?.copy ?? ctaStack.recoverySurfaceCopy
+      : primaryAction.label);
+  const shellNextMoveDetail = recoveryRuntime?.nextMove.detail
+    ?? (recoveryHelperState === 'promoted'
+      ? recoveryOwnership.detail
+      : shellState === 'premium'
+        ? `${primaryAction.ownerLabel} still owns the cleanest visible next move.`
+        : shellState === 'watched'
+          ? `${primaryAction.ownerLabel} can still lead, but ${nextEscalation.toLowerCase()}`
+          : `${recoveryOwnership.recoveryOwner} should take over the visible next move before the shell implies continuity.`);
+  const shellNextMoveTone = recoveryRuntime?.nextMove.tone
+    ?? (shellState === 'premium' ? 'ready' : shellState === 'watched' ? 'watch' : 'recover');
+  const shellOrchestration: LivePlayerOverlayPlaybackShellOrchestration = {
+    title: 'Playback shell orchestration',
+    state: shellState,
+    summary: shellState === 'premium'
+      ? 'The playback runtime can hand the shell one clean continuity line, one companion copy lane, and one default next move.'
+      : shellState === 'watched'
+        ? 'The shell can stay direct, but it must keep the watched clause and ownership caveat visible from the same backend packet.'
+        : 'The shell should pivot fully into recovery-led ownership and copy without recomputing takeover logic locally.',
+    detail: 'This packet tells the shell what to show for continuity, companion copy, and next move after provider, telemetry, line, and takeover truth have already been reconciled in the playback runtime.',
+    continuityLabel: shellContinuityLabel,
+    overlayCopy: shellOverlayCopy,
+    nextMoveLabel: shellNextMoveLabel,
+    nextMoveDetail: shellNextMoveDetail,
+    nextMoveTone: shellNextMoveTone,
+    nextMoveTargetProviderId: recoveryRuntime?.targetProviderId ?? primaryAction.targetProviderId,
+    primaryActionLabel: ctaStack.slots.find((slot) => slot.id === 'hero')?.state === 'hidden'
+      ? null
+      : ctaStack.slots.find((slot) => slot.id === 'hero')?.ctaLabel ?? null,
+    secondaryActionLabel: ctaStack.slots.find((slot) => slot.id === 'secondary')?.state === 'hidden'
+      ? null
+      : ctaStack.slots.find((slot) => slot.id === 'secondary')?.ctaLabel ?? null,
+    focusRule: recoveryHelperState === 'promoted'
+      ? 'Move focus toward the recovery helper because takeover is now the honest first action.'
+      : heroCtaState === 'promoted'
+        ? 'Keep initial focus on the hero CTA while the shell stays within the current proof boundary.'
+        : 'Keep focus conservative and let visible caution or recovery copy outrank aggressive CTA emphasis.',
+    takeoverReason: recoveryOwnership.handoffReadiness,
+    actions: [
+      buildShellActionPlan({
+        id: 'hero',
+        label: 'Hero action plan',
+        state: heroCtaState,
+        ownerLabel: ctaEligibility.primaryOwner,
+        summary: ctaStack.heroSurfaceCopy,
+        detail: ctaStack.slots.find((slot) => slot.id === 'hero')?.activationRule
+          ?? 'Hero CTA posture is still settling.',
+        tone: heroCtaState === 'promoted' ? 'ready' : heroCtaState === 'watched' ? 'watch' : 'recover',
+      }),
+      buildShellActionPlan({
+        id: 'secondary',
+        label: 'Secondary action plan',
+        state: secondaryCtaState,
+        ownerLabel: secondaryAction?.ownerLabel ?? 'No secondary owner',
+        summary: ctaStack.companionSurfaceCopy,
+        detail: ctaStack.slots.find((slot) => slot.id === 'secondary')?.activationRule
+          ?? 'Secondary action posture is still settling.',
+        tone: secondaryCtaState === 'promoted'
+          ? 'ready'
+          : secondaryCtaState === 'watched'
+            ? 'watch'
+            : secondaryCtaState === 'blocked'
+              ? 'recover'
+              : 'watch',
+      }),
+      buildShellActionPlan({
+        id: 'recovery-helper',
+        label: 'Recovery helper plan',
+        state: recoveryHelperState,
+        ownerLabel: recoveryOwnership.recoveryOwner,
+        summary: ctaStack.recoverySurfaceCopy,
+        detail: ctaStack.slots.find((slot) => slot.id === 'recovery-helper')?.activationRule
+          ?? 'Recovery helper posture is still settling.',
+        tone: recoveryHelperState === 'promoted'
+          ? 'ready'
+          : recoveryHelperState === 'watched'
+            ? 'watch'
+            : recoveryHelperState === 'blocked'
+              ? 'recover'
+              : 'watch',
+      }),
+    ],
+    insights: [
+      buildShellInsight({
+        id: 'connection-headroom',
+        label: connectionHeadroom.title,
+        state: connectionHeadroom.state,
+        ownerLabel: `${connectionHeadroom.activeOwner} vs ${connectionHeadroom.fallbackOwner}`,
+        summary: connectionHeadroom.summary,
+        detail: `${connectionHeadroom.currentUsage} ${connectionHeadroom.overlayRule}`,
+        actionLabel: connectionHeadroom.nextLimit,
+        tone: connectionHeadroom.tone,
+      }),
+      buildShellInsight({
+        id: 'switch-custody',
+        label: switchCustody.title,
+        state: switchCustody.state,
+        ownerLabel: `${switchCustody.currentOwner} -> ${switchCustody.standbyOwner}`,
+        summary: switchCustody.summary,
+        detail: `${switchCustody.detail} ${switchCustody.lastHandoff}`,
+        actionLabel: switchCustody.custodyRule,
+        tone: switchCustody.tone,
+      }),
+      buildShellInsight({
+        id: 'resume-honesty',
+        label: resumeHonesty.title,
+        state: resumeHonesty.state,
+        ownerLabel: resumeHonesty.resumeTarget,
+        summary: resumeHonesty.summary,
+        detail: `${resumeHonesty.detail} ${resumeHonesty.continuityRisk}`,
+        actionLabel: resumeHonesty.nextHonestMove,
+        tone: resumeHonesty.tone,
+      }),
+      buildShellInsight({
+        id: 'takeover-rule',
+        label: multiConnectionTakeover.title,
+        state: multiConnectionTakeover.tone,
+        ownerLabel: multiConnectionTakeover.recommendedOwner,
+        summary: multiConnectionTakeover.summary,
+        detail: `${multiConnectionTakeover.detail} ${multiConnectionTakeover.blockedOwnerCount > 0 ? `${multiConnectionTakeover.blockedOwnerCount} provider routes are currently blocked.` : 'No provider routes are currently blocked.'}`,
+        actionLabel: multiConnectionTakeover.rules[0]?.actionLabel
+          ?? 'Keep takeover wording conservative until a rule can be promoted.',
+        tone: multiConnectionTakeover.tone,
+      }),
+    ],
+  };
   const tone = getDominantTone([
     recoveryRuntime?.tone ?? 'ready',
     primaryAction.tone,
@@ -2406,6 +2581,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     heroDoctrine,
     escalationWitnesses,
     messageLadder,
+    shellOrchestration,
     metadataWitnesses,
     freshnessWitnesses,
     windowWitnesses,

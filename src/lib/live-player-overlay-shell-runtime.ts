@@ -260,13 +260,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
       ? `Guide posture: ${guideStateLabel}`
       : 'Next program data is unavailable, so the overlay should say so plainly.';
   const continuityLabel = continuityRuntime.recoveryOwnerLabel;
-  const heroCta = playbackRuntime.ctaStack.slots.find((slot) => slot.id === 'hero');
-  const secondaryCta = playbackRuntime.ctaStack.slots.find((slot) => slot.id === 'secondary');
-  const overlayCopy = playbackRuntime.messageLadder.state === 'premium'
-    ? playbackRuntime.ctaStack.companionSurfaceCopy
-    : playbackRuntime.messageLadder.state === 'watched'
-      ? playbackRuntime.ctaStack.companionSurfaceCopy
-      : playbackRuntime.ctaStack.continuitySurfaceCopy;
+  const shellOrchestration = playbackRuntime.shellOrchestration;
   const quickActions = buildQuickActions({ controlRuntime, remoteRuntime, recoveryRuntime });
   const lanes = buildLanes({
     nowLabel,
@@ -302,15 +296,15 @@ export const buildLivePlayerOverlayShellRuntime = ({
     providerLabel,
     nowLabel,
     nextLabel,
-    continuityLabel,
+    continuityLabel: shellOrchestration.continuityLabel || continuityLabel,
     progressLabel,
     seekWindowLabel,
     audioLabel,
     subtitleLabel,
-    overlayCopy,
+    overlayCopy: shellOrchestration.overlayCopy,
     actionKind: recoveryRuntime?.actionKind ?? 'fail-closed',
-    primaryActionLabel: heroCta?.state === 'hidden' ? null : heroCta?.ctaLabel ?? null,
-    secondaryActionLabel: secondaryCta?.state === 'hidden' ? null : secondaryCta?.ctaLabel ?? null,
+    primaryActionLabel: shellOrchestration.primaryActionLabel,
+    secondaryActionLabel: shellOrchestration.secondaryActionLabel,
     focusRuntime,
     commandRuntime,
     interactionRuntime,
@@ -321,10 +315,10 @@ export const buildLivePlayerOverlayShellRuntime = ({
     lanes,
     statusChips,
     nextMove: {
-      label: recoveryRuntime?.nextMove.label ?? remoteRuntime.nextMove.label,
-      detail: recoveryRuntime?.nextMove.detail ?? overlayCopy,
-      tone: recoveryRuntime?.nextMove.tone ?? remoteRuntime.nextMove.tone,
-      targetProviderId: recoveryRuntime?.targetProviderId ?? remoteRuntime.nextMove.targetProviderId,
+      label: shellOrchestration.nextMoveLabel || recoveryRuntime?.nextMove.label || remoteRuntime.nextMove.label,
+      detail: shellOrchestration.nextMoveDetail,
+      tone: shellOrchestration.nextMoveTone,
+      targetProviderId: shellOrchestration.nextMoveTargetProviderId,
     },
   };
 };

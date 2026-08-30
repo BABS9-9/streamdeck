@@ -92,6 +92,76 @@ export function LivePlayerOverlayShellPanel({
           </article>
         </div>
 
+        <div className={`mt-4 rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.shellOrchestration.nextMoveTone]}`}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.shellOrchestration.title}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.playbackRuntime.shellOrchestration.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.shellOrchestration.detail}</p>
+            </div>
+            <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+              {contract.playbackRuntime.shellOrchestration.state}
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Continuity line</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.shellOrchestration.continuityLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Companion copy</p>
+              <p className="mt-3 text-sm leading-6 text-white/90">{contract.playbackRuntime.shellOrchestration.overlayCopy}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Next move</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.shellOrchestration.nextMoveLabel}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.shellOrchestration.nextMoveDetail}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Focus rule</p>
+              <p className="mt-3 text-sm leading-6 text-white/90">{contract.playbackRuntime.shellOrchestration.focusRule}</p>
+              <p className="mt-2 text-xs leading-5 text-white/70">{contract.playbackRuntime.shellOrchestration.takeoverReason}</p>
+            </article>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {contract.playbackRuntime.shellOrchestration.actions.map((action) => (
+              <article
+                key={action.id}
+                className={`rounded-2xl border p-4 ${toneStyles[action.tone]}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{action.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {action.state}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{action.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{action.ownerLabel}</p>
+                <p className="mt-2 text-xs leading-5 text-white/70">{action.detail}</p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {contract.playbackRuntime.shellOrchestration.insights.map((insight) => (
+              <article
+                key={insight.id}
+                className={`rounded-2xl border p-4 ${toneStyles[insight.tone]}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{insight.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {insight.state}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{insight.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{insight.ownerLabel}</p>
+                <p className="mt-2 text-xs leading-5 text-white/70">{insight.detail}</p>
+                <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/65">{insight.actionLabel}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <article className="rounded-2xl border border-white/15 bg-white/[0.04] p-4">
             <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Progress lane</p>

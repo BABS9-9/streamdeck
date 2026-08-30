@@ -2268,6 +2268,46 @@ export type LivePlayerOverlayPlaybackMessageLadder = {
   surfaces: LivePlayerOverlayPlaybackMessageSurface[];
 };
 
+export type LivePlayerOverlayPlaybackShellActionPlan = {
+  id: 'hero' | 'secondary' | 'recovery-helper';
+  label: string;
+  state: 'promoted' | 'watched' | 'blocked' | 'hidden';
+  ownerLabel: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackShellInsight = {
+  id: 'connection-headroom' | 'switch-custody' | 'resume-honesty' | 'takeover-rule';
+  label: string;
+  state: string;
+  ownerLabel: string;
+  summary: string;
+  detail: string;
+  actionLabel: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackShellOrchestration = {
+  title: string;
+  state: 'premium' | 'watched' | 'recovery';
+  summary: string;
+  detail: string;
+  continuityLabel: string;
+  overlayCopy: string;
+  nextMoveLabel: string;
+  nextMoveDetail: string;
+  nextMoveTone: LivePlayerControlTone;
+  nextMoveTargetProviderId: string | null;
+  primaryActionLabel: string | null;
+  secondaryActionLabel: string | null;
+  focusRule: string;
+  takeoverReason: string;
+  actions: LivePlayerOverlayPlaybackShellActionPlan[];
+  insights: LivePlayerOverlayPlaybackShellInsight[];
+};
+
 export type LivePlayerOverlayPlaybackRuntimeContract = {
   screenId: 'player';
   title: string;
@@ -2313,6 +2353,7 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   heroDoctrine: LivePlayerOverlayPlaybackHeroDoctrine;
   escalationWitnesses: LivePlayerOverlayPlaybackEscalationWitness[];
   messageLadder: LivePlayerOverlayPlaybackMessageLadder;
+  shellOrchestration: LivePlayerOverlayPlaybackShellOrchestration;
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
   windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];
