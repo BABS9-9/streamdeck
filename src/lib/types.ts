@@ -777,7 +777,7 @@ export type SurfaceConnectionHeadroomRuntimeLane = {
 };
 
 export type SurfaceConnectionHeadroomRuntimeContract = {
-  screenId: 'login' | 'home' | 'live';
+  screenId: 'login' | 'home' | 'live' | 'player';
   title: string;
   summary: string;
   providerCount: number;
@@ -1533,6 +1533,32 @@ export type LivePlayerContinuityRuntimeContract = {
     tone: LivePlayerControlTone;
     targetProviderId: string | null;
   };
+};
+
+export type LivePlayerBrowseToPlayerHandoffEntry = {
+  id: 'inheritance' | 'playback-owner' | 'recovery-owner' | 'transfer-trigger';
+  label: string;
+  summary: string;
+  detail: string;
+  tone: 'ready' | 'watch' | 'recover';
+};
+
+export type LivePlayerBrowseToPlayerHandoffContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: 'ready' | 'watch' | 'recover';
+  handoffState: 'local' | 'watch' | 'transfer-ready' | 'recovery-led';
+  inheritedSurface: 'home' | 'live' | 'search' | 'favorites' | 'continue' | 'player' | 'movies' | 'series' | 'collections' | null;
+  inheritedSurfaceLabel: string;
+  inheritedProviderLabel: string;
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  nextMoveLabel: string;
+  nextMoveDetail: string;
+  entries: LivePlayerBrowseToPlayerHandoffEntry[];
 };
 
 export type LivePlayerLineReleaseEntry = {
@@ -2857,7 +2883,7 @@ export type MockProviderManifest = {
     }>;
   }>;
   surfaceLaunchReadinessContracts: Array<{
-    screenId: 'login' | 'home' | 'live';
+    screenId: 'login' | 'home' | 'live' | 'player';
     title: string;
     summary: string;
     readiness: Array<{
@@ -2917,7 +2943,7 @@ export type MockProviderManifest = {
     }>;
   }>;
   surfaceScorecards: Array<{
-    screenId: 'login' | 'home' | 'live';
+    screenId: 'login' | 'home' | 'live' | 'player';
     title: string;
     summary: string;
     metrics: Array<{
@@ -2928,7 +2954,7 @@ export type MockProviderManifest = {
     }>;
   }>;
   surfaceExitCriteria: Array<{
-    screenId: 'login' | 'home' | 'live';
+    screenId: 'login' | 'home' | 'live' | 'player';
     title: string;
     summary: string;
     goSignal: string;
@@ -2939,7 +2965,7 @@ export type MockProviderManifest = {
     recoveryMove: string;
   }>;
   surfaceHandoffs: Array<{
-    screenId: 'login' | 'home' | 'live';
+    screenId: 'login' | 'home' | 'live' | 'player';
     title: string;
     summary: string;
     carriesForward: string[];
@@ -3065,7 +3091,7 @@ export type MockProviderManifest = {
     }>;
   }>;
   surfaceAutonomyBoundaries: Array<{
-    screenId: 'login' | 'home' | 'live';
+    screenId: 'login' | 'home' | 'live' | 'player';
     title: string;
     summary: string;
     boundaries: Array<{
@@ -3173,7 +3199,7 @@ export type MockProviderManifest = {
     }>;
   }>;
   surfaceConnectionHeadrooms: Array<{
-    screenId: 'login' | 'home' | 'live';
+    screenId: 'login' | 'home' | 'live' | 'player';
     title: string;
     summary: string;
     lanes: Array<{

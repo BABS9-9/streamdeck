@@ -5,7 +5,7 @@ import {
   StreamHealth,
 } from './types';
 
-type ScreenId = 'login' | 'home' | 'live';
+type ScreenId = 'login' | 'home' | 'live' | 'player';
 type Tone = 'ready' | 'watch' | 'recover';
 
 type RuntimeSurfaceContracts = {
@@ -35,6 +35,7 @@ const screenLabels: Record<ScreenId, string> = {
   login: 'Login',
   home: 'Home',
   live: 'Live',
+  player: 'Player',
 };
 
 const guideStatusLabel = (report: ProviderGuideCoverageReport | null) => {
@@ -65,7 +66,7 @@ const getProviderTone = (board: SavedProviderHealthBoard): Tone => {
 };
 
 const getPlaybackTone = (screenId: ScreenId, streamHealth?: StreamHealth | null): Tone => {
-  if (screenId !== 'live') return 'ready';
+  if (screenId !== 'live' && screenId !== 'player') return 'ready';
   if (!streamHealth || streamHealth.status === 'idle' || streamHealth.status === 'loading') return 'watch';
   if (streamHealth.status === 'healthy') return 'ready';
   if (streamHealth.status === 'buffering' || streamHealth.status === 'degraded') return 'watch';
@@ -140,9 +141,15 @@ const getRecoveryMove = ({
       || 'Hold hero launches to browse-safe fallback until provider and guide posture both clear.';
   }
 
+  if (screenId === 'live') {
+    return providerRoute
+      || guideFallback
+      || 'Switch playback ownership to the healthiest saved provider before the current channel gets blamed for provider instability.';
+  }
+
   return providerRoute
     || guideFallback
-    || 'Switch playback ownership to the healthiest saved provider before the current channel gets blamed for provider instability.';
+    || 'Keep playback continuity explicit and hand the dock to the healthiest saved provider before the active stream starts sounding healthier than the proof stack.';
 };
 
 const buildLaunchReadiness = ({
@@ -177,7 +184,7 @@ const buildLaunchReadiness = ({
     : 'No verified now/next listing yet';
 
   const providerCard = {
-    label: screenId === 'login' ? 'Connect owner' : screenId === 'home' ? 'Browse owner' : 'Playback owner',
+    label: screenId === 'login' ? 'Connect owner' : screenId === 'home' ? 'Browse owner' : screenId === 'live' ? 'Playback owner' : 'Dock owner',
     safeWhen: `${providerLabel} still owns the surface${providerStatusLabel ? ` (${providerStatusLabel})` : ''} and the saved-provider board is not warning about expiry, saturation, or auth drift.`,
     blockedWhen: activeWarning || 'No active provider owner is healthy enough to carry the next move honestly.',
     recoveryMove,
@@ -185,7 +192,7 @@ const buildLaunchReadiness = ({
   };
 
   const guideCard = {
-    label: screenId === 'login' ? 'Guide preview' : screenId === 'home' ? 'Hero guide truth' : 'Channel guide truth',
+    label: screenId === 'login' ? 'Guide preview' : screenId === 'home' ? 'Hero guide truth' : screenId === 'live' ? 'Channel guide truth' : 'Playback guide truth',
     safeWhen: guideSummary,
     blockedWhen: report
       ? `${guideSummary}. Do not sell confident now/next continuity when fresh coverage is missing.`
@@ -197,13 +204,15 @@ const buildLaunchReadiness = ({
   };
 
   const launchCard = {
-    label: screenId === 'login' ? 'Enter Home' : screenId === 'home' ? 'Open featured launch' : 'Play selected channel',
+    label: screenId === 'login' ? 'Enter Home' : screenId === 'home' ? 'Open featured launch' : screenId === 'live' ? 'Play selected channel' : 'Keep current playback',
     safeWhen: screenId === 'live'
       ? `${selectedLabel || 'Selected channel'} is still anchored by ${selectedGuideLabel} and playback telemetry is not red-lining.`
+      : screenId === 'player'
+        ? `${selectedLabel || 'Active playback'} is still backed by the same provider owner, same now/next proof, and stream health that has not slipped into visible recovery.`
       : screenId === 'home'
         ? `${selectedLabel || 'Featured browse state'} is still backed by a healthy provider owner and honest guide continuity.`
         : `${providerLabel} can move into Home without reconnect theater because provider and guide proof are both visible now.`,
-    blockedWhen: screenId === 'live'
+    blockedWhen: screenId === 'live' || screenId === 'player'
       ? streamHealth?.message || 'Playback health is degraded enough that the next Play tap would outrun current proof.'
       : getDominantTone([providerTone, guideTone]) === 'recover'
         ? 'The next move would hide provider or guide instability behind premium shell polish.'
@@ -215,7 +224,7 @@ const buildLaunchReadiness = ({
   return {
     screenId,
     title: `${screenLabels[screenId]} launch readiness`,
-    summary: `This contract is generated from the active provider board${report ? ' plus shared live-guide coverage' : ''}${screenId === 'live' ? ' and current playback telemetry' : ''}, not just mock rehearsal copy.`,
+    summary: `This contract is generated from the active provider board${report ? ' plus shared live-guide coverage' : ''}${screenId === 'live' || screenId === 'player' ? ' and current playback telemetry' : ''}, not just mock rehearsal copy.`,
     readiness: [providerCard, guideCard, launchCard],
   };
 };
@@ -247,7 +256,7 @@ const buildLaunchScorecard = ({
   return {
     screenId,
     title: `${screenLabels[screenId]} runtime scorecard`,
-    summary: `The next move is currently ${overallTone === 'ready' ? 'go-safe' : overallTone === 'watch' ? 'watch-safe' : 'recovery-led'} based on runtime provider ownership, guide continuity, and ${screenId === 'live' ? 'playback telemetry' : 'surface proof'}.`,
+    summary: `The next move is currently ${overallTone === 'ready' ? 'go-safe' : overallTone === 'watch' ? 'watch-safe' : 'recovery-led'} based on runtime provider ownership, guide continuity, and ${screenId === 'live' || screenId === 'player' ? 'playback telemetry' : 'surface proof'}.`,
     metrics: [
       {
         label: 'Provider owner',
@@ -258,7 +267,7 @@ const buildLaunchScorecard = ({
         tone: providerTone,
       },
       {
-        label: screenId === 'live' ? 'Guide continuity' : 'Shared guide truth',
+        label: screenId === 'live' || screenId === 'player' ? 'Guide continuity' : 'Shared guide truth',
         value: guideStatusLabel(report),
         detail: currentNowTitle
           ? `${selectedLabel || 'Current focus'} is carrying "${currentNowTitle}" as the verified now listing.`
@@ -266,14 +275,14 @@ const buildLaunchScorecard = ({
         tone: guideTone,
       },
       {
-        label: screenId === 'live' ? 'Playback safety' : 'Recovery posture',
-        value: screenId === 'live'
+        label: screenId === 'live' || screenId === 'player' ? 'Playback safety' : 'Recovery posture',
+        value: screenId === 'live' || screenId === 'player'
           ? streamHealth?.status || 'idle'
           : recoveryOwner,
-        detail: screenId === 'live'
+        detail: screenId === 'live' || screenId === 'player'
           ? streamHealth?.message || 'Playback telemetry has not raised a hard stop yet.'
           : board.recoveryRoute?.detail || `${recoveryOwner} is the current recovery owner if the active source loses surface ownership.`,
-        tone: screenId === 'live' ? playbackTone : overallTone,
+        tone: screenId === 'live' || screenId === 'player' ? playbackTone : overallTone,
       },
     ],
   };
@@ -313,10 +322,12 @@ const buildExitCriteria = ({
       ? `${providerLabel} is ready, saved-provider warnings are under control, and the login preview already exposes honest guide continuity before routing into Home.`
       : screenId === 'home'
         ? `${selectedLabel || 'The featured launch'} still has a healthy provider owner and enough guide truth to open Live or playback without changing the story.`
+        : screenId === 'player'
+          ? `${selectedLabel || 'The active stream'} is still owned by ${providerLabel}, ${currentNowTitle ? `the now/next lane still points at "${currentNowTitle}", ` : ''}and playback telemetry is not already asking for a visible handoff.`
         : `${selectedLabel || 'The selected channel'} is still owned by ${providerLabel}, ${currentNowTitle ? `now playing truth points at "${currentNowTitle}", ` : ''}and playback telemetry is not in an error posture.`,
     holdSignal: getDominantTone([providerTone, guideTone, playbackTone]) === 'ready'
       ? 'Hold only if the provider loses ownership or the shared guide proof drops out before the next tap.'
-      : screenId === 'live'
+      : screenId === 'live' || screenId === 'player'
         ? streamHealth?.message || 'Playback, provider, or guide proof has already degraded enough that the next Play tap would outrun honest proof.'
         : `Hold while ${guideStatusLabel(report)} or while the saved-provider board is still warning about the current owner.`,
     nextHopLabel,
@@ -356,6 +367,8 @@ const buildHandoffMap = ({
 
   if (screenId === 'live') {
     carriesForward.push('Playback keeps the selected channel identity visible even when the guide or provider path downgrades.');
+  } else if (screenId === 'player') {
+    carriesForward.push('The dock keeps the same active stream, playback owner, and recovery destination visible so Home and Live handoff language does not get rewritten locally.');
   } else if (screenId === 'home') {
     carriesForward.push('Featured browse state, favorites, and quick-live context stay pinned to the same provider-safe continuity path.');
   } else {
@@ -410,12 +423,14 @@ const buildAutonomyBoundary = ({
     : 'Fresh line-capacity proof is still pending';
 
   const providerBoundary = {
-    label: screenId === 'login' ? 'Saved-provider re-entry' : screenId === 'home' ? 'Featured provider carry-forward' : 'Playback provider carry-forward',
+    label: screenId === 'login' ? 'Saved-provider re-entry' : screenId === 'home' ? 'Featured provider carry-forward' : screenId === 'live' ? 'Playback provider carry-forward' : 'Dock provider carry-forward',
     autoMaintains: `${providerLabel} stays visible as the current owner while StreamDeck keeps recovery context and saved-provider ranking attached to the surface.`,
     userOwns: screenId === 'login'
       ? 'Choosing a different saved provider or reconnecting from scratch when the current owner no longer looks trustworthy.'
       : screenId === 'home'
         ? 'Approving a provider switch before the featured launch changes who owns the next browse or playback move.'
+        : screenId === 'player'
+          ? 'Approving a provider transfer before playback recovery changes ownership away from the currently visible stream.'
         : 'Approving a provider transfer before playback changes ownership away from the currently selected live source.',
     forcedHandoffTrigger: board.activeProvider?.warning
       || `${headroomLabel}. ${recoveryMove}`,
@@ -423,11 +438,11 @@ const buildAutonomyBoundary = ({
   };
 
   const guideBoundary = {
-    label: screenId === 'login' ? 'Guide preview honesty' : screenId === 'home' ? 'Hero guide honesty' : 'Selected-channel guide honesty',
+    label: screenId === 'login' ? 'Guide preview honesty' : screenId === 'home' ? 'Hero guide honesty' : screenId === 'live' ? 'Selected-channel guide honesty' : 'Playback guide honesty',
     autoMaintains: report?.status === 'fresh'
       ? `StreamDeck may keep ${selectedGuideLabel} attached to ${selectedLabel || providerLabel} without reopening the same guide proof on every render.`
       : `StreamDeck may keep ${selectedLabel || providerLabel} visible while downgrading copy to match ${guideSummary.toLowerCase()}.`,
-    userOwns: screenId === 'live'
+    userOwns: screenId === 'live' || screenId === 'player'
       ? 'Deciding whether guide gaps are still acceptable for this channel before trusting the next Play move.'
       : 'Deciding whether downgraded guide continuity is still good enough to keep moving without pretending the proof is fresher than it is.',
     forcedHandoffTrigger: report?.status === 'fresh'
@@ -437,18 +452,22 @@ const buildAutonomyBoundary = ({
   };
 
   const actionBoundary = {
-    label: screenId === 'login' ? 'Connect action boundary' : screenId === 'home' ? 'Hero launch boundary' : 'Play action boundary',
+    label: screenId === 'login' ? 'Connect action boundary' : screenId === 'home' ? 'Hero launch boundary' : screenId === 'live' ? 'Play action boundary' : 'Playback action boundary',
     autoMaintains: screenId === 'login'
       ? 'StreamDeck may preserve saved credentials, provider ranking, and preview guide proof before sending the user into Home.'
       : screenId === 'home'
         ? 'StreamDeck may preserve featured context, favorites, and recovery posture while the user decides whether to open Live or play the featured source.'
+        : screenId === 'player'
+          ? 'StreamDeck may preserve active-stream identity, playback telemetry, and explicit recovery ownership while the user decides whether to retry, switch, or exit.'
         : 'StreamDeck may preserve selected-channel context, preview telemetry, and guide continuity while playback health remains honest.',
     userOwns: screenId === 'login'
       ? 'The final decision to reuse this provider and move into Home.'
       : screenId === 'home'
         ? 'The final decision to turn the featured card into a real launch.'
+        : screenId === 'player'
+          ? 'The final decision to keep playback running, retry it, or accept a provider handoff when the proof stack is still visible.'
         : 'The final decision to start or keep playback when telemetry, guide continuity, and line headroom are still visible.',
-    forcedHandoffTrigger: screenId === 'live'
+    forcedHandoffTrigger: screenId === 'live' || screenId === 'player'
       ? streamHealth?.message || 'Playback proof has degraded enough that the next Play move must pause for a visible recovery choice.'
       : getDominantTone([providerTone, guideTone, playbackTone]) === 'ready'
         ? 'If provider ownership or shared guide proof slips before the next tap, StreamDeck must stop auto-carrying the same launch story.'
@@ -459,7 +478,7 @@ const buildAutonomyBoundary = ({
   return {
     screenId,
     title: `${screenLabels[screenId]} autonomy boundary`,
-    summary: `This boundary is generated from provider ownership, guide continuity, ${screenId === 'live' ? 'playback telemetry, ' : ''}and saved-provider recovery posture so automatic continuity stops where user-owned choice begins.`,
+    summary: `This boundary is generated from provider ownership, guide continuity, ${screenId === 'live' || screenId === 'player' ? 'playback telemetry, ' : ''}and saved-provider recovery posture so automatic continuity stops where user-owned choice begins.`,
     boundaries: [providerBoundary, guideBoundary, actionBoundary],
   };
 };
@@ -528,7 +547,7 @@ const buildConnectionHeadroom = ({
           : remainingConnections <= 1
             ? 'The surface is one launch away from saturation, so premium copy has to acknowledge the shrinking safety margin.'
             : 'The surface still has enough provider headroom to stay launch-safe if guide and provider proof remain honest.',
-        warningTrigger: screenId === 'live'
+        warningTrigger: screenId === 'live' || screenId === 'player'
           ? playbackWarning || 'Playback buffering, provider warnings, or last-line usage can all force a visible warning before the next play decision.'
           : 'A provider warning, stale guide proof, or last-line posture must downgrade the next move before premium copy overclaims safety.',
         blockedState: remainingConnections === 0
@@ -540,7 +559,7 @@ const buildConnectionHeadroom = ({
         tone: remainingConnections === null ? 'watch' : remainingConnections <= 1 ? 'recover' : 'watch',
       },
       {
-        label: screenId === 'login' ? 'Recovery line policy' : screenId === 'home' ? 'Featured launch line policy' : 'Selected playback line policy',
+        label: screenId === 'login' ? 'Recovery line policy' : screenId === 'home' ? 'Featured launch line policy' : screenId === 'live' ? 'Selected playback line policy' : 'Active playback line policy',
         currentWindow: `${ownerLabel} remains the first choice only while provider ownership, guide proof, and line capacity still agree with each other.`,
         warningTrigger: owner?.warning || guideStatusLabel(report),
         blockedState: playbackWarning

@@ -15,15 +15,18 @@ import { buildLivePlayerOverlayInteractionRuntime } from '@/lib/live-player-over
 import { buildLivePlayerOverlaySessionRuntime } from '@/lib/live-player-overlay-session-runtime';
 import { buildLivePlayerOverlayTimelineRuntime } from '@/lib/live-player-overlay-timeline-runtime';
 import { buildLivePlayerOverlayPlaybackRuntime } from '@/lib/live-player-overlay-playback-runtime';
+import { buildLivePlayerBrowseToPlayerHandoffRuntime } from '@/lib/live-player-browse-to-player-handoff-runtime';
 import { buildLivePlayerOverlayShellRuntime } from '@/lib/live-player-overlay-shell-runtime';
 import { buildLivePlayerLineReleaseRuntime } from '@/lib/live-player-line-release-runtime';
 import { buildLivePlayerRemoteRuntime } from '@/lib/live-player-remote-runtime';
 import { buildMultiConnectionSwitchRuntime } from '@/lib/multi-connection-switch-runtime';
 import { buildProviderDropRuntime } from '@/lib/provider-drop-runtime';
 import { buildSavedProviderRecoveryAuthorityResolver } from '@/lib/saved-provider-recovery-authority-resolver';
+import { buildSavedProviderConnectionHeadroomRuntime } from '@/lib/saved-provider-connection-headroom-runtime';
 import { buildSavedProviderRecoveryProofDissentRuntime } from '@/lib/saved-provider-recovery-proof-dissent-runtime';
 import { buildSavedProviderRecoveryProofQuorumRuntime } from '@/lib/saved-provider-recovery-proof-quorum-runtime';
 import { buildSavedProviderHealthBoard } from '@/lib/saved-provider-health';
+import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { LivePlayerOverlayPlaybackActionId, MockProviderManifest } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatGuideUpdatedAge, getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
@@ -33,6 +36,7 @@ import { LivePlayerContinuityPanel } from './live-player-continuity-panel';
 import { LivePlayerControlPanel } from './live-player-control-panel';
 import { LivePlayerFocusReturnPanel } from './live-player-focus-return-panel';
 import { LivePlayerOverlayShellPanel } from './live-player-overlay-shell-panel';
+import { LivePlayerBrowseToPlayerHandoffPanel } from './live-player-browse-to-player-handoff-panel';
 import { LivePlayerRecoveryActionPanel } from './live-player-recovery-action-panel';
 import { LivePlayerLineClearancePanel } from './live-player-line-clearance-panel';
 import { LivePlayerLineReleasePanel } from './live-player-line-release-panel';
@@ -42,6 +46,10 @@ import { ProviderFactGrid } from './provider-fact-grid';
 import { ProviderDropPanel } from './provider-drop-panel';
 import { ProviderRecoveryRail } from './provider-recovery-rail';
 import { SavedProviderRecoveryAuthorityPanel } from './saved-provider-recovery-authority-panel';
+import { SurfaceConnectionHeadroom } from './surface-connection-headroom';
+import { SurfaceExitCriteria } from './surface-exit-criteria';
+import { SurfaceHandoffMap } from './surface-handoff-map';
+import { SurfaceLaunchScorecard } from './surface-launch-scorecard';
 import { SurfaceRecoveryAuthorityInline } from './surface-recovery-authority-inline';
 import { SurfaceRecoveryProofDissentInline } from './surface-recovery-proof-dissent-inline';
 import { SurfaceRecoveryProofQuorumInline } from './surface-recovery-proof-quorum-inline';
@@ -137,6 +145,38 @@ export function PlayerDock() {
     activeConnectionId: currentProviderId,
     surface: 'player',
   }), [connectionStatus, connections, currentProviderId]);
+  const playerSurfaceContracts = useMemo(() => buildRuntimeSurfaceContracts({
+    screenId: 'player',
+    providerLabel: currentProvider?.name ?? historyItem?.lastOwner?.providerName ?? 'Current playback owner',
+    providerStatusLabel: currentProviderId ? connectionStatus[currentProviderId]?.state ?? null : null,
+    savedProviderBoard,
+    guideCoverage: currentGuideCoverage,
+    selectedLabel: currentStream?.name ?? historyItem?.title ?? currentProvider?.name ?? 'Active playback',
+    currentNowTitle: currentGuide?.now?.title ?? null,
+    currentNextTitle: currentGuide?.next?.title ?? null,
+    nextHopHref: '/live',
+    nextHopLabel: 'Return to Live',
+    streamHealth,
+  }), [
+    connectionStatus,
+    currentGuide?.next?.title,
+    currentGuide?.now?.title,
+    currentGuideCoverage,
+    currentProvider?.name,
+    currentProviderId,
+    currentStream?.name,
+    historyItem?.lastOwner?.providerName,
+    historyItem?.title,
+    savedProviderBoard,
+    streamHealth,
+  ]);
+  const playerConnectionHeadroomRuntime = useMemo(
+    () => buildSavedProviderConnectionHeadroomRuntime({
+      contract: playerSurfaceContracts.connectionHeadroom,
+      board: savedProviderBoard,
+    }),
+    [playerSurfaceContracts.connectionHeadroom, savedProviderBoard]
+  );
   const statusTone = streamHealth.status === 'healthy'
     ? 'bg-emerald-400/15 text-emerald-200'
     : streamHealth.status === 'buffering'
@@ -645,6 +685,27 @@ export function PlayerDock() {
     recoveryGuideProvider?.name,
     recoveryGuideState,
     currentProviderId,
+  ]);
+  const livePlayerBrowseToPlayerHandoffRuntime = useMemo(() => buildLivePlayerBrowseToPlayerHandoffRuntime({
+    currentStream,
+    currentProviderId,
+    currentProviderName: currentProvider?.name ?? null,
+    connections,
+    connectionStatus,
+    historyItem,
+    lastSwitchContext,
+    savedProviderBoard,
+    playbackRuntime: livePlayerOverlayPlaybackRuntime,
+  }), [
+    connectionStatus,
+    connections,
+    currentProvider?.name,
+    currentProviderId,
+    currentStream,
+    historyItem,
+    lastSwitchContext,
+    livePlayerOverlayPlaybackRuntime,
+    savedProviderBoard,
   ]);
   const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({
     channelName: currentStream?.name ?? historyItem?.title ?? 'Active playback',
@@ -1199,6 +1260,25 @@ export function PlayerDock() {
                 onSecondaryAction={livePlayerOverlayRuntime.secondaryActionLabel ? handleRecoveryActionSecondary : undefined}
                 onCommandDispatch={handleOverlayDispatch}
                 onPlaybackAction={handlePlaybackActionDispatch}
+              />
+              <SurfaceConnectionHeadroom
+                runtime={playerConnectionHeadroomRuntime}
+                badge="Playback connection headroom"
+              />
+              <SurfaceLaunchScorecard
+                scorecard={playerSurfaceContracts.launchScorecard}
+                badge="Playback launch scorecard"
+              />
+              <SurfaceExitCriteria
+                criteria={playerSurfaceContracts.exitCriteria}
+                badge="Playback exit criteria"
+              />
+              <SurfaceHandoffMap
+                handoff={playerSurfaceContracts.handoffMap}
+                badge="Playback handoff map"
+              />
+              <LivePlayerBrowseToPlayerHandoffPanel
+                contract={livePlayerBrowseToPlayerHandoffRuntime}
               />
               <LivePlayerControlPanel contract={livePlayerControlRuntime} />
               <LivePlayerContinuityPanel contract={livePlayerContinuityRuntime} />
