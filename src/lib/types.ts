@@ -2008,6 +2008,36 @@ export type LivePlayerOverlayPlaybackActionRoute = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackActionReadinessItem = {
+  id: LivePlayerOverlayPlaybackActionId;
+  label: string;
+  state: 'lead' | 'support' | 'caution' | 'suppress';
+  ownerLabel: string;
+  summary: string;
+  detail: string;
+  visibilityRule: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackActionReadiness = {
+  title: string;
+  state: 'lead' | 'support' | 'caution' | 'suppress';
+  summary: string;
+  detail: string;
+  leadActionLabel: string;
+  supportActionLabel: string;
+  visibleActionCount: number;
+  suppressedActionCount: number;
+  leadRule: string;
+  supportRule: string;
+  cautionRule: string;
+  readinessEscalation: string;
+  recoveryActionLabel: string;
+  suppressionRule: string;
+  items: LivePlayerOverlayPlaybackActionReadinessItem[];
+  tone: LivePlayerControlTone;
+};
+
 export type LivePlayerOverlayPlaybackMetadataWitness = {
   id: 'active' | 'recovery';
   label: string;
@@ -2279,7 +2309,7 @@ export type LivePlayerOverlayPlaybackShellActionPlan = {
 };
 
 export type LivePlayerOverlayPlaybackShellInsight = {
-  id: 'connection-headroom' | 'switch-custody' | 'resume-honesty' | 'takeover-rule';
+  id: 'connection-headroom' | 'switch-custody' | 'resume-honesty' | 'takeover-rule' | 'action-readiness';
   label: string;
   state: string;
   ownerLabel: string;
@@ -2349,6 +2379,7 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   connectionHeadroom: LivePlayerOverlayPlaybackConnectionHeadroom;
   switchCustody: LivePlayerOverlayPlaybackSwitchCustody;
   resumeHonesty: LivePlayerOverlayPlaybackResumeHonesty;
+  actionReadiness: LivePlayerOverlayPlaybackActionReadiness;
   multiConnectionTakeover: LivePlayerOverlayPlaybackMultiConnectionTakeover;
   heroDoctrine: LivePlayerOverlayPlaybackHeroDoctrine;
   escalationWitnesses: LivePlayerOverlayPlaybackEscalationWitness[];

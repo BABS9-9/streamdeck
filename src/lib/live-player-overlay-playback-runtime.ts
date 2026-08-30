@@ -1,5 +1,7 @@
 import {
   LivePlayerControlTone,
+  LivePlayerOverlayPlaybackActionReadiness,
+  LivePlayerOverlayPlaybackActionReadinessItem,
   LivePlayerControlRuntimeContract,
   LivePlayerLineReleaseRuntimeContract,
   LivePlayerOverlayPlaybackActionRoute,
@@ -188,6 +190,26 @@ const buildActionRoute = ({
   targetProviderId: targetProviderId ?? null,
   available: available ?? false,
   tone: fallbackTone,
+});
+
+const buildActionReadinessItem = ({
+  id,
+  label,
+  state,
+  ownerLabel,
+  summary,
+  detail,
+  visibilityRule,
+  tone,
+}: LivePlayerOverlayPlaybackActionReadinessItem): LivePlayerOverlayPlaybackActionReadinessItem => ({
+  id,
+  label,
+  state,
+  ownerLabel,
+  summary,
+  detail,
+  visibilityRule,
+  tone,
 });
 
 const buildMetadataWitness = ({
@@ -2388,6 +2410,163 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
       }),
     ],
   };
+  // Rank every visible playback action from one backend-owned proof stack so
+  // the overlay does not have to locally arbitrate lead vs support vs suppress.
+  const actionReadinessItems = actions.map<LivePlayerOverlayPlaybackActionReadinessItem>((action) => {
+    const isLead = action.id === primaryAction.id && heroCtaState === 'promoted';
+    const isSupport = Boolean(
+      secondaryAction
+      && action.id === secondaryAction.id
+      && (
+        secondaryCtaState === 'promoted'
+        || secondaryCtaState === 'watched'
+      )
+    );
+    const isRecoverySupport = Boolean(
+      recoveryHelperAction
+      && action.id === recoveryHelperAction.id
+      && (
+        recoveryHelperState === 'promoted'
+        || recoveryHelperState === 'watched'
+      )
+      && action.id !== primaryAction.id
+      && action.id !== secondaryAction?.id
+    );
+
+    const state: LivePlayerOverlayPlaybackActionReadinessItem['state'] = !currentStream
+      ? action.id === 'return'
+        ? 'caution'
+        : 'suppress'
+      : isLead
+        ? 'lead'
+        : isSupport || isRecoverySupport
+          ? 'support'
+          : action.available && action.availabilityState === 'ready'
+            ? 'caution'
+            : 'suppress';
+
+    const summary = state === 'lead'
+      ? `${action.label} is the backend-cleared first action for the current playback proof stack.`
+      : state === 'support'
+        ? `${action.label} should stay visible as supporting context while another action owns the main promise.`
+        : state === 'caution'
+          ? `${action.label} is still honest to show, but it should not outrank the current primary or recovery story.`
+          : `${action.label} should stay suppressed until the proof stack changes.`;
+
+    const detail = state === 'lead'
+      ? `${action.ownerLabel} still owns the cleanest executable next move, so the shell can emphasize this action without local arbitration.`
+      : state === 'support'
+        ? action.ownerDetail
+        : state === 'caution'
+          ? action.available
+            ? `${action.ownerDetail} Keep its role explicit instead of letting it compete with the lead lane.`
+            : `${action.availabilityDetail} Keep the wait or block reason visible if the shell still mentions it.`
+          : action.available
+            ? `${action.ownerDetail} It remains real, but the runtime has stronger actions to emphasize first.`
+            : `${action.availabilityDetail} Do not elevate it before the route becomes executable.`;
+
+    const visibilityRule = state === 'lead'
+      ? 'Lead this action by default while premium or watched CTA proof still points at the same next move.'
+      : state === 'support'
+        ? 'Keep this action nearby as context, but subordinate it to the current lead or recovery helper.'
+        : state === 'caution'
+          ? 'Only show this with explicit proof limits attached; never let it read like the carefree default next press.'
+          : 'Hide this action or keep it visually de-emphasized until execution, ownership, or recovery truth changes.';
+
+    const tone: LivePlayerOverlayPlaybackActionReadinessItem['tone'] = state === 'lead'
+      ? 'ready'
+      : state === 'support' || state === 'caution'
+        ? 'watch'
+        : 'recover';
+
+    return buildActionReadinessItem({
+      id: action.id,
+      label: action.label,
+      state,
+      ownerLabel: action.ownerLabel,
+      summary,
+      detail,
+      visibilityRule,
+      tone,
+    });
+  });
+  const leadReadinessItem = actionReadinessItems.find((item) => item.state === 'lead')
+    ?? actionReadinessItems.find((item) => item.state === 'support')
+    ?? actionReadinessItems.find((item) => item.state === 'caution')
+    ?? actionReadinessItems[0];
+  const supportReadinessItem = actionReadinessItems.find((item) => item.state === 'support') ?? null;
+  const visibleActionCount = actionReadinessItems.filter((item) => item.state !== 'suppress').length;
+  const suppressedActionCount = actionReadinessItems.filter((item) => item.state === 'suppress').length;
+  const actionReadinessState: LivePlayerOverlayPlaybackActionReadiness['state'] = !currentStream
+    ? 'suppress'
+    : leadReadinessItem?.state === 'lead'
+      ? 'lead'
+      : supportReadinessItem
+        ? 'support'
+        : leadReadinessItem?.state === 'caution'
+          ? 'caution'
+          : 'suppress';
+  const actionReadinessTone: LivePlayerOverlayPlaybackActionReadiness['tone'] = actionReadinessState === 'lead'
+    ? 'ready'
+    : actionReadinessState === 'support' || actionReadinessState === 'caution'
+      ? 'watch'
+      : 'recover';
+  const actionReadiness: LivePlayerOverlayPlaybackActionReadiness = {
+    title: 'Action readiness ledger',
+    state: actionReadinessState,
+    summary: !currentStream
+      ? 'The shell should suppress all aggressive playback actions until one real playback owner attaches.'
+      : actionReadinessState === 'lead'
+        ? `${leadReadinessItem?.label ?? primaryAction.label} is cleared to lead, and the rest of the visible actions should orbit that same proof story.`
+        : actionReadinessState === 'support'
+          ? `${leadReadinessItem?.label ?? primaryAction.label} can stay visible, but the shell should frame the rest of the action set as supporting context only.`
+          : actionReadinessState === 'caution'
+            ? 'The overlay still has honest actions to show, but none should read like a carefree default next press.'
+            : 'Suppress the visible action stack until execution, ownership, or recovery proof becomes believable again.',
+    detail: !currentStream
+      ? 'Wait for one durable playback owner, one believable telemetry lane, and one routed next move before the shell starts emphasizing playback controls.'
+      : actionReadinessState === 'lead'
+        ? `${leadReadinessItem?.ownerLabel ?? primaryAction.ownerLabel} still owns the lead lane, so the shell can keep supporting actions visible without asking the UI to rank them.`
+        : actionReadinessState === 'support'
+          ? `${leadReadinessItem?.ownerLabel ?? primaryAction.ownerLabel} can still frame the first move, but the shell should keep backup, track, or return actions visibly subordinate.`
+          : actionReadinessState === 'caution'
+            ? 'Execution or proof limits are strong enough that every visible action needs explicit context instead of premium emphasis.'
+            : 'Recovery or missing-proof conditions are stronger than the action routes, so the shell should de-emphasize or hide anything that sounds like confident continuation.',
+    leadActionLabel: leadReadinessItem?.label ?? primaryAction.label,
+    supportActionLabel: supportReadinessItem?.label ?? 'No supporting action promoted',
+    visibleActionCount,
+    suppressedActionCount,
+    leadRule: !currentStream
+      ? 'Do not lead any playback action until the player attaches to one real owner.'
+      : heroCtaState === 'promoted'
+        ? `${primaryAction.label} owns the first press while telemetry, ownership, and execution still tell one story.`
+        : `${leadReadinessItem?.label ?? primaryAction.label} may stay visible, but only inside watched or recovery framing.`,
+    supportRule: !supportReadinessItem
+      ? 'No support lane needs separate emphasis right now.'
+      : `${supportReadinessItem.label} should stay close enough to preserve context without competing with the lead lane.`,
+    cautionRule: actionReadinessItems.some((item) => item.state === 'caution')
+      ? 'Caution actions can remain visible only if the shell keeps proof limits or fallback language attached.'
+      : 'No caution-only actions are currently required.',
+    readinessEscalation: !currentStream
+      ? 'Escalate straight into recovery or return language until playback ownership exists.'
+      : heroDoctrineState === 'recovery'
+        ? 'Escalate away from premium action emphasis and let recovery framing outrank every convenience action.'
+        : telemetryDecayStage === 'aging' || telemetryDecayStage === 'stale' || telemetryDecayStage === 'missing'
+          ? 'Escalate into watched copy as telemetry freshness decays, even if an action route still exists.'
+          : preferredWitness?.id === 'recovery'
+            ? `Escalate once ${preferredWitness.providerLabel} keeps beating the active path for metadata proof.`
+            : 'Escalate only when execution, ownership, or recovery proof stops backing the visible lead action.',
+    recoveryActionLabel: recoveryHelperAction?.label
+      ?? recoveryRuntime?.nextMove.label
+      ?? 'No recovery action promoted',
+    suppressionRule: !currentStream
+      ? 'No playback owner is attached yet.'
+      : actionReadinessItems.some((item) => item.state === 'suppress')
+        ? 'Any suppressed action must stay hidden or visibly de-emphasized until its route becomes honest again.'
+        : 'No action currently requires hard suppression.',
+    items: actionReadinessItems,
+    tone: actionReadinessTone,
+  };
   const shellState: LivePlayerOverlayPlaybackShellOrchestration['state'] = heroDoctrineState;
   const shellContinuityLabel = continuitySurface?.copy ?? recoveryOwnership.detail;
   const shellOverlayCopy = shellState === 'recovery'
@@ -2520,6 +2699,16 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
           ?? 'Keep takeover wording conservative until a rule can be promoted.',
         tone: multiConnectionTakeover.tone,
       }),
+      buildShellInsight({
+        id: 'action-readiness',
+        label: actionReadiness.title,
+        state: actionReadiness.state,
+        ownerLabel: leadReadinessItem?.ownerLabel ?? primaryAction.ownerLabel,
+        summary: actionReadiness.summary,
+        detail: actionReadiness.detail,
+        actionLabel: actionReadiness.suppressionRule,
+        tone: actionReadiness.tone,
+      }),
     ],
   };
   const tone = getDominantTone([
@@ -2577,6 +2766,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     connectionHeadroom,
     switchCustody,
     resumeHonesty,
+    actionReadiness,
     multiConnectionTakeover,
     heroDoctrine,
     escalationWitnesses,

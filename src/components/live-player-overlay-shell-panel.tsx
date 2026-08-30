@@ -20,6 +20,13 @@ const availabilityToneStyles = {
   blocked: 'border-rose-300/20 bg-rose-500/10 text-rose-100',
 } as const;
 
+const actionReadinessToneStyles = {
+  lead: 'border-sky-300/20 bg-sky-500/10 text-sky-100',
+  support: 'border-emerald-300/20 bg-emerald-500/10 text-emerald-100',
+  caution: 'border-amber-300/20 bg-amber-500/10 text-amber-100',
+  suppress: 'border-rose-300/20 bg-rose-500/10 text-rose-100',
+} as const;
+
 export function LivePlayerOverlayShellPanel({
   contract,
   onPrimaryAction,
@@ -157,6 +164,77 @@ export function LivePlayerOverlayShellPanel({
                 <p className="mt-2 text-xs leading-5 text-white/75">{insight.ownerLabel}</p>
                 <p className="mt-2 text-xs leading-5 text-white/70">{insight.detail}</p>
                 <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/65">{insight.actionLabel}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div className={`mt-4 rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.actionReadiness.tone]}`}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.actionReadiness.title}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.playbackRuntime.actionReadiness.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.actionReadiness.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2">
+                Lead: {contract.playbackRuntime.actionReadiness.leadActionLabel}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2">
+                Support: {contract.playbackRuntime.actionReadiness.supportActionLabel}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2">
+                Visible: {contract.playbackRuntime.actionReadiness.visibleActionCount}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2">
+                Suppressed: {contract.playbackRuntime.actionReadiness.suppressedActionCount}
+              </span>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Lead rule</p>
+              <p className="mt-3 text-xs leading-5 text-white/80">{contract.playbackRuntime.actionReadiness.leadRule}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Support rule</p>
+              <p className="mt-3 text-xs leading-5 text-white/80">{contract.playbackRuntime.actionReadiness.supportRule}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Caution rule</p>
+              <p className="mt-3 text-xs leading-5 text-white/80">{contract.playbackRuntime.actionReadiness.cautionRule}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Escalation rule</p>
+              <p className="mt-3 text-xs leading-5 text-white/80">{contract.playbackRuntime.actionReadiness.readinessEscalation}</p>
+            </article>
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Recovery action</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.playbackRuntime.actionReadiness.recoveryActionLabel}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Suppression rule</p>
+              <p className="mt-3 text-xs leading-5 text-white/80">{contract.playbackRuntime.actionReadiness.suppressionRule}</p>
+            </article>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {contract.playbackRuntime.actionReadiness.items.map((item) => (
+              <article
+                key={item.id}
+                className={`rounded-2xl border p-4 ${actionReadinessToneStyles[item.state]}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{item.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {item.state}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{item.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{item.ownerLabel}</p>
+                <p className="mt-2 text-xs leading-5 text-white/70">{item.detail}</p>
+                <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/65">{item.visibilityRule}</p>
               </article>
             ))}
           </div>
