@@ -3,7 +3,9 @@ const { URL } = require('url');
 
 const PORT = 3579;
 const host = `http://localhost:${PORT}`;
-const phaseOneCheckpointRefreshedAt = '2026-08-31T13:00:00-04:00';
+const phaseOneCheckpointRefreshedAt = '2026-08-31T19:00:00-04:00';
+const phaseOneCheckpointRunLabel = 'Axe cron refresh · 2026-08-31 19:00 ET';
+const phaseOneCheckpointBriefPath = '~/.openclaw/briefs/AXE_IPTV_PROJECT_BRIEF.md';
 const scenarioLabels = {
   healthy: 'Healthy mock mode',
   degradedSearch: 'Degraded search rehearsal',
@@ -6566,6 +6568,8 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
       phaseOneCheckpoint: {
         generatedAt: new Date().toISOString(),
         refreshedAt: phaseOneCheckpointRefreshedAt,
+        runLabel: phaseOneCheckpointRunLabel,
+        briefPath: phaseOneCheckpointBriefPath,
         activeScenario: scenario,
         assignments: [
       {
@@ -6573,21 +6577,21 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         title: 'Write DIFFERENTIATORS.md',
         status: 'shipped',
         artifact: 'DIFFERENTIATORS.md',
-        proof: 'Competitive matrix, ship lanes, and assignment-grade surface implications are documented for Login, Home, and Live.',
+        proof: 'Competitive matrix, ship lanes, and assignment-grade surface implications are documented for Login, Home, and Live and re-stamped for the 7:00 PM ET cron checkpoint.',
       },
       {
         id: 'adapter',
         title: 'Build mock Xtream Codes provider adapter',
         status: 'shipped',
         artifact: 'mock-provider/server.js',
-        proof: 'Mock auth, live, VOD, series, EPG, XMLTV, scenario rehearsal, and adapter manifest routes are live for local product validation.',
+        proof: 'Mock auth, live, VOD, series, EPG, XMLTV, scenario rehearsal, adapter manifest, and checkpoint metadata routes are live for local product validation.',
       },
       {
         id: 'surfaces',
         title: 'Scaffold project + ship login, home, and live TV browser',
         status: 'shipped',
         artifact: 'src/app/page.jsx + src/components/home-dashboard.tsx + src/components/live-browser.tsx',
-        proof: 'The Next.js shell exposes saved-provider login, streaming home browse, and a live TV browser with inline preview plus guide posture.',
+        proof: 'The Next.js shell exposes saved-provider login, streaming home browse, and a live TV browser with inline preview plus guide posture, all showing the same fresh checkpoint rail.',
       },
     ],
     routeProof: [

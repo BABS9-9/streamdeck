@@ -2753,6 +2753,8 @@ export type MockProviderAssignmentCheckpoint = {
 export type MockProviderPhaseOneCheckpoint = {
   generatedAt: string;
   refreshedAt: string;
+  runLabel: string;
+  briefPath: string;
   activeScenario: MockProviderScenario;
   assignments: MockProviderAssignmentCheckpoint[];
   routeProof: Array<{

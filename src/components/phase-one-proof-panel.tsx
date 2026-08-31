@@ -39,6 +39,7 @@ export function PhaseOneProofPanel({ checkpoint, screenId, className = '' }: Pha
         <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-right">
           <p className="text-[0.65rem] uppercase tracking-[0.25em] text-cyan-100/70">Scenario</p>
           <p className="text-sm font-semibold text-cyan-50">{checkpoint.activeScenario}</p>
+          <p className="mt-2 text-[0.65rem] uppercase tracking-[0.25em] text-cyan-100/70">{checkpoint.runLabel}</p>
           <p className="mt-2 text-xs text-cyan-100/70">Checkpoint refreshed {refreshedLabel}</p>
         </div>
       </div>
@@ -69,6 +70,7 @@ export function PhaseOneProofPanel({ checkpoint, screenId, className = '' }: Pha
             <p className="max-w-xl text-sm text-slate-300">{routeProof.goal}</p>
           </div>
           <p className="mt-4 text-sm text-cyan-100">Verification: {routeProof.verification}</p>
+          <p className="mt-2 text-xs text-slate-400">Brief source: {checkpoint.briefPath}</p>
         </div>
       ) : null}
     </section>
