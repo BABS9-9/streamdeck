@@ -696,6 +696,7 @@ export function PlayerDock() {
     lastSwitchContext,
     savedProviderBoard,
     playbackRuntime: livePlayerOverlayPlaybackRuntime,
+    surfaceContracts: playerSurfaceContracts,
   }), [
     connectionStatus,
     connections,
@@ -705,6 +706,7 @@ export function PlayerDock() {
     historyItem,
     lastSwitchContext,
     livePlayerOverlayPlaybackRuntime,
+    playerSurfaceContracts,
     savedProviderBoard,
   ]);
   const livePlayerOverlayRuntime = useMemo(() => buildLivePlayerOverlayShellRuntime({

@@ -8,6 +8,7 @@ import {
   WatchHistoryItem,
   XtreamStream,
 } from './types';
+import { RuntimeSurfaceContracts } from './runtime-surface-contracts';
 
 type BuildLivePlayerBrowseToPlayerHandoffArgs = {
   currentStream: XtreamStream | null;
@@ -19,6 +20,7 @@ type BuildLivePlayerBrowseToPlayerHandoffArgs = {
   lastSwitchContext?: ProviderSwitchContext | null;
   savedProviderBoard: SavedProviderHealthBoard;
   playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+  surfaceContracts: RuntimeSurfaceContracts;
 };
 
 const surfaceLabels: Record<NonNullable<WatchHistoryItem['sourceSurface']> | 'login' | 'settings' | 'system', string> = {
@@ -186,6 +188,165 @@ const getNextMove = ({
   };
 };
 
+const buildSharedLanguage = ({
+  inheritedSurfaceLabel,
+  inheritedProviderLabel,
+  currentOwnerLabel,
+  recoveryOwnerLabel,
+  handoffState,
+  playbackRuntime,
+  surfaceContracts,
+}: {
+  inheritedSurfaceLabel: string;
+  inheritedProviderLabel: string;
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  handoffState: LivePlayerBrowseToPlayerHandoffContract['handoffState'];
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+  surfaceContracts: RuntimeSurfaceContracts;
+}): LivePlayerBrowseToPlayerHandoffContract['sharedLanguage'] => {
+  const providerMetric = surfaceContracts.launchScorecard.metrics[0];
+  const headroomLane = surfaceContracts.connectionHeadroom.lanes[0];
+  const continuityMetric = surfaceContracts.launchScorecard.metrics[1];
+  const providerBoundary = surfaceContracts.autonomyBoundary.boundaries[0];
+  const guideBoundary = surfaceContracts.autonomyBoundary.boundaries[1];
+  const actionBoundary = surfaceContracts.autonomyBoundary.boundaries[2];
+  const transferCarryForward = surfaceContracts.handoffMap.carriesForward[2] ?? surfaceContracts.handoffMap.fallbackDetail;
+
+  return [
+    {
+      id: 'provider-truth',
+      label: 'Provider truth language',
+      summary: handoffState === 'local'
+        ? `${currentOwnerLabel} stays named as the visible owner while ${inheritedSurfaceLabel} remains the launch story.`
+        : handoffState === 'watch'
+          ? `${currentOwnerLabel} is still the visible owner, but provider wording now needs caveats before the dock sounds fully settled again.`
+          : `${recoveryOwnerLabel} has enough recovery authority that provider language should stop pretending ${currentOwnerLabel} still quietly owns the next move.`,
+      proofSource: providerMetric?.detail ?? surfaceContracts.launchScorecard.summary,
+      carryForward: `${surfaceContracts.handoffMap.carriesForward[0]} ${providerBoundary.autoMaintains}`.trim(),
+      dockRule: providerBoundary.userOwns,
+      watchTrigger: providerBoundary.forcedHandoffTrigger,
+      recoveryMove: handoffState === 'local'
+        ? `If provider truth slips, stop carrying ${inheritedProviderLabel} as a silent launch assumption and promote ${recoveryOwnerLabel} explicitly.`
+        : surfaceContracts.handoffMap.fallbackDetail,
+      tone: handoffState === 'local' ? providerMetric?.tone ?? 'ready' : providerBoundary.tone,
+    },
+    {
+      id: 'connection-headroom',
+      label: 'Connection headroom language',
+      summary: headroomLane.currentWindow,
+      proofSource: surfaceContracts.connectionHeadroom.summary,
+      carryForward: `${headroomLane.recommendedMove} ${surfaceContracts.handoffMap.carriesForward[3] ?? ''}`.trim(),
+      dockRule: surfaceContracts.connectionHeadroom.lanes[1]?.currentWindow ?? headroomLane.currentWindow,
+      watchTrigger: headroomLane.warningTrigger,
+      recoveryMove: headroomLane.blockedState,
+      tone: headroomLane.tone,
+    },
+    {
+      id: 'continuity',
+      label: 'Continuity language',
+      summary: playbackRuntime.shellOrchestration.continuityLabel,
+      proofSource: continuityMetric?.detail ?? surfaceContracts.launchScorecard.summary,
+      carryForward: `${surfaceContracts.handoffMap.carriesForward[1]} ${guideBoundary.autoMaintains}`.trim(),
+      dockRule: guideBoundary.userOwns,
+      watchTrigger: `${playbackRuntime.resumeHonesty.continuityRisk} ${guideBoundary.forcedHandoffTrigger}`.trim(),
+      recoveryMove: continuityMetric?.tone === 'ready'
+        ? playbackRuntime.resumeHonesty.nextHonestMove
+        : `${playbackRuntime.recoveryOwnership.handoffReadiness} ${surfaceContracts.handoffMap.fallbackDetail}`.trim(),
+      tone: playbackRuntime.resumeHonesty.tone,
+    },
+    {
+      id: 'takeover',
+      label: 'Takeover language',
+      summary: playbackRuntime.multiConnectionTakeover.summary,
+      proofSource: playbackRuntime.multiConnectionTakeover.detail,
+      carryForward: `${transferCarryForward} ${actionBoundary.autoMaintains}`.trim(),
+      dockRule: actionBoundary.userOwns,
+      watchTrigger: `${playbackRuntime.multiConnectionTakeover.detail} ${playbackRuntime.shellOrchestration.takeoverReason}`.trim(),
+      recoveryMove: playbackRuntime.multiConnectionTakeover.rules[1]?.summary
+        ?? `${recoveryOwnerLabel} should become the visible takeover owner before the shell implies automatic recovery.`,
+      tone: playbackRuntime.multiConnectionTakeover.tone,
+    },
+  ];
+};
+
+const buildSurfaceParity = ({
+  inheritedSurfaceLabel,
+  inheritedProviderLabel,
+  currentOwnerLabel,
+  recoveryOwnerLabel,
+  handoffState,
+  nextMove,
+  sharedLanguage,
+  playbackRuntime,
+  surfaceContracts,
+}: {
+  inheritedSurfaceLabel: string;
+  inheritedProviderLabel: string;
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  handoffState: LivePlayerBrowseToPlayerHandoffContract['handoffState'];
+  nextMove: { label: string; detail: string };
+  sharedLanguage: LivePlayerBrowseToPlayerHandoffContract['sharedLanguage'];
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+  surfaceContracts: RuntimeSurfaceContracts;
+}): LivePlayerBrowseToPlayerHandoffContract['surfaceParity'] => {
+  const providerLane = sharedLanguage.find((lane) => lane.id === 'provider-truth');
+  const headroomLane = sharedLanguage.find((lane) => lane.id === 'connection-headroom');
+  const continuityLane = sharedLanguage.find((lane) => lane.id === 'continuity');
+  const takeoverLane = sharedLanguage.find((lane) => lane.id === 'takeover');
+
+  const baseHeadroom = headroomLane?.summary ?? surfaceContracts.connectionHeadroom.lanes[0]?.currentWindow ?? surfaceContracts.connectionHeadroom.summary;
+  const baseTakeover = takeoverLane?.summary ?? playbackRuntime.multiConnectionTakeover.summary;
+  const liveSummary = handoffState === 'local'
+    ? `${inheritedSurfaceLabel} can still hand the active channel into playback without rewriting the owner story.`
+    : handoffState === 'watch'
+      ? `${inheritedSurfaceLabel} must keep the channel story visible, but the handoff now needs watch-safe caveats.`
+      : `${inheritedSurfaceLabel} should stop implying a seamless carry-forward and name the transfer path directly.`;
+
+  return [
+    {
+      id: 'home',
+      label: 'Home phrasing receipt',
+      summary: `${inheritedSurfaceLabel} keeps launch provenance visible before Live or Player rewrites anything.`,
+      providerLine: inheritedProviderLabel === currentOwnerLabel
+        ? `${inheritedProviderLabel} remains the browse owner Home can name directly.`
+        : `${inheritedProviderLabel} owns the original browse launch, but Home should already foreshadow ${currentOwnerLabel} as the visible playback owner.`,
+      headroomLine: `Home should keep provider headroom phrased as launch safety: ${baseHeadroom}`,
+      continuityLine: `Home carries the launch story forward as ${surfaceContracts.handoffMap.carriesForward[1] ?? continuityLane?.carryForward ?? 'shared guide continuity remains explicit.'}`,
+      takeoverLine: handoffState === 'local'
+        ? `Home keeps takeover implied only as a fallback to ${recoveryOwnerLabel}.`
+        : `Home should say the fallback owner out loud: ${surfaceContracts.handoffMap.fallbackDetail}`,
+      nextMoveLine: `Home next move: route into Live or playback without losing ${inheritedSurfaceLabel.toLowerCase()} provenance.`,
+      tone: providerLane?.tone ?? 'ready',
+    },
+    {
+      id: 'live',
+      label: 'Live phrasing receipt',
+      summary: liveSummary,
+      providerLine: providerLane?.summary ?? `${currentOwnerLabel} still owns the live-to-player path.`,
+      headroomLine: `Live should phrase line pressure as a playback warning, not just a browse warning: ${baseHeadroom}`,
+      continuityLine: continuityLane?.summary ?? playbackRuntime.shellOrchestration.continuityLabel,
+      takeoverLine: handoffState === 'transfer-ready' || handoffState === 'recovery-led'
+        ? `Live should name ${recoveryOwnerLabel} as the safer takeover owner before playback overclaims stability.`
+        : `Live may keep takeover secondary while ${currentOwnerLabel} still owns the visible path.`,
+      nextMoveLine: `Live next move: ${playbackRuntime.shellOrchestration.nextMoveLabel}.`,
+      tone: continuityLane?.tone ?? 'watch',
+    },
+    {
+      id: 'player',
+      label: 'Player phrasing receipt',
+      summary: `Player Dock speaks last, so it must preserve the same provider, continuity, headroom, and takeover language already established upstream.`,
+      providerLine: providerLane?.carryForward ?? `${currentOwnerLabel} stays named as the visible dock owner.`,
+      headroomLine: headroomLane?.watchTrigger ?? surfaceContracts.connectionHeadroom.lanes[1]?.warningTrigger ?? surfaceContracts.connectionHeadroom.summary,
+      continuityLine: continuityLane?.watchTrigger ?? playbackRuntime.resumeHonesty.continuityRisk,
+      takeoverLine: `${baseTakeover} ${playbackRuntime.shellOrchestration.takeoverReason}`.trim(),
+      nextMoveLine: `Player next move: ${nextMove.label}. ${nextMove.detail}`,
+      tone: takeoverLane?.tone ?? playbackRuntime.multiConnectionTakeover.tone,
+    },
+  ];
+};
+
 export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
   currentStream,
   currentProviderId,
@@ -196,6 +357,7 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
   lastSwitchContext = null,
   savedProviderBoard,
   playbackRuntime,
+  surfaceContracts,
 }: BuildLivePlayerBrowseToPlayerHandoffArgs): LivePlayerBrowseToPlayerHandoffContract | null => {
   if (!currentStream) return null;
 
@@ -236,6 +398,26 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     currentOwnerLabel,
     recoveryOwnerLabel,
   });
+  const sharedLanguage = buildSharedLanguage({
+    inheritedSurfaceLabel,
+    inheritedProviderLabel,
+    currentOwnerLabel,
+    recoveryOwnerLabel,
+    handoffState,
+    playbackRuntime,
+    surfaceContracts,
+  });
+  const surfaceParity = buildSurfaceParity({
+    inheritedSurfaceLabel,
+    inheritedProviderLabel,
+    currentOwnerLabel,
+    recoveryOwnerLabel,
+    handoffState,
+    nextMove,
+    sharedLanguage,
+    playbackRuntime,
+    surfaceContracts,
+  });
   const currentProviderStatus = currentProviderId ? connectionStatus[currentProviderId]?.state ?? null : null;
   const inheritedSurfaceTone = getSurfaceTone(inheritedSurface);
   const surfaceLead = inheritedSurface
@@ -266,6 +448,8 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     recoveryOwnerLabel,
     nextMoveLabel: nextMove.label,
     nextMoveDetail: nextMove.detail,
+    sharedLanguage,
+    surfaceParity,
     entries: [
       {
         id: 'inheritance',

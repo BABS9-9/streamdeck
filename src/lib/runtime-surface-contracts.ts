@@ -8,7 +8,7 @@ import {
 type ScreenId = 'login' | 'home' | 'live' | 'player';
 type Tone = 'ready' | 'watch' | 'recover';
 
-type RuntimeSurfaceContracts = {
+export type RuntimeSurfaceContracts = {
   launchReadiness: MockProviderManifest['surfaceLaunchReadinessContracts'][number];
   launchScorecard: MockProviderManifest['surfaceScorecards'][number];
   exitCriteria: MockProviderManifest['surfaceExitCriteria'][number];

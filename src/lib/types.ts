@@ -1543,6 +1543,30 @@ export type LivePlayerBrowseToPlayerHandoffEntry = {
   tone: 'ready' | 'watch' | 'recover';
 };
 
+export type LivePlayerBrowseToPlayerSharedLanguageLane = {
+  id: 'provider-truth' | 'connection-headroom' | 'continuity' | 'takeover';
+  label: string;
+  summary: string;
+  proofSource: string;
+  carryForward: string;
+  dockRule: string;
+  watchTrigger: string;
+  recoveryMove: string;
+  tone: 'ready' | 'watch' | 'recover';
+};
+
+export type LivePlayerBrowseToPlayerParityReceipt = {
+  id: 'home' | 'live' | 'player';
+  label: string;
+  summary: string;
+  providerLine: string;
+  headroomLine: string;
+  continuityLine: string;
+  takeoverLine: string;
+  nextMoveLine: string;
+  tone: 'ready' | 'watch' | 'recover';
+};
+
 export type LivePlayerBrowseToPlayerHandoffContract = {
   screenId: 'player';
   title: string;
@@ -1558,6 +1582,8 @@ export type LivePlayerBrowseToPlayerHandoffContract = {
   recoveryOwnerLabel: string;
   nextMoveLabel: string;
   nextMoveDetail: string;
+  sharedLanguage: LivePlayerBrowseToPlayerSharedLanguageLane[];
+  surfaceParity: LivePlayerBrowseToPlayerParityReceipt[];
   entries: LivePlayerBrowseToPlayerHandoffEntry[];
 };
 
