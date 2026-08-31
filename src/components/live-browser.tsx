@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, isMockProviderServer, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { fetchMockProviderCheckpoint, fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, isMockProviderServer, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { SurfaceActionGate } from '@/components/surface-action-gate';
 import { SurfaceAutonomyBoundary } from '@/components/surface-autonomy-boundary';
 import { SurfaceClaimCeiling } from '@/components/surface-claim-ceiling';
 import { SurfaceClaimCeilingInline } from '@/components/surface-claim-ceiling-inline';
 import { MockDemoBoard } from '@/components/mock-demo-board';
+import { PhaseOneProofPanel } from '@/components/phase-one-proof-panel';
 import { PhaseOneShipRail } from '@/components/phase-one-ship-rail';
 import { MockScenarioControl } from '@/components/mock-scenario-control';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
@@ -120,7 +121,7 @@ import { buildRuntimeSurfaceContracts } from '@/lib/runtime-surface-contracts';
 import { buildLiveStreamUrl, getContentId, getLiveCategories, getLiveStreams } from '@/lib/xtream-api';
 import { buildLiveMarketResolver } from '@/lib/live-market-resolver';
 import { buildProviderDropRuntime } from '@/lib/provider-drop-runtime';
-import { MockProviderHealth, MockProviderManifest, XtreamCategory, XtreamStream } from '@/lib/types';
+import { MockProviderHealth, MockProviderManifest, MockProviderPhaseOneCheckpoint, XtreamCategory, XtreamStream } from '@/lib/types';
 import { useAuthStore } from '@/stores/auth-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { getGuidePayload, useLiveGuideStore } from '@/stores/live-guide-store';
@@ -158,6 +159,7 @@ export function LiveBrowser() {
   const [error, setError] = useState<string | null>(null);
   const [manifest, setManifest] = useState<MockProviderManifest | null>(null);
   const [health, setHealth] = useState<MockProviderHealth | null>(null);
+  const [checkpoint, setCheckpoint] = useState<MockProviderPhaseOneCheckpoint | null>(null);
   const [scenario, setScenario] = useState(getSelectedMockProviderScenario());
   const [focusAnchor, setFocusAnchor] = useState('Selected channel');
 
@@ -190,6 +192,14 @@ export function LiveBrowser() {
       })
       .catch(() => {
         if (!cancelled) setHealth(null);
+      });
+
+    fetchMockProviderCheckpoint(MOCK_SERVER, scenario)
+      .then((data) => {
+        if (!cancelled) setCheckpoint(data);
+      })
+      .catch(() => {
+        if (!cancelled) setCheckpoint(null);
       });
 
     return () => {
@@ -741,6 +751,7 @@ export function LiveBrowser() {
   return (
     <div className="space-y-6">
       {isMockConnection ? <MockScenarioControl /> : null}
+      {isMockConnection ? <PhaseOneProofPanel checkpoint={checkpoint} screenId="live" /> : null}
       {isMockConnection ? <MockDemoBoard health={health} manifest={manifest} screenId="live" /> : null}
       {isMockConnection ? (
         <ProviderRiskStrip

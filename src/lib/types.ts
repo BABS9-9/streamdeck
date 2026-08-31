@@ -2677,6 +2677,26 @@ export type MockProviderCategorySummary = {
 
 export type MockProviderScenario = 'healthy' | 'degradedSearch' | 'degradedLive' | 'degradedEpg' | 'lineSaturated' | 'expiredAccount' | 'authUnstable';
 
+export type MockProviderAssignmentCheckpoint = {
+  id: 'differentiators' | 'adapter' | 'surfaces';
+  title: string;
+  status: 'shipped' | 'wired' | 'rehearsal-ready';
+  artifact: string;
+  proof: string;
+};
+
+export type MockProviderPhaseOneCheckpoint = {
+  generatedAt: string;
+  activeScenario: MockProviderScenario;
+  assignments: MockProviderAssignmentCheckpoint[];
+  routeProof: Array<{
+    screenId: 'login' | 'home' | 'live';
+    route: string;
+    goal: string;
+    verification: string;
+  }>;
+};
+
 export type MockProviderManifest = {
   adapterId: string;
   providerName: string;
@@ -3414,6 +3434,7 @@ export type MockProviderManifest = {
       tone: 'ready' | 'watch' | 'recover';
     }>;
   }>;
+  phaseOneCheckpoint?: MockProviderPhaseOneCheckpoint;
 };
 
 export type MockProviderHealth = {

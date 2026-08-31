@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
+import { fetchMockProviderCheckpoint, fetchMockProviderHealth, fetchMockProviderManifest, getSelectedMockProviderScenario, subscribeToMockProviderScenario } from '@/lib/mock-provider';
 import { MockDemoBoard } from '@/components/mock-demo-board';
+import { PhaseOneProofPanel } from '@/components/phase-one-proof-panel';
 import { PhaseOneShipRail } from '@/components/phase-one-ship-rail';
 import { DifferentiatorSpotlight } from '@/components/differentiator-spotlight';
 import { ProviderRiskStrip } from '@/components/provider-risk-strip';
@@ -151,6 +152,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('demo');
   const [manifest, setManifest] = useState(null);
   const [health, setHealth] = useState(null);
+  const [checkpoint, setCheckpoint] = useState(null);
   const [scenario, setScenario] = useState('healthy');
   const [loginGuideStreams, setLoginGuideStreams] = useState([]);
   const [loginFocusAnchor, setLoginFocusAnchor] = useState('Server URL');
@@ -198,6 +200,14 @@ export default function LoginPage() {
       })
       .catch(() => {
         if (!cancelled) setHealth(null);
+      });
+
+    fetchMockProviderCheckpoint(MOCK_SERVER, scenario)
+      .then((data) => {
+        if (!cancelled) setCheckpoint(data);
+      })
+      .catch(() => {
+        if (!cancelled) setCheckpoint(null);
       });
 
     return () => {
@@ -851,6 +861,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6">
+            <PhaseOneProofPanel checkpoint={checkpoint} screenId="login" />
             <MockDemoBoard health={health} manifest={manifest} screenId="login" />
           </div>
 

@@ -1,5 +1,5 @@
 import { storage } from './storage';
-import { MockProviderHealth, MockProviderManifest, MockProviderScenario, XtreamCredentials } from './types';
+import { MockProviderHealth, MockProviderManifest, MockProviderPhaseOneCheckpoint, MockProviderScenario, XtreamCredentials } from './types';
 
 const MOCK_HOST = 'http://localhost:3579';
 const EVENT_NAME = 'streamdeck:mock-scenario-change';
@@ -83,4 +83,30 @@ export async function fetchMockProviderManifest(
   }
 
   return response.json() as Promise<MockProviderManifest>;
+}
+
+export async function fetchMockProviderCheckpoint(
+  serverOrCredentials?: string | XtreamCredentials | null,
+  scenario?: MockProviderScenario
+) {
+  const server = typeof serverOrCredentials === 'string'
+    ? serverOrCredentials
+    : serverOrCredentials?.server;
+
+  if (!isMockProviderServer(server)) return null;
+
+  const activeScenario = scenario || getSelectedMockProviderScenario();
+  const checkpointUrl = new URL('/adapter/checkpoint', MOCK_HOST);
+  if (activeScenario !== 'healthy') checkpointUrl.searchParams.set('scenario', activeScenario);
+
+  const response = await fetch(checkpointUrl.toString(), {
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Mock provider checkpoint failed: ${response.status}`);
+  }
+
+  return response.json() as Promise<MockProviderPhaseOneCheckpoint>;
 }

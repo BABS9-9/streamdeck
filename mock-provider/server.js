@@ -6562,6 +6562,53 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceFallbackExpiryContracts: buildSurfaceFallbackExpiryContracts(scenario),
   surfaceProviderPodiums: buildSurfaceProviderPodiums(scenario),
   browseLaunchScorecards: buildBrowseLaunchScorecards(scenario),
+  phaseOneCheckpoint: {
+    generatedAt: new Date().toISOString(),
+    activeScenario: scenario,
+    assignments: [
+      {
+        id: 'differentiators',
+        title: 'Write DIFFERENTIATORS.md',
+        status: 'shipped',
+        artifact: 'DIFFERENTIATORS.md',
+        proof: 'Competitive matrix, ship lanes, and assignment-grade surface implications are documented for Login, Home, and Live.',
+      },
+      {
+        id: 'adapter',
+        title: 'Build mock Xtream Codes provider adapter',
+        status: 'shipped',
+        artifact: 'mock-provider/server.js',
+        proof: 'Mock auth, live, VOD, series, EPG, XMLTV, scenario rehearsal, and adapter manifest routes are live for local product validation.',
+      },
+      {
+        id: 'surfaces',
+        title: 'Scaffold project + ship login, home, and live TV browser',
+        status: 'shipped',
+        artifact: 'src/app/page.jsx + src/components/home-dashboard.tsx + src/components/live-browser.tsx',
+        proof: 'The Next.js shell exposes saved-provider login, streaming home browse, and a live TV browser with inline preview plus guide posture.',
+      },
+    ],
+    routeProof: [
+      {
+        screenId: 'login',
+        route: '/',
+        goal: 'Connect with saved or mock Xtream credentials and see the next honest move before entering the shell.',
+        verification: 'Use mock credentials, connect, and confirm the premium proof stack plus provider trust updates in place.',
+      },
+      {
+        screenId: 'home',
+        route: '/home',
+        goal: 'Land on a streaming-first dashboard with featured launch context, quick live access, and continuity rails.',
+        verification: 'Confirm the hero, quick-live rail, provider cockpit, and scenario refresh survive without a manual page reload.',
+      },
+      {
+        screenId: 'live',
+        route: '/live',
+        goal: 'Browse categories, preview channels, read NOW / NEXT posture, and launch from the active surf context.',
+        verification: 'Flip scenarios and confirm search, category focus, preview state, and fallback copy stay intact on the live browser.',
+      },
+    ],
+  },
   scenarioSpotlight: {
     title: scenario === 'healthy' ? 'Healthy launch rehearsal' : scenarioLabels[scenario] || 'Scenario rehearsal',
     summary: scenario === 'healthy'
@@ -6953,6 +7000,10 @@ const server = http.createServer((req, res) => {
 
   if (path === '/adapter/manifest') {
     return sendJson(res, buildAdapterManifest(scenario));
+  }
+
+  if (path === '/adapter/checkpoint') {
+    return sendJson(res, buildAdapterManifest(scenario).phaseOneCheckpoint);
   }
 
   res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

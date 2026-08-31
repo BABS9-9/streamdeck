@@ -1,5 +1,17 @@
 # StreamDeck Differentiators
 
+## Three-Assignment Checkpoint
+
+This Phase 1 prototype is anchored to three visible deliverables, and each one should be provable both in the repo and inside the running product:
+
+| Assignment | Artifact | What it proves |
+| --- | --- | --- |
+| Write `DIFFERENTIATORS.md` | `DIFFERENTIATORS.md` | Product strategy, competitive gaps, and surface-level UX doctrine are explicit instead of living in agent memory. |
+| Build mock Xtream Codes provider adapter | `mock-provider/server.js` | Login, Home, and Live can be rehearsed against deterministic auth, catalog, EPG, XMLTV, and degraded-scenario responses before real customer providers are involved. |
+| Scaffold StreamDeck + ship Login, Home, Live TV browser | `src/app/page.jsx`, `src/components/home-dashboard.tsx`, `src/components/live-browser.tsx` | The prototype already behaves like a streaming product: saved-provider connect, streaming-first home, and real live-browser surf with preview and guide posture. |
+
+The bar is not “some screens exist.” The bar is that each of these three assignments supports the others: the differentiator doctrine informs the UI, the adapter makes that UI testable, and the shipped surfaces make the doctrine visible to a user without a walkthrough.
+
 ## Product Position
 
 StreamDeck should feel like a premium streaming product first and an IPTV utility second. The competitive gap is not just visual polish. It is faster provider switching, better inline trust signals, stronger continuity across browse and playback, and features that treat multi-provider IPTV households like a real product use case instead of an edge case.
