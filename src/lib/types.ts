@@ -1567,6 +1567,33 @@ export type LivePlayerBrowseToPlayerParityReceipt = {
   tone: 'ready' | 'watch' | 'recover';
 };
 
+export type LivePlayerBrowseToPlayerBreakpointWitness = {
+  label: string;
+  detail: string;
+};
+
+export type LivePlayerBrowseToPlayerBreakpoint = {
+  id: 'provider-drift' | 'headroom-collapse' | 'continuity-break' | 'takeover-promotion';
+  label: string;
+  summary: string;
+  stopCarryForward: string;
+  promoteInstead: string;
+  affectedSurfaces: Array<'home' | 'live' | 'player'>;
+  witnessStack: LivePlayerBrowseToPlayerBreakpointWitness[];
+  tone: 'ready' | 'watch' | 'recover';
+};
+
+export type LivePlayerBrowseToPlayerTransitionMatrixEntry = {
+  id: 'home' | 'live' | 'player' | 'recovery';
+  label: string;
+  summary: string;
+  canStillSay: string;
+  mustStopSaying: string;
+  promoteNow: string;
+  watcher: string;
+  tone: 'ready' | 'watch' | 'recover';
+};
+
 export type LivePlayerBrowseToPlayerHandoffContract = {
   screenId: 'player';
   title: string;
@@ -1584,6 +1611,8 @@ export type LivePlayerBrowseToPlayerHandoffContract = {
   nextMoveDetail: string;
   sharedLanguage: LivePlayerBrowseToPlayerSharedLanguageLane[];
   surfaceParity: LivePlayerBrowseToPlayerParityReceipt[];
+  breakpointLedger: LivePlayerBrowseToPlayerBreakpoint[];
+  transitionMatrix: LivePlayerBrowseToPlayerTransitionMatrixEntry[];
   entries: LivePlayerBrowseToPlayerHandoffEntry[];
 };
 
