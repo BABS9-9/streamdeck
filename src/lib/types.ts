@@ -1594,6 +1594,40 @@ export type LivePlayerBrowseToPlayerTransitionMatrixEntry = {
   tone: 'ready' | 'watch' | 'recover';
 };
 
+export type LivePlayerBrowseToPlayerConfidenceWitness = {
+  label: string;
+  detail: string;
+};
+
+export type LivePlayerBrowseToPlayerConfidenceCarryForwardEntry = {
+  id: 'home-premium' | 'live-watch' | 'player-floor' | 'recovery-reset';
+  label: string;
+  summary: string;
+  minimumProof: string;
+  downgradeMode: string;
+  hardStopTrigger: string;
+  affectedSurfaces: Array<'home' | 'live' | 'player'>;
+  witnessStack: LivePlayerBrowseToPlayerConfidenceWitness[];
+  tone: 'ready' | 'watch' | 'recover';
+};
+
+export type LivePlayerBrowseToPlayerProofOwnershipWitness = {
+  label: string;
+  detail: string;
+};
+
+export type LivePlayerBrowseToPlayerProofOwnershipEntry = {
+  id: 'launch-proof' | 'relay-proof' | 'dock-proof' | 'recovery-proof';
+  label: string;
+  summary: string;
+  currentOwner: string;
+  blockingProof: string;
+  promoteOwner: string;
+  affectedSurfaces: Array<'home' | 'live' | 'player'>;
+  witnessStack: LivePlayerBrowseToPlayerProofOwnershipWitness[];
+  tone: 'ready' | 'watch' | 'recover';
+};
+
 export type LivePlayerBrowseToPlayerHandoffContract = {
   screenId: 'player';
   title: string;
@@ -1613,6 +1647,8 @@ export type LivePlayerBrowseToPlayerHandoffContract = {
   surfaceParity: LivePlayerBrowseToPlayerParityReceipt[];
   breakpointLedger: LivePlayerBrowseToPlayerBreakpoint[];
   transitionMatrix: LivePlayerBrowseToPlayerTransitionMatrixEntry[];
+  confidenceCarryForward: LivePlayerBrowseToPlayerConfidenceCarryForwardEntry[];
+  proofOwnershipLedger: LivePlayerBrowseToPlayerProofOwnershipEntry[];
   entries: LivePlayerBrowseToPlayerHandoffEntry[];
 };
 

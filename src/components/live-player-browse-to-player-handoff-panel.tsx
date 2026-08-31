@@ -239,6 +239,110 @@ export function LivePlayerBrowseToPlayerHandoffPanel({
         </div>
       </div>
 
+      <div className="mt-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Confidence carry-forward ledger</p>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/55">How far premium language may survive</span>
+        </div>
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-white/65">
+          This ledger turns the player confidence floor into surface-specific rules so Home, Live, and Player know exactly when premium tone is still earned.
+        </p>
+        <div className="mt-3 grid gap-3 xl:grid-cols-2">
+          {contract.confidenceCarryForward.map((entry) => (
+            <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-white">{entry.label}</p>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                  {entry.id}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-white">{entry.summary}</p>
+              <div className="mt-4 space-y-3 text-xs leading-5 text-white/80">
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Minimum proof</p>
+                  <p className="mt-1">{entry.minimumProof}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Downgrade mode</p>
+                  <p className="mt-1">{entry.downgradeMode}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Hard stop trigger</p>
+                  <p className="mt-1">{entry.hardStopTrigger}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Affected surfaces</p>
+                  <p className="mt-1">{entry.affectedSurfaces.join(', ')}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Witness stack</p>
+                  <div className="mt-2 space-y-2">
+                    {entry.witnessStack.map((witness) => (
+                      <div key={`${entry.id}-${witness.label}`} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/55">{witness.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-white/85">{witness.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Proof ownership ledger</p>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/55">Who owns the handoff story now</span>
+        </div>
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-white/65">
+          This ledger names which surface or provider actually owns the proof stack at each handoff stage so the dock stops borrowing stale confidence.
+        </p>
+        <div className="mt-3 grid gap-3 xl:grid-cols-2">
+          {contract.proofOwnershipLedger.map((entry) => (
+            <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-white">{entry.label}</p>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                  {entry.id}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-white">{entry.summary}</p>
+              <div className="mt-4 space-y-3 text-xs leading-5 text-white/80">
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Current owner</p>
+                  <p className="mt-1">{entry.currentOwner}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Blocking proof</p>
+                  <p className="mt-1">{entry.blockingProof}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Promote owner</p>
+                  <p className="mt-1">{entry.promoteOwner}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Affected surfaces</p>
+                  <p className="mt-1">{entry.affectedSurfaces.join(', ')}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Witness stack</p>
+                  <div className="mt-2 space-y-2">
+                    {entry.witnessStack.map((witness) => (
+                      <div key={`${entry.id}-${witness.label}`} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/55">{witness.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-white/85">{witness.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-5 grid gap-3 xl:grid-cols-2">
         {contract.entries.map((entry) => (
           <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>

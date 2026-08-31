@@ -541,6 +541,258 @@ const buildTransitionMatrix = ({
   ];
 };
 
+const buildConfidenceCarryForward = ({
+  inheritedSurfaceLabel,
+  currentOwnerLabel,
+  recoveryOwnerLabel,
+  handoffState,
+  playbackRuntime,
+  sharedLanguage,
+}: {
+  inheritedSurfaceLabel: string;
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  handoffState: LivePlayerBrowseToPlayerHandoffContract['handoffState'];
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+  sharedLanguage: LivePlayerBrowseToPlayerHandoffContract['sharedLanguage'];
+}): LivePlayerBrowseToPlayerHandoffContract['confidenceCarryForward'] => {
+  const providerLane = sharedLanguage.find((lane) => lane.id === 'provider-truth');
+  const headroomLane = sharedLanguage.find((lane) => lane.id === 'connection-headroom');
+  const continuityLane = sharedLanguage.find((lane) => lane.id === 'continuity');
+  const takeoverLane = sharedLanguage.find((lane) => lane.id === 'takeover');
+  const confidenceFloor = playbackRuntime.confidenceFloor;
+
+  return [
+    {
+      id: 'home-premium',
+      label: 'Home premium carry-forward',
+      summary: handoffState === 'local'
+        ? `${inheritedSurfaceLabel} may still sound premium because launch provenance, provider ownership, and the first playback proof are still reading as one story.`
+        : `${inheritedSurfaceLabel} can only borrow premium tone briefly now because playback proof is already asking for visible caveats downstream.`,
+      minimumProof: `Home may keep premium launch language only while ${currentOwnerLabel} still sounds like the same owner that will reach Player Dock, and the first continuity proof has not downgraded into visible watch posture.`,
+      downgradeMode: `Downgrade Home into launch-safe wording the moment provider drift or continuity caveats start outranking ${inheritedSurfaceLabel.toLowerCase()} provenance.`,
+      hardStopTrigger: providerLane?.watchTrigger ?? confidenceFloor.hardStopTrigger,
+      affectedSurfaces: ['home'],
+      witnessStack: [
+        {
+          label: 'Minimum proof floor',
+          detail: confidenceFloor.minimumProof,
+        },
+        {
+          label: 'Provider carry-forward',
+          detail: providerLane?.carryForward ?? `${currentOwnerLabel} still owns the visible path.`,
+        },
+        {
+          label: 'Continuity carry-forward',
+          detail: continuityLane?.carryForward ?? playbackRuntime.shellOrchestration.continuityLabel,
+        },
+      ],
+      tone: handoffState === 'local' ? 'ready' : 'watch',
+    },
+    {
+      id: 'live-watch',
+      label: 'Live watched-proof window',
+      summary: 'Live is where premium browse language must prove it can survive real playback conditions without turning into confidence theater.',
+      minimumProof: `Live may keep watched premium tone only while ${currentOwnerLabel} still has one visible owner story, one fresh-enough telemetry lane, and one believable next move attached to the channel.`,
+      downgradeMode: `${confidenceFloor.downgradeMode} Live should be the first surface to widen the wording before Player has to do the entire correction alone.`,
+      hardStopTrigger: `${headroomLane?.watchTrigger ?? playbackRuntime.connectionHeadroom.nextLimit} ${continuityLane?.watchTrigger ?? playbackRuntime.resumeHonesty.continuityRisk}`.trim(),
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Confidence floor',
+          detail: confidenceFloor.summary,
+        },
+        {
+          label: 'Line pressure',
+          detail: headroomLane?.summary ?? playbackRuntime.connectionHeadroom.currentUsage,
+        },
+        {
+          label: 'Continuity risk',
+          detail: continuityLane?.watchTrigger ?? playbackRuntime.resumeHonesty.continuityRisk,
+        },
+      ],
+      tone: confidenceFloor.tone === 'recover' ? 'recover' : 'watch',
+    },
+    {
+      id: 'player-floor',
+      label: 'Player final premium floor',
+      summary: 'Player Dock owns the final premium claim, so it needs the strictest proof floor of any surface in the handoff path.',
+      minimumProof: confidenceFloor.minimumProof,
+      downgradeMode: confidenceFloor.downgradeMode,
+      hardStopTrigger: confidenceFloor.hardStopTrigger,
+      affectedSurfaces: ['player'],
+      witnessStack: [
+        {
+          label: 'Proof owner',
+          detail: playbackRuntime.messageLadder.proofOwner,
+        },
+        {
+          label: 'Proof trigger',
+          detail: playbackRuntime.messageLadder.proofTrigger,
+        },
+        {
+          label: 'Takeover posture',
+          detail: takeoverLane?.summary ?? playbackRuntime.multiConnectionTakeover.summary,
+        },
+      ],
+      tone: confidenceFloor.tone,
+    },
+    {
+      id: 'recovery-reset',
+      label: 'Recovery reset point',
+      summary: handoffState === 'local'
+        ? `Recovery may stay ambient for now, but it becomes the new wording baseline the instant ${recoveryOwnerLabel} outranks ${currentOwnerLabel} for the next honest move.`
+        : `${recoveryOwnerLabel} is already close enough to the proof center that premium carry-forward should reset around recovery language, not old browse language.`,
+      minimumProof: `Do not rebuild premium tone until ${recoveryOwnerLabel} can explain one visible owner, one executable recovery move, and one honest continuity line without borrowing stale launch confidence from ${inheritedSurfaceLabel}.`,
+      downgradeMode: `Reset the wording around ${recoveryOwnerLabel}, the recovery route, and the exact blocked proof seam instead of trying to preserve old premium phrasing.`,
+      hardStopTrigger: takeoverLane?.watchTrigger ?? playbackRuntime.recoveryOwnership.handoffReadiness,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Recovery readiness',
+          detail: playbackRuntime.recoveryOwnership.handoffReadiness,
+        },
+        {
+          label: 'Hard-stop floor',
+          detail: confidenceFloor.hardStopTrigger,
+        },
+        {
+          label: 'Next honest move',
+          detail: playbackRuntime.resumeHonesty.nextHonestMove,
+        },
+      ],
+      tone: handoffState === 'local' ? 'watch' : 'recover',
+    },
+  ];
+};
+
+const buildProofOwnershipLedger = ({
+  inheritedSurfaceLabel,
+  currentOwnerLabel,
+  recoveryOwnerLabel,
+  handoffState,
+  playbackRuntime,
+  sharedLanguage,
+}: {
+  inheritedSurfaceLabel: string;
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  handoffState: LivePlayerBrowseToPlayerHandoffContract['handoffState'];
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+  sharedLanguage: LivePlayerBrowseToPlayerHandoffContract['sharedLanguage'];
+}): LivePlayerBrowseToPlayerHandoffContract['proofOwnershipLedger'] => {
+  const providerLane = sharedLanguage.find((lane) => lane.id === 'provider-truth');
+  const continuityLane = sharedLanguage.find((lane) => lane.id === 'continuity');
+  const takeoverLane = sharedLanguage.find((lane) => lane.id === 'takeover');
+
+  return [
+    {
+      id: 'launch-proof',
+      label: 'Launch proof owner',
+      summary: `${inheritedSurfaceLabel} may speak first, but its launch confidence only counts while ${currentOwnerLabel} still inherits the same provider and continuity story into playback.`,
+      currentOwner: `${inheritedSurfaceLabel} owns provenance; ${currentOwnerLabel} owns whether that provenance still survives first contact with real playback.`,
+      blockingProof: providerLane?.watchTrigger ?? playbackRuntime.messageLadder.proofTrigger,
+      promoteOwner: handoffState === 'local'
+        ? `Keep ${currentOwnerLabel} as the inherited proof owner until drift becomes visible.`
+        : `Stop treating ${inheritedSurfaceLabel} provenance as decisive and promote ${currentOwnerLabel} as a watched owner with caveats attached.`,
+      affectedSurfaces: ['home', 'live', 'player'],
+      witnessStack: [
+        {
+          label: 'Launch story',
+          detail: providerLane?.summary ?? `${currentOwnerLabel} still reads as the inherited launch owner.`,
+        },
+        {
+          label: 'Continuity carry-forward',
+          detail: continuityLane?.carryForward ?? playbackRuntime.shellOrchestration.continuityLabel,
+        },
+        {
+          label: 'Proof trigger',
+          detail: playbackRuntime.messageLadder.proofTrigger,
+        },
+      ],
+      tone: handoffState === 'local' ? 'ready' : 'watch',
+    },
+    {
+      id: 'relay-proof',
+      label: 'Live relay proof owner',
+      summary: 'Live is the relay judge for whether browse confidence still belongs to the same owner once program truth, line pressure, and switch custody arrive.',
+      currentOwner: `${currentOwnerLabel} remains the relay owner only while playback telemetry, guide continuity, and the recommended next move still point at the same route.`,
+      blockingProof: `${playbackRuntime.connectionHeadroom.nextLimit} ${playbackRuntime.switchCustody.custodyRule}`.trim(),
+      promoteOwner: handoffState === 'transfer-ready' || handoffState === 'recovery-led'
+        ? `Promote ${recoveryOwnerLabel} as the live relay owner before Player overclaims stability.`
+        : `Keep ${currentOwnerLabel} visible, but move Live into watched-proof wording immediately when line or custody proof splits.`,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Relay continuity',
+          detail: continuityLane?.summary ?? playbackRuntime.shellOrchestration.continuityLabel,
+        },
+        {
+          label: 'Line pressure',
+          detail: playbackRuntime.connectionHeadroom.currentUsage,
+        },
+        {
+          label: 'Switch custody',
+          detail: playbackRuntime.switchCustody.detail,
+        },
+      ],
+      tone: handoffState === 'local' ? 'watch' : handoffState === 'watch' ? 'watch' : 'recover',
+    },
+    {
+      id: 'dock-proof',
+      label: 'Dock final proof owner',
+      summary: 'Player Dock owns the last wording pass, so it must say who actually owns the proof stack now instead of borrowing stale browse confidence.',
+      currentOwner: `${playbackRuntime.messageLadder.proofOwner} currently owns the proof stack that keeps the next visible move honest.`,
+      blockingProof: playbackRuntime.messageLadder.proofTrigger,
+      promoteOwner: handoffState === 'local'
+        ? `Keep ${currentOwnerLabel} as the dock proof owner while the proof trigger stays quiet.`
+        : `Promote ${recoveryOwnerLabel} or watched ownership language before the dock implies ${currentOwnerLabel} still owns everything silently.`,
+      affectedSurfaces: ['player'],
+      witnessStack: [
+        {
+          label: 'Proof owner',
+          detail: playbackRuntime.messageLadder.proofOwner,
+        },
+        {
+          label: 'Next move',
+          detail: playbackRuntime.shellOrchestration.nextMoveDetail,
+        },
+        {
+          label: 'Action readiness',
+          detail: playbackRuntime.actionReadiness.summary,
+        },
+      ],
+      tone: handoffState === 'local' ? 'ready' : playbackRuntime.messageLadder.tone,
+    },
+    {
+      id: 'recovery-proof',
+      label: 'Recovery proof owner',
+      summary: `${recoveryOwnerLabel} becomes the proof owner the moment recovery routing, metadata freshness, or takeover honesty outrank the active playback story.`,
+      currentOwner: handoffState === 'local'
+        ? `${recoveryOwnerLabel} is the standby proof owner waiting behind the active path.`
+        : `${recoveryOwnerLabel} now owns the safer proof stack for the next honest move.`,
+      blockingProof: takeoverLane?.watchTrigger ?? playbackRuntime.recoveryOwnership.handoffReadiness,
+      promoteOwner: `Name ${recoveryOwnerLabel} directly, attach the exact blocked proof seam, and stop framing recovery as a silent background fallback.`,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Recovery readiness',
+          detail: playbackRuntime.recoveryOwnership.handoffReadiness,
+        },
+        {
+          label: 'Takeover rule',
+          detail: takeoverLane?.summary ?? playbackRuntime.multiConnectionTakeover.summary,
+        },
+        {
+          label: 'Resume move',
+          detail: playbackRuntime.resumeHonesty.nextHonestMove,
+        },
+      ],
+      tone: handoffState === 'local' ? 'watch' : 'recover',
+    },
+  ];
+};
+
 export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
   currentStream,
   currentProviderId,
@@ -631,6 +883,22 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     sharedLanguage,
     playbackRuntime,
   });
+  const confidenceCarryForward = buildConfidenceCarryForward({
+    inheritedSurfaceLabel,
+    currentOwnerLabel,
+    recoveryOwnerLabel,
+    handoffState,
+    playbackRuntime,
+    sharedLanguage,
+  });
+  const proofOwnershipLedger = buildProofOwnershipLedger({
+    inheritedSurfaceLabel,
+    currentOwnerLabel,
+    recoveryOwnerLabel,
+    handoffState,
+    playbackRuntime,
+    sharedLanguage,
+  });
   const currentProviderStatus = currentProviderId ? connectionStatus[currentProviderId]?.state ?? null : null;
   const inheritedSurfaceTone = getSurfaceTone(inheritedSurface);
   const surfaceLead = inheritedSurface
@@ -665,6 +933,8 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     surfaceParity,
     breakpointLedger,
     transitionMatrix,
+    confidenceCarryForward,
+    proofOwnershipLedger,
     entries: [
       {
         id: 'inheritance',
