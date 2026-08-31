@@ -1,5 +1,13 @@
 # StreamDeck Differentiators
 
+## August 31, 2026 Checkpoint Refresh
+
+This brief was re-validated on Monday, August 31, 2026 at 1:00 PM America/Toronto against the current repo state in `~/.openclaw/workspace/streamdeck/`.
+
+- `DIFFERENTIATORS.md` remains the strategy source of truth for the premium-player position and the must-be-honest login, home, and live product contracts.
+- `mock-provider/server.js` still exposes deterministic Xtream-style auth, catalog, guide, XMLTV, scenario health, and `/adapter/checkpoint` proof for the assignment surfaces.
+- `src/app/page.jsx`, `src/components/home-dashboard.tsx`, and `src/components/live-browser.tsx` still ship the three required Phase 1 surfaces and now render the refreshed checkpoint timestamp from the adapter proof panel inside the product shell.
+
 ## Three-Assignment Checkpoint
 
 This Phase 1 prototype is anchored to three visible deliverables, and each one should be provable both in the repo and inside the running product:

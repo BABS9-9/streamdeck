@@ -3,6 +3,7 @@ const { URL } = require('url');
 
 const PORT = 3579;
 const host = `http://localhost:${PORT}`;
+const phaseOneCheckpointRefreshedAt = '2026-08-31T13:00:00-04:00';
 const scenarioLabels = {
   healthy: 'Healthy mock mode',
   degradedSearch: 'Degraded search rehearsal',
@@ -6562,10 +6563,11 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
   surfaceFallbackExpiryContracts: buildSurfaceFallbackExpiryContracts(scenario),
   surfaceProviderPodiums: buildSurfaceProviderPodiums(scenario),
   browseLaunchScorecards: buildBrowseLaunchScorecards(scenario),
-  phaseOneCheckpoint: {
-    generatedAt: new Date().toISOString(),
-    activeScenario: scenario,
-    assignments: [
+      phaseOneCheckpoint: {
+        generatedAt: new Date().toISOString(),
+        refreshedAt: phaseOneCheckpointRefreshedAt,
+        activeScenario: scenario,
+        assignments: [
       {
         id: 'differentiators',
         title: 'Write DIFFERENTIATORS.md',

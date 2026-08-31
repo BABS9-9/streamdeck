@@ -16,6 +16,15 @@ export function PhaseOneProofPanel({ checkpoint, screenId, className = '' }: Pha
   if (!checkpoint) return null;
 
   const routeProof = checkpoint.routeProof.find((entry) => entry.screenId === screenId);
+  const refreshedAt = new Date(checkpoint.refreshedAt);
+  const refreshedLabel = Number.isNaN(refreshedAt.getTime())
+    ? checkpoint.refreshedAt
+    : refreshedAt.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
 
   return (
     <section className={`rounded-[28px] border border-white/10 bg-slate-950/70 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.45)] ${className}`}>
@@ -30,6 +39,7 @@ export function PhaseOneProofPanel({ checkpoint, screenId, className = '' }: Pha
         <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-right">
           <p className="text-[0.65rem] uppercase tracking-[0.25em] text-cyan-100/70">Scenario</p>
           <p className="text-sm font-semibold text-cyan-50">{checkpoint.activeScenario}</p>
+          <p className="mt-2 text-xs text-cyan-100/70">Checkpoint refreshed {refreshedLabel}</p>
         </div>
       </div>
 
