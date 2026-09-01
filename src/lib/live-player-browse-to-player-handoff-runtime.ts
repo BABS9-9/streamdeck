@@ -150,6 +150,43 @@ const getHandoffTone = (
   return 'ready';
 };
 
+const getSwitchReasonLabel = (reason?: ProviderSwitchContext['reason'] | null) => {
+  switch (reason) {
+    case 'manual':
+      return 'manual provider handoff';
+    case 'launch':
+      return 'launch-owner transfer';
+    case 'recovery':
+      return 'recovery takeover';
+    case 'variant':
+      return 'variant rescue';
+    case 'validation':
+      return 'validation reroute';
+    case 'remove-connection':
+      return 'removed-provider reset';
+    case 'auto':
+      return 'automatic handoff';
+    case 'quick-switch':
+      return 'quick-switch relay';
+    default:
+      return 'provider handoff';
+  }
+};
+
+const getSwitchContextSummary = (lastSwitchContext?: ProviderSwitchContext | null) => {
+  if (!lastSwitchContext?.toProviderId) {
+    return 'No saved-provider transfer context is attached to the current playback path.';
+  }
+
+  const sourceLabel = lastSwitchContext.sourceSurface
+    ? getSurfaceLabel(lastSwitchContext.sourceSurface === 'settings' || lastSwitchContext.sourceSurface === 'login' || lastSwitchContext.sourceSurface === 'system'
+      ? null
+      : lastSwitchContext.sourceSurface)
+    : 'an inherited surface';
+
+  return `${sourceLabel} last preserved a ${getSwitchReasonLabel(lastSwitchContext.reason)} into ${lastSwitchContext.toProviderId}.`;
+};
+
 const getNextMove = ({
   handoffState,
   playbackRuntime,
@@ -793,6 +830,328 @@ const buildProofOwnershipLedger = ({
   ];
 };
 
+const buildSwitchCarryForwardLedger = ({
+  inheritedSurfaceLabel,
+  currentOwnerLabel,
+  recoveryOwnerLabel,
+  handoffState,
+  lastSwitchContext,
+  playbackRuntime,
+}: {
+  inheritedSurfaceLabel: string;
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  handoffState: LivePlayerBrowseToPlayerHandoffContract['handoffState'];
+  lastSwitchContext?: ProviderSwitchContext | null;
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+}): LivePlayerBrowseToPlayerHandoffContract['switchCarryForwardLedger'] => {
+  const preservedQuery = lastSwitchContext?.preservedQuery?.trim();
+  const preservedTitle = lastSwitchContext?.preservedTitle?.trim();
+  const preservedResultCount = lastSwitchContext?.preservedResultCount ?? null;
+  const preservedDuplicateGroups = lastSwitchContext?.preservedDuplicateGroups ?? null;
+  const preservedFavoriteCount = lastSwitchContext?.preservedFavoriteCount ?? null;
+  const preservedRecentItemsCount = lastSwitchContext?.preservedRecentItemsCount ?? null;
+  const preservedCollectionsCount = lastSwitchContext?.preservedCollectionsCount ?? null;
+  const switchReasonLabel = getSwitchReasonLabel(lastSwitchContext?.reason);
+  const switchContextSummary = getSwitchContextSummary(lastSwitchContext);
+  const hasSwitchContext = Boolean(lastSwitchContext?.toProviderId);
+  const selectionPreserved = Boolean(preservedTitle || preservedQuery || preservedResultCount !== null);
+  const memoryCounts = [preservedFavoriteCount, preservedRecentItemsCount, preservedCollectionsCount].filter((value) => value !== null);
+  const savedMemoryPreserved = memoryCounts.length > 0;
+
+  return [
+    {
+      id: 'source-context',
+      label: 'Source-context carry-forward',
+      summary: hasSwitchContext
+        ? `${inheritedSurfaceLabel} may carry the original surface story forward only while the ${switchReasonLabel} still reads as the same user-visible journey.`
+        : `${inheritedSurfaceLabel} remains the inherited browse witness because no saved-provider switch has displaced it yet.`,
+      preservedContext: hasSwitchContext
+        ? `${switchContextSummary} Keep ${inheritedSurfaceLabel} visible as the origin surface so Player Dock does not invent a brand-new launch story after the switch.`
+        : `Carry ${inheritedSurfaceLabel} forward as the launch witness until a real saved-provider transfer or recovery takeover becomes visible.`,
+      dockRule: hasSwitchContext
+        ? 'Player Dock may preserve the upstream surface label, but it should describe it as preserved context rather than fresh ownership.'
+        : 'Player Dock may keep the same source-surface label because the active browse owner still matches playback ownership.',
+      breakTrigger: hasSwitchContext
+        ? 'Break source-context carry-forward as soon as the saved-provider transfer becomes the user-visible story instead of quiet routing underneath it.'
+        : 'Break source-context carry-forward when a provider transfer, line-cap warning, or recovery takeover outranks the original surface path.',
+      affectedSurfaces: ['home', 'live', 'player'],
+      witnessStack: [
+        {
+          label: 'Inherited surface',
+          detail: `${inheritedSurfaceLabel} is still the last named browse witness on this playback path.`,
+        },
+        {
+          label: 'Switch context',
+          detail: switchContextSummary,
+        },
+        {
+          label: 'Continuity rule',
+          detail: playbackRuntime.resumeHonesty.continuityRisk,
+        },
+      ],
+      tone: hasSwitchContext ? (handoffState === 'local' ? 'watch' : handoffState === 'watch' ? 'watch' : 'recover') : 'ready',
+    },
+    {
+      id: 'selection-context',
+      label: 'Selection-context carry-forward',
+      summary: selectionPreserved
+        ? 'The switch preserved title or query intent, so Live and Player can keep one visible selection story instead of acting like the user started over.'
+        : 'No preserved title or query witness survived the switch, so Player should keep selection continuity conservative.',
+      preservedContext: selectionPreserved
+        ? [
+          preservedTitle ? `Preserved title: ${preservedTitle}.` : null,
+          preservedQuery ? `Preserved query: "${preservedQuery}".` : null,
+          preservedResultCount !== null ? `Preserved result count: ${preservedResultCount}.` : null,
+          preservedDuplicateGroups !== null ? `Duplicate groups carried: ${preservedDuplicateGroups}.` : null,
+        ].filter(Boolean).join(' ')
+        : 'Selection continuity must now rely on the active playback row and current shell wording because no preserved search or title witness is attached.',
+      dockRule: selectionPreserved
+        ? `Player Dock may keep ${preservedTitle ?? 'the selected title'} framed as the same user intent, but it should not imply the provider path stayed identical underneath that intent.`
+        : 'Player Dock should name the current owner and current selection directly instead of pretending the old browse selection survived unchanged.',
+      breakTrigger: selectionPreserved
+        ? 'Break selection carry-forward if the preserved title no longer matches the active playback owner, or if the switch requires new recovery wording to keep the CTA honest.'
+        : 'Break any implied selection continuity as soon as the next action depends on provider recovery or a different title path.',
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Preserved title/query',
+          detail: selectionPreserved
+            ? [
+              preservedTitle ? preservedTitle : null,
+              preservedQuery ? `query ${preservedQuery}` : null,
+              preservedResultCount !== null ? `${preservedResultCount} results` : null,
+            ].filter(Boolean).join(' | ')
+            : 'No preserved title or query witness survived into Player Dock.',
+        },
+        {
+          label: 'CTA owner',
+          detail: playbackRuntime.shellOrchestration.nextMoveLabel,
+        },
+        {
+          label: 'Custody rule',
+          detail: playbackRuntime.switchCustody.custodyRule,
+        },
+      ],
+      tone: selectionPreserved ? (handoffState === 'recovery-led' ? 'recover' : 'watch') : 'recover',
+    },
+    {
+      id: 'saved-memory',
+      label: 'Saved-memory carry-forward',
+      summary: savedMemoryPreserved
+        ? 'Favorites, recents, or collection counts survived the switch, so the dock can admit preserved memory without claiming fresh ownership proof.'
+        : 'No saved-memory counts survived the switch, so the dock should avoid implying deep browse memory continuity.',
+      preservedContext: savedMemoryPreserved
+        ? [
+          preservedFavoriteCount !== null ? `${preservedFavoriteCount} favorites` : null,
+          preservedRecentItemsCount !== null ? `${preservedRecentItemsCount} recent items` : null,
+          preservedCollectionsCount !== null ? `${preservedCollectionsCount} collection links` : null,
+        ].filter(Boolean).join(', ')
+        : 'The switch did not carry favorite, recents, or collection proof into Player Dock.',
+      dockRule: savedMemoryPreserved
+        ? 'Player Dock may use these counts as continuity witnesses only; they cannot replace provider, line, or recovery proof.'
+        : 'Player Dock should keep continuity anchored to the current playback and recovery packets, not to assumed saved-library memory.',
+      breakTrigger: savedMemoryPreserved
+        ? `Break saved-memory carry-forward when ${recoveryOwnerLabel} becomes the clearer next owner than ${currentOwnerLabel}, because memory continuity no longer tells the same ownership story.`
+        : 'Break any implied library continuity when the current playback owner or recovery owner needs to be named explicitly.',
+      affectedSurfaces: ['home', 'live', 'player'],
+      witnessStack: [
+        {
+          label: 'Preserved memory',
+          detail: savedMemoryPreserved
+            ? [
+              preservedFavoriteCount !== null ? `favorites ${preservedFavoriteCount}` : null,
+              preservedRecentItemsCount !== null ? `recents ${preservedRecentItemsCount}` : null,
+              preservedCollectionsCount !== null ? `collections ${preservedCollectionsCount}` : null,
+            ].filter(Boolean).join(' | ')
+            : 'No preserved saved-memory counts were attached to the latest switch context.',
+        },
+        {
+          label: 'Recovery owner',
+          detail: playbackRuntime.recoveryOwnership.handoffReadiness,
+        },
+        {
+          label: 'Proof floor',
+          detail: playbackRuntime.confidenceFloor.minimumProof,
+        },
+      ],
+      tone: savedMemoryPreserved ? 'watch' : 'recover',
+    },
+    {
+      id: 'recovery-reset',
+      label: 'Recovery-reset carry-forward',
+      summary: handoffState === 'local'
+        ? `${currentOwnerLabel} still has enough aligned proof that the dock does not need to wipe the preserved switch story yet.`
+        : `Once ${recoveryOwnerLabel} takes over, the saved-provider switch context must collapse into recovery-owned wording instead of pretending the old carry-forward still leads.`,
+      preservedContext: handoffState === 'local'
+        ? 'Keep the preserved switch story visible as background context only. The active playback owner still leads the wording.'
+        : `${recoveryOwnerLabel} should inherit only the parts of the preserved switch story that still explain the next honest move.`,
+      dockRule: handoffState === 'local'
+        ? 'Do not let preserved switch context outrank the visible playback owner.'
+        : 'Reset the preserved switch context into recovery-owned wording as soon as the next move depends on takeover, not carry-forward.',
+      breakTrigger: `${playbackRuntime.connectionHeadroom.nextLimit} ${playbackRuntime.recoveryOwnership.handoffReadiness}`.trim(),
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Headroom limit',
+          detail: playbackRuntime.connectionHeadroom.nextLimit,
+        },
+        {
+          label: 'Recovery readiness',
+          detail: playbackRuntime.recoveryOwnership.handoffReadiness,
+        },
+        {
+          label: 'Takeover reason',
+          detail: playbackRuntime.shellOrchestration.takeoverReason,
+        },
+      ],
+      tone: handoffState === 'local' ? 'watch' : 'recover',
+    },
+  ];
+};
+
+const buildTransferDisclosureLedger = ({
+  currentOwnerLabel,
+  recoveryOwnerLabel,
+  handoffState,
+  lastSwitchContext,
+  playbackRuntime,
+}: {
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  handoffState: LivePlayerBrowseToPlayerHandoffContract['handoffState'];
+  lastSwitchContext?: ProviderSwitchContext | null;
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+}): LivePlayerBrowseToPlayerHandoffContract['transferDisclosureLedger'] => {
+  const switchReasonLabel = getSwitchReasonLabel(lastSwitchContext?.reason);
+  const hasSwitchContext = Boolean(lastSwitchContext?.toProviderId);
+  const sourceSurfaceLabel = lastSwitchContext?.sourceSurface
+    ? surfaceLabels[lastSwitchContext.sourceSurface]
+    : 'the prior surface';
+
+  return [
+    {
+      id: 'silent-switch',
+      label: 'Silent-switch allowance',
+      summary: hasSwitchContext && handoffState === 'local'
+        ? `The ${switchReasonLabel} may stay mostly silent only while ${currentOwnerLabel} still owns playback, headroom, and the next honest CTA.`
+        : 'No silent-switch allowance remains unless playback, ownership, and next-move proof still collapse into one visible owner.',
+      currentState: hasSwitchContext
+        ? `${sourceSurfaceLabel} preserved a hidden provider move underneath the same user-visible playback path.`
+        : 'No saved-provider switch is attached, so there is nothing extra to hide.',
+      canStayImplicit: hasSwitchContext && handoffState === 'local'
+        ? 'The switch may stay implicit while the user still experiences one believable title path and no recovery owner needs to be named out loud.'
+        : 'Only the base browse-to-player continuity may stay implicit now.',
+      mustDisclose: 'Disclose the switch the moment provider custody, continuity, or recovery posture stop agreeing on one quiet owner story.',
+      promoteNow: handoffState === 'local'
+        ? `Keep ${currentOwnerLabel} visible and leave the saved-provider move in the witness stack only.`
+        : `Start preparing explicit transfer wording toward ${recoveryOwnerLabel}.`,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Switch witness',
+          detail: getSwitchContextSummary(lastSwitchContext),
+        },
+        {
+          label: 'Current next move',
+          detail: playbackRuntime.shellOrchestration.nextMoveLabel,
+        },
+        {
+          label: 'Current custody',
+          detail: playbackRuntime.switchCustody.detail,
+        },
+      ],
+      tone: hasSwitchContext && handoffState === 'local' ? 'ready' : 'watch',
+    },
+    {
+      id: 'watch-switch',
+      label: 'Watch-safe disclosure',
+      summary: handoffState === 'watch'
+        ? 'The switch can no longer stay fully silent; the dock owes a watched disclosure even if the visible owner has not changed yet.'
+        : 'Watch-safe disclosure only becomes necessary when the saved-provider move starts changing the honesty of continuity or CTA language.',
+      currentState: `${currentOwnerLabel} is still visible, but line pressure, custody drift, or split proof is already softening the original handoff story.`,
+      canStayImplicit: 'Only the exact switch mechanics may stay implicit. The fact that the path is now watched must be visible.',
+      mustDisclose: `Disclose that ${currentOwnerLabel} still owns visible playback while the saved-provider route is being kept warm for ${recoveryOwnerLabel}.`,
+      promoteNow: `Promote watched continuity and one explicit fallback owner instead of waiting for Player Dock to correct the entire story alone.`,
+      affectedSurfaces: ['home', 'live', 'player'],
+      witnessStack: [
+        {
+          label: 'Continuity risk',
+          detail: playbackRuntime.resumeHonesty.continuityRisk,
+        },
+        {
+          label: 'Headroom warning',
+          detail: playbackRuntime.connectionHeadroom.nextLimit,
+        },
+        {
+          label: 'Recovery path',
+          detail: playbackRuntime.recoveryOwnership.handoffReadiness,
+        },
+      ],
+      tone: handoffState === 'watch' ? 'watch' : 'ready',
+    },
+    {
+      id: 'explicit-transfer',
+      label: 'Explicit-transfer threshold',
+      summary: handoffState === 'transfer-ready'
+        ? `${recoveryOwnerLabel} now has enough proof that the saved-provider transfer itself becomes the honest user-facing story.`
+        : 'Explicit transfer stays below the threshold until recovery proof outranks the visible playback owner.',
+      currentState: handoffState === 'transfer-ready'
+        ? `${currentOwnerLabel} is now the last visible owner, not the next honest owner.`
+        : `${currentOwnerLabel} still owns the visible path for now.`,
+      canStayImplicit: 'Only background provenance may stay implicit once the next move itself changes owners.',
+      mustDisclose: `Disclose the handoff as soon as the CTA, recovery owner, and custody rule all point away from ${currentOwnerLabel}.`,
+      promoteNow: `Promote ${recoveryOwnerLabel} directly in the dock copy and make the provider transfer explicit before another proof slip lands.`,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'CTA ownership',
+          detail: playbackRuntime.ctaStack.slots.find((slot) => slot.id === 'hero')?.ownerLabel
+            ?? playbackRuntime.ctaStack.heroOwner,
+        },
+        {
+          label: 'Custody rule',
+          detail: playbackRuntime.switchCustody.custodyRule,
+        },
+        {
+          label: 'Takeover rule',
+          detail: playbackRuntime.multiConnectionTakeover.detail,
+        },
+      ],
+      tone: handoffState === 'transfer-ready' ? 'recover' : 'watch',
+    },
+    {
+      id: 'recovery-reset',
+      label: 'Recovery-reset disclosure',
+      summary: handoffState === 'recovery-led'
+        ? 'Recovery is already the loudest truth on the path, so all saved-provider transfer context must collapse into recovery-owned language.'
+        : 'Recovery-reset disclosure only takes over once the dock stops carrying normal playback continuity at all.',
+      currentState: handoffState === 'recovery-led'
+        ? `${recoveryOwnerLabel} is now the honest lead story for the next move.`
+        : 'Normal playback continuity still leads the wording.',
+      canStayImplicit: 'Only the old launch witness may remain implicit, and only as background context.',
+      mustDisclose: `Disclose that recovery, not quiet carry-forward, now owns the next move and the ownership story has reset away from ${currentOwnerLabel}.`,
+      promoteNow: playbackRuntime.recoveryOwnership.handoffReadiness,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Recovery owner',
+          detail: playbackRuntime.recoveryOwnership.recoveryOwner,
+        },
+        {
+          label: 'Recovery readiness',
+          detail: playbackRuntime.recoveryOwnership.handoffReadiness,
+        },
+        {
+          label: 'Next honest move',
+          detail: playbackRuntime.resumeHonesty.nextHonestMove,
+        },
+      ],
+      tone: handoffState === 'recovery-led' ? 'recover' : 'watch',
+    },
+  ];
+};
+
 export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
   currentStream,
   currentProviderId,
@@ -899,6 +1258,21 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     playbackRuntime,
     sharedLanguage,
   });
+  const switchCarryForwardLedger = buildSwitchCarryForwardLedger({
+    inheritedSurfaceLabel,
+    currentOwnerLabel,
+    recoveryOwnerLabel,
+    handoffState,
+    lastSwitchContext,
+    playbackRuntime,
+  });
+  const transferDisclosureLedger = buildTransferDisclosureLedger({
+    currentOwnerLabel,
+    recoveryOwnerLabel,
+    handoffState,
+    lastSwitchContext,
+    playbackRuntime,
+  });
   const currentProviderStatus = currentProviderId ? connectionStatus[currentProviderId]?.state ?? null : null;
   const inheritedSurfaceTone = getSurfaceTone(inheritedSurface);
   const surfaceLead = inheritedSurface
@@ -935,6 +1309,8 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     transitionMatrix,
     confidenceCarryForward,
     proofOwnershipLedger,
+    switchCarryForwardLedger,
+    transferDisclosureLedger,
     entries: [
       {
         id: 'inheritance',

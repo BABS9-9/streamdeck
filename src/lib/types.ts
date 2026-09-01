@@ -1628,6 +1628,41 @@ export type LivePlayerBrowseToPlayerProofOwnershipEntry = {
   tone: 'ready' | 'watch' | 'recover';
 };
 
+export type LivePlayerBrowseToPlayerSwitchCarryForwardWitness = {
+  label: string;
+  detail: string;
+};
+
+export type LivePlayerBrowseToPlayerSwitchCarryForwardEntry = {
+  id: 'source-context' | 'selection-context' | 'saved-memory' | 'recovery-reset';
+  label: string;
+  summary: string;
+  preservedContext: string;
+  dockRule: string;
+  breakTrigger: string;
+  affectedSurfaces: Array<'home' | 'live' | 'player'>;
+  witnessStack: LivePlayerBrowseToPlayerSwitchCarryForwardWitness[];
+  tone: 'ready' | 'watch' | 'recover';
+};
+
+export type LivePlayerBrowseToPlayerTransferDisclosureWitness = {
+  label: string;
+  detail: string;
+};
+
+export type LivePlayerBrowseToPlayerTransferDisclosureEntry = {
+  id: 'silent-switch' | 'watch-switch' | 'explicit-transfer' | 'recovery-reset';
+  label: string;
+  summary: string;
+  currentState: string;
+  canStayImplicit: string;
+  mustDisclose: string;
+  promoteNow: string;
+  affectedSurfaces: Array<'home' | 'live' | 'player'>;
+  witnessStack: LivePlayerBrowseToPlayerTransferDisclosureWitness[];
+  tone: 'ready' | 'watch' | 'recover';
+};
+
 export type LivePlayerBrowseToPlayerHandoffContract = {
   screenId: 'player';
   title: string;
@@ -1649,6 +1684,8 @@ export type LivePlayerBrowseToPlayerHandoffContract = {
   transitionMatrix: LivePlayerBrowseToPlayerTransitionMatrixEntry[];
   confidenceCarryForward: LivePlayerBrowseToPlayerConfidenceCarryForwardEntry[];
   proofOwnershipLedger: LivePlayerBrowseToPlayerProofOwnershipEntry[];
+  switchCarryForwardLedger: LivePlayerBrowseToPlayerSwitchCarryForwardEntry[];
+  transferDisclosureLedger: LivePlayerBrowseToPlayerTransferDisclosureEntry[];
   entries: LivePlayerBrowseToPlayerHandoffEntry[];
 };
 

@@ -343,6 +343,114 @@ export function LivePlayerBrowseToPlayerHandoffPanel({
         </div>
       </div>
 
+      <div className="mt-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Switch carry-forward ledger</p>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/55">What survives a saved-provider move</span>
+        </div>
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-white/65">
+          This ledger tells Home, Live, and Player which pieces of saved-provider switch context may survive silently and which ones must collapse once ownership changes.
+        </p>
+        <div className="mt-3 grid gap-3 xl:grid-cols-2">
+          {contract.switchCarryForwardLedger.map((entry) => (
+            <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-white">{entry.label}</p>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                  {entry.id}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-white">{entry.summary}</p>
+              <div className="mt-4 space-y-3 text-xs leading-5 text-white/80">
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Preserved context</p>
+                  <p className="mt-1">{entry.preservedContext}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Dock rule</p>
+                  <p className="mt-1">{entry.dockRule}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Break trigger</p>
+                  <p className="mt-1">{entry.breakTrigger}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Affected surfaces</p>
+                  <p className="mt-1">{entry.affectedSurfaces.join(', ')}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Witness stack</p>
+                  <div className="mt-2 space-y-2">
+                    {entry.witnessStack.map((witness) => (
+                      <div key={`${entry.id}-${witness.label}`} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/55">{witness.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-white/85">{witness.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Transfer disclosure ledger</p>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/55">When the switch must become visible</span>
+        </div>
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-white/65">
+          This ledger sets the disclosure threshold for saved-provider moves so the dock does not hide a real ownership change behind stale continuity language.
+        </p>
+        <div className="mt-3 grid gap-3 xl:grid-cols-2">
+          {contract.transferDisclosureLedger.map((entry) => (
+            <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-white">{entry.label}</p>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                  {entry.id}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-white">{entry.summary}</p>
+              <div className="mt-4 space-y-3 text-xs leading-5 text-white/80">
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Current state</p>
+                  <p className="mt-1">{entry.currentState}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Can stay implicit</p>
+                  <p className="mt-1">{entry.canStayImplicit}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Must disclose</p>
+                  <p className="mt-1">{entry.mustDisclose}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Promote now</p>
+                  <p className="mt-1">{entry.promoteNow}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Affected surfaces</p>
+                  <p className="mt-1">{entry.affectedSurfaces.join(', ')}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Witness stack</p>
+                  <div className="mt-2 space-y-2">
+                    {entry.witnessStack.map((witness) => (
+                      <div key={`${entry.id}-${witness.label}`} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/55">{witness.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-white/85">{witness.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-5 grid gap-3 xl:grid-cols-2">
         {contract.entries.map((entry) => (
           <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>
