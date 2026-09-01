@@ -1680,6 +1680,19 @@ export type LivePlayerBrowseToPlayerDisclosureEscalationEntry = {
   tone: 'ready' | 'watch' | 'recover';
 };
 
+export type LivePlayerBrowseToPlayerSurfaceNarrationEntry = {
+  id: 'home' | 'live' | 'player' | 'recovery';
+  label: string;
+  summary: string;
+  headline: string;
+  supportLine: string;
+  badgeLabel: string;
+  fallbackLabel: string;
+  switchDisclosure: string;
+  trigger: string;
+  tone: 'ready' | 'watch' | 'recover';
+};
+
 export type LivePlayerBrowseToPlayerHandoffContract = {
   screenId: 'player';
   title: string;
@@ -1704,6 +1717,7 @@ export type LivePlayerBrowseToPlayerHandoffContract = {
   switchCarryForwardLedger: LivePlayerBrowseToPlayerSwitchCarryForwardEntry[];
   transferDisclosureLedger: LivePlayerBrowseToPlayerTransferDisclosureEntry[];
   disclosureEscalationLedger: LivePlayerBrowseToPlayerDisclosureEscalationEntry[];
+  surfaceNarrationLedger: LivePlayerBrowseToPlayerSurfaceNarrationEntry[];
   entries: LivePlayerBrowseToPlayerHandoffEntry[];
 };
 

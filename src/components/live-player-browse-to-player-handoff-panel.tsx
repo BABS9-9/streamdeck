@@ -503,6 +503,55 @@ export function LivePlayerBrowseToPlayerHandoffPanel({
         </div>
       </div>
 
+      <div className="mt-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Surface narration ledger</p>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/55">Exact copy packet by surface</span>
+        </div>
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-white/65">
+          This ledger gives Home, Live, Player, and Recovery one backend-owned narration packet so UI copy does not have to recompute the final story from raw witnesses.
+        </p>
+        <div className="mt-3 grid gap-3 xl:grid-cols-2">
+          {contract.surfaceNarrationLedger.map((entry) => (
+            <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-white">{entry.label}</p>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                  {entry.id}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-white">{entry.summary}</p>
+              <div className="mt-4 space-y-3 text-xs leading-5 text-white/80">
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Headline</p>
+                  <p className="mt-1">{entry.headline}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Support line</p>
+                  <p className="mt-1">{entry.supportLine}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Badge label</p>
+                  <p className="mt-1">{entry.badgeLabel}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Fallback label</p>
+                  <p className="mt-1">{entry.fallbackLabel}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Switch disclosure</p>
+                  <p className="mt-1">{entry.switchDisclosure}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Trigger</p>
+                  <p className="mt-1">{entry.trigger}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-5 grid gap-3 xl:grid-cols-2">
         {contract.entries.map((entry) => (
           <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>

@@ -1272,6 +1272,103 @@ const buildDisclosureEscalationLedger = ({
   ];
 };
 
+const buildSurfaceNarrationLedger = ({
+  inheritedSurfaceLabel,
+  currentOwnerLabel,
+  recoveryOwnerLabel,
+  handoffState,
+  nextMove,
+  lastSwitchContext,
+  playbackRuntime,
+  sharedLanguage,
+}: {
+  inheritedSurfaceLabel: string;
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  handoffState: LivePlayerBrowseToPlayerHandoffContract['handoffState'];
+  nextMove: { label: string; detail: string };
+  lastSwitchContext?: ProviderSwitchContext | null;
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+  sharedLanguage: LivePlayerBrowseToPlayerHandoffContract['sharedLanguage'];
+}): LivePlayerBrowseToPlayerHandoffContract['surfaceNarrationLedger'] => {
+  const providerLane = sharedLanguage.find((lane) => lane.id === 'provider-truth');
+  const headroomLane = sharedLanguage.find((lane) => lane.id === 'connection-headroom');
+  const continuityLane = sharedLanguage.find((lane) => lane.id === 'continuity');
+  const takeoverLane = sharedLanguage.find((lane) => lane.id === 'takeover');
+  const switchSummary = getSwitchContextSummary(lastSwitchContext);
+
+  return [
+    {
+      id: 'home',
+      label: 'Home narration packet',
+      summary: 'Home should introduce the launch story without overclaiming that playback proof is already settled.',
+      headline: handoffState === 'local'
+        ? `${inheritedSurfaceLabel} still launches into ${currentOwnerLabel} cleanly.`
+        : `${inheritedSurfaceLabel} launched this path, but playback proof is already asking for caveats.`,
+      supportLine: handoffState === 'local'
+        ? `Keep launch provenance visible while ${currentOwnerLabel} still inherits the same provider and continuity story into playback.`
+        : `Keep launch provenance visible, but foreshadow that ${recoveryOwnerLabel} may need to take the next honest move if the proof stack keeps splitting.`,
+      badgeLabel: handoffState === 'local' ? 'Launch provenance intact' : 'Launch proof softening',
+      fallbackLabel: `If Home cannot stay premium, downgrade into launch-safe wording and push the proof check into Live.`,
+      switchDisclosure: switchSummary,
+      trigger: providerLane?.watchTrigger ?? playbackRuntime.messageLadder.proofTrigger,
+      tone: handoffState === 'local' ? 'ready' : 'watch',
+    },
+    {
+      id: 'live',
+      label: 'Live narration packet',
+      summary: 'Live should be the first surface that turns split playback proof into visible watched wording.',
+      headline: handoffState === 'transfer-ready' || handoffState === 'recovery-led'
+        ? `${recoveryOwnerLabel} is now closer to the honest next move than ${currentOwnerLabel}.`
+        : `${currentOwnerLabel} can still lead Live, but the channel story is now watch-sensitive.`,
+      supportLine: handoffState === 'local'
+        ? `${continuityLane?.summary ?? playbackRuntime.shellOrchestration.continuityLabel} ${headroomLane?.summary ?? ''}`.trim()
+        : `Keep ${currentOwnerLabel} visible only with watched wording, and preview ${recoveryOwnerLabel} before Player has to do the entire correction alone.`,
+      badgeLabel: handoffState === 'local' ? 'Relay proof aligned' : handoffState === 'watch' ? 'Watched relay' : 'Transfer preview',
+      fallbackLabel: `If line pressure or custody drift increases, switch Live into explicit transfer framing before the dock overclaims quiet continuity.`,
+      switchDisclosure: handoffState === 'local'
+        ? 'Any saved-provider move may stay in the witness stack only while Live still reads as one believable owner story.'
+        : `The saved-provider route is no longer purely background context; Live should start naming the fallback owner out loud.`,
+      trigger: `${headroomLane?.watchTrigger ?? playbackRuntime.connectionHeadroom.nextLimit} ${playbackRuntime.switchCustody.custodyRule}`.trim(),
+      tone: handoffState === 'local' ? 'ready' : handoffState === 'watch' ? 'watch' : 'recover',
+    },
+    {
+      id: 'player',
+      label: 'Player narration packet',
+      summary: 'Player Dock speaks last, so its copy must collapse directly onto the active proof owner and next honest move.',
+      headline: handoffState === 'local'
+        ? `${currentOwnerLabel} still owns the visible playback story.`
+        : handoffState === 'watch'
+          ? `${currentOwnerLabel} is still visible, but the dock owes watched wording now.`
+          : `${recoveryOwnerLabel} now owns the next honest player story.`,
+      supportLine: handoffState === 'local'
+        ? nextMove.detail
+        : `${nextMove.label}. ${playbackRuntime.resumeHonesty.nextHonestMove}`.trim(),
+      badgeLabel: handoffState === 'local' ? 'Dock proof aligned' : handoffState === 'watch' ? 'Dock under watch' : 'Dock transfer explicit',
+      fallbackLabel: `If the dock loses proof again, collapse around ${recoveryOwnerLabel}, the exact blocked seam, and the concrete recovery action instead of preserving old browse tone.`,
+      switchDisclosure: handoffState === 'local'
+        ? 'Keep any saved-provider move implicit only as background witness context.'
+        : `Make the saved-provider handoff visible before the dock implies ${currentOwnerLabel} still owns silent continuity.`,
+      trigger: `${playbackRuntime.messageLadder.proofTrigger} ${takeoverLane?.watchTrigger ?? playbackRuntime.shellOrchestration.takeoverReason}`.trim(),
+      tone: handoffState === 'local' ? 'ready' : handoffState === 'watch' ? 'watch' : 'recover',
+    },
+    {
+      id: 'recovery',
+      label: 'Recovery narration packet',
+      summary: 'Recovery copy should reset the story around the safest visible owner, not around preserved launch wording.',
+      headline: handoffState === 'recovery-led'
+        ? `${recoveryOwnerLabel} is the recovery-backed owner now.`
+        : `${recoveryOwnerLabel} is the standby recovery owner if playback proof breaks.`,
+      supportLine: playbackRuntime.recoveryOwnership.handoffReadiness,
+      badgeLabel: handoffState === 'recovery-led' ? 'Recovery owns copy' : 'Recovery standing by',
+      fallbackLabel: `Keep the old launch owner only as provenance once recovery becomes the loudest truth on the path.`,
+      switchDisclosure: `Recovery should absorb any prior saved-provider switch into one explicit explanation for why ${recoveryOwnerLabel} now owns the next move.`,
+      trigger: playbackRuntime.recoveryOwnership.handoffReadiness,
+      tone: handoffState === 'recovery-led' ? 'recover' : 'watch',
+    },
+  ];
+};
+
 export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
   currentStream,
   currentProviderId,
@@ -1400,6 +1497,16 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     lastSwitchContext,
     playbackRuntime,
   });
+  const surfaceNarrationLedger = buildSurfaceNarrationLedger({
+    inheritedSurfaceLabel,
+    currentOwnerLabel,
+    recoveryOwnerLabel,
+    handoffState,
+    nextMove,
+    lastSwitchContext,
+    playbackRuntime,
+    sharedLanguage,
+  });
   const currentProviderStatus = currentProviderId ? connectionStatus[currentProviderId]?.state ?? null : null;
   const inheritedSurfaceTone = getSurfaceTone(inheritedSurface);
   const surfaceLead = inheritedSurface
@@ -1439,6 +1546,7 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     switchCarryForwardLedger,
     transferDisclosureLedger,
     disclosureEscalationLedger,
+    surfaceNarrationLedger,
     entries: [
       {
         id: 'inheritance',
