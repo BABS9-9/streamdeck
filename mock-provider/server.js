@@ -3,8 +3,8 @@ const { URL } = require('url');
 
 const PORT = 3579;
 const host = `http://localhost:${PORT}`;
-const phaseOneCheckpointRefreshedAt = '2026-09-01T07:00:00-04:00';
-const phaseOneCheckpointRunLabel = 'Axe cron refresh · 2026-09-01 07:00 ET';
+const phaseOneCheckpointRefreshedAt = '2026-09-01T13:00:00-04:00';
+const phaseOneCheckpointRunLabel = 'Axe cron refresh · 2026-09-01 13:00 ET';
 const phaseOneCheckpointBriefPath = '~/.openclaw/briefs/AXE_IPTV_PROJECT_BRIEF.md';
 const scenarioLabels = {
   healthy: 'Healthy mock mode',
@@ -6577,7 +6577,7 @@ const buildAdapterManifest = (scenario = 'healthy') => ({
         title: 'Write DIFFERENTIATORS.md',
         status: 'shipped',
         artifact: 'DIFFERENTIATORS.md',
-        proof: 'Competitive matrix, ship lanes, and assignment-grade surface implications are documented for Login, Home, and Live and re-stamped for the 7:00 AM ET cron checkpoint.',
+        proof: 'Competitive matrix, ship lanes, and assignment-grade surface implications are documented for Login, Home, and Live and re-stamped for the 1:00 PM ET cron checkpoint.',
       },
       {
         id: 'adapter',
