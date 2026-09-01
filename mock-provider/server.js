@@ -3,8 +3,8 @@ const { URL } = require('url');
 
 const PORT = 3579;
 const host = `http://localhost:${PORT}`;
-const phaseOneCheckpointRefreshedAt = '2026-09-01T13:00:00-04:00';
-const phaseOneCheckpointRunLabel = 'Axe cron refresh · 2026-09-01 13:00 ET';
+const phaseOneCheckpointRefreshedAt = '2026-09-01T19:00:00-04:00';
+const phaseOneCheckpointRunLabel = 'Axe cron refresh · 2026-09-01 19:00 ET';
 const phaseOneCheckpointBriefPath = '~/.openclaw/briefs/AXE_IPTV_PROJECT_BRIEF.md';
 const scenarioLabels = {
   healthy: 'Healthy mock mode',
