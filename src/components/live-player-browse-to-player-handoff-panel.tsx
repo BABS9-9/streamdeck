@@ -451,6 +451,58 @@ export function LivePlayerBrowseToPlayerHandoffPanel({
         </div>
       </div>
 
+      <div className="mt-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Disclosure escalation ladder</p>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/55">Which story wins first</span>
+        </div>
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-white/65">
+          This ladder gives the dock one backend-owned order for when quiet continuity can hold, when watched wording takes over, and when transfer or recovery must lead the story.
+        </p>
+        <div className="mt-3 grid gap-3 xl:grid-cols-2">
+          {contract.disclosureEscalationLedger.map((entry) => (
+            <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-white">{entry.label}</p>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                  {entry.id}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-white">{entry.summary}</p>
+              <div className="mt-4 space-y-3 text-xs leading-5 text-white/80">
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Trigger</p>
+                  <p className="mt-1">{entry.trigger}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">User-visible story</p>
+                  <p className="mt-1">{entry.userVisibleStory}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Dock copy rule</p>
+                  <p className="mt-1">{entry.dockCopyRule}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Affected surfaces</p>
+                  <p className="mt-1">{entry.affectedSurfaces.join(', ')}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Witness stack</p>
+                  <div className="mt-2 space-y-2">
+                    {entry.witnessStack.map((witness) => (
+                      <div key={`${entry.id}-${witness.label}`} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/55">{witness.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-white/85">{witness.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-5 grid gap-3 xl:grid-cols-2">
         {contract.entries.map((entry) => (
           <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>

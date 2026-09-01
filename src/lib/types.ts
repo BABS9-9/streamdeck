@@ -1663,6 +1663,23 @@ export type LivePlayerBrowseToPlayerTransferDisclosureEntry = {
   tone: 'ready' | 'watch' | 'recover';
 };
 
+export type LivePlayerBrowseToPlayerDisclosureEscalationWitness = {
+  label: string;
+  detail: string;
+};
+
+export type LivePlayerBrowseToPlayerDisclosureEscalationEntry = {
+  id: 'quiet-owner' | 'watched-owner' | 'transfer-owner' | 'recovery-owner';
+  label: string;
+  summary: string;
+  trigger: string;
+  userVisibleStory: string;
+  dockCopyRule: string;
+  affectedSurfaces: Array<'home' | 'live' | 'player'>;
+  witnessStack: LivePlayerBrowseToPlayerDisclosureEscalationWitness[];
+  tone: 'ready' | 'watch' | 'recover';
+};
+
 export type LivePlayerBrowseToPlayerHandoffContract = {
   screenId: 'player';
   title: string;
@@ -1686,6 +1703,7 @@ export type LivePlayerBrowseToPlayerHandoffContract = {
   proofOwnershipLedger: LivePlayerBrowseToPlayerProofOwnershipEntry[];
   switchCarryForwardLedger: LivePlayerBrowseToPlayerSwitchCarryForwardEntry[];
   transferDisclosureLedger: LivePlayerBrowseToPlayerTransferDisclosureEntry[];
+  disclosureEscalationLedger: LivePlayerBrowseToPlayerDisclosureEscalationEntry[];
   entries: LivePlayerBrowseToPlayerHandoffEntry[];
 };
 

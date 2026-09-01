@@ -1152,6 +1152,126 @@ const buildTransferDisclosureLedger = ({
   ];
 };
 
+const buildDisclosureEscalationLedger = ({
+  currentOwnerLabel,
+  recoveryOwnerLabel,
+  handoffState,
+  lastSwitchContext,
+  playbackRuntime,
+}: {
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  handoffState: LivePlayerBrowseToPlayerHandoffContract['handoffState'];
+  lastSwitchContext?: ProviderSwitchContext | null;
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+}): LivePlayerBrowseToPlayerHandoffContract['disclosureEscalationLedger'] => {
+  const switchReasonLabel = getSwitchReasonLabel(lastSwitchContext?.reason);
+  const hasSwitchContext = Boolean(lastSwitchContext?.toProviderId);
+
+  return [
+    {
+      id: 'quiet-owner',
+      label: 'Quiet-owner carry-forward',
+      summary: hasSwitchContext
+        ? `${currentOwnerLabel} may keep the dock story quiet only while the ${switchReasonLabel} stays beneath visible playback ownership.`
+        : `${currentOwnerLabel} keeps the dock story quiet because no saved-provider transfer has overtaken the visible path.`,
+      trigger: hasSwitchContext
+        ? 'Escalate the moment the saved-provider route changes who owns continuity, CTA honesty, or the visible next move.'
+        : 'Escalate when line pressure, switch custody drift, or recovery readiness stop agreeing on one owner.',
+      userVisibleStory: `${currentOwnerLabel} still looks like one continuous playback owner to the user.`,
+      dockCopyRule: 'Keep the active owner visible, keep any transfer context in the witness stack, and do not imply a fresh ownership reset.',
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Switch context',
+          detail: getSwitchContextSummary(lastSwitchContext),
+        },
+        {
+          label: 'Current next move',
+          detail: playbackRuntime.shellOrchestration.nextMoveLabel,
+        },
+        {
+          label: 'Continuity proof',
+          detail: playbackRuntime.resumeHonesty.continuityRisk,
+        },
+      ],
+      tone: handoffState === 'local' ? 'ready' : 'watch',
+    },
+    {
+      id: 'watched-owner',
+      label: 'Watched-owner disclosure',
+      summary: 'Once proof starts splitting, the dock still carries the current owner but must admit that the path is no longer quietly settled.',
+      trigger: `${playbackRuntime.connectionHeadroom.nextLimit} ${playbackRuntime.switchCustody.detail}`.trim(),
+      userVisibleStory: `${currentOwnerLabel} remains on screen, but the user should see that continuity is now watched rather than silently guaranteed.`,
+      dockCopyRule: `Keep ${currentOwnerLabel} visible, add watched wording immediately, and name ${recoveryOwnerLabel} as the standby fallback before the dock sounds fully stable again.`,
+      affectedSurfaces: ['home', 'live', 'player'],
+      witnessStack: [
+        {
+          label: 'Headroom warning',
+          detail: playbackRuntime.connectionHeadroom.nextLimit,
+        },
+        {
+          label: 'Custody drift',
+          detail: playbackRuntime.switchCustody.detail,
+        },
+        {
+          label: 'Recovery readiness',
+          detail: playbackRuntime.recoveryOwnership.handoffReadiness,
+        },
+      ],
+      tone: handoffState === 'watch' ? 'watch' : handoffState === 'local' ? 'ready' : 'recover',
+    },
+    {
+      id: 'transfer-owner',
+      label: 'Transfer-owner disclosure',
+      summary: `${recoveryOwnerLabel} becomes the honest visible owner as soon as transfer proof outranks the currently playing owner story.`,
+      trigger: `${playbackRuntime.switchCustody.custodyRule} ${playbackRuntime.multiConnectionTakeover.detail}`.trim(),
+      userVisibleStory: `${currentOwnerLabel} is now only the last visible owner; ${recoveryOwnerLabel} owns the next honest move the user needs to understand.`,
+      dockCopyRule: `Promote ${recoveryOwnerLabel} directly in Player Dock copy, make the provider transfer explicit, and stop borrowing ${currentOwnerLabel}'s quiet continuity language.`,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'CTA owner',
+          detail: playbackRuntime.ctaStack.heroOwner,
+        },
+        {
+          label: 'Custody rule',
+          detail: playbackRuntime.switchCustody.custodyRule,
+        },
+        {
+          label: 'Takeover proof',
+          detail: playbackRuntime.multiConnectionTakeover.detail,
+        },
+      ],
+      tone: handoffState === 'transfer-ready' ? 'watch' : handoffState === 'recovery-led' ? 'recover' : 'ready',
+    },
+    {
+      id: 'recovery-owner',
+      label: 'Recovery-owner disclosure',
+      summary: 'When recovery becomes the loudest truth, the dock must reset the story around recovery ownership instead of around preserved playback continuity.',
+      trigger: playbackRuntime.recoveryOwnership.handoffReadiness,
+      userVisibleStory: `${recoveryOwnerLabel} now owns the safest visible explanation for what happens next.`,
+      dockCopyRule: `Collapse the old carry-forward wording, frame recovery as the lead story, and keep the old playback owner only as background provenance.`,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Recovery owner',
+          detail: playbackRuntime.recoveryOwnership.recoveryOwner,
+        },
+        {
+          label: 'Next honest move',
+          detail: playbackRuntime.resumeHonesty.nextHonestMove,
+        },
+        {
+          label: 'Takeover reason',
+          detail: playbackRuntime.shellOrchestration.takeoverReason,
+        },
+      ],
+      tone: handoffState === 'recovery-led' ? 'recover' : 'watch',
+    },
+  ];
+};
+
 export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
   currentStream,
   currentProviderId,
@@ -1273,6 +1393,13 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     lastSwitchContext,
     playbackRuntime,
   });
+  const disclosureEscalationLedger = buildDisclosureEscalationLedger({
+    currentOwnerLabel,
+    recoveryOwnerLabel,
+    handoffState,
+    lastSwitchContext,
+    playbackRuntime,
+  });
   const currentProviderStatus = currentProviderId ? connectionStatus[currentProviderId]?.state ?? null : null;
   const inheritedSurfaceTone = getSurfaceTone(inheritedSurface);
   const surfaceLead = inheritedSurface
@@ -1311,6 +1438,7 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     proofOwnershipLedger,
     switchCarryForwardLedger,
     transferDisclosureLedger,
+    disclosureEscalationLedger,
     entries: [
       {
         id: 'inheritance',
