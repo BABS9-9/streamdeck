@@ -1693,6 +1693,25 @@ export type LivePlayerBrowseToPlayerSurfaceNarrationEntry = {
   tone: 'ready' | 'watch' | 'recover';
 };
 
+export type LivePlayerBrowseToPlayerAuthorityWitness = {
+  label: string;
+  detail: string;
+};
+
+export type LivePlayerBrowseToPlayerAuthorityEntry = {
+  id: 'launch-provenance' | 'provider-owner' | 'line-headroom' | 'continuity-story' | 'transfer-story' | 'recovery-route';
+  label: string;
+  summary: string;
+  activeOwner: string;
+  winningSurface: 'home' | 'live' | 'player' | 'recovery';
+  holdRule: string;
+  handoffTrigger: string;
+  visibleFallback: string;
+  affectedSurfaces: Array<'home' | 'live' | 'player'>;
+  witnessStack: LivePlayerBrowseToPlayerAuthorityWitness[];
+  tone: 'ready' | 'watch' | 'recover';
+};
+
 export type LivePlayerBrowseToPlayerHandoffContract = {
   screenId: 'player';
   title: string;
@@ -1718,6 +1737,7 @@ export type LivePlayerBrowseToPlayerHandoffContract = {
   transferDisclosureLedger: LivePlayerBrowseToPlayerTransferDisclosureEntry[];
   disclosureEscalationLedger: LivePlayerBrowseToPlayerDisclosureEscalationEntry[];
   surfaceNarrationLedger: LivePlayerBrowseToPlayerSurfaceNarrationEntry[];
+  authorityLedger: LivePlayerBrowseToPlayerAuthorityEntry[];
   entries: LivePlayerBrowseToPlayerHandoffEntry[];
 };
 

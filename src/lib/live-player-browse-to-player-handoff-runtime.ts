@@ -1369,6 +1369,212 @@ const buildSurfaceNarrationLedger = ({
   ];
 };
 
+const buildAuthorityLedger = ({
+  inheritedSurfaceLabel,
+  inheritedProviderLabel,
+  currentOwnerLabel,
+  recoveryOwnerLabel,
+  handoffState,
+  nextMove,
+  lastSwitchContext,
+  playbackRuntime,
+  sharedLanguage,
+}: {
+  inheritedSurfaceLabel: string;
+  inheritedProviderLabel: string;
+  currentOwnerLabel: string;
+  recoveryOwnerLabel: string;
+  handoffState: LivePlayerBrowseToPlayerHandoffContract['handoffState'];
+  nextMove: { label: string; detail: string };
+  lastSwitchContext?: ProviderSwitchContext | null;
+  playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
+  sharedLanguage: LivePlayerBrowseToPlayerHandoffContract['sharedLanguage'];
+}): LivePlayerBrowseToPlayerHandoffContract['authorityLedger'] => {
+  const providerLane = sharedLanguage.find((lane) => lane.id === 'provider-truth');
+  const headroomLane = sharedLanguage.find((lane) => lane.id === 'connection-headroom');
+  const continuityLane = sharedLanguage.find((lane) => lane.id === 'continuity');
+  const takeoverLane = sharedLanguage.find((lane) => lane.id === 'takeover');
+  const switchSummary = getSwitchContextSummary(lastSwitchContext);
+  const liveTransferWatch = `${headroomLane?.watchTrigger ?? playbackRuntime.connectionHeadroom.nextLimit} ${playbackRuntime.switchCustody.custodyRule}`.trim();
+
+  return [
+    {
+      id: 'launch-provenance',
+      label: 'Launch provenance owner',
+      summary: `${inheritedSurfaceLabel} owns the origin story until provider drift or takeover proof outranks the original browse path.`,
+      activeOwner: inheritedSurfaceLabel,
+      winningSurface: handoffState === 'local' ? 'home' : handoffState === 'watch' ? 'live' : 'player',
+      holdRule: handoffState === 'local'
+        ? `${inheritedSurfaceLabel} may stay visible because ${currentOwnerLabel} still reads like the same launch owner reaching Player Dock.`
+        : `${inheritedSurfaceLabel} is now provenance only; downstream surfaces must qualify the launch story before it sounds current.`,
+      handoffTrigger: providerLane?.watchTrigger ?? playbackRuntime.messageLadder.proofTrigger,
+      visibleFallback: `If launch provenance breaks, keep ${inheritedSurfaceLabel} as background context and let Live or Player own the active wording instead.`,
+      affectedSurfaces: ['home', 'live', 'player'],
+      witnessStack: [
+        {
+          label: 'Launch owner',
+          detail: `${inheritedSurfaceLabel} originally launched the current player path on ${inheritedProviderLabel}.`,
+        },
+        {
+          label: 'Provider continuity',
+          detail: providerLane?.summary ?? `${currentOwnerLabel} still owns the visible provider story.`,
+        },
+        {
+          label: 'Switch context',
+          detail: switchSummary,
+        },
+      ],
+      tone: handoffState === 'local' ? 'ready' : 'watch',
+    },
+    {
+      id: 'provider-owner',
+      label: 'Provider owner authority',
+      summary: 'The runtime should publish one explicit provider winner so the dock never guesses whether launch ownership or recovery ownership leads the story.',
+      activeOwner: handoffState === 'transfer-ready' || handoffState === 'recovery-led' ? recoveryOwnerLabel : currentOwnerLabel,
+      winningSurface: handoffState === 'local' ? 'player' : handoffState === 'watch' ? 'live' : 'player',
+      holdRule: handoffState === 'transfer-ready' || handoffState === 'recovery-led'
+        ? `Promote ${recoveryOwnerLabel} directly as the provider owner; ${currentOwnerLabel} should remain only as the last visible owner.`
+        : `Keep ${currentOwnerLabel} as the provider owner until custody and takeover proof stop agreeing with the current playback path.`,
+      handoffTrigger: `${playbackRuntime.switchCustody.custodyRule} ${playbackRuntime.multiConnectionTakeover.detail}`.trim(),
+      visibleFallback: `If provider ownership splits again, move copy onto ${playbackRuntime.messageLadder.proofOwner} and attach the exact reason the old owner lost the line.`,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Proof owner',
+          detail: playbackRuntime.messageLadder.proofOwner,
+        },
+        {
+          label: 'Custody rule',
+          detail: playbackRuntime.switchCustody.custodyRule,
+        },
+        {
+          label: 'Takeover reason',
+          detail: playbackRuntime.multiConnectionTakeover.detail,
+        },
+      ],
+      tone: handoffState === 'local' ? 'ready' : handoffState === 'watch' ? 'watch' : 'recover',
+    },
+    {
+      id: 'line-headroom',
+      label: 'Connection headroom authority',
+      summary: 'Live should own the first visible line-pressure warning, while Player Dock owns the final correction once spare capacity becomes doubtful.',
+      activeOwner: handoffState === 'local' ? 'Live warning lane + Player final owner' : 'Player Dock line-risk owner',
+      winningSurface: handoffState === 'local' ? 'live' : 'player',
+      holdRule: handoffState === 'local'
+        ? `Let Live surface the first warning, but let Player Dock make the final claim about whether ${currentOwnerLabel} can still carry premium continuity.`
+        : `Player Dock must own the line story now because the active connection can no longer hide behind browse-safe language.`,
+      handoffTrigger: headroomLane?.watchTrigger ?? playbackRuntime.connectionHeadroom.nextLimit,
+      visibleFallback: `If line proof drops again, collapse around ${recoveryOwnerLabel}, the safer route, and the exact blocked-capacity seam before another action is promoted.`,
+      affectedSurfaces: ['home', 'live', 'player'],
+      witnessStack: [
+        {
+          label: 'Current window',
+          detail: headroomLane?.dockRule ?? playbackRuntime.connectionHeadroom.summary,
+        },
+        {
+          label: 'Next limit',
+          detail: playbackRuntime.connectionHeadroom.nextLimit,
+        },
+        {
+          label: 'Recovery move',
+          detail: headroomLane?.recoveryMove ?? playbackRuntime.recoveryOwnership.handoffReadiness,
+        },
+      ],
+      tone: handoffState === 'local' ? 'ready' : handoffState === 'watch' ? 'watch' : 'recover',
+    },
+    {
+      id: 'continuity-story',
+      label: 'Continuity story authority',
+      summary: 'Continuity must have one winning surface so Home, Live, and Player do not each soften the story differently when proof starts slipping.',
+      activeOwner: handoffState === 'local' ? `${inheritedSurfaceLabel} -> Live -> Player` : handoffState === 'watch' ? 'Live watched continuity' : 'Player recovery continuity',
+      winningSurface: handoffState === 'local' ? 'home' : handoffState === 'watch' ? 'live' : 'player',
+      holdRule: handoffState === 'local'
+        ? `Keep the same continuity story across ${inheritedSurfaceLabel}, Live, and Player while the first playback proof still agrees with launch provenance.`
+        : handoffState === 'watch'
+          ? 'Let Live widen the wording first so Player Dock does not have to perform the entire continuity correction alone.'
+          : `Reset continuity around ${recoveryOwnerLabel} and the blocked seam instead of preserving old launch phrasing.`,
+      handoffTrigger: continuityLane?.watchTrigger ?? playbackRuntime.resumeHonesty.continuityRisk,
+      visibleFallback: `${nextMove.label}. ${nextMove.detail}`.trim(),
+      affectedSurfaces: ['home', 'live', 'player'],
+      witnessStack: [
+        {
+          label: 'Continuity lane',
+          detail: continuityLane?.summary ?? playbackRuntime.shellOrchestration.continuityLabel,
+        },
+        {
+          label: 'Continuity risk',
+          detail: playbackRuntime.resumeHonesty.continuityRisk,
+        },
+        {
+          label: 'Next honest move',
+          detail: playbackRuntime.resumeHonesty.nextHonestMove,
+        },
+      ],
+      tone: handoffState === 'local' ? 'ready' : handoffState === 'watch' ? 'watch' : 'recover',
+    },
+    {
+      id: 'transfer-story',
+      label: 'Transfer disclosure authority',
+      summary: 'The transfer story needs one authority winner so saved-provider moves become visible at the same threshold on Live and Player.',
+      activeOwner: handoffState === 'local' ? 'Silent witness stack' : handoffState === 'watch' ? 'Watched disclosure lane' : `${recoveryOwnerLabel} transfer owner`,
+      winningSurface: handoffState === 'local' ? 'player' : handoffState === 'watch' ? 'live' : 'player',
+      holdRule: handoffState === 'local'
+        ? 'Keep the saved-provider move implicit only as witness context while the current owner still owns a believable silent continuity story.'
+        : handoffState === 'watch'
+          ? `Let Live begin the disclosure so Player Dock is confirming an already-visible transfer story, not inventing it.`
+          : `Player Dock must name ${recoveryOwnerLabel} directly and make the provider handoff explicit now.`,
+      handoffTrigger: handoffState === 'local'
+        ? liveTransferWatch
+        : `${playbackRuntime.switchCustody.custodyRule} ${takeoverLane?.watchTrigger ?? playbackRuntime.shellOrchestration.takeoverReason}`.trim(),
+      visibleFallback: `If another proof slip lands, collapse the wording onto ${recoveryOwnerLabel}, the handoff reason, and the concrete recovery action.`,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Switch summary',
+          detail: switchSummary,
+        },
+        {
+          label: 'Disclosure threshold',
+          detail: playbackRuntime.switchCustody.custodyRule,
+        },
+        {
+          label: 'Dock trigger',
+          detail: takeoverLane?.watchTrigger ?? playbackRuntime.shellOrchestration.takeoverReason,
+        },
+      ],
+      tone: handoffState === 'local' ? 'ready' : handoffState === 'watch' ? 'watch' : 'recover',
+    },
+    {
+      id: 'recovery-route',
+      label: 'Recovery route authority',
+      summary: 'Recovery should have a named owner before the dock gets there, so the UI can switch from watched continuity to a concrete next move without inventing fallback logic.',
+      activeOwner: recoveryOwnerLabel,
+      winningSurface: handoffState === 'recovery-led' ? 'recovery' : 'player',
+      holdRule: handoffState === 'recovery-led'
+        ? `${recoveryOwnerLabel} already owns the visible route, so recovery copy should lead every downstream explanation.`
+        : `${recoveryOwnerLabel} is the standby recovery owner and should stay attached to the current path as the explicit next move if proof falls again.`,
+      handoffTrigger: playbackRuntime.recoveryOwnership.handoffReadiness,
+      visibleFallback: `Keep ${recoveryOwnerLabel} named as the next move owner and preserve ${currentOwnerLabel} only as provenance once recovery outranks local playback.`,
+      affectedSurfaces: ['live', 'player'],
+      witnessStack: [
+        {
+          label: 'Recovery owner',
+          detail: playbackRuntime.recoveryOwnership.recoveryOwner,
+        },
+        {
+          label: 'Recovery readiness',
+          detail: playbackRuntime.recoveryOwnership.handoffReadiness,
+        },
+        {
+          label: 'Takeover lane',
+          detail: takeoverLane?.recoveryMove ?? playbackRuntime.shellOrchestration.takeoverReason,
+        },
+      ],
+      tone: handoffState === 'recovery-led' ? 'recover' : 'watch',
+    },
+  ];
+};
+
 export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
   currentStream,
   currentProviderId,
@@ -1507,6 +1713,17 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     playbackRuntime,
     sharedLanguage,
   });
+  const authorityLedger = buildAuthorityLedger({
+    inheritedSurfaceLabel,
+    inheritedProviderLabel,
+    currentOwnerLabel,
+    recoveryOwnerLabel,
+    handoffState,
+    nextMove,
+    lastSwitchContext,
+    playbackRuntime,
+    sharedLanguage,
+  });
   const currentProviderStatus = currentProviderId ? connectionStatus[currentProviderId]?.state ?? null : null;
   const inheritedSurfaceTone = getSurfaceTone(inheritedSurface);
   const surfaceLead = inheritedSurface
@@ -1547,6 +1764,7 @@ export const buildLivePlayerBrowseToPlayerHandoffRuntime = ({
     transferDisclosureLedger,
     disclosureEscalationLedger,
     surfaceNarrationLedger,
+    authorityLedger,
     entries: [
       {
         id: 'inheritance',
