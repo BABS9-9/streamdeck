@@ -1712,6 +1712,27 @@ export type LivePlayerBrowseToPlayerAuthorityEntry = {
   tone: 'ready' | 'watch' | 'recover';
 };
 
+export type LivePlayerBrowseToPlayerPrecedenceWitness = {
+  label: string;
+  detail: string;
+};
+
+export type LivePlayerBrowseToPlayerPrecedenceEntry = {
+  id: 'launch-vs-provider' | 'provider-vs-line' | 'line-vs-continuity' | 'continuity-vs-transfer' | 'transfer-vs-recovery';
+  label: string;
+  summary: string;
+  precedenceRank: 1 | 2 | 3 | 4 | 5;
+  competingClaims: string;
+  winningClaim: string;
+  winnerReason: string;
+  loserConstraint: string;
+  priorityRule: string;
+  escalationTarget: string;
+  affectedSurfaces: Array<'home' | 'live' | 'player'>;
+  witnessStack: LivePlayerBrowseToPlayerPrecedenceWitness[];
+  tone: 'ready' | 'watch' | 'recover';
+};
+
 export type LivePlayerBrowseToPlayerHandoffContract = {
   screenId: 'player';
   title: string;
@@ -1738,6 +1759,7 @@ export type LivePlayerBrowseToPlayerHandoffContract = {
   disclosureEscalationLedger: LivePlayerBrowseToPlayerDisclosureEscalationEntry[];
   surfaceNarrationLedger: LivePlayerBrowseToPlayerSurfaceNarrationEntry[];
   authorityLedger: LivePlayerBrowseToPlayerAuthorityEntry[];
+  precedenceLedger: LivePlayerBrowseToPlayerPrecedenceEntry[];
   entries: LivePlayerBrowseToPlayerHandoffEntry[];
 };
 

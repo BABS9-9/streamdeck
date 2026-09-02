@@ -612,6 +612,70 @@ export function LivePlayerBrowseToPlayerHandoffPanel({
         </div>
       </div>
 
+      <div className="mt-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Precedence ledger</p>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/55">Which conflict wins first</span>
+        </div>
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-white/65">
+          This ledger resolves collisions across launch provenance, provider truth, line pressure, continuity, transfer disclosure, and recovery so the dock never invents its own override order.
+        </p>
+        <div className="mt-3 grid gap-3 xl:grid-cols-2">
+          {contract.precedenceLedger.map((entry) => (
+            <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-white">{entry.label}</p>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/80">
+                  P{entry.precedenceRank}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-white">{entry.summary}</p>
+              <div className="mt-4 space-y-3 text-xs leading-5 text-white/80">
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Competing claims</p>
+                  <p className="mt-1">{entry.competingClaims}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Winning claim</p>
+                  <p className="mt-1">{entry.winningClaim}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Winner reason</p>
+                  <p className="mt-1">{entry.winnerReason}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Loser constraint</p>
+                  <p className="mt-1">{entry.loserConstraint}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Priority rule</p>
+                  <p className="mt-1">{entry.priorityRule}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Escalation target</p>
+                  <p className="mt-1">{entry.escalationTarget}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Affected surfaces</p>
+                  <p className="mt-1">{entry.affectedSurfaces.join(', ')}</p>
+                </div>
+                <div>
+                  <p className="uppercase tracking-[0.18em] text-white/55">Witness stack</p>
+                  <div className="mt-2 space-y-2">
+                    {entry.witnessStack.map((witness) => (
+                      <div key={`${entry.id}-${witness.label}`} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/55">{witness.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-white/85">{witness.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-5 grid gap-3 xl:grid-cols-2">
         {contract.entries.map((entry) => (
           <article key={entry.id} className={`rounded-[1.35rem] border p-4 ${toneStyles[entry.tone]}`}>
