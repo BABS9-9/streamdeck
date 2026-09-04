@@ -2284,6 +2284,43 @@ export type LivePlayerOverlayVisibilityRuntimeContract = {
   };
 };
 
+export type LivePlayerOverlayMutationState =
+  | 'idle'
+  | 'pending'
+  | 'aligned';
+
+export type LivePlayerOverlayMutationStep = {
+  id: 'apply-visibility-target' | 'hold-visibility-state';
+  label: string;
+  detail: string;
+  effectKind: 'set-overlay-state' | 'none';
+  targetVisibilityState: LivePlayerOverlayVisibilityState;
+};
+
+export type LivePlayerOverlayMutationRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  mutationState: LivePlayerOverlayMutationState;
+  rawVisibilityState: LivePlayerOverlayVisibilityState;
+  effectiveVisibilityState: LivePlayerOverlayVisibilityState;
+  targetVisibilityState: LivePlayerOverlayVisibilityState;
+  applyMode: LivePlayerOverlayVisibilityApplyMode;
+  lockState: LivePlayerOverlayVisibilityLockState;
+  triggerLabel: string;
+  releaseRule: string;
+  step: LivePlayerOverlayMutationStep;
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    targetVisibilityState: LivePlayerOverlayVisibilityState;
+  };
+};
+
 export type LivePlayerOverlaySessionFreshnessState =
   | 'fresh'
   | 'warming'
@@ -2806,6 +2843,7 @@ export type LivePlayerOverlayRuntimeContract = {
   interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
   executionRuntime: LivePlayerOverlayExecutionRuntimeContract;
   visibilityRuntime: LivePlayerOverlayVisibilityRuntimeContract;
+  mutationRuntime: LivePlayerOverlayMutationRuntimeContract;
   sessionRuntime: LivePlayerOverlaySessionRuntimeContract;
   playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
   timelineRuntime: LivePlayerOverlayTimelineRuntimeContract;

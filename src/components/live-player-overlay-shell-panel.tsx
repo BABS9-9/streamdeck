@@ -1308,6 +1308,59 @@ export function LivePlayerOverlayShellPanel({
           </div>
         </div>
 
+        <div className={`mt-4 rounded-2xl border p-4 ${toneStyles[contract.mutationRuntime.tone]}`}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.mutationRuntime.eyebrow}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.mutationRuntime.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.mutationRuntime.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.mutationRuntime.mutationState}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.mutationRuntime.applyMode}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.mutationRuntime.lockState}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Stored state</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.mutationRuntime.rawVisibilityState}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Effective state</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.mutationRuntime.effectiveVisibilityState}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Target state</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.mutationRuntime.targetVisibilityState}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Trigger</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.mutationRuntime.triggerLabel}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.mutationRuntime.step.label}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Release rule</p>
+              <p className="mt-3 text-xs leading-5 text-white/80">{contract.mutationRuntime.releaseRule}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.mutationRuntime.nextMove.label}</p>
+            <p className="mt-3 text-sm leading-6 text-white/90">{contract.mutationRuntime.step.detail}</p>
+          </div>
+        </div>
+
         <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="max-w-3xl">

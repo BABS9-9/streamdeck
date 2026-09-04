@@ -14,6 +14,7 @@ import { buildLivePlayerOverlayCommandRuntime } from '@/lib/live-player-overlay-
 import { buildLivePlayerOverlayInteractionRuntime } from '@/lib/live-player-overlay-interaction-runtime';
 import { buildLivePlayerOverlayExecutionRuntime } from '@/lib/live-player-overlay-execution-runtime';
 import { buildLivePlayerOverlayVisibilityRuntime } from '@/lib/live-player-overlay-visibility-runtime';
+import { buildLivePlayerOverlayMutationRuntime } from '@/lib/live-player-overlay-mutation-runtime';
 import { buildLivePlayerOverlaySessionRuntime } from '@/lib/live-player-overlay-session-runtime';
 import { buildLivePlayerOverlayTimelineRuntime } from '@/lib/live-player-overlay-timeline-runtime';
 import { buildLivePlayerOverlayPlaybackRuntime } from '@/lib/live-player-overlay-playback-runtime';
@@ -710,6 +711,13 @@ export function PlayerDock() {
     livePlayerOverlayInteractionRuntime,
     playerRecoveryActionRuntime,
   ]);
+  const livePlayerOverlayMutationRuntime = useMemo(() => buildLivePlayerOverlayMutationRuntime({
+    interactionRuntime: livePlayerOverlayInteractionRuntime,
+    visibilityRuntime: livePlayerOverlayVisibilityRuntime,
+  }), [
+    livePlayerOverlayInteractionRuntime,
+    livePlayerOverlayVisibilityRuntime,
+  ]);
   const livePlayerBrowseToPlayerHandoffRuntime = useMemo(() => buildLivePlayerBrowseToPlayerHandoffRuntime({
     currentStream,
     currentProviderId,
@@ -756,6 +764,7 @@ export function PlayerDock() {
     interactionRuntime: livePlayerOverlayInteractionRuntime,
     executionRuntime: livePlayerOverlayExecutionRuntime,
     visibilityRuntime: livePlayerOverlayVisibilityRuntime,
+    mutationRuntime: livePlayerOverlayMutationRuntime,
     sessionRuntime: livePlayerOverlaySessionRuntime,
     playbackRuntime: livePlayerOverlayPlaybackRuntime,
     timelineRuntime: livePlayerOverlayTimelineRuntime,
@@ -776,6 +785,7 @@ export function PlayerDock() {
     livePlayerOverlayCommandRuntime,
     livePlayerOverlayExecutionRuntime,
     livePlayerOverlayInteractionRuntime,
+    livePlayerOverlayMutationRuntime,
     livePlayerOverlayPlaybackRuntime,
     livePlayerOverlayVisibilityRuntime,
     livePlayerOverlaySessionRuntime,
@@ -1090,14 +1100,14 @@ export function PlayerDock() {
   };
 
   useEffect(() => {
-    if (livePlayerOverlayVisibilityRuntime.applyMode !== 'set-overlay-state') return;
-    if (overlayState === livePlayerOverlayVisibilityRuntime.targetVisibilityState) return;
+    if (livePlayerOverlayMutationRuntime.step.effectKind !== 'set-overlay-state') return;
+    if (overlayState === livePlayerOverlayMutationRuntime.step.targetVisibilityState) return;
 
-    setOverlayState(livePlayerOverlayVisibilityRuntime.targetVisibilityState);
+    setOverlayState(livePlayerOverlayMutationRuntime.step.targetVisibilityState);
   }, [
     overlayState,
     setOverlayState,
-    livePlayerOverlayVisibilityRuntime,
+    livePlayerOverlayMutationRuntime,
   ]);
 
   useEffect(() => {
