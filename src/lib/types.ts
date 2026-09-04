@@ -2157,6 +2157,68 @@ export type LivePlayerOverlayInteractionRuntimeContract = {
   };
 };
 
+export type LivePlayerOverlayExecutionEffectKind =
+  | 'set-overlay-state'
+  | 'close-overlay'
+  | 'request-track-command'
+  | 'close-playback'
+  | 'retry-playback'
+  | 'quick-switch'
+  | 'play-exact-recovery-target'
+  | 'play-category-recovery-target'
+  | 'switch-playback-owner'
+  | 'record-blocked'
+  | 'record-unavailable';
+
+export type LivePlayerOverlayExecutionPlanStep = {
+  id: string;
+  label: string;
+  detail: string;
+  effectKind: LivePlayerOverlayExecutionEffectKind;
+  overlayState: LivePlayerOverlayVisibilityState | null;
+  targetProviderId: string | null;
+  trackCommand: 'cycle-audio' | 'cycle-subtitle' | 'open-picker' | null;
+};
+
+export type LivePlayerOverlayExecutionPlan = {
+  id: string;
+  source: 'command' | 'action';
+  commandId: LivePlayerOverlayCommandEntry['id'] | null;
+  actionId: LivePlayerOverlayPlaybackActionId | null;
+  label: string;
+  dispatchKind: LivePlayerOverlayDispatchKind;
+  available: boolean;
+  tone: LivePlayerControlTone;
+  startVisibilityState: LivePlayerOverlayVisibilityState;
+  targetVisibilityState: LivePlayerOverlayVisibilityState;
+  targetProviderId: string | null;
+  targetMode: 'none' | 'current-playback' | 'direct-provider' | 'exact-variant' | 'category-fallback' | 'close-path';
+  summary: string;
+  detail: string;
+  blockedDetail: string;
+  unavailableDetail: string;
+  steps: LivePlayerOverlayExecutionPlanStep[];
+};
+
+export type LivePlayerOverlayExecutionRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  primaryPlanLabel: string;
+  recoveryPlanLabel: string;
+  commandPlans: LivePlayerOverlayExecutionPlan[];
+  actionPlans: LivePlayerOverlayExecutionPlan[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    targetProviderId: string | null;
+  };
+};
+
 export type LivePlayerOverlaySessionFreshnessState =
   | 'fresh'
   | 'warming'
@@ -2677,6 +2739,7 @@ export type LivePlayerOverlayRuntimeContract = {
   focusRuntime: LivePlayerOverlayFocusRuntimeContract;
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
   interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
+  executionRuntime: LivePlayerOverlayExecutionRuntimeContract;
   sessionRuntime: LivePlayerOverlaySessionRuntimeContract;
   playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
   timelineRuntime: LivePlayerOverlayTimelineRuntimeContract;

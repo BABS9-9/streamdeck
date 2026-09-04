@@ -2,6 +2,7 @@ import {
   LivePlayerOverlayCommandRuntimeContract,
   LivePlayerControlRuntimeContract,
   LivePlayerContinuityRuntimeContract,
+  LivePlayerOverlayExecutionRuntimeContract,
   LivePlayerOverlayFocusRuntimeContract,
   LivePlayerOverlayInfoBarState,
   LivePlayerOverlayInteractionRuntimeContract,
@@ -217,6 +218,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
   focusRuntime,
   commandRuntime,
   interactionRuntime,
+  executionRuntime,
   sessionRuntime,
   playbackRuntime,
   timelineRuntime,
@@ -237,6 +239,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
   focusRuntime: LivePlayerOverlayFocusRuntimeContract;
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
   interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
+  executionRuntime: LivePlayerOverlayExecutionRuntimeContract;
   sessionRuntime: LivePlayerOverlaySessionRuntimeContract;
   playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
   timelineRuntime: LivePlayerOverlayTimelineRuntimeContract;
@@ -308,6 +311,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
     focusRuntime,
     commandRuntime,
     interactionRuntime,
+    executionRuntime,
     sessionRuntime,
     playbackRuntime,
     timelineRuntime,

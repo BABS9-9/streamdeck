@@ -1148,10 +1148,10 @@ export function LivePlayerOverlayShellPanel({
             <p className="mt-3 text-sm leading-6 text-white/90">{contract.interactionRuntime.reasonPath}</p>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="max-w-3xl">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Execution witness</p>
+        <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Execution witness</p>
                 <p className="mt-2 text-sm font-semibold text-white">{contract.interactionRuntime.executionSummary}</p>
                 <p className="mt-2 text-xs leading-5 text-white/75">{contract.interactionRuntime.executionDetail}</p>
               </div>
@@ -1190,6 +1190,77 @@ export function LivePlayerOverlayShellPanel({
                 ))}
               </div>
             ) : null}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.executionRuntime.eyebrow}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.executionRuntime.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.executionRuntime.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.executionRuntime.primaryPlanLabel}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.executionRuntime.recoveryPlanLabel}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.executionRuntime.nextMove.label}</p>
+            <p className="mt-3 text-sm leading-6 text-white/90">{contract.executionRuntime.nextMove.detail}</p>
+          </div>
+
+          <div className="mt-4 grid gap-3 xl:grid-cols-2">
+            {contract.executionRuntime.commandPlans.map((plan) => (
+              <article
+                key={plan.id}
+                className={`rounded-2xl border p-4 ${
+                  plan.tone === 'ready'
+                    ? 'border-sky-300/20 bg-sky-500/10'
+                    : plan.tone === 'watch'
+                      ? 'border-amber-300/20 bg-amber-500/10'
+                      : 'border-rose-300/20 bg-rose-500/10'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{plan.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {plan.dispatchKind}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{plan.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/80">{plan.detail}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {plan.startVisibilityState}
+                  </span>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {plan.targetVisibilityState}
+                  </span>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {plan.targetMode}
+                  </span>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {plan.steps.map((step) => (
+                    <div key={step.id} className="rounded-xl border border-white/10 bg-black/20 p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-white/70">{step.label}</p>
+                        <span className="rounded-full border border-white/15 bg-white/[0.06] px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                          {step.effectKind}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-white/75">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
           </div>
         </div>
 
