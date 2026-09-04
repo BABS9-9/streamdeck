@@ -10,6 +10,9 @@ import {
   LivePlayerOverlayPlaybackDiagnosticsWitness,
   LivePlayerOverlayPlaybackEscalationWitness,
   LivePlayerOverlayPlaybackFreshnessWitness,
+  LivePlayerOverlayPlaybackGuideHydration,
+  LivePlayerOverlayPlaybackGuideHydrationStep,
+  LivePlayerOverlayPlaybackGuideHydrationTarget,
   LivePlayerOverlayPlaybackHeroDoctrine,
   LivePlayerOverlayPlaybackMessageLane,
   LivePlayerOverlayPlaybackMessageLadder,
@@ -298,6 +301,141 @@ const buildFreshnessWitness = ({
     summary,
     detail,
     tone: getGuideEvidenceTone(state, hasGuide),
+  };
+};
+
+const getGuideHydrationTargetState = ({
+  enabled,
+  contentId,
+  hasGuide,
+  coverageStatus,
+  syncStatus,
+  blocked,
+  duplicate,
+}: {
+  enabled: boolean;
+  contentId: number | null;
+  hasGuide: boolean;
+  coverageStatus?: ProviderGuideCoverageReport['status'] | null;
+  syncStatus?: ProviderEpgSyncState['status'] | null;
+  blocked?: boolean;
+  duplicate?: boolean;
+}): LivePlayerOverlayPlaybackGuideHydrationTarget['state'] => {
+  if (!enabled) return 'blocked';
+  if (duplicate) return 'duplicate';
+  if (blocked || !contentId || contentId <= 0) return 'blocked';
+  if (syncStatus === 'refreshing') return 'refreshing';
+  if (hasGuide || coverageStatus === 'fresh') return 'ready';
+  if (coverageStatus === 'stale' || coverageStatus === 'partial' || coverageStatus === 'error' || coverageStatus === 'empty' || syncStatus === 'error') {
+    return 'stale';
+  }
+  return 'idle';
+};
+
+const buildGuideHydrationTarget = ({
+  id,
+  label,
+  providerId,
+  providerName,
+  contentId,
+  coverage,
+  syncState,
+  hasGuide,
+  enabled,
+  duplicate = false,
+}: {
+  id: LivePlayerOverlayPlaybackGuideHydrationTarget['id'];
+  label: string;
+  providerId: string | null;
+  providerName: string | null;
+  contentId: number | null;
+  coverage: ProviderGuideCoverageReport | null;
+  syncState: ProviderEpgSyncState | null;
+  hasGuide: boolean;
+  enabled: boolean;
+  duplicate?: boolean;
+}): LivePlayerOverlayPlaybackGuideHydrationTarget => {
+  const state = getGuideHydrationTargetState({
+    enabled,
+    contentId,
+    hasGuide,
+    coverageStatus: coverage?.status ?? null,
+    syncStatus: syncState?.status ?? null,
+    blocked: !providerId,
+    duplicate,
+  });
+
+  const summary = duplicate
+    ? `${providerName ?? 'Recovery provider'} reuses the same guide target as the active playback owner.`
+    : state === 'refreshing'
+      ? `${providerName ?? 'Guide owner'} is already refreshing guide proof for this playback target.`
+      : state === 'ready'
+        ? `${providerName ?? 'Guide owner'} already has usable now/next proof for this playback target.`
+        : state === 'stale'
+          ? `${providerName ?? 'Guide owner'} still needs fresher guide proof for this playback target.`
+          : state === 'blocked'
+            ? 'Guide hydration is blocked until playback names a real provider and content target.'
+            : `${providerName ?? 'Guide owner'} has not produced a durable guide witness yet.`;
+  const detail = duplicate
+    ? 'The shell should not run a second guide refresh for the same provider and stream pair.'
+    : state === 'refreshing'
+      ? `${syncState?.error ?? coverage?.summary ?? 'A guide refresh request is already in flight.'}`
+      : state === 'ready'
+        ? `${coverage?.summary ?? 'Now/next proof is already attached to this playback route.'}`
+        : state === 'stale'
+          ? `${syncState?.error ?? coverage?.summary ?? 'Guide freshness has slipped enough that the shell should request a new witness.'}`
+          : state === 'blocked'
+            ? 'Guide hydration should stay idle until the runtime can point at a concrete playback stream.'
+            : `${coverage?.summary ?? 'Guide hydration can warm this target without inventing player-shell heuristics.'}`;
+
+  return {
+    id,
+    label,
+    providerId,
+    providerLabel: providerName ?? 'Unknown provider',
+    contentId,
+    state,
+    summary,
+    detail,
+    tone: state === 'ready' ? 'ready' : state === 'refreshing' || state === 'duplicate' || state === 'idle' ? 'watch' : 'recover',
+  };
+};
+
+const buildGuideHydrationStep = ({
+  target,
+}: {
+  target: LivePlayerOverlayPlaybackGuideHydrationTarget;
+}): LivePlayerOverlayPlaybackGuideHydrationStep => {
+  if (target.state === 'stale' || target.state === 'idle') {
+    return {
+      id: target.id,
+      effectKind: 'hydrate-guide',
+      providerId: target.providerId,
+      contentId: target.contentId,
+      summary: `Hydrate ${target.label.toLowerCase()} guide proof.`,
+      detail: target.detail,
+      reason: target.state === 'stale'
+        ? 'Guide freshness or proof is not strong enough to leave hydration implicit.'
+        : 'This playback path has a concrete provider target but no durable guide witness yet.',
+      tone: target.tone,
+    };
+  }
+
+  return {
+    id: target.id,
+    effectKind: 'idle',
+    providerId: target.providerId,
+    contentId: target.contentId,
+    summary: target.summary,
+    detail: target.detail,
+    reason: target.state === 'duplicate'
+      ? 'The recovery lane shares the same guide target, so a second refresh would be redundant.'
+      : target.state === 'refreshing'
+        ? 'A guide refresh is already in flight.'
+        : target.state === 'ready'
+          ? 'Guide proof is already fresh enough for this playback lane.'
+          : 'No guide hydration should run until the runtime points at a stable target.',
+    tone: target.tone,
   };
 };
 
@@ -684,10 +822,12 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   currentStream,
   currentProviderId,
   currentProviderName,
+  currentContentId,
   guide,
   guideCoverage,
   guideSyncState,
   recoveryProviderName,
+  recoveryContentId,
   recoveryGuide,
   recoveryGuideCoverage,
   recoveryGuideSyncState,
@@ -704,10 +844,12 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   currentStream: XtreamStream | null;
   currentProviderId: string | null;
   currentProviderName: string | null;
+  currentContentId: number | null;
   guide: NormalizedEpg | null;
   guideCoverage: ProviderGuideCoverageReport | null;
   guideSyncState: ProviderEpgSyncState | null;
   recoveryProviderName: string | null;
+  recoveryContentId: number | null;
   recoveryGuide: NormalizedEpg | null;
   recoveryGuideCoverage: ProviderGuideCoverageReport | null;
   recoveryGuideSyncState: ProviderEpgSyncState | null;
@@ -868,6 +1010,83 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
   const preferredFreshnessWitness = freshnessWitnesses.find((witness) => witness.id === 'metadata-owner') ?? freshnessWitnesses[0];
   const guideFreshnessLabel = `${preferredFreshnessWitness.summary} (${preferredFreshnessWitness.ageLabel})`;
   const guideFreshnessDetail = preferredFreshnessWitness.detail;
+  const activeGuideTarget = buildGuideHydrationTarget({
+    id: 'active',
+    label: 'Active lane',
+    providerId: currentProviderId,
+    providerName: currentProviderName,
+    contentId: currentContentId,
+    coverage: guideCoverage,
+    syncState: guideSyncState,
+    hasGuide: activeGuideReady,
+    enabled: isLive,
+  });
+  const duplicateGuideTarget = Boolean(
+    currentProviderId
+    && recoveryRuntime?.targetProviderId
+    && currentContentId
+    && recoveryContentId
+    && currentProviderId === recoveryRuntime.targetProviderId
+    && currentContentId === recoveryContentId
+  );
+  const recoveryGuideTarget = buildGuideHydrationTarget({
+    id: 'recovery',
+    label: 'Recovery lane',
+    providerId: recoveryRuntime?.targetProviderId ?? null,
+    providerName: recoveryProviderName,
+    contentId: recoveryContentId,
+    coverage: recoveryGuideCoverage,
+    syncState: recoveryGuideSyncState,
+    hasGuide: recoveryTargetGuideReady,
+    enabled: isLive,
+    duplicate: duplicateGuideTarget,
+  });
+  const guideHydrationTargets = [activeGuideTarget, recoveryGuideTarget].filter((target) => (
+    target.id === 'active'
+    || target.providerId
+    || target.contentId
+    || target.state !== 'blocked'
+  ));
+  const guideHydrationSteps = guideHydrationTargets.map((target) => buildGuideHydrationStep({ target }));
+  const pendingHydrationCount = guideHydrationSteps.filter((step) => step.effectKind === 'hydrate-guide').length;
+  const guideHydrationState: LivePlayerOverlayPlaybackGuideHydration['state'] = recoveryRuntime?.actionKind === 'quick-switch'
+    || recoveryRuntime?.actionKind === 'reclaim-owner'
+    || recoveryRuntime?.actionKind === 'wait-for-line'
+    || recoveryRuntime?.actionKind === 'fail-closed'
+    ? 'recovery-led'
+    : pendingHydrationCount > 0
+      ? 'warming'
+      : guideHydrationTargets.some((target) => target.state === 'blocked')
+        ? 'blocked'
+        : 'stable';
+  const guideHydrationTone: LivePlayerOverlayPlaybackGuideHydration['tone'] = guideHydrationState === 'stable'
+    ? 'ready'
+    : guideHydrationState === 'warming'
+      ? 'watch'
+      : 'recover';
+  const guideHydration: LivePlayerOverlayPlaybackGuideHydration = {
+    title: 'Guide hydration runtime',
+    state: guideHydrationState,
+    summary: guideHydrationState === 'stable'
+      ? 'Active playback and recovery metadata already have the guide witnesses the overlay needs.'
+      : guideHydrationState === 'warming'
+        ? 'Guide hydration is still warming at least one playback lane, so the shell should refresh through the runtime plan.'
+        : guideHydrationState === 'recovery-led'
+          ? 'Recovery posture is currently shaping which guide lane deserves the next hydration pass.'
+          : 'Guide hydration is blocked until playback publishes a concrete provider and stream target.',
+    detail: pendingHydrationCount > 0
+      ? `${pendingHydrationCount} runtime-authored guide hydration step${pendingHydrationCount === 1 ? '' : 's'} remain pending across the active and recovery lanes.`
+      : 'No extra guide hydration step is needed right now, so the shell can follow existing metadata witnesses without re-requesting them.',
+    primaryTargetLabel: guideHydrationTargets.find((target) => target.state === 'stale' || target.state === 'idle')?.providerLabel
+      ?? preferredWitness?.providerLabel
+      ?? currentProviderName
+      ?? 'Guide owner pending',
+    duplicateRule: 'If the recovery lane points at the same provider and stream as active playback, the shell should skip the duplicate refresh.',
+    pendingHydrationCount,
+    tone: guideHydrationTone,
+    targets: guideHydrationTargets,
+    steps: guideHydrationSteps,
+  };
   const metadataSummary = currentProviderName
     ? preferredWitness.id === 'recovery'
       ? `${currentProviderName} still owns playback, but ${preferredWitness.providerLabel} has the clearest backup now/next proof for ${currentStream?.name ?? historyItem?.title ?? 'this session'}.`
@@ -2987,6 +3206,7 @@ export const buildLivePlayerOverlayPlaybackRuntime = ({
     messageLadder,
     shellOrchestration,
     shellPolicy,
+    guideHydration,
     metadataWitnesses,
     freshnessWitnesses,
     windowWitnesses,

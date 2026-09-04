@@ -652,10 +652,12 @@ export function PlayerDock() {
     currentStream,
     currentProviderId,
     currentProviderName: currentProvider?.name ?? null,
+    currentContentId: contentId || null,
     guide: currentGuide,
     guideCoverage: currentGuideCoverage,
     guideSyncState: currentGuideState,
     recoveryProviderName: recoveryGuideProvider?.name ?? null,
+    recoveryContentId: recoveryGuideContentId || null,
     recoveryGuide,
     recoveryGuideCoverage,
     recoveryGuideSyncState: recoveryGuideState,
@@ -1111,25 +1113,25 @@ export function PlayerDock() {
   ]);
 
   useEffect(() => {
-    if (!currentProvider || !currentStream || currentStream.stream_type !== 'live' || !contentId) return;
-    markGuideFromCache(currentProvider.id, [contentId]);
-    refreshGuideEntry(currentProvider, contentId).catch(() => {});
-  }, [contentId, currentProvider, currentStream?.stream_type, markGuideFromCache, refreshGuideEntry]);
+    livePlayerOverlayPlaybackRuntime.guideHydration.steps.forEach((step) => {
+      if (step.effectKind !== 'hydrate-guide' || !step.providerId || !step.contentId) return;
 
-  useEffect(() => {
-    if (!recoveryGuideProvider || !recoveryGuideStream || recoveryGuideContentId <= 0) return;
-    if (recoveryGuideProvider.id === currentProviderId && recoveryGuideContentId === contentId) return;
+      const provider = step.id === 'active'
+        ? currentProvider
+        : recoveryGuideProvider?.id === step.providerId
+          ? recoveryGuideProvider
+          : null;
 
-    markGuideFromCache(recoveryGuideProvider.id, [recoveryGuideContentId]);
-    refreshGuideEntry(recoveryGuideProvider, recoveryGuideContentId).catch(() => {});
+      if (!provider) return;
+      markGuideFromCache(provider.id, [step.contentId]);
+      refreshGuideEntry(provider, step.contentId).catch(() => {});
+    });
   }, [
-    contentId,
-    currentProviderId,
+    currentProvider,
     markGuideFromCache,
-    recoveryGuideContentId,
     recoveryGuideProvider,
-    recoveryGuideStream,
     refreshGuideEntry,
+    livePlayerOverlayPlaybackRuntime.guideHydration,
   ]);
 
   if (!currentStream || !playbackUrl || !currentProviderId) return null;

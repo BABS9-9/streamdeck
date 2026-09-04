@@ -405,6 +405,63 @@ export function LivePlayerOverlayShellPanel({
             ))}
           </div>
 
+          <div className={`mt-4 rounded-2xl border p-4 ${toneStyles[contract.playbackRuntime.guideHydration.tone]}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="max-w-3xl">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{contract.playbackRuntime.guideHydration.title}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{contract.playbackRuntime.guideHydration.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{contract.playbackRuntime.guideHydration.detail}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2">
+                  {contract.playbackRuntime.guideHydration.state}
+                </span>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2">
+                  Target: {contract.playbackRuntime.guideHydration.primaryTargetLabel}
+                </span>
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2">
+                  Pending: {contract.playbackRuntime.guideHydration.pendingHydrationCount}
+                </span>
+              </div>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-white/65">{contract.playbackRuntime.guideHydration.duplicateRule}</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {contract.playbackRuntime.guideHydration.targets.map((target) => (
+                <article
+                  key={target.id}
+                  className={`rounded-2xl border p-4 ${toneStyles[target.tone]}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{target.label}</p>
+                    <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                      {target.state}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-white">{target.providerLabel}</p>
+                  <p className="mt-2 text-sm text-white/85">{target.summary}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/70">{target.detail}</p>
+                </article>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {contract.playbackRuntime.guideHydration.steps.map((step) => (
+                <article
+                  key={`${step.id}-${step.effectKind}-${step.providerId ?? 'none'}-${step.contentId ?? 'none'}`}
+                  className={`rounded-2xl border p-4 ${toneStyles[step.tone]}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{step.summary}</p>
+                    <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                      {step.effectKind}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-white/75">{step.detail}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/65">{step.reason}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
               <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Live edge</p>

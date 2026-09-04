@@ -2453,6 +2453,42 @@ export type LivePlayerOverlayPlaybackFreshnessWitness = {
   tone: LivePlayerControlTone;
 };
 
+export type LivePlayerOverlayPlaybackGuideHydrationTarget = {
+  id: 'active' | 'recovery';
+  label: string;
+  providerId: string | null;
+  providerLabel: string;
+  contentId: number | null;
+  state: 'ready' | 'refreshing' | 'stale' | 'blocked' | 'duplicate' | 'idle';
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackGuideHydrationStep = {
+  id: 'active' | 'recovery';
+  effectKind: 'hydrate-guide' | 'idle';
+  providerId: string | null;
+  contentId: number | null;
+  summary: string;
+  detail: string;
+  reason: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayPlaybackGuideHydration = {
+  title: string;
+  state: 'stable' | 'warming' | 'recovery-led' | 'blocked';
+  summary: string;
+  detail: string;
+  primaryTargetLabel: string;
+  duplicateRule: string;
+  pendingHydrationCount: number;
+  tone: LivePlayerControlTone;
+  targets: LivePlayerOverlayPlaybackGuideHydrationTarget[];
+  steps: LivePlayerOverlayPlaybackGuideHydrationStep[];
+};
+
 export type LivePlayerOverlayPlaybackWindowWitness = {
   id: 'live-edge' | 'seek' | 'program-window';
   label: string;
@@ -2803,6 +2839,7 @@ export type LivePlayerOverlayPlaybackRuntimeContract = {
   messageLadder: LivePlayerOverlayPlaybackMessageLadder;
   shellOrchestration: LivePlayerOverlayPlaybackShellOrchestration;
   shellPolicy: LivePlayerOverlayPlaybackShellPolicy;
+  guideHydration: LivePlayerOverlayPlaybackGuideHydration;
   metadataWitnesses: LivePlayerOverlayPlaybackMetadataWitness[];
   freshnessWitnesses: LivePlayerOverlayPlaybackFreshnessWitness[];
   windowWitnesses: LivePlayerOverlayPlaybackWindowWitness[];
