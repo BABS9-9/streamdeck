@@ -1193,6 +1193,121 @@ export function LivePlayerOverlayShellPanel({
           </div>
         </div>
 
+        <div className={`mt-4 rounded-2xl border p-4 ${toneStyles[contract.visibilityRuntime.tone]}`}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-3xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.visibilityRuntime.eyebrow}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{contract.visibilityRuntime.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-white/75">{contract.visibilityRuntime.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.visibilityRuntime.directiveState}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.visibilityRuntime.lockState}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.visibilityRuntime.applyMode}
+              </span>
+              <span className="rounded-full border border-white/15 bg-black/20 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                {contract.visibilityRuntime.activeRuleCount} active
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Raw shell state</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.visibilityRuntime.rawVisibilityState}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Effective state</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.visibilityRuntime.effectiveVisibilityState}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Target state</p>
+              <p className="mt-3 text-sm font-semibold text-white">{contract.visibilityRuntime.targetVisibilityState}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Apply rule</p>
+            <p className="mt-3 text-sm font-semibold text-white">{contract.visibilityRuntime.nextMove.label}</p>
+            <p className="mt-2 text-xs leading-5 text-white/75">{contract.visibilityRuntime.applyDetail}</p>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Priority summary</p>
+              <p className="mt-3 text-sm leading-6 text-white/90">{contract.visibilityRuntime.prioritySummary}</p>
+            </article>
+            <article className="rounded-2xl border border-white/15 bg-black/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Release rule</p>
+              <p className="mt-3 text-sm leading-6 text-white/90">{contract.visibilityRuntime.releaseRule}</p>
+            </article>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {contract.visibilityRuntime.rules.map((rule) => (
+              <article
+                key={rule.id}
+                className={`rounded-2xl border p-4 ${
+                  rule.tone === 'ready'
+                    ? 'border-sky-300/20 bg-sky-500/10'
+                    : rule.tone === 'watch'
+                      ? 'border-amber-300/20 bg-amber-500/10'
+                      : 'border-rose-300/20 bg-rose-500/10'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{rule.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    {rule.state}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{rule.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{rule.detail}</p>
+                <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/65">
+                  target {rule.targetVisibilityState}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {contract.visibilityRuntime.priorityEntries.map((entry) => (
+              <article
+                key={`${entry.id}-priority`}
+                className={`rounded-2xl border p-4 ${
+                  entry.tone === 'ready'
+                    ? 'border-sky-300/20 bg-sky-500/10'
+                    : entry.tone === 'watch'
+                      ? 'border-amber-300/20 bg-amber-500/10'
+                      : 'border-rose-300/20 bg-rose-500/10'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/80">{entry.label}</p>
+                  <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/75">
+                    #{entry.rank} {entry.state}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">{entry.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-white/75">{entry.detail}</p>
+                <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/65">
+                  promotes {entry.targetVisibilityState}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/15 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{contract.visibilityRuntime.nextMove.label}</p>
+            <p className="mt-3 text-sm leading-6 text-white/90">{contract.visibilityRuntime.nextMove.detail}</p>
+          </div>
+        </div>
+
         <div className="mt-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="max-w-3xl">

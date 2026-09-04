@@ -14,6 +14,7 @@ import {
   LivePlayerOverlaySessionRuntimeContract,
   LivePlayerOverlayStatusChip,
   LivePlayerOverlayTimelineRuntimeContract,
+  LivePlayerOverlayVisibilityRuntimeContract,
   LivePlayerRecoveryActionRuntimeContract,
   LivePlayerRemoteRuntimeContract,
 } from './types';
@@ -219,6 +220,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
   commandRuntime,
   interactionRuntime,
   executionRuntime,
+  visibilityRuntime,
   sessionRuntime,
   playbackRuntime,
   timelineRuntime,
@@ -240,6 +242,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
   interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
   executionRuntime: LivePlayerOverlayExecutionRuntimeContract;
+  visibilityRuntime: LivePlayerOverlayVisibilityRuntimeContract;
   sessionRuntime: LivePlayerOverlaySessionRuntimeContract;
   playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
   timelineRuntime: LivePlayerOverlayTimelineRuntimeContract;
@@ -312,6 +315,7 @@ export const buildLivePlayerOverlayShellRuntime = ({
     commandRuntime,
     interactionRuntime,
     executionRuntime,
+    visibilityRuntime,
     sessionRuntime,
     playbackRuntime,
     timelineRuntime,

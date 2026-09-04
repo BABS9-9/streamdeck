@@ -13,6 +13,7 @@ import { buildLivePlayerOverlayFocusRuntime } from '@/lib/live-player-overlay-fo
 import { buildLivePlayerOverlayCommandRuntime } from '@/lib/live-player-overlay-command-runtime';
 import { buildLivePlayerOverlayInteractionRuntime } from '@/lib/live-player-overlay-interaction-runtime';
 import { buildLivePlayerOverlayExecutionRuntime } from '@/lib/live-player-overlay-execution-runtime';
+import { buildLivePlayerOverlayVisibilityRuntime } from '@/lib/live-player-overlay-visibility-runtime';
 import { buildLivePlayerOverlaySessionRuntime } from '@/lib/live-player-overlay-session-runtime';
 import { buildLivePlayerOverlayTimelineRuntime } from '@/lib/live-player-overlay-timeline-runtime';
 import { buildLivePlayerOverlayPlaybackRuntime } from '@/lib/live-player-overlay-playback-runtime';
@@ -696,6 +697,19 @@ export function PlayerDock() {
     livePlayerOverlayPlaybackRuntime,
     playerRecoveryActionRuntime,
   ]);
+  const livePlayerOverlayVisibilityRuntime = useMemo(() => buildLivePlayerOverlayVisibilityRuntime({
+    overlayState,
+    streamHealthStatus: streamHealth.status,
+    controlRuntime: livePlayerControlRuntime,
+    interactionRuntime: livePlayerOverlayInteractionRuntime,
+    recoveryRuntime: playerRecoveryActionRuntime,
+  }), [
+    overlayState,
+    streamHealth.status,
+    livePlayerControlRuntime,
+    livePlayerOverlayInteractionRuntime,
+    playerRecoveryActionRuntime,
+  ]);
   const livePlayerBrowseToPlayerHandoffRuntime = useMemo(() => buildLivePlayerBrowseToPlayerHandoffRuntime({
     currentStream,
     currentProviderId,
@@ -741,6 +755,7 @@ export function PlayerDock() {
     commandRuntime: livePlayerOverlayCommandRuntime,
     interactionRuntime: livePlayerOverlayInteractionRuntime,
     executionRuntime: livePlayerOverlayExecutionRuntime,
+    visibilityRuntime: livePlayerOverlayVisibilityRuntime,
     sessionRuntime: livePlayerOverlaySessionRuntime,
     playbackRuntime: livePlayerOverlayPlaybackRuntime,
     timelineRuntime: livePlayerOverlayTimelineRuntime,
@@ -762,6 +777,7 @@ export function PlayerDock() {
     livePlayerOverlayExecutionRuntime,
     livePlayerOverlayInteractionRuntime,
     livePlayerOverlayPlaybackRuntime,
+    livePlayerOverlayVisibilityRuntime,
     livePlayerOverlaySessionRuntime,
     livePlayerOverlayTimelineRuntime,
     livePlayerOverlayFocusRuntime,
@@ -1074,27 +1090,14 @@ export function PlayerDock() {
   };
 
   useEffect(() => {
-    if (streamHealth.status === 'error' || playerRecoveryActionRuntime?.actionKind === 'wait-for-line' || playerRecoveryActionRuntime?.actionKind === 'fail-closed') {
-      openOverlay('recovery');
-      return;
-    }
+    if (livePlayerOverlayVisibilityRuntime.applyMode !== 'set-overlay-state') return;
+    if (overlayState === livePlayerOverlayVisibilityRuntime.targetVisibilityState) return;
 
-    if (livePlayerControlRuntime.seekWindowState === 'timeshift-active' && overlayState === 'closed') {
-      setOverlayState('transport');
-      return;
-    }
-
-    if (livePlayerControlRuntime.subtitleAudioOptionState === 'selection-active' && overlayState === 'closed') {
-      setOverlayState('tracks');
-    }
+    setOverlayState(livePlayerOverlayVisibilityRuntime.targetVisibilityState);
   }, [
-    livePlayerControlRuntime.seekWindowState,
-    livePlayerControlRuntime.subtitleAudioOptionState,
-    openOverlay,
     overlayState,
-    playerRecoveryActionRuntime?.actionKind,
     setOverlayState,
-    streamHealth.status,
+    livePlayerOverlayVisibilityRuntime,
   ]);
 
   useEffect(() => {

@@ -2219,6 +2219,71 @@ export type LivePlayerOverlayExecutionRuntimeContract = {
   };
 };
 
+export type LivePlayerOverlayVisibilityDirectiveState =
+  | 'released'
+  | 'guided-open'
+  | 'pinned-open'
+  | 'manual-open';
+
+export type LivePlayerOverlayVisibilityLockState =
+  | 'released'
+  | 'transport-pending'
+  | 'tracks-pending'
+  | 'recovery-pinned'
+  | 'manual-open';
+
+export type LivePlayerOverlayVisibilityApplyMode =
+  | 'none'
+  | 'set-overlay-state';
+
+export type LivePlayerOverlayVisibilityRule = {
+  id: 'recovery' | 'transport' | 'tracks' | 'manual';
+  label: string;
+  state: 'active' | 'standby' | 'released';
+  summary: string;
+  detail: string;
+  targetVisibilityState: LivePlayerOverlayVisibilityState;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayVisibilityPriorityEntry = {
+  id: 'recovery' | 'transport' | 'tracks' | 'manual';
+  label: string;
+  rank: number;
+  state: 'winning' | 'queued' | 'released';
+  targetVisibilityState: LivePlayerOverlayVisibilityState;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+};
+
+export type LivePlayerOverlayVisibilityRuntimeContract = {
+  screenId: 'player';
+  title: string;
+  eyebrow: string;
+  summary: string;
+  detail: string;
+  tone: LivePlayerControlTone;
+  directiveState: LivePlayerOverlayVisibilityDirectiveState;
+  lockState: LivePlayerOverlayVisibilityLockState;
+  rawVisibilityState: LivePlayerOverlayVisibilityState;
+  effectiveVisibilityState: LivePlayerOverlayVisibilityState;
+  targetVisibilityState: LivePlayerOverlayVisibilityState;
+  applyMode: LivePlayerOverlayVisibilityApplyMode;
+  applyDetail: string;
+  releaseRule: string;
+  prioritySummary: string;
+  activeRuleCount: number;
+  rules: LivePlayerOverlayVisibilityRule[];
+  priorityEntries: LivePlayerOverlayVisibilityPriorityEntry[];
+  nextMove: {
+    label: string;
+    detail: string;
+    tone: LivePlayerControlTone;
+    targetVisibilityState: LivePlayerOverlayVisibilityState;
+  };
+};
+
 export type LivePlayerOverlaySessionFreshnessState =
   | 'fresh'
   | 'warming'
@@ -2740,6 +2805,7 @@ export type LivePlayerOverlayRuntimeContract = {
   commandRuntime: LivePlayerOverlayCommandRuntimeContract;
   interactionRuntime: LivePlayerOverlayInteractionRuntimeContract;
   executionRuntime: LivePlayerOverlayExecutionRuntimeContract;
+  visibilityRuntime: LivePlayerOverlayVisibilityRuntimeContract;
   sessionRuntime: LivePlayerOverlaySessionRuntimeContract;
   playbackRuntime: LivePlayerOverlayPlaybackRuntimeContract;
   timelineRuntime: LivePlayerOverlayTimelineRuntimeContract;
